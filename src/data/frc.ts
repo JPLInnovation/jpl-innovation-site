@@ -251,9 +251,18 @@ export const motors: HardwareItem[] = [
 
 export const controlStack: HardwareItem[] = [
 	{
+		name: 'roboRIO → SystemCore',
+		maker: 'Robot controller',
+		desc: 'The roboRIO runs the robot for the 2026 season only. After that it is replaced by SystemCore, the new FRC robot controller.',
+		specs: [
+			{ value: 'roboRIO', label: '2026 season only' },
+			{ value: 'SystemCore', label: 'replaces it after 2026' },
+		],
+	},
+	{
 		name: 'CAN bus',
 		maker: 'Wiring',
-		desc: 'Every motor controller and sensor shares one two-wire bus back to the roboRIO.',
+		desc: 'Every motor controller and sensor shares one two-wire bus back to the robot controller: the roboRIO in 2026, SystemCore after that.',
 		specs: [{ value: 'Two-wire' }, { value: 'Unique CAN ID per device' }],
 	},
 	{

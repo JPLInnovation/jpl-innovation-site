@@ -8,7 +8,7 @@ import { controlStack, motors } from "@/data/frc";
 
 const current = motors.filter((m) => !m.legacy);
 const legacy = motors.filter((m) => m.legacy);
-// Devices drawn on the CAN bus diagram, left to right after the roboRIO.
+// Devices drawn on the CAN bus diagram, left to right after the robot controller.
 const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", "PDH"];
 ---
 
@@ -59,6 +59,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 							<ol class="relative flex items-start justify-between gap-2">
 								<li class="flex w-16 flex-col items-center gap-2 text-center">
 									<span class="grid h-9 w-16 place-items-center rounded-md bg-foreground text-[11px] font-bold text-background">roboRIO</span>
+									<span class="text-[10px] font-semibold leading-tight text-muted-foreground">2026 only<br />then SystemCore</span>
 								</li>
 								{
 									busDevices.map((device) => (
@@ -72,7 +73,8 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 						</div>
 					</div>
 					<figcaption class="mt-3 text-sm text-muted-foreground">
-						One two-wire bus back to the roboRIO. Every device on it has its own CAN ID.
+						One two-wire bus back to the robot controller: the roboRIO for the 2026 season, SystemCore after that. Every
+						device on it has its own CAN ID.
 					</figcaption>
 				</figure>
 

@@ -218,7 +218,7 @@ export default function createRobot(ctx: StageContext): Model {
 	shooterMotor.position.x = 0.25;
 	shooter.add(shooterMotor);
 
-	/* ---------- Controls: roboRIO and robot signal light ---------- */
+	/* ---------- Controls: roboRIO (2026 season; SystemCore replaces it after) and robot signal light ---------- */
 	add(new BoxGeometry(0.14, 0.03, 0.1), standard(0xc8ccd2, { metalness: 0.4, roughness: 0.4 }), 0, 0.095, -0.2);
 	const rsl = add(new CylinderGeometry(0.02, 0.02, 0.035, 16), signalLight, -0.21, 0.58, 0.14);
 
