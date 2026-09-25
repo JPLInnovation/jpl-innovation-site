@@ -36,7 +36,7 @@ export const roadmap = [
 	{ title: 'Sourcing parts', desc: 'Ordering components.', state: 'current' },
 	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, PDB, and wiring on the F450.', state: 'upcoming' },
 	{ title: 'Flight controller setup', desc: 'Calibration, radio binding, and first hover.', state: 'upcoming' },
-	{ title: '4G video link', desc: 'Pi Zero 2 W streaming Camera Module 3 over 4G.', state: 'upcoming' },
+	{ title: '4G video link', desc: 'Pi Zero 2 W streaming a USB webcam over 4G.', state: 'upcoming' },
 	{ title: 'Field testing', desc: 'Test flights and tuning.', state: 'upcoming' },
 ] as const;
 
@@ -73,8 +73,8 @@ export const systems = [
 		title: 'Live video',
 		icon: 'video-camera',
 		steps: [
-			{ name: 'Camera Module 3', detail: 'autofocus' },
-			{ name: 'Pi Zero 2 W', detail: 'encode & stream', link: 'camera cable' },
+			{ name: 'USB webcam', detail: 'live video' },
+			{ name: 'Pi Zero 2 W', detail: 'encode & stream', link: 'USB' },
 			{ name: '4G modem', detail: 'ZTE MF833', link: 'OTG USB' },
 			{ name: 'Viewer', detail: 'anywhere online', link: 'mobile network' },
 		],
@@ -124,8 +124,7 @@ export const partGroups: PartGroup[] = [
 		color: 'var(--chart-4)',
 		parts: [
 			{ name: 'Raspberry Pi Zero 2 W', why: 'Processes and streams the video over 4G.', price: 850_000 },
-			{ name: 'Camera Module 3', why: 'Crisp, high-quality video with fast autofocus.', price: 864_000 },
-			{ name: 'Pi Zero Camera Cable', why: 'Adapts the camera to the Pi Zero’s smaller connector.', price: 50_000 },
+			{ name: 'USB Webcam', why: 'Plugs into the Pi Zero over USB for the live video feed.' },
 			{ name: 'ZTE MF833 4G Modem', why: 'The USB 4G stick that gives the drone internet.', price: 780_000 },
 			{ name: 'OTG Micro-USB Cable', why: 'Plugs the full-size 4G stick into the Pi Zero.', price: 15_000 },
 		],

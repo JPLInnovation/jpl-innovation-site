@@ -4,7 +4,7 @@
  * Content lives in src/data/frc.ts (`motors`, `controlStack`).
  */
 import HardwareRow from "@/components/HardwareRow.astro";
-import { controlStack, motors } from "@/data/frc";
+import { controlStack, motors, vision } from "@/data/frc";
 
 const current = motors.filter((m) => !m.legacy);
 const legacy = motors.filter((m) => m.legacy);
@@ -17,7 +17,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
 			<h2 id="hardware-heading" class="font-wide text-3xl font-[850] md:text-5xl">Hardware we use</h2>
 			<p class="text-lg text-muted-foreground">
-				The stack: the motors that move the robot, and the CAN control system that drives them.
+				The stack: the motors that move the robot, the CAN control system that drives them, and the camera that sees the field.
 			</p>
 		</div>
 
@@ -80,6 +80,11 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 
 				<ul class="flex flex-col" data-reveal-group>
 					{controlStack.map((item) => <HardwareRow item={item} />)}
+				</ul>
+
+				<h3 class="mt-4 font-semiwide text-xl font-[780]">Vision</h3>
+				<ul class="flex flex-col" data-reveal-group>
+					{vision.map((item) => <HardwareRow item={item} />)}
 				</ul>
 			</div>
 		</div>

@@ -13,7 +13,10 @@ import {
 	MeshBasicMaterial,
 	type MeshStandardMaterial,
 	type Object3D,
+	QuadraticBezierCurve3,
 	TorusGeometry,
+	TubeGeometry,
+	Vector3,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
@@ -44,6 +47,7 @@ export default function createDrone(ctx: StageContext): Model {
 	const batteryLabel = standard(0xffc20e, { roughness: 0.6 });
 	const escBlue = standard(0x1f5fd1, { roughness: 0.5 });
 	const lens = standard(0x0b0d10, { metalness: 0.2, roughness: 0.1 });
+	const webcamBody = standard(0x1a1c20, { roughness: 0.55 });
 	const led = standard(0x1daef1, { emissive: 0x1daef1, emissiveIntensity: 2 });
 
 	const drone = new Group();
@@ -111,13 +115,16 @@ export default function createDrone(ctx: StageContext): Model {
 	const pi = add(new Mesh(new BoxGeometry(0.065, 0.004, 0.03), piGreen), 0, 0.052, -0.045);
 	add(new Mesh(new BoxGeometry(0.012, 0.003, 0.012), chip), 0, 0.0035, 0, pi);
 
-	// Camera Module 3 on the front edge, looking forward
+	// USB webcam on the front edge, looking forward, with its USB lead running back to the Pi
 	const camera = new Group();
-	camera.position.set(0, 0.03, 0.078);
+	camera.position.set(0, 0.032, 0.08);
 	drone.add(camera);
-	add(new Mesh(new BoxGeometry(0.025, 0.024, 0.003), piGreen), 0, 0, 0, camera);
-	const lensMesh = add(new Mesh(new CylinderGeometry(0.0045, 0.0045, 0.006, 16), lens), 0, 0.002, 0.004, camera);
+	add(new Mesh(new RoundedBoxGeometry(0.038, 0.022, 0.018, 2, 0.006), webcamBody), 0, 0, 0, camera);
+	const lensMesh = add(new Mesh(new CylinderGeometry(0.0068, 0.0068, 0.006, 20), lens), -0.004, 0, 0.0095, camera);
 	lensMesh.rotation.x = Math.PI / 2;
+	add(new Mesh(new BoxGeometry(0.003, 0.003, 0.002), led), 0.012, 0.004, 0.0095, camera);
+	const usbLead = new QuadraticBezierCurve3(new Vector3(-0.016, 0.03, 0.07), new Vector3(-0.06, 0.07, 0.02), new Vector3(-0.03, 0.055, -0.045));
+	drone.add(new Mesh(new TubeGeometry(usbLead, 20, 0.0016, 6), webcamBody));
 
 	// ZTE MF833 4G USB modem on the side, with signal rings
 	add(new Mesh(new RoundedBoxGeometry(0.03, 0.012, 0.09, 2, 0.004), modemWhite), 0.062, 0.058, -0.02);
@@ -154,7 +161,7 @@ export default function createDrone(ctx: StageContext): Model {
 	const tour = [
 		ctx.label("MicoAir H743 flight controller", anchor(-0.02, 0.1, 0.03), tourClass),
 		ctx.label("Raspberry Pi Zero 2 W", anchor(0, 0.08, -0.11), tourClass),
-		ctx.label("Camera Module 3", anchor(0, 0.02, 0.14), tourClass),
+		ctx.label("USB webcam", anchor(0, 0.03, 0.15), tourClass),
 		ctx.label("ZTE MF833 4G modem", anchor(0.14, 0.07, -0.02), tourClass),
 		ctx.label("3S 2200 mAh LiPo", anchor(0, -0.065, 0), tourClass),
 	];

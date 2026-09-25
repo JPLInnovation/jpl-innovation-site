@@ -308,3 +308,13 @@ export const controlStack: HardwareItem[] = [
 		specs: [{ value: 'Config' }, { value: 'Firmware' }, { value: 'Live diagnostics' }],
 	},
 ];
+
+/** Vision: cameras that see the field. */
+export const vision: HardwareItem[] = [
+	{
+		name: 'Limelight',
+		maker: 'Limelight Vision',
+		desc: 'Smart camera for live video and on-board vision processing, so the robot can see the field.',
+		specs: [{ value: 'Live video' }, { value: 'Vision processing' }],
+	},
+];
