@@ -1,16 +1,19 @@
-﻿/**
- * Team 10951's 2026 modified KitBot in 3D, rebuilt from the team's photos (website-old-main/image):
- *   front  â€” FRCnew.jpg (details) and FRC.JPG (proportions)
- *   back   â€” modifiedkitbot.jpg
+/**
+ * Team 10951's 2026 robot in 3D: the official 2026 FRC KitBot layout with the team's modifications.
+ *   KitBot layout: FIRST's 2026 KitBot Instruction Guide (Fuel Mechanism, Intake Base, Hopper).
+ *   Team changes: photos in website-old-main/image (front: FRCnew.jpg, FRC.JPG; back: modifiedkitbot.jpg).
  * Simplified, not CAD. ~1 unit = 1 m. The robot's front (intake) faces +z; its left side is +x.
  *
- * What's modelled: the aluminium KitBot frame with perforated rails and tan tread wheels; the front intake
- * (tan compliant-wheel roller under a shaft of red star wheels); the cage of white/blue/black arc guides over the
- * banded roller and the blue-flap/green-wheel feeder; clear side plates, Kraken X60 motors and the drive pulley on
- * the left; the red robot signal light on the right; the Limelight camera on top; and the clear rear hopper with
- * the "10951 Saigon South Dragons" decal. The roboRIO sits in the hopper for 2026 (SystemCore replaces it after).
- * A game piece is pulled in at the front, carried up and over the rollers along the arcs, and dropped into the
- * hopper, on a loop.
+ * How FUEL moves, as on the KitBot: the front intake rollers pull it off the floor and back into the clear
+ * hopper. To shoot, the feeder lifts it into the launcher roller, which flings it along the hood and out of the
+ * top, up and forward toward the goal. The hood wraps only the back of the launcher (about 100 degrees), so the
+ * ball leaves at about 45 degrees instead of being carried over the top and backward.
+ *
+ * What's modelled: the aluminium frame with perforated rails and tan tread wheels; the intake (tan compliant
+ * wheels under red star wheels); clear Fuel Mechanism side plates; the blue-flap/green-wheel feeder; the banded
+ * launcher roller under the white/blue/black hood plates; Kraken X60s; the red robot signal light; the Limelight;
+ * and the clear rear hopper with the "10951 Saigon South Dragons" decal. The roboRIO (2026 only, SystemCore
+ * after) and the power hub sit under the hopper floor.
  */
 import {
 	BoxGeometry,
@@ -36,18 +39,29 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
 
 export const view: StageView = {
-	camera: [1.45, 1.0, 1.7],
-	target: [0, 0.3, 0],
+	camera: [1.5, 1.0, 1.75],
+	target: [0, 0.36, 0.1],
 	fov: 34,
 	spin: 0.22,
 	minPolar: 0.5,
 	maxPolar: 1.45,
-	fitWidth: 1.3,
+	fitWidth: 1.35,
 };
 
 const X_AXIS = Math.PI / 2; // rotate a y-axis cylinder onto the x axis
 const FONT = '"Archivo Variable", "Arial Black", sans-serif';
 const LOGO = "/assets/10951.jpg";
+const DEG = Math.PI / 180;
+
+/** Launcher roller axis, in the side view (z forward, y up). */
+const LAUNCHER = { y: 0.55, z: 0.03, r: 0.05 };
+/** Hood: an arc behind the launcher, from the top-back (exit) to below the axis (entry). */
+const HOOD = { from: 130 * DEG, to: 230 * DEG, inner: 0.195, outer: 0.23 };
+const BALL_R = 0.075;
+/** Ball centre while it rides between the launcher and the hood. */
+const RIDE = LAUNCHER.r + BALL_R;
+/** Where the ball leaves the hood, and its direction of travel there (tangent to the arc). */
+const EXIT_ANGLE = 135 * DEG;
 
 export default function createRobot(ctx: StageContext): Model {
 	/* ---------- Materials ---------- */
@@ -92,12 +106,23 @@ export default function createRobot(ctx: StageContext): Model {
 		mesh.rotation.z = X_AXIS;
 		return mesh;
 	};
+	/** A roller: a group on the x axis at (y, z) with a thin shaft, spun by rotating the group about x. */
+	const roller = (y: number, z: number, shaft: Material = black) => {
+		const group = new Group();
+		group.position.set(0, y, z);
+		robot.add(group);
+		onX(add(new CylinderGeometry(0.008, 0.008, 0.62, 10), shaft, 0, 0, 0, group));
+		return group;
+	};
+	/** A point on a circle around the launcher axis, in the side view. */
+	const aroundLauncher = (angle: number, radius: number) =>
+		new Vector3(0, LAUNCHER.y + Math.sin(angle) * radius, LAUNCHER.z + Math.cos(angle) * radius);
 
-	/* ---------- KitBot frame, wheels and belly pan ---------- */
+	/* ---------- AM14U6 frame (front rail cut open for FUEL), wheels, belly pan ---------- */
 	for (const x of [-0.325, 0.325]) add(new BoxGeometry(0.05, 0.1, 0.74), perforated(0.74), x, 0.1, 0);
 	add(new BoxGeometry(0.6, 0.1, 0.05), perforated(0.6), 0, 0.1, -0.345);
-	add(new BoxGeometry(0.5, 0.08, 0.04), perforated(0.5), 0, 0.09, 0.335); // front cross member
-	for (const x of [-0.3, 0.3]) add(new BoxGeometry(0.1, 0.11, 0.12), perforated(0.12), x, 0.1, 0.36); // front corner blocks
+	add(new BoxGeometry(0.5, 0.08, 0.04), perforated(0.5), 0, 0.09, 0.335); // low front cross member
+	for (const x of [-0.3, 0.3]) add(new BoxGeometry(0.1, 0.11, 0.12), perforated(0.12), x, 0.1, 0.36); // front rail stubs
 	add(new BoxGeometry(0.44, 0.012, 0.64), plywood, 0, 0.156, -0.03);
 
 	const wheelGeometry = new CylinderGeometry(0.076, 0.076, 0.04, 32);
@@ -120,21 +145,15 @@ export default function createRobot(ctx: StageContext): Model {
 		ctx.invalidate();
 	});
 
-	/* ---------- Front intake: tan compliant-wheel roller, red star wheels ---------- */
-	const lowRoller = new Group();
-	lowRoller.position.set(0, 0.105, 0.445);
-	robot.add(lowRoller);
-	onX(add(new CylinderGeometry(0.008, 0.008, 0.6, 10), black, 0, 0, 0, lowRoller));
+	/* ---------- Intake: lower shaft of tan compliant wheels, upper shaft of red star flaps ---------- */
+	const lowRoller = roller(0.105, 0.445);
 	const compliant = new CylinderGeometry(0.03, 0.03, 0.02, 20);
 	for (const x of [-0.22, -0.13, -0.04, 0.05, 0.14, 0.23]) {
 		for (const dx of [-0.011, 0.011]) onX(add(compliant, tan, x + dx, 0, 0, lowRoller));
 	}
 
 	const starGeometry = starWheel(0.055, 0.022, 8, 0.012);
-	const starRoller = new Group();
-	starRoller.position.set(0, 0.19, 0.4);
-	robot.add(starRoller);
-	onX(add(new CylinderGeometry(0.008, 0.008, 0.6, 10), black, 0, 0, 0, starRoller));
+	const starRoller = roller(0.19, 0.4);
 	for (const x of [-0.2, -0.05, 0.1]) {
 		const star = add(starGeometry, red, x, 0, 0, starRoller);
 		star.rotation.y = Math.PI / 2;
@@ -144,61 +163,24 @@ export default function createRobot(ctx: StageContext): Model {
 	blueStar.rotation.y = Math.PI / 2;
 	onX(add(new CylinderGeometry(0.014, 0.014, 0.03, 12), red, 0.2, 0, 0, starRoller));
 
-	/* ---------- Mechanism: clear side plates, arc guides, rollers ---------- */
-	const plate = new Shape();
-	plate.moveTo(0, 0.155);
-	plate.lineTo(0.34, 0.155);
-	plate.lineTo(0.34, 0.5);
-	plate.quadraticCurveTo(0.34, 0.63, 0.21, 0.63);
-	plate.lineTo(0, 0.63);
+	/* ---------- Fuel Mechanism: clear side plates with the KitBot's wavy front edge ---------- */
+	const plate = new Shape(); // shape x = world z (forward), shape y = world y
+	plate.moveTo(-0.12, 0.155);
+	plate.lineTo(0.35, 0.155);
+	plate.lineTo(0.35, 0.29);
+	plate.quadraticCurveTo(0.25, 0.37, 0.29, 0.49); // the waist above the intake
+	plate.lineTo(0.3, 0.57);
+	plate.quadraticCurveTo(0.3, 0.66, 0.2, 0.66);
+	plate.lineTo(-0.12, 0.66);
 	plate.closePath();
-	const plateGeometry = new ExtrudeGeometry(plate, { depth: 0.006, bevelEnabled: false, curveSegments: 12 });
+	const plateGeometry = new ExtrudeGeometry(plate, { depth: 0.006, bevelEnabled: false, curveSegments: 14 });
 	for (const x of [-0.318, 0.324]) {
 		const side = add(plateGeometry, clear, x, 0, 0);
-		side.rotation.y = -Math.PI / 2; // shape x â†’ world z, extrusion â†’ world âˆ’x
+		side.rotation.y = -Math.PI / 2; // shape x -> world z, extrusion -> world -x
 	}
 
-	// Arc guides wrapping over the roller stack, centred on the banded roller.
-	const CENTER = { y: 0.42, z: 0.14 };
-	const from = (-50 * Math.PI) / 180;
-	const to = (150 * Math.PI) / 180;
-	const arcShape = new Shape();
-	arcShape.moveTo(Math.cos(from) * 0.245, Math.sin(from) * 0.245);
-	arcShape.absarc(0, 0, 0.245, from, to, false);
-	arcShape.lineTo(Math.cos(to) * 0.21, Math.sin(to) * 0.21);
-	arcShape.absarc(0, 0, 0.21, to, from, true);
-	arcShape.closePath();
-	const arcGeometry = new ExtrudeGeometry(arcShape, { depth: 0.012, bevelEnabled: false, curveSegments: 28 });
-	const arcs = new Group();
-	arcs.position.set(0, CENTER.y, CENTER.z);
-	robot.add(arcs);
-	[white, blue, white, black, black, white, blue, white].forEach((material, i) => {
-		const arc = add(arcGeometry, material, -0.27 + i * 0.077 + 0.006, 0, 0, arcs);
-		arc.rotation.y = -Math.PI / 2;
-	});
-	// Tie-rods through the arcs, with white spacer tubes
-	for (const degrees of [-20, 45, 110]) {
-		const a = (degrees * Math.PI) / 180;
-		const y = Math.sin(a) * 0.2275;
-		const z = Math.cos(a) * 0.2275;
-		onX(add(new CylinderGeometry(0.008, 0.008, 0.62, 10), black, 0, y, z, arcs));
-		for (const x of [-0.19, 0.04, 0.2]) onX(add(new CylinderGeometry(0.012, 0.012, 0.05, 12), white, x, y, z, arcs));
-	}
-
-	// Banded roller: black with blue / green / red bands
-	const bandedRoller = new Group();
-	bandedRoller.position.set(0, CENTER.y, CENTER.z);
-	robot.add(bandedRoller);
-	onX(add(new CylinderGeometry(0.05, 0.05, 0.58, 32), black, 0, 0, 0, bandedRoller));
-	const bandGeometry = new CylinderGeometry(0.0505, 0.0505, 0.024, 32);
-	const bands: Array<[number, Material]> = [[-0.23, blue], [-0.16, green], [-0.05, red], [0.0, red], [0.1, green], [0.21, blue]];
-	for (const [x, material] of bands) onX(add(bandGeometry, material, x, 0, 0, bandedRoller));
-
-	// Feeder: blue flap wheels alternating with green compliant wheels
-	const feeder = new Group();
-	feeder.position.set(0, 0.3, 0.05);
-	robot.add(feeder);
-	onX(add(new CylinderGeometry(0.008, 0.008, 0.6, 10), aluminium, 0, 0, 0, feeder));
+	// Feeder: blue flaps alternating with green compliant wheels. Lifts FUEL from the hopper into the launcher.
+	const feeder = roller(0.36, 0.1, aluminium);
 	const flapGeometry = starWheel(0.05, 0.012, 8, 0.008);
 	const greenWheel = new CylinderGeometry(0.035, 0.035, 0.035, 24);
 	for (let i = 0; i < 9; i++) {
@@ -211,33 +193,63 @@ export default function createRobot(ctx: StageContext): Model {
 		}
 	}
 
-	// Silver guard rods across the back of the mechanism
-	for (const [y, z] of [[0.36, -0.01], [0.47, -0.025]]) onX(add(new CylinderGeometry(0.008, 0.008, 0.64, 10), aluminium, 0, y, z));
+	// Launcher: the banded roller (black with blue / green / red bands), top surface spinning forward.
+	const launcher = roller(LAUNCHER.y, LAUNCHER.z);
+	onX(add(new CylinderGeometry(LAUNCHER.r, LAUNCHER.r, 0.58, 32), black, 0, 0, 0, launcher));
+	const bandGeometry = new CylinderGeometry(LAUNCHER.r + 0.0005, LAUNCHER.r + 0.0005, 0.024, 32);
+	const bands: Array<[number, Material]> = [[-0.23, blue], [-0.16, green], [-0.05, red], [0.0, red], [0.1, green], [0.21, blue]];
+	for (const [x, material] of bands) onX(add(bandGeometry, material, x, 0, 0, launcher));
 
-	/* ---------- Left side (+x): Kraken X60s, drive pulley, controller box. Right side: signal light ---------- */
+	// Hood: the team's eight white/blue/black plates on three tie-rods (the KitBot hood uses two plates on
+	// three churros). A shallow arc behind the launcher, so FUEL leaves up and forward.
+	const hoodShape = new Shape();
+	hoodShape.moveTo(Math.cos(HOOD.from) * HOOD.outer, Math.sin(HOOD.from) * HOOD.outer);
+	hoodShape.absarc(0, 0, HOOD.outer, HOOD.from, HOOD.to, false);
+	hoodShape.lineTo(Math.cos(HOOD.to) * HOOD.inner, Math.sin(HOOD.to) * HOOD.inner);
+	hoodShape.absarc(0, 0, HOOD.inner, HOOD.to, HOOD.from, true);
+	hoodShape.closePath();
+	const hoodGeometry = new ExtrudeGeometry(hoodShape, { depth: 0.012, bevelEnabled: false, curveSegments: 20 });
+	const hood = new Group();
+	hood.position.set(0, LAUNCHER.y, LAUNCHER.z);
+	robot.add(hood);
+	[white, blue, white, black, black, white, blue, white].forEach((material, i) => {
+		const arc = add(hoodGeometry, material, -0.27 + i * 0.077 + 0.006, 0, 0, hood);
+		arc.rotation.y = -Math.PI / 2;
+	});
+	const hoodRodRadius = (HOOD.inner + HOOD.outer) / 2;
+	for (const degrees of [145, 180, 215]) {
+		const a = degrees * DEG;
+		const y = Math.sin(a) * hoodRodRadius;
+		const z = Math.cos(a) * hoodRodRadius;
+		onX(add(new CylinderGeometry(0.008, 0.008, 0.64, 10), black, 0, y, z, hood));
+		for (const x of [-0.19, 0.04, 0.2]) onX(add(new CylinderGeometry(0.012, 0.012, 0.05, 12), white, x, y, z, hood));
+	}
+
+	/* ---------- Left side (+x): Kraken X60s on the launcher and feeder, intake belt pulley ---------- */
 	const krakenGeometry = new CylinderGeometry(0.03, 0.03, 0.1, 24);
 	const capGeometry = new CylinderGeometry(0.031, 0.031, 0.012, 24);
 	const krakens = [
-		[0.38, 0.54, 0.2],
-		[0.38, 0.42, 0.3],
+		[0.38, LAUNCHER.y, LAUNCHER.z],
+		[0.38, 0.36, 0.1],
 	].map(([x, y, z]) => {
 		const motor = onX(add(krakenGeometry, black, x, y, z));
 		add(capGeometry, aluminium, 0, 0.05, 0, motor);
 		return motor;
 	});
-	onX(add(new CylinderGeometry(0.06, 0.06, 0.016, 32), black, 0.345, 0.24, 0.2)); // drive pulley
-	add(new BoxGeometry(0.075, 0.035, 0.05), white, 0.29, 0.645, 0.23);
-	add(new BoxGeometry(0.01, 0.036, 0.05), standard(0xff8a1f, { roughness: 0.5 }), 0.33, 0.645, 0.23);
+	onX(add(new CylinderGeometry(0.05, 0.05, 0.016, 32), black, 0.345, 0.19, 0.4)); // intake belt pulley
+	add(new BoxGeometry(0.075, 0.035, 0.05), white, 0.29, 0.678, 0.0);
+	add(new BoxGeometry(0.01, 0.036, 0.05), standard(0xff8a1f, { roughness: 0.5 }), 0.33, 0.678, 0.0);
 
+	// Right side: robot signal light on top of the side plate
 	const rsl = new Group();
-	rsl.position.set(-0.3, 0.63, 0.03);
+	rsl.position.set(-0.3, 0.66, 0.08);
 	robot.add(rsl);
 	add(new CylinderGeometry(0.02, 0.022, 0.022, 20), black, 0, 0.011, 0, rsl);
 	const dome = add(new SphereGeometry(0.022, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), signal, 0, 0.022, 0, rsl);
 
-	/* ---------- Limelight: top left, lens facing forward ---------- */
+	/* ---------- Limelight: on the left side plate, lens facing forward ---------- */
 	const limelight = new Group();
-	limelight.position.set(0.25, 0.665, 0.0);
+	limelight.position.set(0.28, 0.69, 0.15);
 	robot.add(limelight);
 	add(new RoundedBoxGeometry(0.09, 0.055, 0.032, 2, 0.006), black, 0, 0, 0, limelight);
 	const lens = add(new CylinderGeometry(0.011, 0.011, 0.006, 20), standard(0x0a0c10, { metalness: 0.3, roughness: 0.08 }), -0.012, 0.004, 0.017, limelight);
@@ -246,22 +258,24 @@ export default function createRobot(ctx: StageContext): Model {
 		add(new BoxGeometry(0.006, 0.006, 0.002), limelightLed, dx, dy, 0.0165, limelight);
 	}
 
-	/* ---------- Rear hopper: clear box with the team decal, electronics inside ---------- */
+	/* ---------- Rear hopper: clear floor, sides and back with the team decal ---------- */
+	const HOPPER_FLOOR = 0.2;
+	add(new BoxGeometry(0.62, 0.004, 0.3), clear, 0, HOPPER_FLOOR, -0.25);
 	const hopperSide = new Shape();
 	hopperSide.moveTo(-0.4, 0.155);
-	hopperSide.lineTo(0.0, 0.155);
-	hopperSide.lineTo(0.0, 0.52);
-	hopperSide.quadraticCurveTo(-0.08, 0.5, -0.2, 0.46);
-	hopperSide.lineTo(-0.4, 0.44);
+	hopperSide.lineTo(-0.12, 0.155);
+	hopperSide.lineTo(-0.12, 0.56);
+	hopperSide.quadraticCurveTo(-0.22, 0.52, -0.3, 0.49);
+	hopperSide.lineTo(-0.4, 0.48);
 	hopperSide.closePath();
 	const hopperSideGeometry = new ExtrudeGeometry(hopperSide, { depth: 0.005, bevelEnabled: false, curveSegments: 12 });
 	for (const x of [-0.352, 0.357]) {
 		const side = add(hopperSideGeometry, clear, x, 0, 0);
 		side.rotation.y = -Math.PI / 2;
 	}
-	add(new PlaneGeometry(0.71, 0.285), clear, 0, 0.2975, -0.4);
+	add(new PlaneGeometry(0.71, 0.325), clear, 0, 0.3175, -0.4);
 	const decalMaterial = new MeshStandardMaterial({ transparent: true, opacity: 0, roughness: 0.5, depthWrite: false });
-	const decal = add(new PlaneGeometry(0.66, 0.27), decalMaterial, 0, 0.3, -0.402);
+	const decal = add(new PlaneGeometry(0.66, 0.27), decalMaterial, 0, 0.32, -0.402);
 	decal.rotation.y = Math.PI; // faces backwards
 	drawDecal().then((texture) => {
 		decalMaterial.map = texture;
@@ -270,42 +284,59 @@ export default function createRobot(ctx: StageContext): Model {
 		ctx.invalidate();
 	});
 
-	// Power Distribution Hub (red breakers) and the roboRIO (2026 season)
-	add(new BoxGeometry(0.22, 0.035, 0.1), standard(0x2b2f36, { roughness: 0.5 }), 0.04, 0.18, -0.14);
-	for (let i = 0; i < 10; i++) add(new BoxGeometry(0.012, 0.012, 0.03), red, -0.045 + i * 0.019, 0.203, -0.14);
-	add(new BoxGeometry(0.14, 0.03, 0.1), standard(0xc8ccd2, { metalness: 0.4, roughness: 0.4 }), -0.17, 0.177, -0.26);
+	// Under the hopper floor: Power Distribution Hub (red breakers) and the roboRIO (2026 season)
+	add(new BoxGeometry(0.22, 0.03, 0.1), standard(0x2b2f36, { roughness: 0.5 }), 0.06, 0.177, -0.2);
+	for (let i = 0; i < 10; i++) add(new BoxGeometry(0.012, 0.006, 0.03), red, -0.025 + i * 0.019, 0.195, -0.2);
+	add(new BoxGeometry(0.14, 0.028, 0.1), standard(0xc8ccd2, { metalness: 0.4, roughness: 0.4 }), -0.15, 0.176, -0.31);
 
-	/* ---------- Game pieces ---------- */
-	const ballGeometry = new SphereGeometry(0.075, 24, 16);
-	for (const [x, z] of [[-0.14, -0.3], [0.13, -0.27]]) add(ballGeometry, ballMaterial, x, 0.237, z);
-	const path = new CatmullRomCurve3([
-		new Vector3(0, 0.075, 1.0),
+	/* ---------- FUEL: intake -> hopper -> feeder -> launcher -> out the front ---------- */
+	const ballGeometry = new SphereGeometry(BALL_R, 24, 16);
+	const resting = HOPPER_FLOOR + BALL_R;
+	for (const [x, z] of [[-0.15, -0.33], [0.15, -0.33]]) add(ballGeometry, ballMaterial, x, resting, z);
+
+	// 1. Off the floor at the front, under the intake rollers and the feeder, into the hopper.
+	const intakePath = new CatmullRomCurve3([
+		new Vector3(0, BALL_R, 1.0),
 		new Vector3(0, 0.08, 0.62),
 		new Vector3(0, 0.15, 0.47),
-		new Vector3(0, 0.22, 0.3),
-		// up and over the banded roller, just inside the arcs
-		...[-40, 0, 45, 90, 135].map((d) => {
-			const a = (d * Math.PI) / 180;
-			return new Vector3(0, CENTER.y + Math.sin(a) * 0.13, CENTER.z + Math.cos(a) * 0.13);
-		}),
-		new Vector3(0, 0.5, -0.05),
-		new Vector3(0, 0.26, -0.2),
+		new Vector3(0, 0.2, 0.33),
+		new Vector3(0, 0.235, 0.15),
+		new Vector3(0, 0.255, -0.02),
+		new Vector3(0, resting, -0.2),
 	]);
-	const PERIOD = 4;
+	// 2. Forward again under the hood's tail, up past the feeder, then pinched between launcher and hood.
+	const liftPath = new CatmullRomCurve3([
+		new Vector3(0, resting, -0.2),
+		new Vector3(0, 0.282, -0.11),
+		new Vector3(0, 0.34, -0.05),
+		...[250, 215, 180, EXIT_ANGLE / DEG].map((d) => aroundLauncher(d * DEG, RIDE)),
+	]);
+	// 3. Leaves tangent to the hood, up and forward (~45 degrees), in a slow-motion arc.
+	const exit = aroundLauncher(EXIT_ANGLE, RIDE);
+	const launch = { z: Math.sin(EXIT_ANGLE) * 1.5, y: -Math.cos(EXIT_ANGLE) * 1.5, g: 1.4 };
+	const flight = (ball: Mesh, s: number) => ball.position.set(0, exit.y + launch.y * s - launch.g * s * s, exit.z + launch.z * s);
+
+	const PERIOD = 5;
 	const balls = [0, 0.5].map((offset) => ({ ball: add(ballGeometry, ballMaterial), offset }));
+	const easeInOut = (u: number) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
 	const placeBall = (ball: Mesh, t: number) => {
 		const phase = t % PERIOD;
-		if (phase < 3.1) {
-			const u = phase / 3.1;
-			ball.position.copy(path.getPointAt(u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2));
+		ball.visible = phase < 3.6;
+		ball.scale.setScalar(1);
+		if (phase < 1.4) {
+			ball.position.copy(intakePath.getPointAt(easeInOut(phase / 1.4)));
 			ball.scale.setScalar(Math.min(1, phase / 0.25));
 			ball.rotation.x -= 0.1;
-			ball.visible = true;
+		} else if (phase < 2.0) {
+			ball.position.copy(intakePath.getPointAt(1)); // waits in the hopper
+		} else if (phase < 2.6) {
+			const u = (phase - 2.0) / 0.6;
+			ball.position.copy(liftPath.getPointAt(u * u)); // speeds up as the launcher grabs it
+			ball.rotation.x += 0.25;
 		} else if (phase < 3.6) {
-			// Settles into the hopper, then fades out so the pile doesn't grow forever.
-			ball.scale.setScalar(1 - (phase - 3.1) / 0.5);
-		} else {
-			ball.visible = false;
+			const s = phase - 2.6;
+			flight(ball, s);
+			ball.scale.setScalar(s < 0.75 ? 1 : 1 - (s - 0.75) / 0.25); // fades out past the frame
 		}
 	};
 
@@ -317,16 +348,17 @@ export default function createRobot(ctx: StageContext): Model {
 	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
 	const tour = [
 		ctx.label("Intake rollers", starRoller, tourClass),
-		ctx.label("Arc guides", new Vector3(0, CENTER.y + 0.28, CENTER.z), tourClass),
-		ctx.label("Clear hopper", new Vector3(0, 0.5, -0.3), tourClass),
+		ctx.label("Clear hopper", new Vector3(0, 0.52, -0.3), tourClass),
+		ctx.label("Feeder", new Vector3(-0.2, 0.36, 0.14), tourClass),
+		ctx.label("Launcher and hood", aroundLauncher(160 * DEG, 0.33), tourClass),
 		ctx.label("Limelight camera", limelight, tourClass),
 		ctx.label("Kraken X60", krakens[0], tourClass),
 	];
 	let shown = -1;
 
-	// Still pose (reduced motion): one ball on its way over the roller.
-	balls[0].ball.position.copy(path.getPointAt(0.55));
-	balls[1].ball.visible = false;
+	// Still pose (reduced motion): one ball just launched, one waiting in the hopper.
+	flight(balls[0].ball, 0.28);
+	balls[1].ball.position.copy(intakePath.getPointAt(1));
 
 	return {
 		update(t, dt) {
@@ -336,10 +368,11 @@ export default function createRobot(ctx: StageContext): Model {
 				tour.forEach((el, i) => el.toggleAttribute("data-on", current === -2 || i === current));
 			}
 			if (dt === 0) return;
-			lowRoller.rotation.x -= dt * 9;
-			starRoller.rotation.x -= dt * 9;
-			bandedRoller.rotation.x += dt * 14;
+			// Positive rotation about x: a roller's underside moves back, its top forward, its rear face up.
+			lowRoller.rotation.x += dt * 9;
+			starRoller.rotation.x += dt * 9;
 			feeder.rotation.x += dt * 8;
+			launcher.rotation.x += dt * 16;
 			(dome.material as MeshStandardMaterial).emissiveIntensity = Math.sin(t * 7) > 0 ? 2.4 : 0.2;
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
 		},
