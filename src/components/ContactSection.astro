@@ -1,0 +1,25 @@
+---
+/**
+ * Contact section at the bottom of every page (id="contact", linked from the nav).
+ * The address lives in src/data/site.ts.
+ */
+import ContactDialog from "./contact-dialog";
+import { site } from "@/data/site";
+---
+
+<section id="contact" class="bg-accent text-accent-foreground" aria-labelledby="contact-heading">
+	<div class="wrapper flex flex-col gap-8 py-16 md:flex-row md:items-end md:justify-between md:py-20">
+		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
+			<h2 id="contact-heading" class="font-wide text-[clamp(1.9rem,4vw,3rem)] font-[850]">Let&rsquo;s work together.</h2>
+			<p class="text-lg">
+				Have a project in mind, or want to learn more about what we do at JPL Innovation? Reach out at
+				<a
+					href={`mailto:${site.email}`}
+					class="font-semibold underline decoration-2 underline-offset-4 transition-[text-decoration-color] hover:decoration-current"
+					>{site.email}</a
+				>, and we&rsquo;d love to hear from you.
+			</p>
+		</div>
+		<ContactDialog client:visible label="Email us" subject="Project enquiry for JPL Innovation" className="shrink-0" />
+	</div>
+</section>

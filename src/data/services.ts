@@ -1,3 +1,5 @@
+import { site } from "./site";
+
 /**
  * JPL Innovation's services, shown on the home page (#services) and in the hero.
  *
@@ -37,6 +39,6 @@ export const services: Service[] = [
 		icon: "code",
 		title: "Web development",
 		desc: "Fast, accessible websites built and deployed end to end, like this one.",
-		proof: { label: "Source on GitHub", href: "https://github.com/jpl-innovation" },
+		proof: { label: "Source on GitHub", href: site.github },
 	},
 ];

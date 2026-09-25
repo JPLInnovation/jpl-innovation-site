@@ -1,7 +1,7 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
-import JoinBand from "@/components/JoinBand.astro";
+import ContactSection from "@/components/ContactSection.astro";
 import PageIntro from "@/components/PageIntro.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -40,5 +40,5 @@ const { data } = entry;
 		</div>
 	</article>
 
-	<JoinBand />
+	<ContactSection />
 </BaseLayout>

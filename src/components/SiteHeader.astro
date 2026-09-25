@@ -6,6 +6,8 @@ const links = [
 	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
 	{ label: "Members", href: "/members/" },
+	// Every page ends with the contact section, so this jumps down the current page.
+	{ label: "Contact", href: "#contact" },
 ];
 
 /** The most specific link that matches the current path (so /work/frc/ lights up "Work"). */
@@ -24,8 +26,8 @@ const current = links
 			<Logo class="h-11 sm:h-14" />
 		</a>
 		<div class="flex items-center gap-1 sm:gap-2">
-			<!-- Desktop / tablet: links inline -->
-			<nav aria-label="Main" class="hidden sm:block">
+			<!-- Tablet and up: links inline -->
+			<nav aria-label="Main" class="hidden md:block">
 				<ul class="flex items-center">
 					{
 						links.map((l) => (
@@ -43,14 +45,14 @@ const current = links
 				</ul>
 			</nav>
 			<ThemeToggle />
-			<!-- Phones: menu button -->
+			<!-- Phones and small tablets: menu button -->
 			<button
 				type="button"
 				data-menu-button
 				aria-expanded="false"
 				aria-controls="mobile-menu"
 				aria-label="Open menu"
-				class="menu-button inline-flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-secondary sm:hidden"
+				class="menu-button inline-flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-secondary md:hidden"
 			>
 				<span class="menu-icon" aria-hidden="true"><span></span><span></span></span>
 			</button>
@@ -63,7 +65,7 @@ const current = links
 		aria-label="Main"
 		data-menu-panel
 		inert
-		class="menu-panel absolute inset-x-0 top-full border-b bg-background/95 backdrop-blur-xl sm:hidden"
+		class="menu-panel absolute inset-x-0 top-full border-b bg-background/95 backdrop-blur-xl md:hidden"
 	>
 		<ul class="wrapper flex flex-col py-2">
 			{
@@ -169,7 +171,7 @@ const current = links
 
 		const button = header.querySelector<HTMLButtonElement>("[data-menu-button]")!;
 		const panel = header.querySelector<HTMLElement>("[data-menu-panel]")!;
-		const desktop = matchMedia("(min-width: 40rem)");
+		const desktop = matchMedia("(min-width: 48rem)");
 		let openedAt = 0;
 
 		const isOpen = () => header.hasAttribute("data-menu-open");

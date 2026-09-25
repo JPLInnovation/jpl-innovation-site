@@ -1,6 +1,6 @@
 ---
-import ContactDialog from "./contact-dialog";
 import Logo from "./Logo.astro";
+import { site } from "@/data/site";
 
 const year = new Date().getFullYear();
 const links = [
@@ -31,8 +31,8 @@ const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 ho
 		<div>
 			<h2 class="mb-1 text-sm font-semibold">Contact</h2>
 			<ul class="flex flex-col text-sm text-muted-foreground">
-				<li><ContactDialog client:visible look="link" label="antruongphs2@gmail.com" /></li>
-				<li><a class={linkClass} href="https://github.com/jpl-innovation" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+				<li><a class={linkClass} href={`mailto:${site.email}`}>{site.email}</a></li>
+				<li><a class={linkClass} href={site.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
 			</ul>
 		</div>
 	</div>

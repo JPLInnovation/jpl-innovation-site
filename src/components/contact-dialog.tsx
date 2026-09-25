@@ -9,9 +9,10 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { site } from "@/data/site";
 import { cn } from "@/lib/utils";
 
-export const TEAM_EMAIL = "antruongphs2@gmail.com";
+const EMAIL = site.email;
 
 type Props = {
 	/** Pre-filled email subject. */
@@ -29,18 +30,18 @@ type Props = {
  */
 export default function ContactDialog({
 	subject = "Hello JPL Innovation",
-	label = "Email the team",
+	label = "Email us",
 	look = "ink",
 	className,
 }: Props) {
 	const [copied, setCopied] = useState<"idle" | "done" | "failed">("idle");
 	const encoded = encodeURIComponent(subject);
-	const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${TEAM_EMAIL}&su=${encoded}`;
-	const mailto = `mailto:${TEAM_EMAIL}?subject=${encoded}`;
+	const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${EMAIL}&su=${encoded}`;
+	const mailto = `mailto:${EMAIL}?subject=${encoded}`;
 
 	const copy = async () => {
 		try {
-			await navigator.clipboard.writeText(TEAM_EMAIL);
+			await navigator.clipboard.writeText(EMAIL);
 			setCopied("done");
 		} catch {
 			setCopied("failed");
@@ -77,14 +78,14 @@ export default function ContactDialog({
 			</DialogTrigger>
 			<DialogContent className="gap-6 rounded-2xl p-6 sm:max-w-md sm:p-8">
 				<DialogHeader className="gap-2 text-left">
-					<DialogTitle className="font-wide text-2xl font-[850]">Email the team</DialogTitle>
+					<DialogTitle className="font-wide text-2xl font-[850]">Email JPL Innovation</DialogTitle>
 					<DialogDescription className="text-[15px]">
-						Tell us whether you'd like to join, sponsor the 2027 season, or just say hello.
+						Tell us about your project, or ask what we can help with. We read every message.
 					</DialogDescription>
 				</DialogHeader>
 
 				<div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/60 py-2 pl-4 pr-2">
-					<span className="truncate font-medium select-all">{TEAM_EMAIL}</span>
+					<span className="truncate font-medium select-all">{EMAIL}</span>
 					<Button variant="secondary" size="sm" onClick={copy} className="shrink-0" aria-live="polite">
 						{copied === "done" ? (
 							<>

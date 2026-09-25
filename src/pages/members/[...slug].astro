@@ -1,7 +1,7 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
-import JoinBand from "@/components/JoinBand.astro";
+import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import { badgeVariants } from "@/components/ui/badge";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -94,5 +94,5 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 		</div>
 	</article>
 
-	<JoinBand />
+	<ContactSection />
 </BaseLayout>

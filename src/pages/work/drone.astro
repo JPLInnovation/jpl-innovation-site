@@ -3,7 +3,7 @@ import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
 import DroneIllustration from "@/components/DroneIllustration.astro";
-import JoinBand from "@/components/JoinBand.astro";
+import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import PartsTable from "@/components/parts-table";
 import StatusTag from "@/components/StatusTag.astro";
@@ -239,5 +239,5 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 		</div>
 	</section>
 
-	<JoinBand />
+	<ContactSection />
 </BaseLayout>

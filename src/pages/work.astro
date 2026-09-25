@@ -1,5 +1,5 @@
 ---
-import JoinBand from "@/components/JoinBand.astro";
+import ContactSection from "@/components/ContactSection.astro";
 import PageIntro from "@/components/PageIntro.astro";
 import ProjectList from "@/components/ProjectList.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -13,5 +13,5 @@ const projects = await getProjects();
 	<section class="wrapper pb-20 md:pb-28">
 		<ProjectList projects={projects} headingLevel="h2" />
 	</section>
-	<JoinBand />
+	<ContactSection />
 </BaseLayout>

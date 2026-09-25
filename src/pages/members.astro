@@ -1,5 +1,5 @@
 ---
-import JoinBand from "@/components/JoinBand.astro";
+import ContactSection from "@/components/ContactSection.astro";
 import MemberList from "@/components/MemberList.astro";
 import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
@@ -34,5 +34,5 @@ const badges = members.map(toBadge);
 	<section class="wrapper pb-20 md:pb-28">
 		<MemberList members={members} headingLevel="h2" />
 	</section>
-	<JoinBand />
+	<ContactSection />
 </BaseLayout>
