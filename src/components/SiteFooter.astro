@@ -4,10 +4,11 @@ import Logo from "./Logo.astro";
 
 const year = new Date().getFullYear();
 const links = [
+	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
-	{ label: "FIRST Robotics", href: "/work/frc/" },
 	{ label: "F450 4G Drone", href: "/work/drone/" },
 	{ label: "Cybersecurity", href: "/work/cybersecurity/" },
+	{ label: "FIRST Robotics", href: "/work/frc/" },
 	{ label: "Members", href: "/members/" },
 ];
 const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline";
@@ -18,7 +19,7 @@ const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 ho
 		<div class="flex max-w-xs flex-col gap-4">
 			<a href="/" class="press w-fit" aria-label="JPL Innovation home"><Logo class="h-12" /></a>
 			<p class="text-sm text-muted-foreground">
-				A student-led engineering team at Saigon South International School, Ho Chi Minh City. Part of FRC Team 10951.
+				A student-founded engineering startup in Ho Chi Minh City. We design, build and secure real technology: robots, drones, networks and the web.
 			</p>
 		</div>
 		<nav aria-label="Footer">

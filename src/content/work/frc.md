@@ -4,9 +4,9 @@ img: /assets/FRC.JPG
 img_alt: Team 10951's FRC robot on the practice field
 badge: 2027 coming soon
 description: |
-  JPL Innovation is part of FRC Team 10951, a rookie team dedicated to engineering excellence, innovation,
-  and STEM education. We design, build, and program competition robots — and our 2027 season is coming soon.
-order: 1
+  FRC Team 10951, the Saigon South Dragons: a rookie FIRST Robotics Competition team that designs, builds
+  and programs competition robots. Our founders build with the team, and the 2027 season is coming soon.
+order: 3
 ---
 
 <!--

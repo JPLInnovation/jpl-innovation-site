@@ -3,12 +3,12 @@ import Logo from "./Logo.astro";
 import ThemeToggle from "./ThemeToggle.astro";
 
 const links = [
+	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
-	{ label: "FRC", href: "/work/frc/" },
 	{ label: "Members", href: "/members/" },
 ];
 
-/** The most specific link that matches the current path, so /work/frc/ lights up "FRC", not "Work". */
+/** The most specific link that matches the current path (so /work/frc/ lights up "Work"). */
 const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;
 const current = links
 	.filter((l) => path.startsWith(l.href))

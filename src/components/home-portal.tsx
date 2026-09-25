@@ -1,40 +1,22 @@
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { animate } from "motion";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import GlyphPortal from "@/components/ui/glyph-portal";
 import { Button } from "@/components/ui/button";
+import { services } from "@/data/services";
 
 const FACE = '"Archivo Variable", sans-serif';
 const FALLBACK = '"Arial Black", Arial, sans-serif';
 const WORD = "JPL";
 
-const kicker = "FRC Team 10951 at Saigon South International School";
-const support = "Students in Ho Chi Minh City building competition robots, a 4G drone, and secure networks.";
+const kicker = "Student-founded engineering startup · Ho Chi Minh City";
+const support = "We design, build and secure real technology: robots, drones, networks and the web.";
 
 /**
- * Home page hero. The camera flies through the letters J-P-L into a photo of
- * our 2026 robot, then the season summary fades in over it.
+ * Home page hero. The camera flies through the letters J-P-L into a photo of a build
+ * (FRC Team 10951's 2026 robot, one of the projects we work on), then the intro fades in over it.
  */
 export default function HomePortal() {
 	const [face, setFace] = useState<string | null>(null);
-	const statsRef = useRef<HTMLDListElement>(null);
-	const counted = useRef(false);
-
-	// Count the stats up once, as the camera arrives inside the photo.
-	const onProgress = (p: number) => {
-		if (p < 0.8 || counted.current || !statsRef.current) return;
-		counted.current = true;
-		for (const el of statsRef.current.querySelectorAll<HTMLElement>("[data-value]")) {
-			const value = Number(el.dataset.value);
-			const decimals = (el.dataset.value!.split(".")[1] ?? "").length;
-			const suffix = el.dataset.suffix ?? "";
-			animate(0, value, {
-				duration: 1.3,
-				ease: [0.16, 1, 0.3, 1],
-				onUpdate: (n) => (el.textContent = n.toFixed(decimals) + suffix),
-			});
-		}
-	};
 
 	useEffect(() => {
 		// GlyphPortal measures the font once when it mounts, so wait for Archivo first.
@@ -66,8 +48,7 @@ export default function HomePortal() {
 				fontFamily={face}
 				fontWeight={900}
 				scrollLength={2.6}
-				enterLabel="See the robot"
-				onProgress={onProgress}
+				enterLabel="See what we build"
 				style={{
 					"--gp-paper": "var(--background)",
 					"--gp-ink": "var(--foreground)",
@@ -75,24 +56,24 @@ export default function HomePortal() {
 					"--gp-foreground": "#ffffff",
 					fontFamily: "inherit",
 				}}
-				background={<RobotPhoto />}
+				background={<BuildPhoto />}
 				front={
 					<>
 						<p data-jpl-kicker>{kicker}</p>
 						<p data-jpl-support>{support}</p>
 						<span data-jpl-scroll>
-							Scroll to fly into the robot <ArrowDown className="size-4" aria-hidden="true" />
+							Scroll to fly in <ArrowDown className="size-4" aria-hidden="true" />
 						</span>
 					</>
 				}
 			>
-				<SeasonSummary statsRef={statsRef} />
+				<Intro />
 			</GlyphPortal>
 		</div>
 	);
 }
 
-function RobotPhoto() {
+function BuildPhoto() {
 	return (
 		<div className="absolute inset-0" style={{ transform: "scale(var(--gp-field-scale,1))" }}>
 			<img
@@ -110,53 +91,44 @@ function RobotPhoto() {
 	);
 }
 
-function SeasonSummary({ statsRef }: { statsRef: RefObject<HTMLDListElement | null> }) {
-	const stats = [
-		{ value: "95", suffix: "%", label: "autonomous repeatability over 50+ trials" },
-		{ value: "2.3", suffix: " s", label: "average scoring cycle" },
-		{ value: "2", suffix: "", label: "regionals: Vancouver and Istanbul" },
-	];
+/** What JPL Innovation is, over the photo. Service names come from src/data/services.ts (placeholders, TODO: confirm). */
+function Intro() {
 	return (
 		<div className="wrapper flex flex-col gap-10 !px-0">
 			<div className="flex max-w-3xl flex-col gap-5">
 				<h2 className="font-wide text-[clamp(2rem,4.6vw,3.75rem)] font-[820] leading-[1.02]">
-					Eight weeks from game reveal to our first regional.
+					Ideas in, working technology out.
 				</h2>
 				<p className="max-w-[58ch] text-lg text-white/85">
-					Team 10951 designed, built and programmed this robot for the 2026 FIRST Robotics
-					Competition, our rookie season. Season two starts when the 2027 game is revealed in
-					January.
+					JPL Innovation is a small team of student engineers. We take projects from the first sketch to a tested,
+					working build (machines, networks and software) and document what we learn along the way.
 				</p>
 			</div>
-			<dl ref={statsRef} className="grid max-w-3xl gap-6 border-t border-white/20 pt-6 sm:grid-cols-3">
-				{stats.map((s) => (
-					<div key={s.label} className="flex flex-col gap-1">
-						<dt className="order-2 text-sm text-white/75">{s.label}</dt>
-						<dd
-							className="order-1 font-semiwide text-3xl font-[780] tabular-nums text-accent"
-							data-value={s.value}
-							data-suffix={s.suffix}
-						>
-							{/* One text node, so the count-up can own it without fighting React. */}
-							{`${s.value}${s.suffix}`}
-						</dd>
-					</div>
+			<ul className="grid max-w-3xl gap-x-8 gap-y-3 border-t border-white/20 pt-6 sm:grid-cols-2">
+				{services.map((s) => (
+					<li key={s.title} className="flex items-center gap-3 text-white/90">
+						<span className="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+						{s.title}
+					</li>
 				))}
-			</dl>
-			<div className="flex flex-wrap gap-3">
-				<Button asChild variant="signal" size="lg">
-					<a href="/work/frc/">
-						Explore the FRC season <ArrowRight aria-hidden="true" />
-					</a>
-				</Button>
-				<Button
-					asChild
-					variant="outline"
-					size="lg"
-					className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white dark:bg-transparent"
-				>
-					<a href="/work/">See all projects</a>
-				</Button>
+			</ul>
+			<div className="flex flex-col gap-4">
+				<div className="flex flex-wrap gap-3">
+					<Button asChild variant="signal" size="lg">
+						<a href="/#services">
+							Our services <ArrowRight aria-hidden="true" />
+						</a>
+					</Button>
+					<Button
+						asChild
+						variant="outline"
+						size="lg"
+						className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white dark:bg-transparent"
+					>
+						<a href="/work/">See our work</a>
+					</Button>
+				</div>
+				<p className="text-sm text-white/70">Pictured: FRC Team 10951&rsquo;s 2026 robot, one of the projects we work on.</p>
 			</div>
 		</div>
 	);
@@ -176,7 +148,7 @@ function Poster() {
 			</p>
 			<p className="max-w-[40ch] text-lg">{support}</p>
 			<Button asChild variant="signal" size="lg">
-				<a href="/work/frc/">See the robot</a>
+				<a href="/#services">Our services</a>
 			</Button>
 		</section>
 	);

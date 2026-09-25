@@ -6,7 +6,7 @@ description: |
   Building and securing real networks: Cisco CCNA routing and switching, Windows Server infrastructure,
   and the defensive habits that keep our projects safe.
 badge: In progress
-order: 3
+order: 2
 ---
 
 ## Why cybersecurity

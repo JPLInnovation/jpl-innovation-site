@@ -1,15 +1,18 @@
 ---
-import { ArrowRight, CircleCheck, Cog, NotebookPen, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CircleCheck, Cog, CodeXml, Drone, NotebookPen, ShieldCheck } from "lucide-react";
 import HomePortal from "@/components/home-portal";
 import JoinBand from "@/components/JoinBand.astro";
 import MemberList from "@/components/MemberList.astro";
 import ProjectList from "@/components/ProjectList.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { services } from "@/data/services";
 import { getMembers, getProjects } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 const projects = await getProjects();
 const members = await getMembers();
+
+const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml };
 
 const standards = [
 	"Projects that are demoable, measurable, and improving over time.",
@@ -17,21 +20,22 @@ const standards = [
 	"Real-world skills: problem-solving, communication, and teamwork.",
 ];
 
-const focus = [
+// TODO: confirm process copy — written to match the services placeholders in src/data/services.ts.
+const process = [
 	{
-		icon: ShieldCheck,
-		title: "Networking and cybersecurity",
-		desc: "Build and secure real networks: CCNA routing and switching, Windows infrastructure, and habits that keep our projects safe.",
+		icon: NotebookPen,
+		title: "Plan",
+		desc: "Understand the goal, sketch the options, and agree on what “done” looks like before building anything.",
 	},
 	{
 		icon: Cog,
-		title: "Systems and engineering",
-		desc: "Build reliable systems on strong fundamentals: performance, debugging, and clear architecture from start to finish.",
+		title: "Build and test",
+		desc: "Prototype, measure and iterate until it works reliably, not just once.",
 	},
 	{
-		icon: NotebookPen,
-		title: "Learning and sharing",
-		desc: "Document what we learn, mentor where we can, and keep a portfolio that shows real growth.",
+		icon: CircleCheck,
+		title: "Hand over",
+		desc: "Document everything so the result can be maintained, reused and improved.",
 	},
 ];
 
@@ -40,33 +44,70 @@ const journey: Milestone[] = [
 	{ year: "2023", title: "Foundation and exploration", desc: "Learned programming fundamentals, explored tools, and built our first projects.", state: "past" },
 	{ year: "2024", title: "Project development", desc: "More hands-on robotics and software builds, and a growing portfolio.", state: "past" },
 	{ year: "2025", title: "Innovation and growth", desc: "Stronger full-stack foundations, better quality, and this site.", state: "past" },
-	{ year: "2026", title: "Professional development", desc: "Our FRC rookie season, bigger builds, open source, and internships.", state: "now" },
+	{ year: "2026", title: "Professional development", desc: "Bigger builds, open source, internships, and leading on FRC Team 10951’s rookie season.", state: "now" },
 	{ year: "2027–28", title: "Industry leadership", desc: "Lead projects with strong engineering habits and ship tools real people use.", state: "future" },
 	{ year: "2029+", title: "Creating the future", desc: "Larger-impact projects, mentoring others, and learning as technology moves.", state: "future" },
 ];
 ---
 
 <BaseLayout>
-	<h1 class="sr-only">JPL Innovation: student engineers and FRC Team 10951</h1>
+	<h1 class="sr-only">JPL Innovation: a student-founded engineering startup in Ho Chi Minh City</h1>
 
 	<!-- Pulled up under the sticky header so the opening frame fills the screen. -->
 	<div class="-mt-18">
 		<HomePortal client:load />
 	</div>
 
-	<!-- Projects -->
-	<section class="wrapper py-20 md:py-28" aria-labelledby="work-heading">
-		<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
-			<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">What we're building</h2>
+	<!-- Services -->
+	<!-- TODO: confirm services — placeholder copy, edit in src/data/services.ts -->
+	<section id="services" class="wrapper py-20 md:py-28" aria-labelledby="services-heading">
+		<div class="mb-10 flex max-w-2xl flex-col gap-3 md:mb-12" data-reveal>
+			<h2 id="services-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">What we do</h2>
 			<p class="text-lg text-muted-foreground">
-				A competition robot, a drone that streams over 4G, and the networks that keep it all secure.
+				Hardware, networks and software, taken from the first sketch to a tested, working build.
 			</p>
 		</div>
-		<ProjectList projects={projects} />
+		<ul class="grid gap-5 md:grid-cols-2" data-reveal-group>
+			{
+				services.map((s) => {
+					const Icon = serviceIcons[s.icon];
+					const external = s.proof.href.startsWith("http");
+					return (
+						<li class="flex flex-col gap-4 rounded-xl border bg-card p-6 md:p-8">
+							<Icon className="size-8 text-alliance-blue" strokeWidth={1.75} aria-hidden="true" />
+							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
+							<p class="text-muted-foreground">{s.desc}</p>
+							<a
+								href={s.proof.href}
+								class="press mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+								{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+							>
+								See it: {s.proof.label}
+								<ArrowUpRight className="size-4" aria-hidden="true" />
+							</a>
+						</li>
+					);
+				})
+			}
+		</ul>
+	</section>
+
+	<!-- Projects -->
+	<section class="border-t bg-card" aria-labelledby="work-heading">
+		<div class="wrapper py-20 md:py-28">
+			<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
+				<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">Selected work</h2>
+				<p class="text-lg text-muted-foreground">
+					Our own builds and the team we compete with: a drone that streams over 4G, a secured network lab, and an FRC
+					robot.
+				</p>
+			</div>
+			<ProjectList projects={projects} />
+		</div>
 	</section>
 
 	<!-- Mission -->
-	<section class="border-y bg-card" aria-labelledby="mission-heading">
+	<section class="border-y" aria-labelledby="mission-heading">
 		<div class="wrapper flex flex-col gap-6 pb-16 pt-24 md:pb-24 md:pt-36">
 			<h2 id="mission-heading" class="text-lg font-semibold text-muted-foreground" data-reveal>Our mission</h2>
 			<p data-words class="max-w-5xl font-wide text-[clamp(1.9rem,4.6vw,4.25rem)] font-[850] leading-[1.06] tracking-[-0.02em]">
@@ -88,17 +129,21 @@ const journey: Milestone[] = [
 			</ul>
 		</div>
 		<div class="wrapper pb-20 md:pb-28">
-			<div class="grid gap-10 border-t pt-12 md:grid-cols-3" data-reveal-group>
-			{
-				focus.map(({ icon: FocusIcon, title, desc }) => (
-					<div class="flex flex-col gap-3">
-						<FocusIcon className="size-7" strokeWidth={1.75} aria-hidden="true" />
-						<h3 class="font-semiwide text-xl font-[760]">{title}</h3>
-						<p class="text-muted-foreground">{desc}</p>
-					</div>
-				))
-			}
-			</div>
+			<h3 class="mb-2 text-lg font-semibold" data-reveal>How we work</h3>
+			<ol class="grid gap-10 border-t pt-10 md:grid-cols-3" data-reveal-group>
+				{
+					process.map(({ icon: StepIcon, title, desc }, i) => (
+						<li class="flex flex-col gap-3">
+							<span class="flex items-center gap-3">
+								<StepIcon className="size-7" strokeWidth={1.75} aria-hidden="true" />
+								<span class="text-sm font-semibold text-muted-foreground">Step {i + 1}</span>
+							</span>
+							<h4 class="font-semiwide text-xl font-[760]">{title}</h4>
+							<p class="text-muted-foreground">{desc}</p>
+						</li>
+					))
+				}
+			</ol>
 		</div>
 	</section>
 
@@ -108,45 +153,45 @@ const journey: Milestone[] = [
 			Where we've been, and where we're going
 		</h2>
 		<div class="relative">
-		<!-- Progress so far: draws from 2023 to the "Now" dot (4th of 6 columns). -->
-		<span
-			aria-hidden="true"
-			data-draw
-			data-draw-duration="1.6"
-			class="absolute left-0 top-0 z-[1] hidden h-0.5 w-1/2 bg-accent lg:block"
-		></span>
-		<ol class="grid lg:grid-cols-6" data-reveal-group>
-			{
-				journey.map((m) => (
-					<li
-						class={cn(
-							"relative border-l-2 pb-10 pl-7 lg:border-l-0 lg:border-t-2 lg:pb-0 lg:pl-0 lg:pr-6 lg:pt-8",
-							m.state === "future" ? "border-dashed border-foreground/25" : "border-foreground",
-						)}
-					>
-						<span
-							aria-hidden="true"
+			<!-- Progress so far: draws from 2023 to the "Now" dot (4th of 6 columns). -->
+			<span
+				aria-hidden="true"
+				data-draw
+				data-draw-duration="1.6"
+				class="absolute left-0 top-0 z-[1] hidden h-0.5 w-1/2 bg-accent lg:block"
+			></span>
+			<ol class="grid lg:grid-cols-6" data-reveal-group>
+				{
+					journey.map((m) => (
+						<li
 							class={cn(
-								"absolute -left-[9px] top-1 z-[2] size-4 rounded-full border-2 lg:-top-[9px] lg:left-0",
-								m.state === "past" && "border-foreground bg-foreground",
-								m.state === "now" && "border-foreground bg-accent ring-4 ring-accent/35",
-								m.state === "future" && "border-foreground/40 bg-background",
+								"relative border-l-2 pb-10 pl-7 lg:border-l-0 lg:border-t-2 lg:pb-0 lg:pl-0 lg:pr-6 lg:pt-8",
+								m.state === "future" ? "border-dashed border-foreground/25" : "border-foreground",
 							)}
-						/>
-						<p class="flex items-center gap-2 font-semiwide text-2xl font-[800]">
-							{m.year}
-							{m.state === "now" && (
-								<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
-									Now
-								</span>
-							)}
-						</p>
-						<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
-						<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
-					</li>
-				))
-			}
-		</ol>
+						>
+							<span
+								aria-hidden="true"
+								class={cn(
+									"absolute -left-[9px] top-1 z-[2] size-4 rounded-full border-2 lg:-top-[9px] lg:left-0",
+									m.state === "past" && "border-foreground bg-foreground",
+									m.state === "now" && "border-foreground bg-accent ring-4 ring-accent/35",
+									m.state === "future" && "border-foreground/40 bg-background",
+								)}
+							/>
+							<p class="flex items-center gap-2 font-semiwide text-2xl font-[800]">
+								{m.year}
+								{m.state === "now" && (
+									<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
+										Now
+									</span>
+								)}
+							</p>
+							<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
+							<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+						</li>
+					))
+				}
+			</ol>
 		</div>
 	</section>
 
@@ -156,7 +201,7 @@ const journey: Milestone[] = [
 			<div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between" data-reveal>
 				<div class="flex max-w-2xl flex-col gap-3">
 					<h2 id="team-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">The team</h2>
-					<p class="text-lg text-muted-foreground">The students who design, build and write up everything on this site.</p>
+					<p class="text-lg text-muted-foreground">The founders and students behind JPL Innovation.</p>
 				</div>
 				<a href="/members/" class="press inline-flex min-h-11 items-center gap-2 font-semibold">
 					All members <ArrowRight className="size-4" aria-hidden="true" />
