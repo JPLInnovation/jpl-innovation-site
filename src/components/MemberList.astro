@@ -1,5 +1,6 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import { leadershipRoles } from "@/lib/content";
 
 interface Props {
 	members: CollectionEntry<"members">[];
@@ -29,6 +30,9 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 							{m.data.title}
 						</a>
 					</Heading>
+					{m.data.leadership && (
+						<p class="text-sm font-semibold">{leadershipRoles(m).map((r) => `${r.title}, ${r.org}`).join(" · ")}</p>
+					)}
 					<p class="text-sm text-muted-foreground">{m.data.tags.join(", ")}</p>
 				</div>
 			</li>

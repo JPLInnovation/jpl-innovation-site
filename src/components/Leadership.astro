@@ -1,0 +1,61 @@
+---
+/**
+ * Leadership block: each leader's photo, name and titles at JPL Innovation and on FRC Team 10951.
+ * Titles come from the `leadership` field in src/content/members/*.md.
+ *   lead="jpl" lists the JPL Innovation title first (members page); lead="frc" lists the FRC title first (FRC page).
+ */
+import { getLeaders, leadershipRoles } from "@/lib/content";
+
+interface Props {
+	lead?: "jpl" | "frc";
+	heading?: string;
+	intro?: string;
+	headingLevel?: "h2" | "h3";
+	id?: string;
+}
+
+const { lead = "jpl", heading = "Leadership", intro, headingLevel: Heading = "h2", id = "leadership" } = Astro.props;
+const leaders = await getLeaders();
+---
+
+<div class="flex flex-col gap-8">
+	<div class="flex max-w-2xl flex-col gap-2" data-reveal>
+		<Heading id={`${id}-heading`} class="font-wide text-3xl font-[850] md:text-4xl">{heading}</Heading>
+		{intro && <p class="text-lg text-muted-foreground">{intro}</p>}
+	</div>
+	<ul class="grid gap-5 md:grid-cols-2" aria-labelledby={`${id}-heading`} data-reveal-group>
+		{
+			leaders.map((m) => {
+				const roles = leadershipRoles(m, lead);
+				return (
+					<li class="press group relative flex items-center gap-5 rounded-xl border bg-background p-5 md:p-6">
+						<img
+							src={m.data.img}
+							alt=""
+							loading="lazy"
+							width="80"
+							height="80"
+							class="size-16 shrink-0 rounded-full bg-muted object-cover object-top ring-1 ring-border md:size-20"
+						/>
+						<div class="flex min-w-0 flex-col gap-1.5">
+							<a
+								href={`/members/${m.id}/`}
+								class="font-semiwide text-xl font-[760] after:absolute after:inset-0 group-hover:underline decoration-accent decoration-[3px] underline-offset-[5px]"
+							>
+								{m.data.title}
+							</a>
+							<ul class="flex flex-col gap-0.5 text-[15px]">
+								{roles.map((r, i) => (
+									<li class={i === 0 ? "font-semibold" : "text-muted-foreground"}>
+										{r.title}
+										<span class={i === 0 ? "font-normal text-muted-foreground" : ""}> · {r.org}</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					</li>
+				);
+			})
+		}
+	</ul>
+</div>

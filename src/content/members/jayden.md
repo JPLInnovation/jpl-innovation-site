@@ -2,6 +2,9 @@
 title: Jayden Phan Le
 img: /assets/Jayden_pfp.jpg
 img_alt: Jayden Phan Le portrait
+leadership:
+  jpl: CEO
+  frc: Mechanical Lead
 description: |
   Passionate about technology, innovation, and creating solutions that make a difference. Specializing in robotics, artificial intelligence, and full-stack development.
 tags:

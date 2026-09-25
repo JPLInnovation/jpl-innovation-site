@@ -5,7 +5,7 @@ import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import { badgeVariants } from "@/components/ui/badge";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { toBadge } from "@/lib/content";
+import { leadershipRoles, toBadge } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -49,6 +49,18 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 		</div>
 		<div class="flex flex-col gap-5 md:pt-6" data-reveal-group>
 			<h1 class="font-wide text-[clamp(2.4rem,6vw,4.75rem)] font-[880] leading-[0.98]">{data.title}</h1>
+			{
+				data.leadership && (
+					<ul class="flex flex-col gap-1 text-lg" aria-label="Leadership roles">
+						{leadershipRoles(entry).map((r) => (
+							<li>
+								<span class="font-semibold">{r.title}</span>
+								<span class="text-muted-foreground"> · {r.org}</span>
+							</li>
+						))}
+					</ul>
+				)
+			}
 			<p class="max-w-[54ch] text-lg md:text-xl">{data.description}</p>
 			<ul class="flex flex-wrap gap-2" aria-label="Roles">
 				{data.tags.map((t) => <li class={cn(badgeVariants({ variant: "secondary" }), "px-2.5 py-1 text-[13px]")}>{t}</li>)}

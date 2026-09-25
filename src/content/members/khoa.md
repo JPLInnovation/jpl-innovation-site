@@ -2,6 +2,9 @@
 title: Khoa Le
 img: /assets/10951.jpg
 img_alt: Khoa Le
+leadership:
+  jpl: COO
+  frc: Electrical Lead
 description: |
   Passionate about technology, innovation, and creating solutions that make a difference. Specializing in software development, artificial intelligence, and full-stack engineering.
 tags:

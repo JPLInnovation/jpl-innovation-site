@@ -25,6 +25,15 @@ export const collections = {
 			img: z.string(),
 			img_alt: z.string().optional(),
 			tags: z.array(z.string()),
+			/** Leadership titles, e.g. { jpl: "CEO", frc: "Mechanical Lead" }. */
+			leadership: z
+				.object({
+					/** Title at JPL Innovation. */
+					jpl: z.string().optional(),
+					/** Title on FRC Team 10951. */
+					frc: z.string().optional(),
+				})
+				.optional(),
 			technical_skills: z.array(z.object({
 				title: z.string(),
 				level: z.string(),

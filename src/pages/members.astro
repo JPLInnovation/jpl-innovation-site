@@ -1,5 +1,6 @@
 ---
 import ContactSection from "@/components/ContactSection.astro";
+import Leadership from "@/components/Leadership.astro";
 import MemberList from "@/components/MemberList.astro";
 import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
@@ -12,6 +13,10 @@ const badges = members.map(toBadge);
 
 <BaseLayout title="Members | JPL Innovation" description="The students behind JPL Innovation.">
 	<PageIntro title="Members" lede="The students behind JPL Innovation." />
+
+	<section class="wrapper pb-14 md:pb-20">
+		<Leadership lead="jpl" intro="Who leads JPL Innovation, and the roles they also hold on FRC Team 10951." />
+	</section>
 
 	<section class="wrapper pb-14 md:pb-20" aria-labelledby="badges-heading">
 		<h2 id="badges-heading" class="sr-only">Member badges in 3D</h2>

@@ -25,6 +25,8 @@ import { contactShadow, type Model, type StageContext, type StageView, standard 
 export interface BadgeMember {
 	id: string;
 	name: string;
+	/** Leadership line, e.g. "CEO · Mechanical Lead (FRC)". Shown on the front instead of roles when set. */
+	title?: string;
 	roles: string[];
 	img: string;
 	skills: Array<{ title: string; level: string }>;
@@ -288,9 +290,10 @@ async function drawFront({ c, texture }: Face, member: BadgeMember) {
 	c.fillStyle = NAVY;
 	fit(c, member.name, 800, 56, TEX_W - 80);
 	c.fillText(member.name, 40, 710);
+	const roleLine = member.title ?? member.roles.slice(0, 2).join(" · ");
+	fit(c, roleLine, 600, 26, TEX_W - 80, 18);
 	c.fillStyle = "#4f5b6c";
-	c.font = `600 26px ${FONT}`;
-	c.fillText(member.roles.slice(0, 2).join(" · "), 40, 758);
+	c.fillText(roleLine, 40, 758);
 
 	// Footer band
 	c.fillStyle = YELLOW;
