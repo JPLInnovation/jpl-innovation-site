@@ -21,9 +21,14 @@
 	--accent-dark: #002b56;
 	--accent-overlay: hsla(209, 89%, 67%, 0.33);
 	--accent-subtle-overlay: var(--accent-overlay);
-	--accent-text-over: var(--gray-999);
+	--accent-text-over: #ffffff;
 
 	--link-color: var(--accent-regular);
+
+	/* Surfaces & borders */
+	--border-subtle: rgba(9, 11, 17, 0.09);
+	--border-accent: rgba(29, 174, 241, 0.35);
+	--surface-bg: rgba(255, 255, 255, 0.55);
 
 	/* Gradients */
 	--gradient-stop-1: var(--accent-light);
@@ -70,6 +75,14 @@
 
 	/* Transitions */
 	--theme-transition: 0.2s ease-in-out;
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-duration: 320ms;
+
+	/* Page layout: side gutter and max content width. */
+	--gutter: clamp(1.5rem, 5vw, 4.5rem);
+	--content-max: 90rem;
+	/* Inline padding that lines full-width bars (nav, footer, banners) up with .wrapper content. */
+	--edge: max(var(--gutter), calc((100% - var(--content-max)) / 2));
 
 	/* Accent color soft variants */
 	--accent-soft: rgba(29, 174, 241, 0.1);
@@ -92,30 +105,33 @@
 	--gray-999: #090b11;
 
 	--accent-dark: #1daef1;
-	--accent-regular: #116fa6;
-	--accent-light: #002b56;
-	--accent-overlay: hsla(209, 89%, 67%, 0.33);
+	--accent-regular: #1683c2;
+	--accent-light: #5cc8ff;
+	--accent-overlay: hsla(209, 89%, 67%, 0.25);
 	--accent-subtle-overlay: var(--accent-overlay);
-	--accent-text-over: var(--gray-999);
 
-	--link-color: var(--accent-dark);
+	--link-color: var(--accent-light);
+
+	--border-subtle: rgba(255, 255, 255, 0.08);
+	--border-accent: rgba(92, 200, 255, 0.35);
+	--surface-bg: rgba(20, 25, 37, 0.55);
 
 	--gradient-stop-1: #4c11c6;
 	--gradient-subtle: linear-gradient(150deg, var(--gray-900) 19%, var(--gray-999) 81%);
 	--gradient-accent-orange: linear-gradient(150deg,
 			#ca7879,
 			var(--accent-regular),
-			var(--accent-light));
+			#0b3d6e);
 	--gradient-stroke: linear-gradient(180deg, var(--gray-600), var(--gray-800));
 
 	--shadow-sm:
-		0px 2px 4px rgba(255, 255, 255, 0.06);
+		0px 2px 4px rgba(0, 0, 0, 0.3);
 	--shadow-md:
-		0px 8px 16px rgba(255, 255, 255, 0.12), 0px 2px 4px rgba(255, 255, 255, 0.06);
+		0px 8px 16px rgba(0, 0, 0, 0.35), 0px 2px 4px rgba(0, 0, 0, 0.25);
 	--shadow-lg:
-		0px 24px 48px rgba(255, 255, 255, 0.18), 0px 12px 24px rgba(255, 255, 255, 0.12);
+		0px 24px 48px rgba(0, 0, 0, 0.45), 0px 12px 24px rgba(0, 0, 0, 0.3);
 	--shadow-xl:
-		0px 32px 64px rgba(255, 255, 255, 0.22), 0px 16px 32px rgba(255, 255, 255, 0.14);
+		0px 32px 64px rgba(0, 0, 0, 0.5), 0px 16px 32px rgba(0, 0, 0, 0.35);
 
 	--accent-soft: rgba(29, 174, 241, 0.08);
 	--accent-glow: rgba(29, 174, 241, 0.12);
@@ -125,6 +141,14 @@ html,
 body {
 	min-height: 100%;
 	overflow-x: hidden;
+}
+
+:root {
+	color-scheme: light;
+}
+
+:root.theme-dark {
+	color-scheme: dark;
 }
 
 body {
@@ -160,6 +184,11 @@ h5 {
 	font-family: var(--font-brand);
 	font-weight: 600;
 	color: var(--gray-100);
+	text-wrap: balance;
+}
+
+p {
+	text-wrap: pretty;
 }
 
 h1 {
@@ -184,6 +213,10 @@ h5 {
 
 /* Utilities */
 
+[hidden] {
+	display: none !important;
+}
+
 .sr-only {
 	position: absolute;
 	width: 1px;
@@ -198,9 +231,9 @@ h5 {
 
 .wrapper {
 	width: 100%;
-	max-width: 110rem;
+	max-width: calc(var(--content-max) + 2 * var(--gutter));
 	margin-inline: auto;
-	padding-inline: 2rem;
+	padding-inline: var(--gutter);
 }
 
 .stack {
@@ -274,115 +307,82 @@ h5 {
 	}
 }
 
-/* Friendly hover animations for shapes and UI elements */
-:root {
-	--hover-translate: -6px;
-	--hover-scale: 1.02;
-	--hover-duration: 220ms;
+
+/* Motion & interaction */
+
+html {
+	scroll-behavior: smooth;
+	scroll-padding-top: 6rem;
 }
 
-/* Apply smooth transitions to common "shape" elements */
-.card,
-.btn,
-.pill,
-.badge,
-.rounded,
-.shadow-lg,
-.portfolio-preview,
-.member-preview .card,
-.focus-area,
-.timeline-item,
-.grid-item,
-img,
-.icon svg,
-.social,
-.blog-post {
-	transition: transform var(--hover-duration) ease, box-shadow var(--hover-duration) ease, filter var(--hover-duration) ease, opacity var(--hover-duration) ease;
-	will-change: transform, box-shadow, filter;
-	backface-visibility: hidden;
+::selection {
+	background: var(--accent-overlay);
+	color: var(--gray-0);
 }
 
-/* Hover / focus states: subtle lift, gentle scale, brighter */
-.card:hover,
-.btn:hover,
-.pill:hover,
-.badge:hover,
-.rounded:hover,
-.member-preview .card:hover,
-.focus-area:hover,
-.timeline-item:hover,
-.grid-item:hover,
-img:hover,
-.icon svg:hover,
-.social:hover,
-.blog-post:hover {
-	transform: translateY(var(--hover-translate)) scale(var(--hover-scale));
-	box-shadow: var(--shadow-lg);
-	filter: brightness(1.04);
-	opacity: 0.995;
+:focus-visible {
+	outline: 2px solid var(--accent-light);
+	outline-offset: 3px;
+	border-radius: 0.25rem;
 }
 
-/* Slightly different behavior for inline SVG icons */
-.icon svg {
-	transition: transform var(--hover-duration) cubic-bezier(.2,.9,.2,1), fill var(--hover-duration) ease;
-	transform-origin: center;
-}
-.icon svg:hover {
-	transform: translateY(-4px) rotate(-6deg) scale(1.06);
-}
-
-/* Keyboard accessible focus states */
-.card:focus-visible,
-.btn:focus-visible,
-.pill:focus-visible,
-.badge:focus-visible,
-.rounded:focus-visible,
-.member-preview .card:focus-visible {
-	outline: 3px solid rgba(17,111,166,0.14);
-	outline-offset: 4px;
-	transform: translateY(var(--hover-translate)) scale(var(--hover-scale));
+/* Shared card surface used across sections. */
+.surface {
+	border: 1px solid var(--border-subtle);
+	background: var(--surface-bg);
+	box-shadow: var(--shadow-sm);
+	transition:
+		transform var(--ease-duration) var(--ease-out),
+		box-shadow var(--ease-duration) var(--ease-out),
+		border-color var(--ease-duration) var(--ease-out),
+		background-color var(--ease-duration) var(--ease-out);
 }
 
-/* Reduce motion preference: disable transforms for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-	.card,
-	.btn,
-	.pill,
-	.badge,
-	.rounded,
-	img,
-	.icon svg {
-		transition: none !important;
-		transform: none !important;
+.surface:hover {
+	border-color: var(--border-accent);
+	box-shadow: var(--shadow-md);
+	transform: translateY(-4px);
+}
+
+/* Scroll reveal: elements fade/slide in once they enter the viewport.
+   Only applied when JS has run (html.js) so content is never hidden without it. */
+@media (prefers-reduced-motion: no-preference) {
+	.js [data-reveal] {
+		opacity: 0;
+		translate: 0 1.5rem;
+		transition:
+			opacity 700ms var(--ease-out),
+			translate 700ms var(--ease-out);
+		transition-delay: var(--reveal-delay, 0ms);
+	}
+
+	/* Keep hover transitions working on revealed cards; only the reveal is delayed. */
+	.js [data-reveal].surface {
+		transition:
+			opacity 700ms var(--ease-out),
+			translate 700ms var(--ease-out),
+			transform var(--ease-duration) var(--ease-out),
+			box-shadow var(--ease-duration) var(--ease-out),
+			border-color var(--ease-duration) var(--ease-out);
+		transition-delay: var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), 0ms, 0ms, 0ms;
+	}
+
+	.js [data-reveal].is-visible {
+		opacity: 1;
+		translate: none;
 	}
 }
 
-/* Stronger overrides for components that set their own scoped transitions
-   This ensures hover transforms still apply when component CSS overwrites transitions */
-.card,
-a.card,
-.btn,
-button,
-.pill,
-.badge,
-.rounded,
-img,
-.blog-post {
-	transition: transform var(--hover-duration) ease !important;
-	will-change: transform !important;
-}
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
 
-.card:hover,
-a.card:hover,
-.btn:hover,
-button:hover,
-.pill:hover,
-.badge:hover,
-.rounded:hover,
-img:hover,
-.blog-post:hover {
-	transform: translateY(var(--hover-translate)) scale(var(--hover-scale)) !important;
-	box-shadow: var(--shadow-lg) !important;
-	filter: brightness(1.04) !important;
-	opacity: 0.995 !important;
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
 }

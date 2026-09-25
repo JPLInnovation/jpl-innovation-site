@@ -1,14 +1,16 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import Icon from "./Icon.astro";
 
 interface Props {
 	member: CollectionEntry<"members">;
 }
 
 const { data, id } = Astro.props.member;
+const role = data.tags[0];
 ---
 
-<a class="card" href={`/members/${id}`}>
+<a class="card" href={`/members/${id}/`}>
 	<div class="image-wrap">
 		<img
 			src={data.img}
@@ -17,7 +19,13 @@ const { data, id } = Astro.props.member;
 			decoding="async"
 		/>
 	</div>
-	<span class="title">{data.title}</span>
+	<div class="info">
+		<div class="text">
+			<span class="title">{data.title}</span>
+			{role && <span class="role">{role}</span>}
+		</div>
+		<span class="arrow"><Icon icon="arrow-right" /></span>
+	</div>
 </a>
 
 <style>
@@ -26,23 +34,17 @@ const { data, id } = Astro.props.member;
 		flex-direction: column;
 		height: 100%;
 		min-height: 16rem;
-		background: linear-gradient(135deg, var(--gray-900) 0%, rgba(29, 174, 241, 0.04) 100%);
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 0.75rem;
+		background: var(--gray-999);
+		border: 1px solid var(--border-subtle);
+		border-radius: 1rem;
 		overflow: hidden;
 		box-shadow: var(--shadow-md);
 		text-decoration: none;
 		font-family: var(--font-brand);
-		font-size: var(--text-lg);
-		font-weight: 500;
-		transition: all 320ms cubic-bezier(.2,.9,.2,1);
-	}
-
-	.card:hover {
-		box-shadow: var(--shadow-lg);
-		border-color: rgba(29, 174, 241, 0.25);
-		transform: translateY(-8px);
-		background: linear-gradient(135deg, var(--gray-900) 0%, rgba(29, 174, 241, 0.08) 100%);
+		transition:
+			transform var(--ease-duration) var(--ease-out),
+			box-shadow var(--ease-duration) var(--ease-out),
+			border-color var(--ease-duration) var(--ease-out);
 	}
 
 	.image-wrap {
@@ -52,7 +54,10 @@ const { data, id } = Astro.props.member;
 		justify-content: center;
 		min-height: 11rem;
 		padding: 1rem 1rem 0;
-		background: var(--gray-900);
+		overflow: hidden;
+		background:
+			radial-gradient(circle at 50% 0%, var(--accent-overlay), transparent 70%),
+			var(--gray-900);
 	}
 
 	img {
@@ -60,13 +65,67 @@ const { data, id } = Astro.props.member;
 		max-height: 12rem;
 		object-fit: contain;
 		object-position: top center;
+		border-radius: 0.5rem 0.5rem 0 0;
+		transition: transform 700ms var(--ease-out);
+	}
+
+	.info {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 1rem 1.25rem;
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
 	}
 
 	.title {
-		padding: 1rem 1.25rem;
-		background: var(--gray-999);
-		color: var(--gray-200);
-		border-top: 1px solid var(--gray-800);
+		font-size: var(--text-lg);
+		font-weight: 500;
+		color: var(--gray-100);
+	}
+
+	.role {
+		font-family: var(--font-body);
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.arrow {
+		display: flex;
+		flex-shrink: 0;
+		padding: 0.5rem;
+		border-radius: 999rem;
+		color: var(--gray-300);
+		background: var(--gray-900);
+		transition:
+			transform var(--ease-duration) var(--ease-out),
+			background-color var(--ease-duration) ease,
+			color var(--ease-duration) ease;
+	}
+
+	.card:hover,
+	.card:focus-visible {
+		transform: translateY(-6px);
+		box-shadow: var(--shadow-lg);
+		border-color: var(--border-accent);
+	}
+
+	.card:hover img,
+	.card:focus-visible img {
+		transform: scale(1.04);
+	}
+
+	.card:hover .arrow,
+	.card:focus-visible .arrow {
+		transform: translateX(4px);
+		color: #fff;
+		background: var(--accent-regular);
 	}
 
 	@media (min-width: 50em) {
@@ -82,6 +141,10 @@ const { data, id } = Astro.props.member;
 
 		img {
 			max-height: 16rem;
+		}
+
+		.info {
+			padding: 1.25rem 1.5rem;
 		}
 	}
 </style>

@@ -10,6 +10,8 @@ export const collections = {
 			description: z.string(),
 			img: z.string(),
 			img_alt: z.string().optional(),
+			/** Optional short label shown on the project card, e.g. "Coming soon". */
+			badge: z.string().optional(),
 		}),
 	}),
 	members: defineCollection({

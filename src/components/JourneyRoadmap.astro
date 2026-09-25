@@ -11,15 +11,15 @@ const milestones = [
 		desc: "Expanded hands-on experience through robotics and software builds and grew our portfolio.",
 	},
 	{
-		label: "2025 · Present",
+		label: "2025 · Past",
 		title: "Innovation & growth",
 		desc: "Strengthening full-stack foundations, improving quality, and growing the JPL Innovation site and project list.",
-		current: true,
 	},
 	{
-		label: "2026 · Near future",
+		label: "2026 · Present",
 		title: "Professional development",
 		desc: "Take on bigger builds, contribute to open-source, and pursue internships while sharpening real-world skills.",
+		current: true,
 	},
 	{
 		label: "2027–2028 · Future",
@@ -35,12 +35,12 @@ const milestones = [
 ---
 
 <section class="section with-background">
-	<header class="section-header stack gap-2 lg:gap-4">
+	<header class="section-header stack gap-2 lg:gap-4" data-reveal>
 		<h3>Journey & roadmap</h3>
 		<p>Past work and where we're heading next.</p>
 	</header>
 
-	<ol class="timeline">
+	<ol class="timeline" data-reveal style="--reveal-delay: 120ms">
 		{
 			milestones.map((item) => (
 				<li class:list={["timeline-item", item.current && "current"]}>
@@ -112,11 +112,28 @@ const milestones = [
 		box-shadow: var(--shadow-sm);
 	}
 
+	.timeline {
+		--tl-gap: 1.5rem;
+	}
+
 	.timeline-item {
+		position: relative;
 		display: grid;
 		grid-template-columns: auto 1fr;
 		gap: 1rem;
 		align-items: start;
+	}
+
+	/* Connector line between milestones. */
+	.timeline-item:not(:last-child)::before {
+		content: "";
+		position: absolute;
+		left: calc(0.375rem - 1px);
+		top: 1.35rem;
+		bottom: calc(-1 * var(--tl-gap) + 0.2rem);
+		width: 2px;
+		border-radius: 1px;
+		background: var(--gray-800);
 	}
 
 	.dot {
@@ -132,6 +149,13 @@ const milestones = [
 		background: var(--accent-regular);
 		border-color: var(--accent-regular);
 		box-shadow: 0 0 0 3px var(--accent-subtle-overlay);
+		animation: glow 2.4s ease-in-out infinite;
+	}
+
+	@keyframes glow {
+		50% {
+			box-shadow: 0 0 0 7px transparent;
+		}
 	}
 
 	.label {
@@ -176,6 +200,7 @@ const milestones = [
 			border-radius: 1.5rem;
 			padding: 2.5rem;
 			gap: 2rem;
+			--tl-gap: 2rem;
 		}
 
 		.timeline-content h4 {

@@ -15,7 +15,9 @@ interface Props {
 // Read more about dynamic routes and this `getStaticPaths` function in the Astro docs:
 // https://docs.astro.build/en/guides/routing/#dynamic-routes
 export async function getStaticPaths() {
-	const work = await getCollection("work");
+	// FRC and the drone have their own dedicated pages (src/pages/work/frc.astro, drone.astro).
+	const custom = ["frc", "drone"];
+	const work = await getCollection("work", (entry) => !custom.includes(entry.id));
 	return work.map((entry) => ({
 		params: { slug: entry.id },
 		props: { entry },
@@ -32,7 +34,7 @@ const { Content } = await render(entry);
 			<header>
 				<div class="wrapper stack gap-2">
 					<a class="back-link" href="/work/"
-						><Icon icon="arrow-left" /> Work</a
+						><Icon icon="arrow-left" /> All work</a
 					>
 					<Hero title={entry.data.title} align="start">
 						<div class="details">
@@ -42,7 +44,7 @@ const { Content } = await render(entry);
 				</div>
 			</header>
 			<main class="wrapper">
-				<div class="stack gap-10 content">
+				<div class="stack gap-10 content" data-reveal>
 					{
 						entry.data.img && (
 							<img
@@ -64,7 +66,7 @@ const { Content } = await render(entry);
 <style>
 	header {
 		padding-bottom: 1.5rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid var(--border-subtle);
 		position: relative;
 	}
 
@@ -88,15 +90,15 @@ const { Content } = await render(entry);
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
-		transition: all 240ms ease;
+		transition: translate var(--ease-duration) var(--ease-out), color var(--theme-transition);
 		font-size: var(--text-sm);
-		color: var(--accent-light);
+		color: var(--link-color);
 		text-decoration: none;
 		margin-bottom: 0.5rem;
 	}
 
 	.back-link:hover {
-		transform: translateX(-4px);
+		translate: -4px 0;
 	}
 
 	.details {
@@ -186,7 +188,7 @@ const { Content } = await render(entry);
 		box-shadow: var(--shadow-lg);
 		background: linear-gradient(135deg, var(--gray-900) 0%, rgba(29, 174, 241, 0.04) 100%);
 		border: 1px solid rgba(29, 174, 241, 0.15);
-		transition: all 320ms cubic-bezier(.2,.9,.2,1);
+		transition: transform 600ms var(--ease-out), box-shadow var(--ease-duration) var(--ease-out);
 		width: 100%;
 		height: auto;
 		max-width: 100%;
@@ -195,7 +197,7 @@ const { Content } = await render(entry);
 	.content :global(img:hover) {
 		transform: scale(1.02);
 		box-shadow: var(--shadow-xl);
-		border-color: rgba(29, 174, 241, 0.25);
+		border-color: var(--border-accent);
 	}
 
 	@media (max-width: 49.99em) {
@@ -212,7 +214,7 @@ const { Content } = await render(entry);
 		padding: 1rem 1rem 1rem 1.25rem;
 		padding-inline-start: 1.25rem;
 		border-radius: 0.75rem;
-		border-left: 4px solid var(--accent-light);
+		border-left: 4px solid var(--link-color);
 		background: linear-gradient(135deg, rgba(29, 174, 241, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
 		box-shadow: var(--shadow-sm);
 		color: var(--gray-0);
@@ -254,7 +256,7 @@ const { Content } = await render(entry);
 		text-align: left;
 		font-weight: 600;
 		border-bottom: 1px solid rgba(29, 174, 241, 0.15);
-		color: var(--accent-light);
+		color: var(--link-color);
 		font-size: var(--text-sm);
 	}
 
@@ -267,7 +269,7 @@ const { Content } = await render(entry);
 
 	.content :global(table td) {
 		padding: 0.75rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+		border-bottom: 1px solid var(--border-subtle);
 	}
 
 	@media (min-width: 50em) {
@@ -293,19 +295,16 @@ const { Content } = await render(entry);
 	}
 
 	.content :global(li::marker) {
-		color: var(--accent-light);
+		color: var(--link-color);
 		font-weight: 600;
 	}
 
-	.back-link,
 	.content :global(a) {
 		text-decoration: 1px solid underline transparent;
 		text-underline-offset: 0.25em;
 		transition: text-decoration-color var(--theme-transition);
 	}
 
-	.back-link:hover,
-	.back-link:focus,
 	.content :global(a:hover),
 	.content :global(a:focus) {
 		text-decoration-color: currentColor;

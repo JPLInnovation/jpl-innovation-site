@@ -1,0 +1,178 @@
+---
+/**
+ * Animated top-down F450 quadcopter (quad-X). Front is up; the front arms are red like the real frame.
+ * Props spin in the standard pattern: front-left & rear-right CW, front-right & rear-left CCW.
+ * Drawn roughly to scale: 10" props on 450 mm motor-to-motor diagonal.
+ */
+const motors = [
+	{ x: 100, y: 100, dir: "cw", front: true },
+	{ x: 300, y: 100, dir: "ccw", front: true },
+	{ x: 100, y: 300, dir: "ccw", front: false },
+	{ x: 300, y: 300, dir: "cw", front: false },
+];
+---
+
+<svg
+	class="drone"
+	viewBox="0 0 400 400"
+	role="img"
+	aria-label="Top-down illustration of the F450 quadcopter with spinning propellers"
+>
+	<defs>
+		<radialGradient id="prop-disc">
+			<stop offset="0.25" stop-color="#5cc8ff" stop-opacity="0" />
+			<stop offset="0.9" stop-color="#5cc8ff" stop-opacity="0.16" />
+			<stop offset="1" stop-color="#5cc8ff" stop-opacity="0.35" />
+		</radialGradient>
+	</defs>
+
+	<g class="body">
+		<!-- Arms -->
+		{
+			motors.map((m) => (
+				<line x1="200" y1="200" x2={m.x} y2={m.y} class:list={["arm", { front: m.front }]} />
+			))
+		}
+
+		<!-- Motors & propellers -->
+		{
+			motors.map((m) => (
+				<g transform={`translate(${m.x} ${m.y})`}>
+					<circle r="80" fill="url(#prop-disc)" />
+					<g class:list={["prop", m.dir]}>
+						<ellipse rx="74" ry="6.5" />
+					</g>
+					<circle r="19" class="motor" />
+					<circle r="6" class="hub" />
+				</g>
+			))
+		}
+
+		<!-- Center plate, flight controller, and camera (front) -->
+		<rect x="148" y="148" width="104" height="104" rx="26" class="plate" />
+		<rect x="179" y="179" width="42" height="42" rx="6" class="fc" />
+		<circle cx="200" cy="200" r="4" class="led" />
+		<rect x="187" y="136" width="26" height="16" rx="4" class="cam" />
+		<circle cx="200" cy="144" r="4" class="lens" />
+
+		<!-- 4G signal -->
+		<g class="signal" transform="translate(200 232)">
+			<path d="M-10 14a14 14 0 0 1 20 0" />
+			<path d="M-18 22a26 26 0 0 1 36 0" />
+		</g>
+	</g>
+</svg>
+
+<style>
+	.drone {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+
+	.body {
+		animation: bob 4s ease-in-out infinite;
+	}
+
+	.arm {
+		stroke: #c3cadb;
+		stroke-width: 14;
+		stroke-linecap: round;
+	}
+
+	.arm.front {
+		stroke: #e5484d;
+	}
+
+	.prop ellipse {
+		fill: rgba(227, 234, 245, 0.85);
+	}
+
+	.prop {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: spin 0.32s linear infinite;
+	}
+
+	.prop.ccw {
+		animation-direction: reverse;
+	}
+
+	.motor {
+		fill: #2b3445;
+		stroke: #6474a2;
+		stroke-width: 3;
+	}
+
+	.hub {
+		fill: #c3cadb;
+	}
+
+	.plate {
+		fill: #1b2433;
+		stroke: #3d4663;
+		stroke-width: 3;
+	}
+
+	.fc {
+		fill: #0f1a2b;
+		stroke: #1daef1;
+		stroke-width: 2.5;
+	}
+
+	.led {
+		fill: #1daef1;
+		animation: blink 1.6s ease-in-out infinite;
+	}
+
+	.cam {
+		fill: #283044;
+		stroke: #8490b5;
+		stroke-width: 2;
+	}
+
+	.lens {
+		fill: #5cc8ff;
+	}
+
+	.signal path {
+		fill: none;
+		stroke: #5cc8ff;
+		stroke-width: 3;
+		stroke-linecap: round;
+		animation: signal 1.8s ease-in-out infinite;
+	}
+
+	.signal path:nth-child(2) {
+		animation-delay: 0.3s;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	@keyframes bob {
+		50% {
+			transform: translateY(-6px);
+		}
+	}
+
+	@keyframes blink {
+		50% {
+			opacity: 0.25;
+		}
+	}
+
+	@keyframes signal {
+		0%,
+		100% {
+			opacity: 0.2;
+		}
+		50% {
+			opacity: 1;
+		}
+	}
+</style>

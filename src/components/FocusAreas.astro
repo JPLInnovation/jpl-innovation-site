@@ -3,23 +3,23 @@ import Icon from "./Icon.astro";
 ---
 
 <section class="section with-background">
-	<header class="section-header stack gap-2 lg:gap-4">
+	<header class="section-header stack gap-2 lg:gap-4" data-reveal>
 		<h3>Where we focus</h3>
 		<p>Core themes that guide our projects.</p>
 	</header>
 
 	<div class="focus-grid">
-		<div class="box focus-card stack gap-2 lg:gap-4">
+		<div data-reveal style="--reveal-delay: 0ms" class="box surface focus-card stack gap-2 lg:gap-4">
 			<Icon icon="terminal-window" color="var(--accent-regular)" size="2.5rem" gradient />
 			<h2>AI & automation</h2>
 			<p>Learn modern AI workflows and apply them to practical problems—automation, recognition, and smarter decision-making.</p>
 		</div>
-		<div class="box focus-card stack gap-2 lg:gap-4">
+		<div data-reveal style="--reveal-delay: 120ms" class="box surface focus-card stack gap-2 lg:gap-4">
 			<Icon icon="strategy" color="var(--accent-regular)" size="2.5rem" gradient />
 			<h2>Systems & engineering</h2>
 			<p>Build reliable systems with strong fundamentals—performance, debugging, and clear architecture from start to finish.</p>
 		</div>
-		<div class="box focus-card stack gap-2 lg:gap-4">
+		<div data-reveal style="--reveal-delay: 240ms" class="box surface focus-card stack gap-2 lg:gap-4">
 			<Icon icon="trophy" color="var(--accent-regular)" size="2.5rem" gradient />
 			<h2>Learning & sharing</h2>
 			<p>Document what we learn, mentor where we can, and build a portfolio that reflects real growth—skills, projects, and teamwork.</p>
@@ -70,28 +70,8 @@ import Icon from "./Icon.astro";
 	}
 
 	.box {
-		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 0.75rem;
 		padding: 1.5rem;
-		background: linear-gradient(135deg,
-			rgba(29, 174, 241, 0.03) 0%,
-			rgba(255, 255, 255, 0.02) 100%);
-		box-shadow: var(--shadow-sm);
-		transition: all 300ms ease;
-	}
-
-	.focus-card {
-		backdrop-filter: blur(8px);
-	}
-
-	.box:hover,
-	.focus-card:hover {
-		border-color: rgba(29, 174, 241, 0.2);
-		background: linear-gradient(135deg,
-			rgba(29, 174, 241, 0.08) 0%,
-			rgba(255, 255, 255, 0.04) 100%);
-		box-shadow: var(--shadow-md);
-		transform: translateY(-4px);
 	}
 
 	.focus-grid {

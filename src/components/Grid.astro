@@ -51,6 +51,12 @@ const { variant } = Astro.props;
 			transform: none;
 		}
 
+		/* Exactly two items: two columns, so there's no empty third column. */
+		.grid.offset:has(> :global(:last-child:nth-child(2))) {
+			grid-template-columns: repeat(2, 1fr);
+			max-width: 52rem;
+		}
+
 		.grid.small {
 			display: flex;
 			flex-wrap: wrap;

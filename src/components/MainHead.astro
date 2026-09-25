@@ -13,9 +13,15 @@ const {
 ---
 
 <meta charset="UTF-8" />
-<meta name="description" property="og:description" content={description} />
-<meta name="viewport" content="width=device-width" />
+<meta name="description" content={description} />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="generator" content={Astro.generator} />
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#090b11" media="(prefers-color-scheme: dark)" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
 <title>{title}</title>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -41,16 +47,22 @@ const {
 	};
 	const applyThemePreference = () => {
 		const isDark = getThemePreference() === "dark";
-		document.documentElement.classList[isDark ? "add" : "remove"]("theme-dark");
+		const root = document.documentElement;
+		root.classList[isDark ? "add" : "remove"]("theme-dark");
+		// `js` enables scroll-reveal styles; content stays visible without JS.
+		root.classList.add("js");
 	};
 	applyThemePreference();
 
 	/** @type {Window & { __jplThemeSwapHookSetup?: boolean }} */
 	const runtime = window;
 
-	// Re-apply the preferred theme after client-side route swaps.
+	// Re-apply root classes after client-side route swaps (the swap resets <html> attributes).
 	if (!runtime.__jplThemeSwapHookSetup) {
-		document.addEventListener("astro:after-swap", applyThemePreference);
+		document.addEventListener("astro:after-swap", () => {
+			applyThemePreference();
+			if (document.readyState === "complete") document.documentElement.classList.add("loaded");
+		});
 		runtime.__jplThemeSwapHookSetup = true;
 	}
 </script>

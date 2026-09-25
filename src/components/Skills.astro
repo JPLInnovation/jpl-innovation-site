@@ -2,7 +2,7 @@
 import Icon from "./Icon.astro";
 ---
 
-<section class="box skills">
+<section class="box surface skills">
 	<div class="stack gap-2 lg:gap-4">
 		<Icon
 			icon="rocket-launch"
@@ -37,23 +37,8 @@ import Icon from "./Icon.astro";
 
 <style>
 	.box {
-		border: 1px solid rgba(255, 255, 255, 0.08);
 		border-radius: 0.75rem;
 		padding: 1.5rem;
-		background: linear-gradient(135deg,
-			rgba(29, 174, 241, 0.03) 0%,
-			rgba(255, 255, 255, 0.02) 100%);
-		box-shadow: var(--shadow-sm);
-		transition: all 300ms ease;
-	}
-
-	.box:hover {
-		border-color: rgba(29, 174, 241, 0.2);
-		background: linear-gradient(135deg,
-			rgba(29, 174, 241, 0.08) 0%,
-			rgba(255, 255, 255, 0.04) 100%);
-		box-shadow: var(--shadow-md);
-		transform: translateY(-2px);
 	}
 
 	.skills {

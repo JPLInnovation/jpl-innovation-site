@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#0d1526"/>
+			<stop offset="1" stop-color="#090b11"/>
+		</linearGradient>
+		<radialGradient id="glow" cx="0.5" cy="0.45" r="0.55">
+			<stop offset="0" stop-color="#1683c2" stop-opacity="0.45"/>
+			<stop offset="1" stop-color="#1683c2" stop-opacity="0"/>
+		</radialGradient>
+		<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+			<path d="M32 0H0v32" fill="none" stroke="#5cc8ff" stroke-opacity="0.08" stroke-width="1"/>
+		</pattern>
+		<radialGradient id="disc">
+			<stop offset="0.25" stop-color="#5cc8ff" stop-opacity="0"/>
+			<stop offset="0.9" stop-color="#5cc8ff" stop-opacity="0.16"/>
+			<stop offset="1" stop-color="#5cc8ff" stop-opacity="0.35"/>
+		</radialGradient>
+		<g id="rotor">
+			<circle r="80" fill="url(#disc)"/>
+			<ellipse rx="74" ry="6.5" fill="#e3eaf5" fill-opacity="0.85"/>
+			<circle r="19" fill="#2b3445" stroke="#6474a2" stroke-width="3"/>
+			<circle r="6" fill="#c3cadb"/>
+		</g>
+	</defs>
+
+	<rect width="800" height="600" fill="url(#bg)"/>
+	<rect width="800" height="600" fill="url(#grid)"/>
+	<rect width="800" height="600" fill="url(#glow)"/>
+
+	<g transform="translate(200 90) scale(1.05)">
+		<g stroke-width="14" stroke-linecap="round">
+			<line x1="200" y1="200" x2="100" y2="100" stroke="#e5484d"/>
+			<line x1="200" y1="200" x2="300" y2="100" stroke="#e5484d"/>
+			<line x1="200" y1="200" x2="100" y2="300" stroke="#c3cadb"/>
+			<line x1="200" y1="200" x2="300" y2="300" stroke="#c3cadb"/>
+		</g>
+		<use href="#rotor" transform="translate(100 100) rotate(25)"/>
+		<use href="#rotor" transform="translate(300 100) rotate(-40)"/>
+		<use href="#rotor" transform="translate(100 300) rotate(70)"/>
+		<use href="#rotor" transform="translate(300 300) rotate(-10)"/>
+		<rect x="148" y="148" width="104" height="104" rx="26" fill="#1b2433" stroke="#3d4663" stroke-width="3"/>
+		<rect x="179" y="179" width="42" height="42" rx="6" fill="#0f1a2b" stroke="#1daef1" stroke-width="2.5"/>
+		<circle cx="200" cy="200" r="4" fill="#1daef1"/>
+		<rect x="187" y="136" width="26" height="16" rx="4" fill="#283044" stroke="#8490b5" stroke-width="2"/>
+		<circle cx="200" cy="144" r="4" fill="#5cc8ff"/>
+		<g transform="translate(200 232)" fill="none" stroke="#5cc8ff" stroke-width="3" stroke-linecap="round">
+			<path d="M-10 14a14 14 0 0 1 20 0"/>
+			<path d="M-18 22a26 26 0 0 1 36 0"/>
+		</g>
+	</g>
+</svg>

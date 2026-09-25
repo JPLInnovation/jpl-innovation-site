@@ -24,7 +24,9 @@ const { href } = Astro.props;
 		background: var(--gradient-accent-orange);
 		box-shadow: var(--shadow-lg);
 		white-space: nowrap;
-		transition: all 280ms cubic-bezier(.2,.9,.2,1);
+		transition:
+			transform var(--ease-duration) var(--ease-out),
+			box-shadow var(--ease-duration) var(--ease-out);
 		border: none;
 		cursor: pointer;
 	}

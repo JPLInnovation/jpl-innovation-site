@@ -1,0 +1,997 @@
+---
+import { getEntry } from "astro:content";
+import ContactCTA from "../../components/ContactCTA.astro";
+import DroneIllustration from "../../components/DroneIllustration.astro";
+import Icon from "../../components/Icon.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { drone, earlierWork, partGroups, roadmap, systems } from "../../data/drone";
+
+// Card title/description still come from src/content/work/drone.md.
+const entry = (await getEntry("work", "drone"))!;
+
+const vnd = new Intl.NumberFormat("vi-VN");
+const formatPrice = (n: number) => `${vnd.format(n)} ₫`;
+
+const groups = partGroups.map((g) => ({
+	...g,
+	subtotal: g.parts.reduce((sum, p) => sum + (p.price ?? 0), 0),
+}));
+const total = groups.reduce((sum, g) => sum + g.subtotal, 0);
+const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
+
+const stateLabel = { done: "Done", current: "Now", upcoming: "Next" } as const;
+---
+
+<BaseLayout title={`${drone.name} | JPL Innovation`} description={entry.data.description}>
+	<div class="stack gap-20">
+		<main class="drone-page stack gap-15">
+			<!-- ============ Hero ============ -->
+			<header class="wrapper hero">
+				<a class="back-link" href="/work/"><Icon icon="arrow-left" /> All work</a>
+
+				<div class="hero-grid">
+					<div class="hero-copy">
+						<p class="eyebrow">
+							<span class="pulse" aria-hidden="true"></span>
+							Drone project · {drone.status}
+						</p>
+						<h1>F450 <span class="gradient-text">4G</span> Drone</h1>
+						<p class="lede">{drone.intro}</p>
+
+						<dl class="facts">
+							{
+								drone.facts.map((f) => (
+									<div>
+										<dt>
+											<Icon icon={f.icon} /> {f.label}
+										</dt>
+										<dd>{f.value}</dd>
+									</div>
+								))
+							}
+						</dl>
+					</div>
+
+					<figure class="hero-visual">
+						<span class="front-label" aria-hidden="true">▲ Front</span>
+						<DroneIllustration />
+						<figcaption>
+							<span><span class="swatch front" aria-hidden="true"></span> Front arms</span>
+							<span><span class="swatch rear" aria-hidden="true"></span> Rear arms</span>
+							<span>Quad-X · props 2 CW + 2 CCW</span>
+						</figcaption>
+					</figure>
+				</div>
+			</header>
+
+			<!-- ============ Roadmap ============ -->
+			<section class="wrapper block stack gap-8">
+				<header class="block-header" data-reveal>
+					<p class="kicker">Build progress</p>
+					<h2>From parts list to first flight</h2>
+				</header>
+				<ol class="steps">
+					{
+						roadmap.map((step, i) => (
+							<li class:list={["step", step.state]} data-reveal style={`--reveal-delay: ${(i % 3) * 90}ms`}>
+								<div class="step-top">
+									<span class="step-num">0{i + 1}</span>
+									<span class="step-state">
+										{step.state === "done" && <Icon icon="check-circle" />}
+										{stateLabel[step.state]}
+									</span>
+								</div>
+								<h3>{step.title}</h3>
+								<p>{step.desc}</p>
+							</li>
+						))
+					}
+				</ol>
+			</section>
+
+			<!-- ============ How it works ============ -->
+			<section class="wrapper block stack gap-8">
+				<header class="block-header" data-reveal>
+					<p class="kicker">How it works</p>
+					<h2>Three systems, one drone</h2>
+					<p class="block-sub">How power, pilot commands, and live video flow through the build.</p>
+				</header>
+
+				<div class="lanes">
+					{
+						systems.map((sys, i) => (
+							<div class="lane surface" data-reveal style={`--reveal-delay: ${i * 100}ms`}>
+								<h3 class="lane-title">
+									<span class="feature-icon">
+										<Icon icon={sys.icon} size="1.25rem" />
+									</span>
+									{sys.title}
+								</h3>
+								<ol class="flow">
+									{sys.steps.map((s, j) => (
+										<li class="flow-item">
+											{j > 0 && (
+												<span class="connector" aria-hidden="true">
+													{"link" in s && s.link && <span class="link-label">{s.link}</span>}
+												</span>
+											)}
+											<span class="chip">
+												<strong>{s.name}</strong>
+												<small>{s.detail}</small>
+											</span>
+										</li>
+									))}
+								</ol>
+								{"branch" in sys && sys.branch && (
+									<ol class="flow branch">
+										<li class="branch-from">
+											<span class="branch-icon" aria-hidden="true">↳</span> from {sys.branch.from}
+										</li>
+										{sys.branch.steps.map((s) => (
+											<li class="flow-item">
+												<span class="connector" aria-hidden="true" />
+												<span class="chip">
+													<strong>{s.name}</strong>
+													<small>{s.detail}</small>
+												</span>
+											</li>
+										))}
+									</ol>
+								)}
+							</div>
+						))
+					}
+				</div>
+			</section>
+
+			<!-- ============ Parts & budget ============ -->
+			<section class="wrapper block stack gap-8" id="parts">
+				<header class="block-header" data-reveal>
+					<p class="kicker">Parts list</p>
+					<h2>{partCount} parts, one budget</h2>
+				</header>
+
+				<div class="budget surface" data-reveal>
+					<div class="budget-total">
+						<p class="kicker">Estimated total</p>
+						<p class="total">{formatPrice(total)}</p>
+						<p class="note">Estimates from Vietnamese online stores. Unpriced items not included.</p>
+					</div>
+					<div class="budget-breakdown">
+						<div class="stacked-bar" aria-hidden="true">
+							{
+								groups.map((g) => (
+									<span style={`flex-grow: ${g.subtotal}; background: ${g.color}`} />
+								))
+							}
+						</div>
+						<ul class="legend">
+							{
+								groups.map((g) => (
+									<li>
+										<span class="swatch" style={`background: ${g.color}`} aria-hidden="true" />
+										<span class="legend-name">{g.title}</span>
+										<span class="legend-value">
+											{formatPrice(g.subtotal)}
+											<small>{Math.round((g.subtotal / total) * 100)}%</small>
+										</span>
+									</li>
+								))
+							}
+						</ul>
+					</div>
+				</div>
+
+				<div class="part-groups">
+					{
+						groups.map((g, i) => (
+							<section
+								class="part-group surface"
+								style={`--group-color: ${g.color}; --reveal-delay: ${(i % 2) * 100}ms`}
+								data-reveal
+							>
+								<header class="group-head">
+									<h3>
+										<span class="feature-icon group-icon">
+											<Icon icon={g.icon} size="1.25rem" />
+										</span>
+										{g.title}
+									</h3>
+									<span class="group-subtotal">{formatPrice(g.subtotal)}</span>
+								</header>
+								<ul class="parts">
+									{g.parts.map((p) => (
+										<li>
+											<div>
+												<strong>{p.name}</strong>
+												<p>{p.why}</p>
+											</div>
+											<span class:list={["price", { tbd: p.price === undefined }]}>
+												{p.price === undefined ? "TBD" : formatPrice(p.price)}
+											</span>
+										</li>
+									))}
+								</ul>
+							</section>
+						))
+					}
+				</div>
+			</section>
+
+			<!-- ============ Earlier work ============ -->
+			<section class="wrapper block stack gap-8">
+				<header class="block-header" data-reveal>
+					<p class="kicker">Earlier work · {earlierWork.date}</p>
+					<h2>{earlierWork.title}</h2>
+				</header>
+				<div class="earlier surface" data-reveal>
+					<p>{earlierWork.summary}</p>
+					<ul class="checks">
+						{earlierWork.points.map((p) => <li>{p}</li>)}
+					</ul>
+				</div>
+			</section>
+		</main>
+		<ContactCTA />
+	</div>
+</BaseLayout>
+
+<style>
+	/* ---------- Shared bits ---------- */
+
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		width: fit-content;
+		font-size: var(--text-sm);
+		color: var(--link-color);
+		text-decoration: none;
+		transition: translate var(--ease-duration) var(--ease-out);
+	}
+
+	.back-link:hover {
+		translate: -4px 0;
+	}
+
+	.eyebrow {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		width: fit-content;
+		padding: 0.35rem 0.9rem;
+		border-radius: 999rem;
+		border: 1px solid var(--border-accent);
+		background: var(--accent-overlay);
+		color: var(--gray-100);
+		font-size: var(--text-sm);
+		font-weight: 700;
+	}
+
+	.pulse {
+		position: relative;
+		flex-shrink: 0;
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--accent-light);
+	}
+
+	.pulse::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: inherit;
+		animation: ping 2s var(--ease-out) infinite;
+	}
+
+	@keyframes ping {
+		75%,
+		100% {
+			transform: scale(2.6);
+			opacity: 0;
+		}
+	}
+
+	.gradient-text {
+		background: linear-gradient(120deg, var(--accent-light), #9378ca 60%, var(--accent-light));
+		background-size: 200% auto;
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		animation: shimmer 6s linear infinite;
+	}
+
+	@keyframes shimmer {
+		to {
+			background-position: 200% center;
+		}
+	}
+
+	.kicker {
+		font-size: var(--text-sm);
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--gray-400);
+	}
+
+	.block-header {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.block-header h2 {
+		font-size: var(--text-2xl);
+		color: var(--gray-0);
+	}
+
+	.block-sub {
+		color: var(--gray-400);
+	}
+
+	h3 {
+		font-size: var(--text-lg);
+		color: var(--gray-100);
+	}
+
+	.surface {
+		border-radius: 1.25rem;
+	}
+
+	.feature-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		width: 2.5rem;
+		height: 2.5rem;
+		border-radius: 0.75rem;
+		color: var(--link-color);
+		background: var(--accent-overlay);
+		border: 1px solid var(--border-accent);
+	}
+
+	/* ---------- Hero ---------- */
+
+	.hero {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+
+	.hero-grid {
+		display: grid;
+		gap: 2.5rem;
+		align-items: center;
+	}
+
+	.hero-copy {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		animation: rise 900ms var(--ease-out) both;
+	}
+
+	.hero-copy h1 {
+		font-size: var(--text-4xl);
+		color: var(--gray-0);
+	}
+
+	.lede {
+		font-size: var(--text-md);
+		color: var(--gray-300);
+		max-width: 55ch;
+	}
+
+	.facts {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+		margin-top: 0.5rem;
+	}
+
+	.facts div {
+		padding: 0.9rem 1rem;
+		border-radius: 1rem;
+		border: 1px solid var(--border-subtle);
+		background: var(--surface-bg);
+	}
+
+	.facts dt {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.facts dd {
+		margin: 0.25rem 0 0;
+		font-family: var(--font-brand);
+		font-size: var(--text-lg);
+		font-weight: 600;
+		color: var(--gray-0);
+	}
+
+	/* The drone sits on a fixed dark "blueprint" panel in both themes. */
+	.hero-visual {
+		position: relative;
+		padding: 2.5rem 2rem 1.5rem;
+		border-radius: 1.75rem;
+		border: 1px solid rgba(92, 200, 255, 0.25);
+		background:
+			radial-gradient(circle at 50% 45%, rgba(22, 131, 194, 0.45), transparent 60%),
+			linear-gradient(rgba(92, 200, 255, 0.08) 1px, transparent 1px) 0 0 / 32px 32px,
+			linear-gradient(90deg, rgba(92, 200, 255, 0.08) 1px, transparent 1px) 0 0 / 32px 32px,
+			linear-gradient(160deg, #0d1526, #090b11);
+		box-shadow: var(--shadow-xl);
+		animation: rise 1100ms 120ms var(--ease-out) both;
+	}
+
+	.hero-visual :global(.drone) {
+		max-width: 26rem;
+		margin-inline: auto;
+	}
+
+	.front-label {
+		position: absolute;
+		top: 1rem;
+		left: 50%;
+		translate: -50% 0;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #e5484d;
+	}
+
+	.hero-visual figcaption {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem 1.25rem;
+		margin-top: 1rem;
+		font-size: var(--text-sm);
+		color: #a3acc8;
+	}
+
+	.hero-visual figcaption span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.swatch {
+		display: inline-block;
+		flex-shrink: 0;
+		width: 0.75rem;
+		height: 0.75rem;
+		border-radius: 0.2rem;
+	}
+
+	.swatch.front {
+		background: #e5484d;
+	}
+
+	.swatch.rear {
+		background: #c3cadb;
+	}
+
+	@keyframes rise {
+		from {
+			opacity: 0;
+			translate: 0 2rem;
+		}
+	}
+
+	/* ---------- Roadmap ---------- */
+
+	.steps {
+		display: grid;
+		gap: 1rem;
+		list-style: none;
+		padding: 0;
+	}
+
+	.step {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 1.25rem;
+		border-radius: 1.25rem;
+		border: 1px solid var(--border-subtle);
+		background: var(--surface-bg);
+		overflow: hidden;
+	}
+
+	/* Progress strip along the top of each step. */
+	.step::before {
+		content: "";
+		position: absolute;
+		inset: 0 0 auto;
+		height: 4px;
+		background: var(--gray-800);
+	}
+
+	.step.done::before {
+		background: var(--accent-regular);
+	}
+
+	.step.current {
+		border-color: var(--border-accent);
+		box-shadow: 0 0 0 3px var(--accent-overlay);
+	}
+
+	.step.current::before {
+		background: linear-gradient(90deg, var(--accent-light), var(--gray-800));
+		background-size: 200% 100%;
+		animation: progress 2.4s ease-in-out infinite alternate;
+	}
+
+	@keyframes progress {
+		from {
+			background-position: 100% 0;
+		}
+		to {
+			background-position: 0 0;
+		}
+	}
+
+	.step-top {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.step-num {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-500);
+	}
+
+	.step-state {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.15rem 0.6rem;
+		border-radius: 999rem;
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--gray-400);
+		background: var(--gray-900);
+	}
+
+	.done .step-state {
+		color: var(--link-color);
+		background: var(--accent-overlay);
+	}
+
+	.current .step-state {
+		color: #fff;
+		background: var(--accent-regular);
+	}
+
+	.step p {
+		color: var(--gray-400);
+		font-size: var(--text-sm);
+	}
+
+	/* ---------- How it works ---------- */
+
+	.lanes {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	.lane {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		padding: 1.5rem;
+	}
+
+	.lane-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.flow {
+		display: flex;
+		flex-direction: column;
+		list-style: none;
+		padding: 0;
+	}
+
+	.flow-item {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.chip {
+		display: flex;
+		flex-direction: column;
+		padding: 0.65rem 1rem;
+		border-radius: 0.9rem;
+		border: 1px solid var(--border-subtle);
+		background: var(--gray-999);
+	}
+
+	.chip strong {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		color: var(--gray-0);
+	}
+
+	.chip small {
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	/* Vertical connector on small screens, horizontal on large. */
+	.connector {
+		position: relative;
+		display: flex;
+		align-items: center;
+		min-height: 2rem;
+		margin-left: 1.25rem;
+		padding-left: 1rem;
+		border-left: 2px dashed var(--border-accent);
+	}
+
+	.connector::after {
+		content: "";
+		position: absolute;
+		left: -6px;
+		bottom: -2px;
+		border: 5px solid transparent;
+		border-top: 6px solid var(--accent-light);
+	}
+
+	.link-label {
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--link-color);
+	}
+
+	.branch {
+		padding-top: 1rem;
+		border-top: 1px dashed var(--border-subtle);
+	}
+
+	.branch-from {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: var(--text-sm);
+		font-weight: 700;
+		color: var(--gray-400);
+	}
+
+	.branch .flow-item:first-of-type .connector {
+		min-height: 1.25rem;
+	}
+
+	/* ---------- Budget ---------- */
+
+	.budget {
+		display: grid;
+		gap: 1.75rem;
+		padding: 1.5rem;
+	}
+
+	.total {
+		font-family: var(--font-brand);
+		font-size: var(--text-3xl);
+		font-weight: 600;
+		line-height: 1.1;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-0);
+	}
+
+	.note {
+		margin-top: 0.5rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.stacked-bar {
+		display: flex;
+		gap: 3px;
+		height: 1rem;
+		border-radius: 999rem;
+		overflow: hidden;
+	}
+
+	.stacked-bar span {
+		transform-origin: left;
+		transition: transform 1.2s var(--ease-out) 200ms;
+	}
+
+	:global(.js) [data-reveal]:not(.is-visible) .stacked-bar span {
+		transform: scaleX(0);
+	}
+
+	.legend {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1.25rem;
+		list-style: none;
+		padding: 0;
+	}
+
+	.legend li {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.legend-name {
+		color: var(--gray-200);
+		font-weight: 700;
+	}
+
+	.legend-value {
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-100);
+		text-align: right;
+	}
+
+	.legend-value small {
+		display: inline-block;
+		min-width: 2.75rem;
+		margin-left: 0.5rem;
+		color: var(--gray-400);
+	}
+
+	/* ---------- Part groups ---------- */
+
+	.part-groups {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	.part-group {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1.5rem;
+		border-top: 4px solid var(--group-color);
+	}
+
+	.group-head {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem 1rem;
+	}
+
+	.group-head h3 {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.group-icon {
+		color: var(--group-color);
+		border-color: color-mix(in srgb, var(--group-color) 40%, transparent);
+		background: color-mix(in srgb, var(--group-color) 14%, transparent);
+	}
+
+	.group-subtotal {
+		font-family: var(--font-brand);
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		color: var(--gray-0);
+	}
+
+	.parts {
+		display: flex;
+		flex-direction: column;
+		list-style: none;
+		padding: 0;
+	}
+
+	.parts li {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 1rem;
+		padding-block: 0.9rem;
+		border-top: 1px solid var(--border-subtle);
+	}
+
+	.parts strong {
+		color: var(--gray-100);
+	}
+
+	.parts p {
+		margin-top: 0.15rem;
+		font-size: var(--text-sm);
+		color: var(--gray-400);
+	}
+
+	.price {
+		font-variant-numeric: tabular-nums;
+		font-weight: 700;
+		color: var(--gray-100);
+		white-space: nowrap;
+	}
+
+	.price.tbd {
+		align-self: start;
+		padding: 0.1rem 0.55rem;
+		border-radius: 999rem;
+		font-size: 0.75rem;
+		color: var(--gray-400);
+		background: var(--gray-900);
+	}
+
+	/* ---------- Earlier work ---------- */
+
+	.earlier {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: 1.5rem;
+	}
+
+	.earlier > p {
+		color: var(--gray-300);
+	}
+
+	.checks {
+		display: grid;
+		gap: 0.6rem;
+		list-style: none;
+		padding: 0;
+	}
+
+	.checks li {
+		position: relative;
+		padding-left: 1.4rem;
+		color: var(--gray-300);
+	}
+
+	.checks li::before {
+		content: "✓";
+		position: absolute;
+		left: 0;
+		color: var(--link-color);
+		font-weight: 700;
+	}
+
+	/* ---------- Responsive ---------- */
+
+	@media (min-width: 40em) {
+		.facts {
+			grid-template-columns: repeat(4, 1fr);
+		}
+
+		.steps {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	@media (min-width: 50em) {
+		.hero-grid {
+			grid-template-columns: 1.1fr 1fr;
+			gap: 4rem;
+		}
+
+		.hero-copy h1 {
+			font-size: var(--text-5xl);
+		}
+
+		.lede {
+			font-size: var(--text-lg);
+		}
+
+		.facts {
+			grid-template-columns: repeat(2, 1fr);
+		}
+
+		.block-header h2 {
+			font-size: var(--text-3xl);
+		}
+
+		.lane,
+		.budget,
+		.part-group,
+		.earlier {
+			padding: 2rem;
+		}
+
+		.budget {
+			grid-template-columns: 1fr 2fr;
+			align-items: center;
+			gap: 3rem;
+		}
+
+		.part-groups {
+			grid-template-columns: repeat(2, 1fr);
+			align-items: start;
+		}
+
+		.earlier .checks {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	/* Horizontal flow once there's room for four chips in a row. */
+	@media (min-width: 64em) {
+		.flow {
+			flex-direction: row;
+			flex-wrap: wrap;
+			align-items: stretch;
+			row-gap: 0.75rem;
+		}
+
+		.flow-item {
+			flex-direction: row;
+			align-items: center;
+			flex: 1 1 0;
+		}
+
+		.chip {
+			flex: 1;
+		}
+
+		.connector {
+			flex: 0 0 4.5rem;
+			justify-content: center;
+			min-height: 0;
+			height: 2px;
+			margin: 0 0.5rem;
+			padding: 0;
+			border-left: 0;
+			border-top: 2px dashed var(--border-accent);
+		}
+
+		.connector::after {
+			left: auto;
+			right: -4px;
+			bottom: auto;
+			top: -7px;
+			border: 5px solid transparent;
+			border-left: 6px solid var(--accent-light);
+		}
+
+		.link-label {
+			position: absolute;
+			bottom: 0.5rem;
+			white-space: nowrap;
+			font-size: 0.65rem;
+		}
+
+		.branch {
+			padding-left: 0;
+		}
+
+		.branch-from {
+			flex: 0 0 auto;
+			margin-right: 0.5rem;
+		}
+
+		.branch .flow-item {
+			flex: 0 1 18rem;
+		}
+	}
+
+	@media (min-width: 70em) {
+		.steps {
+			grid-template-columns: repeat(6, 1fr);
+		}
+	}
+</style>
