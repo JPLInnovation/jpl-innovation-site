@@ -30,16 +30,27 @@ const facts = [
 
 	<header class="wrapper flex flex-col items-center gap-6 pb-14 pt-6 text-center md:pb-20 md:pt-10">
 		<div class="flex flex-col items-center gap-3" data-reveal>
-			<!-- The logo file is white on black: screen-blend drops the black in dark mode;
-			     in light mode it's inverted to black on white and multiply-blended. -->
-			<img
-				src="/assets/FRC_logo.png"
-				alt="FIRST"
-				width="438"
-				height="115"
-				class="h-10 w-auto invert mix-blend-multiply md:h-12 dark:invert-0 dark:mix-blend-screen"
-			/>
-			<p class="text-[15px] font-medium text-muted-foreground">FIRST Robotics Competition</p>
+			<div class="flex items-center gap-4 md:gap-5">
+				<!-- Team 10951 logo. The source image has photo corners, so it's cropped to its circle. -->
+				<img
+					src={team.logo}
+					alt="Team 10951 Saigon South Dragons logo"
+					width="764"
+					height="764"
+					class="size-14 rounded-full object-cover shadow-sm ring-1 ring-border md:size-16"
+				/>
+				<span class="h-10 w-px bg-border" aria-hidden="true"></span>
+				<!-- The FIRST logo file is white on black: screen-blend drops the black in dark mode;
+				     in light mode it's inverted to black on white and multiply-blended. -->
+				<img
+					src="/assets/FRC_logo.png"
+					alt="FIRST"
+					width="438"
+					height="115"
+					class="h-10 w-auto invert mix-blend-multiply md:h-12 dark:invert-0 dark:mix-blend-screen"
+				/>
+			</div>
+			<p class="text-[15px] font-medium text-muted-foreground">Saigon South Dragons · FIRST Robotics Competition</p>
 		</div>
 		<h1 class="font-wide text-[clamp(3.25rem,12vw,10.5rem)] font-[900] leading-[0.9] tracking-[-0.03em]">
 			Team <Odometer value={String(team.number)} />
@@ -93,9 +104,19 @@ const facts = [
 
 	<section class="border-t bg-card" aria-labelledby="team-heading">
 		<div class="wrapper flex flex-col gap-8 py-20 md:py-24">
-			<div class="flex max-w-2xl flex-col gap-2" data-reveal>
-				<h2 id="team-heading" class="font-wide text-3xl font-[850] md:text-4xl">About Team {team.number}</h2>
-				<p class="text-lg text-muted-foreground">{team.school}. {team.mission}.</p>
+			<div class="flex max-w-2xl items-center gap-5" data-reveal>
+				<img
+					src={team.logo}
+					alt=""
+					width="764"
+					height="764"
+					loading="lazy"
+					class="size-16 shrink-0 rounded-full object-cover ring-1 ring-border md:size-20"
+				/>
+				<div class="flex flex-col gap-2">
+					<h2 id="team-heading" class="font-wide text-3xl font-[850] md:text-4xl">About Team {team.number}</h2>
+					<p class="text-lg text-muted-foreground">{team.name}, {team.school}. {team.mission}.</p>
+				</div>
 			</div>
 			<ul class="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
 				{

@@ -5,6 +5,9 @@
 
 export const team = {
 	number: 10951,
+	name: 'Saigon South Dragons',
+	/** Team logo (dragon and gear). The image has photo corners; show it cropped to a circle. */
+	logo: '/assets/10951.jpg',
 	school: 'Saigon South International School (SSIS)',
 	rookieYear: 2026,
 	region: 'Asia-Pacific',
