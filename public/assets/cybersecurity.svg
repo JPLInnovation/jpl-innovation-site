@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" font-family="Arial, Helvetica, sans-serif">
+	<!-- Small secured network: internet → ACL/firewall → router → L3 switch → L2 switches → PCs, plus a Windows server.
+	     Content stays within y≈150–600 so a 21:9 crop keeps it all. -->
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#0d1526"/>
+			<stop offset="1" stop-color="#090b11"/>
+		</linearGradient>
+		<radialGradient id="glow" cx="0.45" cy="0.5" r="0.6">
+			<stop offset="0" stop-color="#1683c2" stop-opacity="0.4"/>
+			<stop offset="1" stop-color="#1683c2" stop-opacity="0"/>
+		</radialGradient>
+		<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+			<path d="M32 0H0v32" fill="none" stroke="#5cc8ff" stroke-opacity="0.08"/>
+		</pattern>
+		<style>
+			.link { fill: none; stroke: #5cc8ff; stroke-opacity: 0.55; stroke-width: 3; }
+			.node { fill: #1b2433; stroke: #6474a2; stroke-width: 3; }
+			.glyph { fill: none; stroke: #c3cadb; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+			.label { fill: #a3acc8; font-size: 20px; text-anchor: middle; }
+			.packet { fill: #5cc8ff; }
+			@media (prefers-reduced-motion: reduce) { .packet { display: none; } }
+		</style>
+		<marker id="head" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+			<path d="M0 0 10 5 0 10z" fill="#c3cadb"/>
+		</marker>
+	</defs>
+
+	<rect width="1200" height="750" fill="url(#bg)"/>
+	<rect width="1200" height="750" fill="url(#grid)"/>
+	<rect width="1200" height="750" fill="url(#glow)"/>
+
+	<!-- Links -->
+	<path id="l-in" class="link" d="M200 375H402"/>
+	<path id="l-core" class="link" d="M498 375H595"/>
+	<path id="l-a" class="link" d="M765 360 C810 360 810 270 855 270"/>
+	<path id="l-b" class="link" d="M765 390 C810 390 810 480 855 480"/>
+	<path class="link" d="M1005 262 C1040 262 1040 230 1077 230M1005 278 C1040 278 1040 310 1077 310"/>
+	<path class="link" d="M1005 472 C1040 472 1040 440 1077 440M1005 488 C1040 488 1040 520 1077 520"/>
+	<path id="l-srv" class="link" d="M680 407V492"/>
+
+	<!-- Packets moving through the network -->
+	<circle class="packet" r="6"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#l-in"/></animateMotion></circle>
+	<circle class="packet" r="6"><animateMotion dur="1.6s" begin="0.8s" repeatCount="indefinite"><mpath href="#l-core"/></animateMotion></circle>
+	<circle class="packet" r="6"><animateMotion dur="1.8s" begin="0.4s" repeatCount="indefinite"><mpath href="#l-a"/></animateMotion></circle>
+	<circle class="packet" r="6"><animateMotion dur="1.8s" begin="1.3s" repeatCount="indefinite"><mpath href="#l-b"/></animateMotion></circle>
+	<circle class="packet" r="6"><animateMotion dur="1.4s" begin="0.6s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#l-srv"/></animateMotion></circle>
+
+	<!-- Internet -->
+	<path class="node" d="M110 400h110a34 34 0 0 0 0-68 46 46 0 0 0-88-10 36 36 0 0 0-22 78z"/>
+	<text class="label" x="160" y="440">Internet</text>
+
+	<!-- ACL / firewall shield on the incoming link -->
+	<path d="M300 322l42 15v34c0 28-19 45-42 56-23-11-42-28-42-56v-34z" fill="#0f2a1f" stroke="#34d399" stroke-width="3.5"/>
+	<path d="M283 373l12 12 23-25" fill="none" stroke="#34d399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+	<text class="label" x="300" y="460">ACL</text>
+
+	<!-- Router (circle with four arrows) -->
+	<circle class="node" cx="450" cy="375" r="48"/>
+	<g class="glyph" marker-end="url(#head)">
+		<path d="M424 349l16 16"/><path d="M476 401l-16-16"/>
+		<path d="M460 365l16-16"/><path d="M440 385l-16 16"/>
+	</g>
+	<text class="label" x="450" y="455">Router</text>
+
+	<!-- Layer 3 switch -->
+	<rect class="node" x="595" y="343" width="170" height="64" rx="10"/>
+	<g class="glyph" marker-end="url(#head)">
+		<path d="M622 365h40"/><path d="M738 385h-40"/><path d="M680 395v-26"/>
+	</g>
+	<text class="label" x="680" y="332">L3 switch</text>
+
+	<!-- Layer 2 switches -->
+	<rect class="node" x="855" y="245" width="150" height="50" rx="9"/>
+	<g class="glyph" marker-end="url(#head)"><path d="M880 263h36"/><path d="M980 277h-36"/></g>
+	<text class="label" x="930" y="232">L2 switch</text>
+	<rect class="node" x="855" y="455" width="150" height="50" rx="9"/>
+	<g class="glyph" marker-end="url(#head)"><path d="M880 473h36"/><path d="M980 487h-36"/></g>
+	<text class="label" x="930" y="530">L2 switch</text>
+
+	<!-- PCs -->
+	<g fill="#1b2433" stroke="#6474a2" stroke-width="3">
+		<rect x="1077" y="212" width="58" height="38" rx="5"/><rect x="1077" y="292" width="58" height="38" rx="5"/>
+		<rect x="1077" y="422" width="58" height="38" rx="5"/><rect x="1077" y="502" width="58" height="38" rx="5"/>
+	</g>
+	<g stroke="#6474a2" stroke-width="3" stroke-linecap="round">
+		<path d="M1094 258h24M1094 338h24M1094 468h24M1094 548h24"/>
+	</g>
+
+	<!-- Windows server -->
+	<rect class="node" x="642" y="492" width="76" height="100" rx="8"/>
+	<g fill="#1daef1">
+		<rect x="662" y="512" width="16" height="16"/><rect x="682" y="512" width="16" height="16"/>
+		<rect x="662" y="532" width="16" height="16"/><rect x="682" y="532" width="16" height="16"/>
+	</g>
+	<path d="M656 568h48M656 578h48" stroke="#6474a2" stroke-width="3" stroke-linecap="round"/>
+	<text class="label" x="626" y="548" style="text-anchor:end">Windows Server</text>
+	<text class="label" x="626" y="574" style="text-anchor:end; font-size:17px; fill:#6474a2">AD · DNS · DHCP</text>
+</svg>

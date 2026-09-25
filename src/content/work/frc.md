@@ -6,6 +6,7 @@ badge: 2027 coming soon
 description: |
   JPL Innovation is part of FRC Team 10951, a rookie team dedicated to engineering excellence, innovation,
   and STEM education. We design, build, and program competition robots — and our 2027 season is coming soon.
+order: 1
 ---
 
 <!--

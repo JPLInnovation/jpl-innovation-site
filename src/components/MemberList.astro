@@ -1,0 +1,37 @@
+---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+	members: CollectionEntry<"members">[];
+	headingLevel?: "h2" | "h3";
+}
+
+const { members, headingLevel: Heading = "h3" } = Astro.props;
+---
+
+<ul class="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+	{
+		members.map((m) => (
+			<li class="press group relative flex flex-col gap-4">
+				<div class="overflow-hidden rounded-xl bg-muted">
+					<img
+						src={m.data.img}
+						transition:name={`member-${m.id}`}
+						alt={m.data.img_alt ?? ""}
+						loading="lazy"
+						class="aspect-[4/5] w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+					/>
+				</div>
+				<div class="flex flex-col gap-1.5">
+					<Heading class="font-semiwide text-xl font-[760]">
+						{/* The whole card is clickable through this link's ::after. */}
+						<a href={`/members/${m.id}/`} class="after:absolute after:inset-0 group-hover:underline decoration-accent decoration-[3px] underline-offset-[5px]">
+							{m.data.title}
+						</a>
+					</Heading>
+					<p class="text-sm text-muted-foreground">{m.data.tags.join(", ")}</p>
+				</div>
+			</li>
+		))
+	}
+</ul>

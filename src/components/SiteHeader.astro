@@ -1,0 +1,54 @@
+---
+import Logo from "./Logo.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const links = [
+	{ label: "Work", href: "/work/" },
+	{ label: "FRC", href: "/work/frc/" },
+	{ label: "Members", href: "/members/" },
+];
+
+/** The most specific link that matches the current path, so /work/frc/ lights up "FRC", not "Work". */
+const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;
+const current = links
+	.filter((l) => path.startsWith(l.href))
+	.sort((a, b) => b.href.length - a.href.length)[0]?.href;
+---
+
+<header
+	data-site-header
+	class="sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-300 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/80"
+>
+	<div class="wrapper flex h-18 items-center justify-between gap-3">
+		<a href="/" class="press flex items-center rounded-md" aria-label="JPL Innovation home">
+			<Logo class="h-11 sm:h-14" />
+		</a>
+		<nav aria-label="Main" class="flex items-center gap-1 sm:gap-2">
+			<ul class="flex items-center">
+				{
+					links.map((l) => (
+						<li>
+							<a
+								href={l.href}
+								aria-current={l.href === current ? "page" : undefined}
+								class="press relative inline-flex h-11 items-center px-2.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground sm:px-3.5 after:absolute after:inset-x-2.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100 sm:after:inset-x-3.5"
+							>
+								{l.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+			<ThemeToggle />
+		</nav>
+	</div>
+</header>
+
+<script>
+	// Scroll edge: the header's bottom border only appears once content is scrolling underneath it.
+	const update = () => {
+		document.querySelector("[data-site-header]")?.toggleAttribute("data-scrolled", scrollY > 4);
+	};
+	addEventListener("scroll", update, { passive: true });
+	document.addEventListener("astro:page-load", update);
+</script>

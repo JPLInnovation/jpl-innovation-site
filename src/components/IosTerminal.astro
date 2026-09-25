@@ -1,0 +1,140 @@
+---
+/**
+ * A Cisco IOS console that types out real configs (VLANs, inter-VLAN routing, an ACL, SSH hardening).
+ * Scripts live in src/data/ccna.ts. Without JS it shows the first config in full; with reduced motion,
+ * each tab shows its full text instantly.
+ */
+import { terminalScenes, type TerminalLine } from "@/data/ccna";
+
+const first = terminalScenes[0];
+const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+const lineHtml = (line: TerminalLine) =>
+	line.out !== undefined
+		? `<span class="text-[#9aa7b8]">${esc(line.out)}</span>`
+		: `<span class="text-[#6d9bf2]">${esc(line.prompt ?? "")}</span> ${esc(line.cmd ?? "")}`;
+---
+
+<div data-ios-terminal class="overflow-hidden rounded-xl border border-[#243449] bg-[#0b1420] text-[#e7ecf2] shadow-[0_24px_60px_-28px_rgb(11_20_32/0.6)]">
+	<div class="flex items-center gap-2 border-b border-[#243449] px-4 py-3">
+		<span class="size-3 rounded-full bg-[#f0596b]" aria-hidden="true"></span>
+		<span class="size-3 rounded-full bg-[#ffc20e]" aria-hidden="true"></span>
+		<span class="size-3 rounded-full bg-[#34d399]" aria-hidden="true"></span>
+		<span class="ml-2 text-xs font-medium text-[#9aa7b8]">Console · Cisco IOS</span>
+	</div>
+	<div role="tablist" aria-label="Configuration" class="flex flex-wrap gap-1 border-b border-[#243449] px-2 py-2">
+		{
+			terminalScenes.map((scene, i) => (
+				<button
+					type="button"
+					role="tab"
+					data-scene={i}
+					aria-selected={i === 0 ? "true" : "false"}
+					class="min-h-9 rounded-md px-3 text-[13px] font-semibold text-[#9aa7b8] transition-colors duration-200 hover:bg-[#16243a] hover:text-[#e7ecf2] aria-selected:bg-[#1b2a3d] aria-selected:text-[#ffc20e]"
+				>
+					{scene.label}
+				</button>
+			))
+		}
+	</div>
+	<pre
+		data-screen
+		class="h-[23rem] overflow-y-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-[12.5px] leading-[1.7] md:text-[13.5px]"
+		set:html={first.lines.map(lineHtml).join("\n")}
+	></pre>
+	<p data-note class="min-h-[3.25rem] border-t border-[#243449] px-4 py-3 text-sm text-[#9aa7b8]">{first.note}</p>
+	<script is:inline type="application/json" data-scenes set:html={JSON.stringify(terminalScenes)}></script>
+</div>
+
+<script>
+	import type { TerminalLine, TerminalScene } from "@/data/ccna";
+
+	const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+	const promptHtml = (p = "") => `<span class="text-[#6d9bf2]">${esc(p)}</span> `;
+	const outHtml = (o: string) => `<span class="text-[#9aa7b8]">${esc(o)}</span>`;
+	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#ffc20e] motion-safe:animate-pulse" aria-hidden="true"></span>`;
+	const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	let stopAll: Array<() => void> = [];
+
+	function init() {
+		stopAll.forEach((stop) => stop());
+		stopAll = [];
+		const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+		for (const root of document.querySelectorAll<HTMLElement>("[data-ios-terminal]")) {
+			const scenes: TerminalScene[] = JSON.parse(root.querySelector("[data-scenes]")!.textContent ?? "[]");
+			const screen = root.querySelector<HTMLElement>("[data-screen]")!;
+			const note = root.querySelector<HTMLElement>("[data-note]")!;
+			const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-scene]")];
+			let run = 0; // bump to cancel the running animation
+			let onScreen = false;
+
+			const full = (i: number) =>
+				(screen.innerHTML = scenes[i].lines
+					.map((l: TerminalLine) => (l.out !== undefined ? outHtml(l.out) : promptHtml(l.prompt) + esc(l.cmd ?? "")))
+					.join("\n"));
+			const play = async (i: number) => {
+				const id = ++run;
+				const alive = () => id === run;
+				// Waits while scrolled away; gives up as soon as this run is cancelled (tab click, navigation).
+				const untilVisible = async () => {
+					while (!onScreen && alive()) await sleep(250);
+				};
+				screen.innerHTML = "";
+				for (const line of scenes[i].lines) {
+					await untilVisible();
+					if (!alive()) return;
+					const row = document.createElement("div");
+					screen.appendChild(row);
+					if (line.out !== undefined) {
+						row.innerHTML = outHtml(line.out);
+						await sleep(160);
+					} else {
+						const cmd = line.cmd ?? "";
+						for (let k = 0; k <= cmd.length; k++) {
+							if (!alive()) return;
+							row.innerHTML = promptHtml(line.prompt) + esc(cmd.slice(0, k)) + cursor;
+							await sleep(18 + Math.random() * 34);
+						}
+						row.innerHTML = promptHtml(line.prompt) + esc(cmd);
+						await sleep(340);
+					}
+					screen.scrollTop = screen.scrollHeight;
+				}
+				if (!alive()) return;
+				const last = [...scenes[i].lines].reverse().find((l) => l.prompt)?.prompt ?? "";
+				const tail = document.createElement("div");
+				tail.innerHTML = promptHtml(last) + cursor;
+				screen.appendChild(tail);
+				await sleep(2800);
+				await untilVisible();
+				if (alive()) select((i + 1) % scenes.length);
+			};
+
+			const select = (i: number) => {
+				tabs.forEach((tab, j) => tab.setAttribute("aria-selected", String(i === j)));
+				note.textContent = scenes[i].note;
+				if (reduced) full(i);
+				else play(i);
+			};
+
+			tabs.forEach((tab, i) => tab.addEventListener("click", () => select(i)));
+
+			let started = false;
+			const observer = new IntersectionObserver(([entry]) => {
+				onScreen = entry.isIntersecting;
+				if (onScreen && !started && !reduced) {
+					started = true;
+					select(0);
+				}
+			});
+			observer.observe(root);
+			stopAll.push(() => {
+				run++;
+				observer.disconnect();
+			});
+		}
+	}
+
+	document.addEventListener("astro:page-load", init);
+</script>

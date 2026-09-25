@@ -1,0 +1,14 @@
+---
+interface Props {
+	title: string;
+	lede?: string;
+}
+const { title, lede } = Astro.props;
+---
+
+<header class="wrapper flex flex-col gap-5 pb-10 pt-12 md:pb-14 md:pt-20">
+	<slot name="before" />
+	<h1 data-reveal class="font-wide text-[clamp(2.6rem,7vw,5.5rem)] font-[880] leading-[0.98]">{title}</h1>
+	{lede && <p data-reveal data-reveal-delay="120" class="max-w-[54ch] text-lg text-muted-foreground md:text-xl">{lede}</p>}
+	<slot />
+</header>

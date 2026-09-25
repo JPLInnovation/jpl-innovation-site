@@ -1,395 +1,170 @@
 ---
-import { getCollection } from "astro:content";
-// Component Imports
-import CallToAction from "../components/CallToAction.astro";
-import ContactCTA from "../components/ContactCTA.astro";
-import FocusAreas from "../components/FocusAreas.astro";
-import Grid from "../components/Grid.astro";
-import Hero from "../components/Hero.astro";
-import Icon from "../components/Icon.astro";
-import JourneyRoadmap from "../components/JourneyRoadmap.astro";
-import MemberPreview from "../components/MemberPreview.astro";
-import Mission from "../components/Mission.astro";
-import PortfolioPreview from "../components/PortfolioPreview.astro";
-import Skills from "../components/Skills.astro";
-import WhyItMatters from "../components/WhyItMatters.astro";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import { ArrowRight, CircleCheck, Cog, NotebookPen, ShieldCheck } from "lucide-react";
+import HomePortal from "@/components/home-portal";
+import JoinBand from "@/components/JoinBand.astro";
+import MemberList from "@/components/MemberList.astro";
+import ProjectList from "@/components/ProjectList.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getMembers, getProjects } from "@/lib/content";
+import { cn } from "@/lib/utils";
 
-// Content Fetching: first four projects and members, alphabetically
-const byTitle = (a: { data: { title: string } }, b: { data: { title: string } }) =>
-	a.data.title.toLowerCase().localeCompare(b.data.title.toLowerCase());
+const projects = await getProjects();
+const members = await getMembers();
 
-const projects = (await getCollection("work")).sort(byTitle).slice(0, 4);
-const members = (await getCollection("members")).sort(byTitle).slice(0, 4);
+const standards = [
+	"Projects that are demoable, measurable, and improving over time.",
+	"Clean foundations: documentation, version control, and repeatable setups.",
+	"Real-world skills: problem-solving, communication, and teamwork.",
+];
+
+const focus = [
+	{
+		icon: ShieldCheck,
+		title: "Networking and cybersecurity",
+		desc: "Build and secure real networks: CCNA routing and switching, Windows infrastructure, and habits that keep our projects safe.",
+	},
+	{
+		icon: Cog,
+		title: "Systems and engineering",
+		desc: "Build reliable systems on strong fundamentals: performance, debugging, and clear architecture from start to finish.",
+	},
+	{
+		icon: NotebookPen,
+		title: "Learning and sharing",
+		desc: "Document what we learn, mentor where we can, and keep a portfolio that shows real growth.",
+	},
+];
+
+type Milestone = { year: string; title: string; desc: string; state: "past" | "now" | "future" };
+const journey: Milestone[] = [
+	{ year: "2023", title: "Foundation and exploration", desc: "Learned programming fundamentals, explored tools, and built our first projects.", state: "past" },
+	{ year: "2024", title: "Project development", desc: "More hands-on robotics and software builds, and a growing portfolio.", state: "past" },
+	{ year: "2025", title: "Innovation and growth", desc: "Stronger full-stack foundations, better quality, and this site.", state: "past" },
+	{ year: "2026", title: "Professional development", desc: "Our FRC rookie season, bigger builds, open source, and internships.", state: "now" },
+	{ year: "2027–28", title: "Industry leadership", desc: "Lead projects with strong engineering habits and ship tools real people use.", state: "future" },
+	{ year: "2029+", title: "Creating the future", desc: "Larger-impact projects, mentoring others, and learning as technology moves.", state: "future" },
+];
 ---
 
 <BaseLayout>
-	<div class="stack gap-20 lg:gap-48">
-		<div class="wrapper stack gap-8 lg:gap-20">
-			<header class="hero">
-				<div class="hero-text">
-					<p class="eyebrow">
-						<span class="pulse" aria-hidden="true"></span>
-						FRC Team 10951 · Student-led
-					</p>
-					<Hero
-						title="Building tomorrow's technology, today"
-						tagline="We're a student-led team focused on learning fast, building real projects, and turning curiosity into practical innovation."
-						align="start"
-					>
-						<div class="hero-actions">
-							<CallToAction href="/work/">
-								See our work
-								<Icon icon="arrow-right" size="1.2em" />
-							</CallToAction>
-							<a class="secondary-link" href="/members/">
-								Meet the team
-							</a>
-						</div>
-					</Hero>
-				</div>
+	<h1 class="sr-only">JPL Innovation: student engineers and FRC Team 10951</h1>
 
-				<figure class="hero-image">
-					<img
-						alt="Team 10951's FRC robot on the practice field surrounded by yellow game pieces"
-						width="2000"
-						height="1333"
-						src="/assets/FRC.JPG"
-						fetchpriority="high"
-					/>
-					<figcaption>
-						<Icon icon="rocket-launch" size="1.1em" /> 2026 competition robot
-					</figcaption>
-				</figure>
-			</header>
-
-			<div data-reveal><Skills /></div>
-
-			<div data-reveal><Mission /></div>
-		</div>
-
-		<main class="wrapper stack gap-20 lg:gap-48">
-			<FocusAreas />
-
-			<div data-reveal><WhyItMatters /></div>
-
-			<JourneyRoadmap />
-
-			<section class="section with-background with-cta">
-				<header class="section-header stack gap-2 lg:gap-4" data-reveal>
-					<h3>Projects</h3>
-					<p>Robotics, drones, and AI — what we've built and what we're building next.</p>
-				</header>
-
-				<div class="gallery" data-reveal style="--reveal-delay: 120ms">
-					<Grid variant="offset">
-						{
-							projects.map((project) => (
-								<li>
-									<PortfolioPreview project={project} />
-								</li>
-							))
-						}
-					</Grid>
-				</div>
-
-				<div class="cta" data-reveal style="--reveal-delay: 240ms">
-					<CallToAction href="/work/">
-						View All
-						<Icon icon="arrow-right" size="1.2em" />
-					</CallToAction>
-				</div>
-			</section>
-
-			<section class="section with-background with-cta">
-				<header class="section-header stack gap-2 lg:gap-4" data-reveal>
-					<h3>Members</h3>
-					<p>The people behind JPL Innovation.</p>
-				</header>
-
-				<div class="gallery" data-reveal style="--reveal-delay: 120ms">
-					<Grid variant="offset">
-						{
-							members.map((member) => (
-								<li>
-									<MemberPreview member={member} />
-								</li>
-							))
-						}
-					</Grid>
-				</div>
-
-				<div class="cta" data-reveal style="--reveal-delay: 240ms">
-					<CallToAction href="/members/">
-						View All
-						<Icon icon="arrow-right" size="1.2em" />
-					</CallToAction>
-				</div>
-			</section>
-		</main>
-
-		<ContactCTA />
+	<!-- Pulled up under the sticky header so the opening frame fills the screen. -->
+	<div class="-mt-18">
+		<HomePortal client:load />
 	</div>
+
+	<!-- Projects -->
+	<section class="wrapper py-20 md:py-28" aria-labelledby="work-heading">
+		<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
+			<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">What we're building</h2>
+			<p class="text-lg text-muted-foreground">
+				A competition robot, a drone that streams over 4G, and the networks that keep it all secure.
+			</p>
+		</div>
+		<ProjectList projects={projects} />
+	</section>
+
+	<!-- Mission -->
+	<section class="border-y bg-card" aria-labelledby="mission-heading">
+		<div class="wrapper flex flex-col gap-6 pb-16 pt-24 md:pb-24 md:pt-36">
+			<h2 id="mission-heading" class="text-lg font-semibold text-muted-foreground" data-reveal>Our mission</h2>
+			<p data-words class="max-w-5xl font-wide text-[clamp(1.9rem,4.6vw,4.25rem)] font-[850] leading-[1.06] tracking-[-0.02em]">
+				Technology is a tool for impact. We keep pushing our skills through ambitious builds, careful experiments, and
+				working together every week.
+			</p>
+		</div>
+		<div class="wrapper grid gap-10 pb-16 md:grid-cols-[1fr_1.4fr] md:gap-16 md:pb-20">
+			<h3 class="text-lg font-semibold" data-reveal>What we hold ourselves to</h3>
+			<ul class="flex flex-col" data-reveal-group>
+				{
+					standards.map((s) => (
+						<li class="flex gap-3 border-t py-4">
+							<CircleCheck className="mt-0.5 size-5 shrink-0 text-alliance-blue" aria-hidden="true" />
+							<span>{s}</span>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+		<div class="wrapper pb-20 md:pb-28">
+			<div class="grid gap-10 border-t pt-12 md:grid-cols-3" data-reveal-group>
+			{
+				focus.map(({ icon: FocusIcon, title, desc }) => (
+					<div class="flex flex-col gap-3">
+						<FocusIcon className="size-7" strokeWidth={1.75} aria-hidden="true" />
+						<h3 class="font-semiwide text-xl font-[760]">{title}</h3>
+						<p class="text-muted-foreground">{desc}</p>
+					</div>
+				))
+			}
+			</div>
+		</div>
+	</section>
+
+	<!-- Journey -->
+	<section class="wrapper py-20 md:py-28" aria-labelledby="journey-heading">
+		<h2 data-reveal id="journey-heading" class="mb-12 max-w-2xl font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">
+			Where we've been, and where we're going
+		</h2>
+		<div class="relative">
+		<!-- Progress so far: draws from 2023 to the "Now" dot (4th of 6 columns). -->
+		<span
+			aria-hidden="true"
+			data-draw
+			data-draw-duration="1.6"
+			class="absolute left-0 top-0 z-[1] hidden h-0.5 w-1/2 bg-accent lg:block"
+		></span>
+		<ol class="grid lg:grid-cols-6" data-reveal-group>
+			{
+				journey.map((m) => (
+					<li
+						class={cn(
+							"relative border-l-2 pb-10 pl-7 lg:border-l-0 lg:border-t-2 lg:pb-0 lg:pl-0 lg:pr-6 lg:pt-8",
+							m.state === "future" ? "border-dashed border-foreground/25" : "border-foreground",
+						)}
+					>
+						<span
+							aria-hidden="true"
+							class={cn(
+								"absolute -left-[9px] top-1 z-[2] size-4 rounded-full border-2 lg:-top-[9px] lg:left-0",
+								m.state === "past" && "border-foreground bg-foreground",
+								m.state === "now" && "border-foreground bg-accent ring-4 ring-accent/35",
+								m.state === "future" && "border-foreground/40 bg-background",
+							)}
+						/>
+						<p class="flex items-center gap-2 font-semiwide text-2xl font-[800]">
+							{m.year}
+							{m.state === "now" && (
+								<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
+									Now
+								</span>
+							)}
+						</p>
+						<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
+						<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+					</li>
+				))
+			}
+		</ol>
+		</div>
+	</section>
+
+	<!-- Team -->
+	<section class="border-t bg-card" aria-labelledby="team-heading">
+		<div class="wrapper py-20 md:py-28">
+			<div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between" data-reveal>
+				<div class="flex max-w-2xl flex-col gap-3">
+					<h2 id="team-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">The team</h2>
+					<p class="text-lg text-muted-foreground">The students who design, build and write up everything on this site.</p>
+				</div>
+				<a href="/members/" class="press inline-flex min-h-11 items-center gap-2 font-semibold">
+					All members <ArrowRight className="size-4" aria-hidden="true" />
+				</a>
+			</div>
+			<MemberList members={members} />
+		</div>
+	</section>
+
+	<JoinBand />
 </BaseLayout>
-
-<style>
-	.hero {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 2.5rem;
-	}
-
-	.hero-text {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 1.25rem;
-		animation: rise 900ms var(--ease-out) both;
-	}
-
-	.eyebrow {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.6rem;
-		padding: 0.35rem 0.9rem;
-		border-radius: 999rem;
-		border: 1px solid var(--border-accent);
-		background: var(--accent-overlay);
-		color: var(--gray-100);
-		font-size: var(--text-sm);
-		font-weight: 700;
-	}
-
-	.pulse {
-		position: relative;
-		width: 0.5rem;
-		height: 0.5rem;
-		border-radius: 50%;
-		background: var(--accent-light);
-	}
-
-	.pulse::after {
-		content: "";
-		position: absolute;
-		inset: 0;
-		border-radius: inherit;
-		background: inherit;
-		animation: ping 2s var(--ease-out) infinite;
-	}
-
-	.hero-actions {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: center;
-		gap: 1rem 1.75rem;
-		margin-top: 0.75rem;
-	}
-
-	.secondary-link {
-		color: var(--gray-100);
-		font-family: var(--font-brand);
-		font-weight: 500;
-		text-decoration: underline 2px transparent;
-		text-underline-offset: 0.35em;
-		transition: text-decoration-color var(--theme-transition), color var(--theme-transition);
-	}
-
-	.secondary-link:hover,
-	.secondary-link:focus-visible {
-		color: var(--gray-0);
-		text-decoration-color: var(--accent-light);
-	}
-
-	.hero-image {
-		position: relative;
-		width: 100%;
-		max-width: 36rem;
-		animation: rise 1100ms 120ms var(--ease-out) both;
-	}
-
-	.hero-image::before {
-		/* Soft glow behind the photo. */
-		content: "";
-		position: absolute;
-		inset: 8% -4% -6% 4%;
-		z-index: -1;
-		border-radius: 2rem;
-		background: var(--gradient-accent-orange);
-		filter: blur(40px);
-		opacity: 0.45;
-	}
-
-	.hero-image img {
-		display: block;
-		width: 100%;
-		aspect-ratio: 4 / 3;
-		object-fit: cover;
-		object-position: 55% 70%;
-		border-radius: 1.5rem;
-		border: 1px solid var(--border-subtle);
-		box-shadow: var(--shadow-xl);
-	}
-
-	.hero-image figcaption {
-		position: absolute;
-		left: 1rem;
-		bottom: 1rem;
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.45rem 0.9rem;
-		border-radius: 999rem;
-		background: rgba(9, 11, 17, 0.6);
-		backdrop-filter: blur(8px);
-		color: #fff;
-		font-size: var(--text-sm);
-		font-weight: 700;
-	}
-
-	@keyframes rise {
-		from {
-			opacity: 0;
-			translate: 0 2rem;
-		}
-	}
-
-	@keyframes ping {
-		75%,
-		100% {
-			transform: scale(2.6);
-			opacity: 0;
-		}
-	}
-
-	@media (min-width: 50em) {
-		.hero {
-			display: grid;
-			grid-template-columns: 6fr 5fr;
-			align-items: center;
-			gap: 3.75rem;
-		}
-
-		.hero-text {
-			align-items: flex-start;
-		}
-
-		.hero-actions {
-			justify-content: flex-start;
-		}
-
-		.hero-image {
-			max-width: none;
-		}
-
-		.hero-image img {
-			aspect-ratio: 4 / 5;
-			border-radius: 3rem;
-		}
-
-		.hero-image figcaption {
-			left: 1.5rem;
-			bottom: 1.5rem;
-		}
-	}
-
-	/* ====================================================== */
-
-	.section {
-		display: grid;
-		gap: 2rem;
-	}
-
-	.with-background {
-		position: relative;
-	}
-
-	.with-background::before {
-		--hero-bg: var(--bg-image-subtle-2);
-
-		content: "";
-		position: absolute;
-		pointer-events: none;
-		left: 50%;
-		width: 100vw;
-		aspect-ratio: calc(2.25 / var(--bg-scale));
-		top: 0;
-		transform: translateY(-75%) translateX(-50%);
-		background:
-			url("/assets/backgrounds/noise.png") top center/220px repeat,
-			var(--hero-bg) center center / var(--bg-gradient-size) no-repeat,
-			var(--gray-999);
-		background-blend-mode: overlay, normal, normal, normal;
-		mix-blend-mode: var(--bg-blend-mode);
-		z-index: -1;
-	}
-
-	.section-header {
-		justify-self: center;
-		text-align: center;
-		max-width: 50ch;
-		font-size: var(--text-md);
-		color: var(--gray-300);
-	}
-
-	.section-header h3 {
-		font-size: var(--text-2xl);
-	}
-
-	.cta {
-		display: flex;
-		justify-content: center;
-	}
-
-	@media (min-width: 50em) {
-		.section {
-			grid-template-columns: 1fr 3fr;
-			grid-template-areas: "header gallery" "header gallery";
-			gap: 4rem 6rem;
-			align-items: start;
-		}
-
-		/* "View All" sits under the heading so the gallery gets the full width. */
-		.section.with-cta {
-			grid-template-rows: auto 1fr;
-			grid-template-areas: "header gallery" "cta gallery";
-			row-gap: 2rem;
-		}
-
-		/* Not sticky here, or the heading would slide over the "View All" button. */
-		.with-cta .section-header {
-			position: static;
-		}
-
-		.section-header {
-			grid-area: header;
-			font-size: var(--text-lg);
-			position: sticky;
-			top: 7rem;
-			justify-self: start;
-			text-align: left;
-			max-width: 15ch;
-		}
-
-		.section-header h3 {
-			font-size: var(--text-3xl);
-			margin-bottom: 1rem;
-		}
-
-		.section-header p {
-			font-size: var(--text-sm);
-			line-height: 1.6;
-		}
-
-		.gallery {
-			grid-area: gallery;
-		}
-
-		.cta {
-			grid-area: cta;
-			align-self: start;
-			justify-self: start;
-		}
-	}
-</style>

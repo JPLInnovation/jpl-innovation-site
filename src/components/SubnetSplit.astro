@@ -1,0 +1,77 @@
+---
+/**
+ * Subnetting, animated: 192.168.10.0/24 split into four /26 subnets.
+ * The segments draw in one after another (data-draw); all numbers are computed, not typed.
+ */
+const BASE = "192.168.10";
+const colors = ["bg-chart-1", "bg-chart-2", "bg-chart-3", "bg-chart-4"];
+const subnets = [0, 1, 2, 3].map((i) => {
+	const network = i * 64;
+	return {
+		cidr: `${BASE}.${network}/26`,
+		range: `.${network + 1} – .${network + 62}`,
+		broadcast: `${BASE}.${network + 63}`,
+		color: colors[i],
+	};
+});
+---
+
+<figure class="flex flex-col gap-6 rounded-xl border bg-background p-5 md:p-8">
+	<figcaption class="flex flex-col gap-2">
+		<h3 class="font-semiwide text-xl font-[780]">Subnetting: one /24 into four /26s</h3>
+		<p class="max-w-[60ch] text-muted-foreground">
+			Borrowing 2 host bits gives 2² = 4 subnets, each with 2⁶ − 2 = 62 usable host addresses.
+		</p>
+	</figcaption>
+
+	<div class="flex flex-col gap-1.5 overflow-x-auto font-mono text-[13px] md:text-sm">
+		<p><span class="text-muted-foreground">Mask</span> 255.255.255.192</p>
+		<p class="whitespace-nowrap" aria-label="Binary mask: 24 network bits, 2 borrowed bits, 6 host bits">
+			<span>11111111.11111111.11111111.</span><span class="rounded-sm bg-accent px-0.5 font-bold text-accent-foreground">11</span><span class="text-muted-foreground">000000</span>
+		</p>
+	</div>
+
+	<div class="flex flex-col gap-2">
+		<div class="flex justify-between text-xs text-muted-foreground" aria-hidden="true">
+			<span>{BASE}.0</span><span>{BASE}.255</span>
+		</div>
+		<div class="flex h-10 gap-1" aria-hidden="true">
+			{
+				subnets.map((s, i) => (
+					<span
+						class={`flex flex-1 origin-left items-center justify-center rounded-md text-xs font-bold text-white ${s.color}`}
+						data-draw
+						data-draw-duration="0.9"
+						data-reveal-delay={String(200 + i * 220)}
+					>
+						/26
+					</span>
+				))
+			}
+		</div>
+	</div>
+
+	<table class="w-full text-left text-sm">
+		<thead class="text-muted-foreground">
+			<tr>
+				<th scope="col" class="pb-2 font-medium">Subnet</th>
+				<th scope="col" class="pb-2 font-medium">Usable hosts</th>
+				<th scope="col" class="hidden pb-2 font-medium sm:table-cell">Broadcast</th>
+			</tr>
+		</thead>
+		<tbody data-reveal-group>
+			{
+				subnets.map((s) => (
+					<tr class="border-t">
+						<td class="py-2.5 pr-3 font-mono">
+							<span class={`mr-2 inline-block size-2.5 rounded-full ${s.color}`} aria-hidden="true" />
+							{s.cidr}
+						</td>
+						<td class="py-2.5 pr-3 font-mono">{s.range}</td>
+						<td class="hidden py-2.5 font-mono sm:table-cell">{s.broadcast}</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</figure>

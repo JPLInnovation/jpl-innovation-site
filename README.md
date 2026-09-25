@@ -1,32 +1,21 @@
-# Astro Starter Kit: Portfolio
+# JPL Innovation website
 
-bill: replace bun with npm it is basically the same
+Astro + React + Tailwind CSS v4 + shadcn/ui. Deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.
 
-```sh
-bun create astro@latest -- --template portfolio
-```
+Use **npm** (not bun): `package-lock.json` holds the esbuild/rollup overrides.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/portfolio)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/portfolio)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/portfolio/devcontainer.json)
+| Command           | Action                                     |
+| :---------------- | :----------------------------------------- |
+| `npm install`     | Install dependencies                       |
+| `npm run dev`     | Dev server at `localhost:4321`             |
+| `npm run build`   | Build the site to `./dist/`                |
+| `npm run preview` | Preview the build                          |
+| `npx astro check` | Type-check `.astro`, `.ts` and `.tsx` files |
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Where things live
 
-![portfolio](https://user-images.githubusercontent.com/357379/210779178-a98f0fb7-6b1a-4068-894c-8e1403e26654.jpg)
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- `src/content/work/*.md`, `src/content/members/*.md` — project cards and member profiles (`order` sets project order).
+- `src/data/frc.ts`, `src/data/drone.ts` — everything on the FRC and drone pages.
+- `src/components/ui/` — shadcn components (add more with `npx shadcn@latest add <name>`) and `glyph-portal.tsx`.
+- `src/components/home-portal.tsx` — the home page "JPL" scroll-through hero.
+- `src/styles/global.css` — colour tokens (light + dark), fonts, chart colours.

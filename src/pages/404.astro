@@ -1,8 +1,14 @@
 ---
-import Hero from '../components/Hero.astro';
-import BaseLayout from '../layouts/BaseLayout.astro';
+import { buttonVariants } from "@/components/ui/button";
+import PageIntro from "@/components/PageIntro.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="Not Found" description="404 Error — this page was not found">
-	<Hero title="Page Not Found" tagline="Not found" />
+<BaseLayout title="Page not found | JPL Innovation" description="This page doesn't exist.">
+	<PageIntro title="Page not found" lede="There's no page at this address. It may have moved when we rebuilt the site.">
+		<div class="flex flex-wrap gap-3 pt-2 pb-20">
+			<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>Go to the home page</a>
+			<a href="/work/" class={buttonVariants({ variant: "outline", size: "lg" })}>See our work</a>
+		</div>
+	</PageIntro>
 </BaseLayout>

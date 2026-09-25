@@ -1,312 +1,44 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content";
-
-import ContactCTA from "../../components/ContactCTA.astro";
-import Hero from "../../components/Hero.astro";
-import Icon from "../../components/Icon.astro";
-import Pill from "../../components/Pill.astro";
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import BackLink from "@/components/BackLink.astro";
+import JoinBand from "@/components/JoinBand.astro";
+import PageIntro from "@/components/PageIntro.astro";
+import StatusTag from "@/components/StatusTag.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 
 interface Props {
 	entry: CollectionEntry<"work">;
 }
 
-// This is a dynamic route that generates a page for every Markdown file in src/content/
-// Read more about dynamic routes and this `getStaticPaths` function in the Astro docs:
-// https://docs.astro.build/en/guides/routing/#dynamic-routes
 export async function getStaticPaths() {
-	// FRC and the drone have their own dedicated pages (src/pages/work/frc.astro, drone.astro).
-	const custom = ["frc", "drone"];
+	// FRC, the drone and cybersecurity have their own pages in src/pages/work/.
+	const custom = ["frc", "drone", "cybersecurity"];
 	const work = await getCollection("work", (entry) => !custom.includes(entry.id));
-	return work.map((entry) => ({
-		params: { slug: entry.id },
-		props: { entry },
-	}));
+	return work.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+const { data } = entry;
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.description}>
-	<div class="stack gap-20">
-		<div class="stack gap-15">
-			<header>
-				<div class="wrapper stack gap-2">
-					<a class="back-link" href="/work/"
-						><Icon icon="arrow-left" /> All work</a
-					>
-					<Hero title={entry.data.title} align="start">
-						<div class="details">
-							<p class="description">{entry.data.description}</p>
-						</div>
-					</Hero>
-				</div>
-			</header>
-			<main class="wrapper">
-				<div class="stack gap-10 content" data-reveal>
-					{
-						entry.data.img && (
-							<img
-								src={entry.data.img}
-								alt={entry.data.img_alt || ""}
-							/>
-						)
-					}
-					<div class="content">
-						<Content />
-					</div>
-				</div>
-			</main>
+<BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
+	<PageIntro title={data.title} lede={data.description}>
+		<div slot="before" class="flex flex-col gap-4">
+			<BackLink href="/work/">All work</BackLink>
+			{data.badge && <StatusTag>{data.badge}</StatusTag>}
 		</div>
-		<ContactCTA />
+	</PageIntro>
+
+	<div class="wrapper" data-reveal data-reveal-delay="200">
+		<img transition:name={`project-${entry.id}`} src={data.img} alt={data.img_alt ?? ""} class="aspect-[21/9] w-full rounded-xl bg-muted object-cover" />
 	</div>
+
+	<article class="wrapper py-16 md:py-24">
+		<div class="prose prose-lg prose-site max-w-[68ch]" data-reveal>
+			<Content />
+		</div>
+	</article>
+
+	<JoinBand />
 </BaseLayout>
-
-<style>
-	header {
-		padding-bottom: 1.5rem;
-		border-bottom: 1px solid var(--border-subtle);
-		position: relative;
-	}
-
-	@media (min-width: 50em) {
-		header {
-			padding-bottom: 2.5rem;
-		}
-	}
-
-	header::after {
-		content: '';
-		position: absolute;
-		bottom: -1px;
-		left: 0;
-		right: 0;
-		height: 1px;
-		background: linear-gradient(90deg, rgba(29, 174, 241, 0.5) 0%, transparent 100%);
-	}
-
-	.back-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		transition: translate var(--ease-duration) var(--ease-out), color var(--theme-transition);
-		font-size: var(--text-sm);
-		color: var(--link-color);
-		text-decoration: none;
-		margin-bottom: 0.5rem;
-	}
-
-	.back-link:hover {
-		translate: -4px 0;
-	}
-
-	.details {
-		display: flex;
-		flex-direction: column;
-		padding: 0.25rem;
-		gap: 1rem;
-		justify-content: flex-start;
-		align-items: flex-start;
-	}
-
-	.description {
-		font-size: var(--text-base);
-		max-width: 100%;
-		line-height: 1.6;
-		color: var(--gray-200);
-	}
-
-	@media (min-width: 50em) {
-		.details {
-			flex-direction: row;
-			gap: 2.5rem;
-			align-items: center;
-		}
-
-		.description {
-			font-size: var(--text-lg);
-			max-width: 54ch;
-		}
-	}
-
-	.content {
-		max-width: 100%;
-		margin-inline: auto;
-		padding: 0 1rem;
-	}
-
-	@media (min-width: 50em) {
-		.content {
-			max-width: 900px;
-			padding: 0;
-		}
-	}
-
-	.content > :global(* + *) {
-		margin-top: 1rem;
-	}
-
-	.content :global(h1),
-	.content :global(h2),
-	.content :global(h3),
-	.content :global(h4),
-	.content :global(h5) {
-		margin: 1.5rem 0 0.75rem 0;
-		background: linear-gradient(135deg, var(--gray-0) 0%, rgba(29, 174, 241, 0.4) 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-		font-size: var(--text-xl);
-		line-height: 1.2;
-	}
-
-	.content :global(h1) {
-		font-size: var(--text-2xl);
-	}
-
-	.content :global(h2) {
-		font-size: var(--text-xl);
-	}
-
-	@media (min-width: 50em) {
-		.content :global(h1),
-		.content :global(h2),
-		.content :global(h3),
-		.content :global(h4),
-		.content :global(h5) {
-			margin: 2rem 0 1rem 0;
-		}
-
-		.content :global(h2) {
-			font-size: var(--text-2xl);
-		}
-	}
-
-	.content :global(img) {
-		border-radius: 1rem;
-		box-shadow: var(--shadow-lg);
-		background: linear-gradient(135deg, var(--gray-900) 0%, rgba(29, 174, 241, 0.04) 100%);
-		border: 1px solid rgba(29, 174, 241, 0.15);
-		transition: transform 600ms var(--ease-out), box-shadow var(--ease-duration) var(--ease-out);
-		width: 100%;
-		height: auto;
-		max-width: 100%;
-	}
-
-	.content :global(img:hover) {
-		transform: scale(1.02);
-		box-shadow: var(--shadow-xl);
-		border-color: var(--border-accent);
-	}
-
-	@media (max-width: 49.99em) {
-		.content :global(img:hover) {
-			transform: none;
-		}
-	}
-
-	.content :global(blockquote) {
-		font-size: var(--text-base);
-		font-family: var(--font-brand);
-		font-weight: 600;
-		line-height: 1.4;
-		padding: 1rem 1rem 1rem 1.25rem;
-		padding-inline-start: 1.25rem;
-		border-radius: 0.75rem;
-		border-left: 4px solid var(--link-color);
-		background: linear-gradient(135deg, rgba(29, 174, 241, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
-		box-shadow: var(--shadow-sm);
-		color: var(--gray-0);
-		margin: 1rem 0;
-	}
-
-	@media (min-width: 50em) {
-		.content :global(blockquote) {
-			font-size: var(--text-lg);
-			padding: 1.5rem 1.5rem 1.5rem 1.5rem;
-		}
-	}
-
-	.content :global(table) {
-		width: 100%;
-		border-collapse: collapse;
-		margin: 1.5rem 0;
-		border-radius: 0.75rem;
-		overflow: hidden;
-		box-shadow: var(--shadow-md);
-		border: 1px solid rgba(29, 174, 241, 0.1);
-		font-size: var(--text-sm);
-	}
-
-	@media (min-width: 50em) {
-		.content :global(table) {
-			margin: 2rem 0;
-			border-radius: 1rem;
-			font-size: inherit;
-		}
-	}
-
-	.content :global(table thead) {
-		background: linear-gradient(135deg, rgba(29, 174, 241, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
-	}
-
-	.content :global(table th) {
-		padding: 0.75rem;
-		text-align: left;
-		font-weight: 600;
-		border-bottom: 1px solid rgba(29, 174, 241, 0.15);
-		color: var(--link-color);
-		font-size: var(--text-sm);
-	}
-
-	@media (min-width: 50em) {
-		.content :global(table th) {
-			padding: 1rem 1.5rem;
-			font-size: inherit;
-		}
-	}
-
-	.content :global(table td) {
-		padding: 0.75rem;
-		border-bottom: 1px solid var(--border-subtle);
-	}
-
-	@media (min-width: 50em) {
-		.content :global(table td) {
-			padding: 1rem 1.5rem;
-		}
-	}
-
-	.content :global(table tbody tr:hover) {
-		background: rgba(29, 174, 241, 0.05);
-		transition: background 200ms ease;
-	}
-
-	.content :global(ul),
-	.content :global(ol) {
-		padding-left: 1.75rem;
-	}
-
-	.content :global(li) {
-		margin: 0.75rem 0;
-		line-height: 1.6;
-		color: var(--gray-200);
-	}
-
-	.content :global(li::marker) {
-		color: var(--link-color);
-		font-weight: 600;
-	}
-
-	.content :global(a) {
-		text-decoration: 1px solid underline transparent;
-		text-underline-offset: 0.25em;
-		transition: text-decoration-color var(--theme-transition);
-	}
-
-	.content :global(a:hover),
-	.content :global(a:focus) {
-		text-decoration-color: currentColor;
-	}
-</style>

@@ -175,3 +175,127 @@ export const season2026 = {
 		},
 	],
 } as const;
+
+/* ------------------------------------------------------------------ */
+/* Hardware we use — motors and the CAN control stack                  */
+/* Specs as supplied by the team; nothing here is estimated.           */
+/* ------------------------------------------------------------------ */
+
+export interface HardwareItem {
+	name: string;
+	maker: string;
+	desc: string;
+	/** Spec chips: a value with an optional short label, e.g. { value: "6,000 RPM", label: "free speed" }. */
+	specs: Array<{ value: string; label?: string }>;
+	/** Older hardware kept for context. */
+	legacy?: boolean;
+}
+
+export const motors: HardwareItem[] = [
+	{
+		name: 'Kraken X60',
+		maker: 'CTRE',
+		desc: 'Powered by Talon FX: the motor and its controller in one unit.',
+		specs: [
+			{ value: '6,000 RPM', label: 'free speed' },
+			{ value: '1,100+ W', label: 'peak power' },
+			{ value: '~7+ N·m', label: 'stall torque' },
+			{ value: 'Integrated Talon FX' },
+			{ value: 'SplineXS shaft' },
+			{ value: 'High-res encoder' },
+		],
+	},
+	{
+		name: 'Kraken X44',
+		maker: 'CTRE',
+		desc: 'The compact X60, used where space and weight matter more than raw output.',
+		specs: [{ value: 'Integrated Talon FX' }, { value: 'SplineXS shaft family' }, { value: 'Compact' }],
+	},
+	{
+		name: 'NEO',
+		maker: 'REV Robotics',
+		desc: 'Brushless drop-in replacement for CIM-style motors, paired with a SPARK MAX controller.',
+		specs: [
+			{ value: '5,676 RPM', label: 'free speed' },
+			{ value: '2.6 N·m', label: 'stall torque' },
+			{ value: '406 W', label: 'peak output' },
+			{ value: 'SPARK MAX' },
+		],
+	},
+	{
+		name: 'NEO Vortex',
+		maker: 'REV Robotics',
+		desc: 'Integrated controller and a through-bore hex shaft for quick-change mounting.',
+		specs: [
+			{ value: '6,784 RPM', label: 'free speed' },
+			{ value: '3.6 N·m', label: 'stall torque' },
+			{ value: '640 W', label: 'peak output' },
+			{ value: 'Through-bore hex' },
+		],
+	},
+	{
+		name: 'Falcon 500',
+		maker: 'CTRE',
+		desc: 'The brushless motor that established the integrated Talon FX pattern before the Kraken line. Still widely used.',
+		specs: [{ value: 'Integrated Talon FX' }, { value: 'Brushless' }],
+		legacy: true,
+	},
+	{
+		name: 'CIM / Mini CIM',
+		maker: 'Classic',
+		desc: 'The brushed DC drivetrain motors most teams started on before brushless motors became legal and common.',
+		specs: [{ value: 'Brushed DC' }, { value: 'Drivetrain' }],
+		legacy: true,
+	},
+];
+
+export const controlStack: HardwareItem[] = [
+	{
+		name: 'CAN bus',
+		maker: 'Wiring',
+		desc: 'Every motor controller and sensor shares one two-wire bus back to the roboRIO.',
+		specs: [{ value: 'Two-wire' }, { value: 'Unique CAN ID per device' }],
+	},
+	{
+		name: 'Talon FX / Talon FXS',
+		maker: 'CTRE',
+		desc: 'Talon FX is built into Kraken and Falcon motors; Talon FXS is a standalone controller for third-party or brushed motors.',
+		specs: [{ value: 'Integrated (FX)' }, { value: 'Standalone (FXS)' }],
+	},
+	{
+		name: 'CANcoder',
+		maker: 'CTRE',
+		desc: 'Absolute magnetic encoder for precise rotational position, such as swerve module steering.',
+		specs: [{ value: 'Absolute' }, { value: 'Magnetic' }],
+	},
+	{
+		name: 'Pigeon 2.0',
+		maker: 'CTRE',
+		desc: 'IMU used for the robot’s heading and orientation.',
+		specs: [{ value: '9-axis IMU' }],
+	},
+	{
+		name: 'CANivore',
+		maker: 'CTRE',
+		desc: 'CAN FD adapter with more bandwidth and more reliable timing for larger CAN networks.',
+		specs: [{ value: 'CAN FD' }],
+	},
+	{
+		name: 'CANdi · CANrange · CANdle',
+		maker: 'CTRE',
+		desc: 'Signal interface, time-of-flight proximity sensing, and addressable LED control, all on the same bus.',
+		specs: [{ value: 'Signal I/O' }, { value: 'Time-of-flight' }, { value: 'Addressable LEDs' }],
+	},
+	{
+		name: 'PDP / PDH',
+		maker: 'Power',
+		desc: 'The Power Distribution Panel or Hub routes and breaker-protects power to every motor controller.',
+		specs: [{ value: 'Breaker-protected' }],
+	},
+	{
+		name: 'Phoenix Tuner X',
+		maker: 'CTRE',
+		desc: 'Desktop app for configuring, flashing firmware, and live-diagnosing every device above.',
+		specs: [{ value: 'Config' }, { value: 'Firmware' }, { value: 'Live diagnostics' }],
+	},
+];

@@ -6,6 +6,7 @@ badge: Build in progress
 description: |
   A quadcopter on the classic F450 frame that streams live video over 4G — Raspberry Pi Zero 2 W,
   Camera Module 3, and a MicoAir H743 flight controller.
+order: 2
 ---
 
 <!--

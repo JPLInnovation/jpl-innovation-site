@@ -1,0 +1,112 @@
+---
+/**
+ * "Hardware we use": motors and the CTRE/Phoenix CAN control stack, as a two-column spec sheet.
+ * Content lives in src/data/frc.ts (`motors`, `controlStack`).
+ */
+import HardwareRow from "@/components/HardwareRow.astro";
+import { controlStack, motors } from "@/data/frc";
+
+const current = motors.filter((m) => !m.legacy);
+const legacy = motors.filter((m) => m.legacy);
+// Devices drawn on the CAN bus diagram, left to right after the roboRIO.
+const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", "PDH"];
+---
+
+<section class="border-t" aria-labelledby="hardware-heading">
+	<div class="wrapper flex flex-col gap-12 py-20 md:py-28">
+		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
+			<h2 id="hardware-heading" class="font-wide text-3xl font-[850] md:text-5xl">Hardware we use</h2>
+			<p class="text-lg text-muted-foreground">
+				The stack: the motors that move the robot, and the CAN control system that drives them.
+			</p>
+		</div>
+
+		<div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
+			<!-- Motors -->
+			<div class="flex flex-col gap-6">
+				<h3 class="font-semiwide text-xl font-[780]">Motors</h3>
+				<ul class="flex flex-col" data-reveal-group>
+					{current.map((item) => <HardwareRow item={item} />)}
+				</ul>
+				<details class="group rounded-xl border bg-card px-5 py-4 open:pb-2">
+					<summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
+						Legacy motors
+						<span class="text-sm font-normal text-muted-foreground group-open:hidden">Falcon 500, CIM / Mini CIM</span>
+						<span class="hidden text-sm font-normal text-muted-foreground group-open:inline">Hide</span>
+					</summary>
+					<ul class="flex flex-col">
+						{legacy.map((item) => <HardwareRow item={item} />)}
+					</ul>
+				</details>
+			</div>
+
+			<!-- Control & electronics -->
+			<div class="flex flex-col gap-6">
+				<h3 class="font-semiwide text-xl font-[780]">Control &amp; electronics</h3>
+
+				<figure class="rounded-xl border bg-card p-5" data-reveal>
+					<div class="overflow-x-auto">
+						<div class="relative min-w-[30rem] pb-2 pt-1">
+							<!-- CAN High (yellow) and CAN Low (green), as wired on FRC robots -->
+							<div class="absolute left-16 right-8 top-[1.55rem] flex flex-col gap-1" aria-hidden="true">
+								<span class="relative h-[3px] overflow-hidden rounded-full bg-[#e8b400]">
+									<span class="can-pulse"></span>
+								</span>
+								<span class="relative h-[3px] overflow-hidden rounded-full bg-[#2e9b4f]">
+									<span class="can-pulse can-pulse--late"></span>
+								</span>
+							</div>
+							<ol class="relative flex items-start justify-between gap-2">
+								<li class="flex w-16 flex-col items-center gap-2 text-center">
+									<span class="grid h-9 w-16 place-items-center rounded-md bg-foreground text-[11px] font-bold text-background">roboRIO</span>
+								</li>
+								{
+									busDevices.map((device) => (
+										<li class="flex w-16 flex-col items-center gap-2 text-center">
+											<span class="h-9 w-[3px] rounded-full bg-border" aria-hidden="true" />
+											<span class="text-[11px] font-semibold leading-tight">{device}</span>
+										</li>
+									))
+								}
+							</ol>
+						</div>
+					</div>
+					<figcaption class="mt-3 text-sm text-muted-foreground">
+						One two-wire bus back to the roboRIO. Every device on it has its own CAN ID.
+					</figcaption>
+				</figure>
+
+				<ul class="flex flex-col" data-reveal-group>
+					{controlStack.map((item) => <HardwareRow item={item} />)}
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.can-pulse {
+		position: absolute;
+		inset-block: 0;
+		left: 0;
+		width: 18%;
+		border-radius: 9999px;
+		background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.95), transparent);
+		transform: translateX(-100%);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.can-pulse {
+			animation: can-pulse 2.6s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+		}
+		.can-pulse--late {
+			animation-delay: 1.3s;
+		}
+	}
+
+	@keyframes can-pulse {
+		to {
+			transform: translateX(560%);
+		}
+	}
+</style>

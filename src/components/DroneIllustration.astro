@@ -1,6 +1,6 @@
 ---
 /**
- * Animated top-down F450 quadcopter (quad-X). Front is up; the front arms are red like the real frame.
+ * Top-down F450 quadcopter (quad-X). Front is up; the front arms are red like the real frame.
  * Props spin in the standard pattern: front-left & rear-right CW, front-right & rear-left CCW.
  * Drawn roughly to scale: 10" props on 450 mm motor-to-motor diagonal.
  */
@@ -20,9 +20,9 @@ const motors = [
 >
 	<defs>
 		<radialGradient id="prop-disc">
-			<stop offset="0.25" stop-color="#5cc8ff" stop-opacity="0" />
-			<stop offset="0.9" stop-color="#5cc8ff" stop-opacity="0.16" />
-			<stop offset="1" stop-color="#5cc8ff" stop-opacity="0.35" />
+			<stop offset="0.25" stop-color="currentColor" stop-opacity="0" />
+			<stop offset="0.9" stop-color="currentColor" stop-opacity="0.16" />
+			<stop offset="1" stop-color="currentColor" stop-opacity="0.35" />
 		</radialGradient>
 	</defs>
 
@@ -64,29 +64,28 @@ const motors = [
 </svg>
 
 <style>
+	/* Colours follow the site palette; front arms are red like the real frame. */
 	.drone {
 		display: block;
 		width: 100%;
 		height: auto;
 		overflow: visible;
-	}
-
-	.body {
-		animation: bob 4s ease-in-out infinite;
+		color: var(--alliance-blue);
 	}
 
 	.arm {
-		stroke: #c3cadb;
+		stroke: var(--muted-foreground);
 		stroke-width: 14;
 		stroke-linecap: round;
 	}
 
 	.arm.front {
-		stroke: #e5484d;
+		stroke: var(--alliance-red);
 	}
 
 	.prop ellipse {
-		fill: rgba(227, 234, 245, 0.85);
+		fill: var(--foreground);
+		opacity: 0.55;
 	}
 
 	.prop {
@@ -95,57 +94,55 @@ const motors = [
 		animation: spin 0.32s linear infinite;
 	}
 
+	/* On load: the props spin up, then the drone lifts off (only when motion is allowed). */
+	:global(.motion) .prop {
+		animation:
+			spinup 1.1s ease-in both,
+			spin 0.32s linear 1.1s infinite;
+	}
+	:global(.motion) .body {
+		transform-box: fill-box;
+		transform-origin: center;
+		animation: liftoff 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+	}
+
 	.prop.ccw {
 		animation-direction: reverse;
 	}
 
 	.motor {
-		fill: #2b3445;
-		stroke: #6474a2;
+		fill: var(--card);
+		stroke: var(--foreground);
 		stroke-width: 3;
 	}
 
-	.hub {
-		fill: #c3cadb;
+	.hub,
+	.led,
+	.lens {
+		fill: var(--accent);
 	}
 
 	.plate {
-		fill: #1b2433;
-		stroke: #3d4663;
-		stroke-width: 3;
+		fill: var(--foreground);
 	}
 
 	.fc {
-		fill: #0f1a2b;
-		stroke: #1daef1;
+		fill: var(--background);
+		stroke: var(--accent);
 		stroke-width: 2.5;
 	}
 
-	.led {
-		fill: #1daef1;
-		animation: blink 1.6s ease-in-out infinite;
-	}
-
 	.cam {
-		fill: #283044;
-		stroke: #8490b5;
+		fill: var(--foreground);
+		stroke: var(--muted-foreground);
 		stroke-width: 2;
-	}
-
-	.lens {
-		fill: #5cc8ff;
 	}
 
 	.signal path {
 		fill: none;
-		stroke: #5cc8ff;
+		stroke: var(--accent);
 		stroke-width: 3;
 		stroke-linecap: round;
-		animation: signal 1.8s ease-in-out infinite;
-	}
-
-	.signal path:nth-child(2) {
-		animation-delay: 0.3s;
 	}
 
 	@keyframes spin {
@@ -153,26 +150,14 @@ const motors = [
 			transform: rotate(360deg);
 		}
 	}
-
-	@keyframes bob {
-		50% {
-			transform: translateY(-6px);
+	@keyframes spinup {
+		to {
+			transform: rotate(720deg);
 		}
 	}
-
-	@keyframes blink {
-		50% {
-			opacity: 0.25;
-		}
-	}
-
-	@keyframes signal {
-		0%,
-		100% {
-			opacity: 0.2;
-		}
-		50% {
-			opacity: 1;
+	@keyframes liftoff {
+		from {
+			transform: translateY(18px) scale(0.94);
 		}
 	}
 </style>

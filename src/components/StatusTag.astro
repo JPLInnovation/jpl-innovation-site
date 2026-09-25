@@ -1,0 +1,17 @@
+---
+/** A project's current status. The yellow dot marks something that's live or next up. */
+interface Props {
+	class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<span
+	class:list={[
+		"inline-flex w-fit items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium",
+		className,
+	]}
+>
+	<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>
+	<slot />
+</span>

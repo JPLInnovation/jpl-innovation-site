@@ -1,0 +1,12 @@
+---
+/** The JPL Innovation logo. The light theme uses a copy with navy "JPL" letters (scripts/make-logo-assets.mjs). */
+interface Props {
+	class?: string;
+}
+const { class: className } = Astro.props;
+---
+
+<span class:list={["inline-flex", className]}>
+	<img src="/assets/jpl-logo-light.png" alt="JPL Innovation" width="687" height="248" class="h-full w-auto dark:hidden" />
+	<img src="/assets/jpl-logo-dark.png" alt="JPL Innovation" width="687" height="248" class="hidden h-full w-auto dark:block" />
+</span>

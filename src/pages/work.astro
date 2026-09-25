@@ -1,37 +1,17 @@
 ---
-import { getCollection } from "astro:content";
-import ContactCTA from "../components/ContactCTA.astro";
-import Grid from "../components/Grid.astro";
-import Hero from "../components/Hero.astro";
-import PortfolioPreview from "../components/PortfolioPreview.astro";
-import BaseLayout from "../layouts/BaseLayout.astro";
+import JoinBand from "@/components/JoinBand.astro";
+import PageIntro from "@/components/PageIntro.astro";
+import ProjectList from "@/components/ProjectList.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getProjects } from "@/lib/content";
 
-const projects = (await getCollection("work")).sort((a, b) =>
-	a.data.title.toLowerCase().localeCompare(b.data.title.toLowerCase()),
-);
+const projects = await getProjects();
 ---
 
-<BaseLayout
-	title="Our Work | JPL Innovation"
-	description="Learn about JPL Innovation's projects"
->
-	<div class="stack gap-20">
-		<main class="wrapper stack gap-8">
-			<Hero
-				title="Our Work"
-				tagline="What we've built, what we're building, and what's coming next."
-				align="start"
-			/>
-			<Grid variant="offset">
-				{
-					projects.map((project) => (
-						<li>
-							<PortfolioPreview project={project} />
-						</li>
-					))
-				}
-			</Grid>
-		</main>
-		<ContactCTA />
-	</div>
+<BaseLayout title="Work | JPL Innovation" description="JPL Innovation's projects: FRC Team 10951, the F450 4G drone, and cybersecurity.">
+	<PageIntro title="Work" lede="What we've built, what's on the bench now, and what's coming next." />
+	<section class="wrapper pb-20 md:pb-28">
+		<ProjectList projects={projects} headingLevel="h2" />
+	</section>
+	<JoinBand />
 </BaseLayout>

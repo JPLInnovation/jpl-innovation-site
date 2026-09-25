@@ -1,146 +1,85 @@
 ---
-// Learn about using Astro layouts:
-// https://docs.astro.build/en/basics/layouts/
-
-import Footer from '../components/Footer.astro';
-// Component Imports
-import MainHead from '../components/MainHead.astro';
-import Nav from '../components/Nav.astro';
 import { ClientRouter } from "astro:transitions";
+import SiteFooter from "@/components/SiteFooter.astro";
+import SiteHeader from "@/components/SiteHeader.astro";
+import "@/styles/global.css";
 
 interface Props {
 	title?: string | undefined;
 	description?: string | undefined;
 }
 
-const { title, description } = Astro.props;
+const {
+	title = "JPL Innovation",
+	description = "Student engineers in Ho Chi Minh City building competition robots, a 4G drone, and secure networks.",
+} = Astro.props;
 ---
 
 <html lang="en">
 	<head>
-		<MainHead title={title} description={description} />
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content={description} />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#eef1f4" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0b1420" media="(prefers-color-scheme: dark)" />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
+		<title>{title}</title>
+		<link rel="icon" type="image/png" href="/favicon.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<script is:inline>
+			// Inlined and blocking so the page never flashes the wrong theme.
+			// `motion` hides scroll-revealed content until src/scripts/motion.ts animates it in.
+			// Skipped for reduced motion; removed again if the script hasn't started within 2.5 s.
+			const applyMotion = () => {
+				const root = document.documentElement;
+				if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+				root.classList.add("motion");
+				setTimeout(() => {
+					if (!root.classList.contains("motion-live")) root.classList.remove("motion");
+				}, 2500);
+			};
+			applyMotion();
+			// The only thing this site keeps in localStorage is this theme choice (no tokens, no accounts).
+			// Anything other than "dark"/"light" is ignored and the system setting is used instead.
+			const applyTheme = () => {
+				let stored = null;
+				try {
+					stored = localStorage.getItem("theme");
+				} catch {}
+				const valid = stored === "dark" || stored === "light";
+				const dark = valid ? stored === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+				document.documentElement.classList.toggle("dark", dark);
+			};
+			applyTheme();
+			// Client-side navigation swaps <html> attributes, so re-apply after each swap.
+			if (!window.__jplThemeHook) {
+				document.addEventListener("astro:after-swap", () => {
+					applyTheme();
+					applyMotion();
+				});
+				window.__jplThemeHook = true;
+			}
+		</script>
 		<ClientRouter />
 	</head>
 	<body>
-		<div class="stack backgrounds">
-			<Nav />
+		<a
+			href="#main"
+			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-foreground"
+		>
+			Skip to content
+		</a>
+		<SiteHeader />
+		<main id="main" class="flex-1">
 			<slot />
-			<Footer />
-		</div>
-
+		</main>
+		<SiteFooter />
 		<script>
-			// Add “loaded” class once the document has completely loaded.
-			addEventListener('load', () => document.documentElement.classList.add('loaded'));
-
-			// Scroll reveal: fade elements marked with [data-reveal] in as they enter the viewport.
-			let observer: IntersectionObserver | undefined;
-			let failsafe: number | undefined;
-			const initReveal = () => {
-				observer?.disconnect();
-				clearTimeout(failsafe);
-				const targets = document.querySelectorAll<HTMLElement>('[data-reveal]:not(.is-visible)');
-				const revealAll = () => targets.forEach((el) => el.classList.add('is-visible'));
-				if (!('IntersectionObserver' in window)) return revealAll();
-				// If nothing is ever reported on screen (e.g. an unusual embed), never leave content hidden.
-				failsafe = window.setTimeout(revealAll, 1500);
-				observer = new IntersectionObserver(
-					(entries) => {
-						for (const entry of entries) {
-							if (!entry.isIntersecting) continue;
-							clearTimeout(failsafe);
-							entry.target.classList.add('is-visible');
-							observer?.unobserve(entry.target);
-						}
-					},
-					{ rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-				);
-				targets.forEach((el) => observer!.observe(el));
-			};
-			document.addEventListener('astro:page-load', initReveal);
+			import "@/scripts/motion";
 		</script>
-
-		<style>
-			:root {
-				--_placeholder-bg: linear-gradient(transparent, transparent);
-				--bg-image-main: url('/assets/backgrounds/bg-main-light-800w.jpg');
-				--bg-image-main-curves: url('/assets/backgrounds/bg-main-light.svg');
-				--bg-image-subtle-1: var(--_placeholder-bg);
-				--bg-image-subtle-2: var(--_placeholder-bg);
-				--bg-image-footer: var(--_placeholder-bg);
-				--bg-svg-blend-mode: overlay;
-				--bg-blend-mode: darken;
-				--bg-image-aspect-ratio: 2.25;
-				--bg-scale: 1.68;
-				--bg-aspect-ratio: calc(var(--bg-image-aspect-ratio) / var(--bg-scale));
-				--bg-gradient-size: calc(var(--bg-scale) * 100%);
-			}
-
-			:root.theme-dark {
-				--bg-image-main: url('/assets/backgrounds/bg-main-dark-800w.jpg');
-				--bg-image-main-curves: url('/assets/backgrounds/bg-main-dark.svg');
-				--bg-svg-blend-mode: darken;
-				--bg-blend-mode: lighten;
-			}
-
-			/* These backgrounds are displayed below the fold, so we lazy load them
-			   once the `.loaded` class has been set.  */
-			:root.loaded {
-				--bg-image-subtle-1: url('/assets/backgrounds/bg-subtle-1-light-800w.jpg');
-				--bg-image-subtle-2: url('/assets/backgrounds/bg-subtle-2-light-800w.jpg');
-				--bg-image-footer: url('/assets/backgrounds/bg-footer-light-800w.jpg');
-			}
-			:root.loaded.theme-dark {
-				--bg-image-subtle-1: url('/assets/backgrounds/bg-subtle-1-dark-800w.jpg');
-				--bg-image-subtle-2: url('/assets/backgrounds/bg-subtle-2-dark-800w.jpg');
-				--bg-image-footer: url('/assets/backgrounds/bg-footer-dark-800w.jpg');
-			}
-
-			@media (min-width: 50em) {
-				:root {
-					--bg-scale: 1;
-					--bg-image-main: url('/assets/backgrounds/bg-main-light-1440w.jpg');
-				}
-				:root.theme-dark {
-					--bg-image-main: url('/assets/backgrounds/bg-main-dark-1440w.jpg');
-				}
-
-				:root.loaded {
-					--bg-image-subtle-1: url('/assets/backgrounds/bg-subtle-1-light-1440w.jpg');
-					--bg-image-subtle-2: url('/assets/backgrounds/bg-subtle-2-light-1440w.jpg');
-					--bg-image-footer: url('/assets/backgrounds/bg-footer-light-1440w.jpg');
-				}
-				:root.loaded.theme-dark {
-					--bg-image-subtle-1: url('/assets/backgrounds/bg-subtle-1-dark-1440w.jpg');
-					--bg-image-subtle-2: url('/assets/backgrounds/bg-subtle-2-dark-1440w.jpg');
-					--bg-image-footer: url('/assets/backgrounds/bg-footer-dark-1440w.jpg');
-				}
-			}
-
-			.backgrounds {
-				min-height: 100%;
-				isolation: isolate;
-				background:
-					/*noise*/
-					url('/assets/backgrounds/noise.png') top center/220px repeat,
-					/*footer*/ var(--bg-image-footer) bottom center/var(--bg-gradient-size) no-repeat,
-					/*header1*/ var(--bg-image-main-curves) top center/var(--bg-gradient-size) no-repeat,
-					/*header2*/ var(--bg-image-main) top center/var(--bg-gradient-size) no-repeat,
-					/*base*/ var(--gray-999);
-				background-blend-mode: /*noise*/
-					overlay,
-					/*footer*/ var(--bg-blend-mode),
-					/*header1*/ var(--bg-svg-blend-mode),
-					/*header2*/ normal,
-					/*base*/ normal;
-			}
-			@media (forced-colors: active) {
-				/* Deactivate custom backgrounds for high contrast users. */
-				.backgrounds {
-					background: none;
-					background-blend-mode: none;
-					--bg-gradient-size: none;
-				}
-			}
-		</style>
 	</body>
 </html>

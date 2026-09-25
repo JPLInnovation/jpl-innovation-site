@@ -13,6 +13,7 @@ export interface PartGroup {
 	id: string;
 	title: string;
 	icon: 'rocket-launch' | 'lightning' | 'target' | 'video-camera';
+	/** A chart token (validated categorical order), used for the budget bar and legend. */
 	color: string;
 	parts: Part[];
 }
@@ -85,7 +86,7 @@ export const partGroups: PartGroup[] = [
 		id: 'airframe',
 		title: 'Airframe & propulsion',
 		icon: 'rocket-launch',
-		color: '#9378ca',
+		color: 'var(--chart-1)',
 		parts: [
 			{ name: 'F450 Drone Frame', why: 'A large, strong frame with plenty of room for all the electronics.', price: 180_000 },
 			{ name: '4× 2212 Brushless Motors', why: 'The classic motors for the F450 frame — 2 clockwise, 2 counter-clockwise.', price: 142_000 },
@@ -98,7 +99,7 @@ export const partGroups: PartGroup[] = [
 		id: 'power',
 		title: 'Power',
 		icon: 'lightning',
-		color: '#f5a524',
+		color: 'var(--chart-2)',
 		parts: [
 			{ name: 'LiPo Battery 3S 2200 mAh', why: 'The power needed to lift this heavier rig.', price: 360_000 },
 			{ name: 'MicoAir PDB', why: 'Power distribution board that connects the battery to the ESCs.' },
@@ -110,7 +111,7 @@ export const partGroups: PartGroup[] = [
 		id: 'control',
 		title: 'Flight control',
 		icon: 'target',
-		color: '#1683c2',
+		color: 'var(--chart-3)',
 		parts: [
 			{ name: 'MicoAir743 V2 (H743, 30×30)', why: 'The drone’s main flight brain.', price: 1_500_000 },
 			{ name: 'Microzone MC6C Radio', why: 'To steer the drone manually with minimal lag.', price: 600_000 },
@@ -120,7 +121,7 @@ export const partGroups: PartGroup[] = [
 		id: 'video',
 		title: 'Video & 4G',
 		icon: 'video-camera',
-		color: '#1daef1',
+		color: 'var(--chart-4)',
 		parts: [
 			{ name: 'Raspberry Pi Zero 2 W', why: 'Processes and streams the video over 4G.', price: 850_000 },
 			{ name: 'Camera Module 3', why: 'Crisp, high-quality video with fast autofocus.', price: 864_000 },

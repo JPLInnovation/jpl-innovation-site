@@ -1,0 +1,62 @@
+---
+/**
+ * A number whose digits roll up into place on page load, like a mechanical counter.
+ * Screen readers get the plain number; without motion the digits simply sit in place.
+ */
+interface Props {
+	value: string;
+	class?: string;
+}
+const { value, class: className } = Astro.props;
+const digits = [...value];
+---
+
+<span class:list={["odometer", className]}>
+	<span class="sr-only">{value}</span>
+	{
+		digits.map((d, i) =>
+			/\d/.test(d) ? (
+				<span class="odo-window" aria-hidden="true">
+					<span class="odo-strip" style={`--digit: ${d}; --i: ${i}`}>
+						{/* Two turns of the wheel, so every digit spins a full turn before landing. */}
+						{[...Array(20).keys()].map((n) => <span>{n % 10}</span>)}
+					</span>
+				</span>
+			) : (
+				<span aria-hidden="true">{d}</span>
+			),
+		)
+	}
+</span>
+
+<style>
+	.odometer {
+		display: inline-flex;
+		font-variant-numeric: tabular-nums;
+	}
+	.odo-window {
+		display: inline-block;
+		height: 1em;
+		/* A little room so descending strokes aren't clipped. */
+		line-height: 1;
+		overflow: hidden;
+	}
+	.odo-strip {
+		display: flex;
+		flex-direction: column;
+		transform: translateY(calc((var(--digit) + 10) * -1em));
+	}
+	.odo-strip > span {
+		height: 1em;
+	}
+	/* Only rolls when motion is allowed (the `motion` class is set in BaseLayout). */
+	:global(.motion) .odo-strip {
+		animation: roll 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+		animation-delay: calc(var(--i) * 90ms + 150ms);
+	}
+	@keyframes roll {
+		from {
+			transform: translateY(0);
+		}
+	}
+</style>

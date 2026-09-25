@@ -1,4 +1,5 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 
 export const collections = {
@@ -10,8 +11,10 @@ export const collections = {
 			description: z.string(),
 			img: z.string(),
 			img_alt: z.string().optional(),
-			/** Optional short label shown on the project card, e.g. "Coming soon". */
+			/** Optional short status shown on the project card, e.g. "Build in progress". */
 			badge: z.string().optional(),
+			/** Position in project lists; lower comes first. */
+			order: z.number().default(99),
 		}),
 	}),
 	members: defineCollection({
