@@ -28,7 +28,7 @@ const leaders = await getLeaders();
 			leaders.map((m) => {
 				const roles = leadershipRoles(m, lead);
 				return (
-					<li class="press group relative flex items-center gap-5 rounded-xl border bg-background p-5 md:p-6">
+					<li class="press group relative flex items-center gap-5 rounded-xl border surface p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] md:p-6">
 						<img
 							src={m.data.img}
 							alt=""
@@ -40,7 +40,7 @@ const leaders = await getLeaders();
 						<div class="flex min-w-0 flex-col gap-1.5">
 							<a
 								href={`/members/${m.id}/`}
-								class="font-semiwide text-xl font-[760] after:absolute after:inset-0 group-hover:underline decoration-accent decoration-[3px] underline-offset-[5px]"
+								class="font-semiwide text-xl font-[760] after:absolute after:inset-0 group-hover:underline decoration-primary dark:decoration-accent decoration-[3px] underline-offset-[5px]"
 							>
 								{m.data.title}
 							</a>

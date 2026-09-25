@@ -52,7 +52,7 @@ export default function HomePortal() {
 				style={{
 					"--gp-paper": "var(--background)",
 					"--gp-ink": "var(--foreground)",
-					"--gp-field": "#0e1b2c",
+					"--gp-field": "var(--hero-field)",
 					"--gp-foreground": "#ffffff",
 					fontFamily: "inherit",
 				}}
@@ -82,11 +82,12 @@ function BuildPhoto() {
 				className="absolute inset-0 size-full object-cover object-[32%_68%]"
 				fetchPriority="high"
 			/>
-			{/* Darkens only once the camera is through, so the copy on top stays readable. */}
-			<div
-				className="absolute inset-0 bg-gradient-to-t from-[#0e1b2c] via-[#0e1b2c]/75 to-[#0e1b2c]/30"
-				style={{ opacity: "var(--gp-reveal,0)" }}
-			/>
+			{/* Darkens only once the camera is through. The copy sits on the left, so the scrim is strongest there
+			    (keeps the white text above WCAG AA even over the bright parts of the photo). */}
+			<div className="absolute inset-0" style={{ opacity: "var(--gp-reveal,0)" }}>
+				<div className="absolute inset-0 bg-gradient-to-t from-hero-field via-hero-field/70 to-hero-field/25" />
+				<div className="absolute inset-0 bg-gradient-to-r from-hero-field/90 via-hero-field/60 to-transparent" />
+			</div>
 		</div>
 	);
 }

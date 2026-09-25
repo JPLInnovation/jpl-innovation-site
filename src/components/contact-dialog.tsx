@@ -19,8 +19,8 @@ type Props = {
 	subject?: string;
 	/** Text on the button that opens the dialog. */
 	label?: string;
-	/** How the opening button looks. */
-	look?: "ink" | "signal" | "link";
+	/** How the opening button looks. "inverse" is a white button for coloured backgrounds. */
+	look?: "ink" | "signal" | "link" | "inverse";
 	className?: string;
 };
 
@@ -67,8 +67,9 @@ export default function ContactDialog({
 						size="lg"
 						variant={look === "signal" ? "signal" : "default"}
 						className={cn(
-							look === "ink" &&
-								"bg-[#0e1b2c] text-white hover:bg-[#0e1b2c]/90 focus-visible:outline-[#0e1b2c] dark:bg-[#0e1b2c] dark:text-white",
+							look === "ink" && "bg-primary text-primary-foreground hover:bg-primary/90",
+							look === "inverse" &&
+								"bg-white font-semibold text-[#1d4ed8] shadow-[var(--shadow-soft)] hover:-translate-y-px hover:bg-white/95 focus-visible:ring-white/60",
 							className,
 						)}
 					>

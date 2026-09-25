@@ -21,8 +21,8 @@ const {
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content={description} />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="theme-color" content="#eef1f4" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#0b1420" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#f4f7fc" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#060b18" media="(prefers-color-scheme: dark)" />
 		<meta property="og:type" content="website" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
@@ -67,6 +67,11 @@ const {
 		<ClientRouter />
 	</head>
 	<body>
+		<!-- Animated background (global.css + src/scripts/background.ts). Persisted so it doesn't restart on navigation. -->
+		<div class="site-bg" aria-hidden="true" transition:persist="site-bg">
+			<div class="site-bg__mesh"></div>
+			<canvas class="site-bg__net" data-site-bg></canvas>
+		</div>
 		<a
 			href="#main"
 			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-foreground"
@@ -79,6 +84,7 @@ const {
 		</main>
 		<SiteFooter />
 		<script>
+			import "@/scripts/background";
 			import "@/scripts/motion";
 		</script>
 	</body>

@@ -73,8 +73,8 @@ const journey: Milestone[] = [
 					const Icon = serviceIcons[s.icon];
 					const external = s.proof.href.startsWith("http");
 					return (
-						<li class="flex flex-col gap-4 rounded-xl border bg-card p-6 md:p-8">
-							<Icon className="size-8 text-alliance-blue" strokeWidth={1.75} aria-hidden="true" />
+						<li class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
+							<Icon className="size-8 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
 							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
 							<p class="text-muted-foreground">{s.desc}</p>
 							<a
@@ -93,7 +93,7 @@ const journey: Milestone[] = [
 	</section>
 
 	<!-- Projects -->
-	<section class="border-t bg-card" aria-labelledby="work-heading">
+	<section class="border-t bg-card/70" aria-labelledby="work-heading">
 		<div class="wrapper py-20 md:py-28">
 			<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
 				<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">Selected work</h2>
@@ -121,7 +121,7 @@ const journey: Milestone[] = [
 				{
 					standards.map((s) => (
 						<li class="flex gap-3 border-t py-4">
-							<CircleCheck className="mt-0.5 size-5 shrink-0 text-alliance-blue" aria-hidden="true" />
+							<CircleCheck className="mt-0.5 size-5 shrink-0 text-primary dark:text-accent" aria-hidden="true" />
 							<span>{s}</span>
 						</li>
 					))
@@ -196,7 +196,7 @@ const journey: Milestone[] = [
 	</section>
 
 	<!-- Team -->
-	<section class="border-t bg-card" aria-labelledby="team-heading">
+	<section class="border-t bg-card/70" aria-labelledby="team-heading">
 		<div class="wrapper py-20 md:py-28">
 			<div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between" data-reveal>
 				<div class="flex max-w-2xl flex-col gap-3">

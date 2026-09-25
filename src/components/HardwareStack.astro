@@ -28,7 +28,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 				<ul class="flex flex-col" data-reveal-group>
 					{current.map((item) => <HardwareRow item={item} />)}
 				</ul>
-				<details class="group rounded-xl border bg-card px-5 py-4 open:pb-2">
+				<details class="group rounded-xl border surface px-5 py-4 open:pb-2">
 					<summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
 						Legacy motors
 						<span class="text-sm font-normal text-muted-foreground group-open:hidden">Falcon 500, CIM / Mini CIM</span>
@@ -44,7 +44,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 			<div class="flex flex-col gap-6">
 				<h3 class="font-semiwide text-xl font-[780]">Control &amp; electronics</h3>
 
-				<figure class="rounded-xl border bg-card p-5" data-reveal>
+				<figure class="rounded-xl border surface p-5" data-reveal>
 					<div class="overflow-x-auto">
 						<div class="relative min-w-[30rem] pb-2 pt-1">
 							<!-- CAN High (yellow) and CAN Low (green), as wired on FRC robots -->

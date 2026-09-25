@@ -206,7 +206,7 @@ const Season2026 = memo(function Season2026() {
 							href={game.fieldImage}
 							target="_blank"
 							rel="noopener"
-							className="group block overflow-hidden rounded-xl border bg-card"
+							className="group block overflow-hidden rounded-xl border surface"
 							aria-label="Open the 2026 playing field image full size"
 						>
 							<img
@@ -231,7 +231,7 @@ const Season2026 = memo(function Season2026() {
 				</div>
 
 				<div className="grid gap-6 lg:grid-cols-2">
-					<figure className="flex flex-col gap-5 rounded-xl border bg-card p-6 md:p-8">
+					<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 						<figcaption className="flex items-baseline justify-between gap-4">
 							<h3 className="flex items-center gap-2 text-lg font-semibold">
 								<Clock className="size-5" aria-hidden="true" /> Match structure
@@ -269,7 +269,7 @@ const Season2026 = memo(function Season2026() {
 						<p className="sr-only">Total match length {matchSeconds} seconds.</p>
 					</figure>
 
-					<figure className="flex flex-col gap-5 rounded-xl border bg-card p-6 md:p-8">
+					<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 						<figcaption>
 							<h3 className="text-lg font-semibold">Points per scoring action</h3>
 						</figcaption>
@@ -358,7 +358,7 @@ const Season2026 = memo(function Season2026() {
 					))}
 				</ul>
 
-				<figure className="flex flex-col gap-5 rounded-xl border bg-card p-6 md:p-8">
+				<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 					<figcaption>
 						<h3 className="text-lg font-semibold">Performance in testing</h3>
 					</figcaption>
@@ -405,7 +405,7 @@ const Season2026 = memo(function Season2026() {
 				</ul>
 				<ul className="grid gap-6 md:grid-cols-2">
 					{season2026.competitions.map((c, i) => (
-						<Reveal as="li" delay={i * 0.1} key={c.code} className="flex flex-col gap-4 rounded-xl border bg-card p-6 md:p-8">
+						<Reveal as="li" delay={i * 0.1} key={c.code} className="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
 							<div className="flex items-start justify-between gap-4">
 								<div>
 									<h3 className="font-semiwide text-xl font-[780]">{c.name}</h3>

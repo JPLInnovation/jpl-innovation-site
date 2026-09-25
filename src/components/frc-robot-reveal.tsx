@@ -43,7 +43,7 @@ export default function FrcRobotReveal({ src, alt }: { src: string; alt: string 
 		return (
 			<section className="relative overflow-hidden" aria-label="Our 2026 robot">
 				<img src={src} alt={alt} className="h-[70svh] w-full object-cover object-[55%_75%]" />
-				<div className="absolute inset-0 bg-gradient-to-t from-[#0e1b2c] via-[#0e1b2c]/70 to-transparent" />
+				<div className="absolute inset-0 bg-gradient-to-t from-hero-field via-hero-field/70 to-transparent" />
 				<Copy />
 			</section>
 		);
@@ -60,7 +60,7 @@ export default function FrcRobotReveal({ src, alt }: { src: string; alt: string 
 						style={{ scale }}
 					/>
 					<motion.div
-						className="absolute inset-0 bg-gradient-to-t from-[#0e1b2c] via-[#0e1b2c]/85 to-[#0e1b2c]/35"
+						className="absolute inset-0 bg-gradient-to-t from-hero-field via-hero-field/85 to-hero-field/35"
 						style={{ opacity: shade }}
 					/>
 				</motion.div>

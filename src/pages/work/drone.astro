@@ -46,7 +46,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 				}
 			</dl>
 		</div>
-		<figure transition:name="project-drone" class="flex flex-col gap-4 rounded-xl border bg-card p-4 md:p-6" data-reveal>
+		<figure transition:name="project-drone" class="flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
 			<ModelViewer
 				client:visible
 				model="drone"
@@ -99,7 +99,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	</section>
 
 	<!-- How it works -->
-	<section class="border-y bg-card" aria-labelledby="systems-heading">
+	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
 		<div class="wrapper flex flex-col gap-10 py-20 md:py-24">
 			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
 				<h2 id="systems-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">Three systems, one drone</h2>
@@ -164,7 +164,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	<section id="parts" class="wrapper flex flex-col gap-10 py-20 md:py-24" aria-labelledby="parts-heading">
 		<h2 data-reveal id="parts-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{partCount} parts, one budget</h2>
 
-		<figure class="grid gap-8 rounded-xl border bg-card p-6 md:grid-cols-[1fr_1.4fr] md:p-8" data-reveal>
+		<figure class="grid gap-8 rounded-xl border surface p-6 md:grid-cols-[1fr_1.4fr] md:p-8" data-reveal>
 			<div class="flex flex-col gap-2">
 				<p class="text-sm text-muted-foreground">Estimated total</p>
 				<p class="font-wide text-[clamp(2.2rem,5vw,3.25rem)] font-[880] leading-none tabular-nums" data-count={total} data-count-format="vnd">{formatVnd(total)}</p>
@@ -219,7 +219,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	</section>
 
 	<!-- Earlier work -->
-	<section class="border-t bg-card" aria-labelledby="earlier-heading">
+	<section class="border-t bg-card/70" aria-labelledby="earlier-heading">
 		<div class="wrapper grid gap-8 py-20 md:grid-cols-[1fr_1.2fr] md:gap-14 md:py-24">
 			<div class="flex flex-col gap-3" data-reveal>
 				<p class="text-sm text-muted-foreground">Earlier work, {earlierWork.date}</p>

@@ -41,8 +41,10 @@ const CARD_H = 0.9;
 const SPACING = 0.86;
 const TEX_W = 600;
 const TEX_H = 900;
-const NAVY = "#0e1b2c";
-const YELLOW = "#ffc20e";
+const NAVY = "#0a1a33";
+const BLUE = "#1d4ed8"; // --primary
+const CYAN = "#22d3ee"; // --accent
+const SLOT = "#1b2c4d";
 const FONT = '"Archivo Variable", "Arial Black", sans-serif';
 
 export const view = (options: Options): StageView => {
@@ -259,17 +261,17 @@ async function drawFront({ c, texture }: Face, member: BadgeMember) {
 	// Navy header with logo and the lanyard slot
 	c.fillStyle = NAVY;
 	c.fillRect(0, 0, TEX_W, 150);
-	c.fillStyle = "#26364d";
+	c.fillStyle = SLOT;
 	roundedPath(c, TEX_W / 2 - 50, 18, 100, 16, 8);
 	c.fill();
 	if (logo) {
 		const h = 64;
 		c.drawImage(logo, 36, 58, (logo.width / logo.height) * h, h);
 	}
-	c.fillStyle = YELLOW;
+	c.fillStyle = CYAN;
 	c.font = `700 22px ${FONT}`;
 	c.textAlign = "right";
-	c.fillText("FRC TEAM 10951", TEX_W - 36, 98);
+	c.fillText("TEAM MEMBER", TEX_W - 36, 98);
 
 	// Photo, cover-fit from the top
 	const box = { x: 40, y: 180, w: TEX_W - 80, h: 450 };
@@ -296,13 +298,13 @@ async function drawFront({ c, texture }: Face, member: BadgeMember) {
 	c.fillText(roleLine, 40, 758);
 
 	// Footer band
-	c.fillStyle = YELLOW;
+	c.fillStyle = BLUE;
 	c.fillRect(0, 820, TEX_W, 80);
-	c.fillStyle = NAVY;
+	c.fillStyle = "#ffffff";
 	c.font = `800 26px ${FONT}`;
 	c.fillText("JPL INNOVATION", 40, 870);
 	c.textAlign = "right";
-	c.fillText("MEMBER", TEX_W - 40, 870);
+	c.fillText("HO CHI MINH CITY", TEX_W - 40, 870);
 	texture.needsUpdate = true;
 }
 
@@ -310,7 +312,7 @@ async function drawBack({ c, texture }: Face, member: BadgeMember) {
 	const [logo] = await Promise.all([loadImage("/assets/jpl-logo-dark.png"), fontsReady()]);
 	c.fillStyle = NAVY;
 	c.fillRect(0, 0, TEX_W, TEX_H);
-	c.fillStyle = "#26364d";
+	c.fillStyle = SLOT;
 	roundedPath(c, TEX_W / 2 - 50, 18, 100, 16, 8);
 	c.fill();
 	if (logo) {
@@ -325,23 +327,23 @@ async function drawBack({ c, texture }: Face, member: BadgeMember) {
 	const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced: 3 };
 	member.skills.slice(0, 6).forEach((skill, i) => {
 		const y = 310 + i * 64;
-		c.fillStyle = "#e7ecf2";
+		c.fillStyle = "#e6edf8";
 		c.font = `700 28px ${FONT}`;
 		c.fillText(skill.title, 40, y);
 		const level = levels[skill.level] ?? 0;
 		for (let n = 0; n < 3; n++) {
-			c.fillStyle = n < level ? YELLOW : "#26364d";
+			c.fillStyle = n < level ? CYAN : SLOT;
 			roundedPath(c, TEX_W - 40 - (3 - n) * 44, y - 18, 36, 12, 6);
 			c.fill();
 		}
 	});
 
-	c.fillStyle = "#9aa7b8";
+	c.fillStyle = "#93a4bd";
 	c.font = `600 24px ${FONT}`;
 	c.fillText(member.roles.join(" · "), 40, 740, TEX_W - 80);
-	c.fillStyle = YELLOW;
+	c.fillStyle = BLUE;
 	c.fillRect(0, 820, TEX_W, 80);
-	c.fillStyle = NAVY;
+	c.fillStyle = "#ffffff";
 	c.font = `700 24px ${FONT}`;
 	c.textAlign = "center";
 	c.fillText("jpl-innovation.github.io", TEX_W / 2, 870);
@@ -359,12 +361,12 @@ function strap() {
 	texture.wrapS = texture.wrapT = RepeatWrapping;
 	texture.repeat.set(1, 2.6);
 	const draw = () => {
-		c.fillStyle = YELLOW;
+		c.fillStyle = BLUE;
 		c.fillRect(0, 0, 64, 512);
 		c.save();
 		c.translate(32, 256);
 		c.rotate(-Math.PI / 2);
-		c.fillStyle = NAVY;
+		c.fillStyle = "#ffffff";
 		c.font = `800 30px ${FONT}`;
 		c.textAlign = "center";
 		c.textBaseline = "middle";

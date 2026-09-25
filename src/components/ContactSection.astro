@@ -1,25 +1,57 @@
 ---
 /**
  * Contact section at the bottom of every page (id="contact", linked from the nav).
- * The address lives in src/data/site.ts.
+ * The address lives in src/data/site.ts. The band uses fixed blues (not theme variables) so its
+ * white text keeps AA contrast (≥ 6.7:1) in both light and dark mode.
  */
 import ContactDialog from "./contact-dialog";
 import { site } from "@/data/site";
 ---
 
-<section id="contact" class="bg-accent text-accent-foreground" aria-labelledby="contact-heading">
-	<div class="wrapper flex flex-col gap-8 py-16 md:flex-row md:items-end md:justify-between md:py-20">
+<section id="contact" class="contact-band relative isolate overflow-hidden text-white" aria-labelledby="contact-heading">
+	<div class="wrapper flex flex-col gap-8 py-16 md:flex-row md:items-end md:justify-between md:py-24">
 		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
 			<h2 id="contact-heading" class="font-wide text-[clamp(1.9rem,4vw,3rem)] font-[850]">Let&rsquo;s work together.</h2>
-			<p class="text-lg">
+			<p class="text-lg text-white/90">
 				Have a project in mind, or want to learn more about what we do at JPL Innovation? Reach out at
 				<a
 					href={`mailto:${site.email}`}
-					class="font-semibold underline decoration-2 underline-offset-4 transition-[text-decoration-color] hover:decoration-current"
+					class="font-semibold text-white underline decoration-white/60 decoration-2 underline-offset-4 transition-[text-decoration-color] hover:decoration-white"
 					>{site.email}</a
 				>, and we&rsquo;d love to hear from you.
 			</p>
 		</div>
-		<ContactDialog client:visible label="Email us" subject="Project enquiry for JPL Innovation" className="shrink-0" />
+		<ContactDialog
+			client:visible
+			label="Email us"
+			look="inverse"
+			subject="Project enquiry for JPL Innovation"
+			className="shrink-0"
+		/>
 	</div>
 </section>
+
+<style>
+	.contact-band {
+		background: linear-gradient(120deg, #0b3fb8 0%, #1d4ed8 45%, #6d28d9 100%);
+	}
+	/* A slow sheen across the band; off for reduced motion. */
+	.contact-band::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		background: radial-gradient(60% 120% at 85% 0%, rgb(34 211 238 / 0.28), transparent 60%);
+		animation: contact-sheen 14s ease-in-out infinite alternate;
+	}
+	@keyframes contact-sheen {
+		to {
+			transform: translateX(-18%);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.contact-band::before {
+			animation: none;
+		}
+	}
+</style>
