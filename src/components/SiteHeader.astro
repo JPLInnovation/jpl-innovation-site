@@ -17,9 +17,10 @@ const current = links
 	.sort((a, b) => b.href.length - a.href.length)[0]?.href;
 ---
 
+<!-- Auto-hides once the page scrolls; comes back when the mouse reaches the top edge, on keyboard focus, or (touch) on scroll up. -->
 <header
 	data-site-header
-	class="sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-300 data-[menu-open]:border-border/70 data-[menu-open]:bg-background/95 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/80"
+	class="site-header sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 data-[menu-open]:border-border/70 data-[menu-open]:bg-background/95 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/80"
 >
 	<div class="wrapper flex h-18 items-center justify-between gap-3">
 		<a href="/" class="press flex items-center rounded-md" aria-label="JPL Innovation home">
@@ -84,9 +85,35 @@ const current = links
 			}
 		</ul>
 	</nav>
+
+	<!-- Pull-tab that hangs below the header while it is hidden. Hover it (or tap it on touch) to bring the header back. -->
+	<div data-header-tab class="header-tab absolute top-full left-1/2 flex h-6 w-16 -translate-x-1/2 items-center justify-center rounded-b-xl border border-t-0 border-foreground/15 bg-background/90 shadow-[var(--shadow-soft)] backdrop-blur-xl" aria-hidden="true">
+		<span class="h-1 w-7 rounded-full bg-foreground/55"></span>
+	</div>
 </header>
 
 <style>
+	/* Hide by sliding up; the tab below the header stays in view. */
+	.site-header {
+		transition:
+			transform 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+			border-color 0.3s,
+			background-color 0.3s;
+	}
+	.site-header[data-hidden] {
+		transform: translateY(-100%);
+	}
+	.header-tab {
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.3s;
+	}
+	[data-hidden] .header-tab {
+		opacity: 1;
+		pointer-events: auto;
+		cursor: pointer;
+	}
+
 	/* Two bars that fold into an X when the menu is open. */
 	.menu-icon {
 		position: relative;
@@ -149,6 +176,8 @@ const current = links
 	}
 
 	@media (prefers-reduced-motion: reduce) {
+		.site-header,
+		.header-tab,
 		.menu-icon > span,
 		.menu-panel,
 		.menu-item {
@@ -169,6 +198,29 @@ const current = links
 		const edge = () => header.toggleAttribute("data-scrolled", scrollY > 4);
 		edge();
 
+		// Auto-hide: the header is always shown near the top of the page, while it is hovered or holds focus, and
+		// while the phone menu is open. Mouse users bring it back by moving to the top edge; touch users by scrolling up.
+		const TOP = 80;
+		const EDGE = 28;
+		const hoverMode = matchMedia("(hover: hover) and (pointer: fine)");
+		const tab = header.querySelector<HTMLElement>("[data-header-tab]")!;
+		let hideTimer = 0;
+		let lastY = scrollY;
+		const show = () => {
+			clearTimeout(hideTimer);
+			header.removeAttribute("data-hidden");
+		};
+		const canHide = () =>
+			scrollY > TOP &&
+			!isOpen() &&
+			// Touch screens keep :hover and focus on whatever was tapped, so only count real hover and keyboard focus.
+			!(hoverMode.matches && header.matches(":hover")) &&
+			!header.querySelector(":focus-visible");
+		const hideSoon = (delay = 0) => {
+			clearTimeout(hideTimer);
+			hideTimer = window.setTimeout(() => canHide() && header.setAttribute("data-hidden", ""), delay);
+		};
+
 		const button = header.querySelector<HTMLButtonElement>("[data-menu-button]")!;
 		const panel = header.querySelector<HTMLElement>("[data-menu-panel]")!;
 		const desktop = matchMedia("(min-width: 48rem)");
@@ -182,12 +234,22 @@ const current = links
 			panel.inert = !open;
 			if (open) openedAt = scrollY;
 			else if (returnFocus) button.focus();
+			if (!open) hideSoon(600);
 		};
 
 		const onScroll = () => {
 			edge();
 			// Close as soon as the page actually scrolls (a little slack for touch jitter).
 			if (isOpen() && Math.abs(scrollY - openedAt) > 8) setOpen(false);
+			const y = scrollY;
+			if (y <= TOP) show();
+			else if (hoverMode.matches) hideSoon();
+			else if (y < lastY - 6) show(); // touch: scrolling up
+			else if (y > lastY + 6) hideSoon();
+			if (Math.abs(y - lastY) > 6 || y <= TOP) lastY = y;
+		};
+		const onPointerMove = (event: PointerEvent) => {
+			if (event.pointerType === "mouse" && event.clientY <= EDGE) show();
 		};
 		const onPointerDown = (event: PointerEvent) => {
 			if (isOpen() && !header.contains(event.target as Node)) setOpen(false);
@@ -201,7 +263,14 @@ const current = links
 		panel.addEventListener("click", (event) => {
 			if ((event.target as Element).closest("a")) setOpen(false);
 		});
+		header.addEventListener("pointerleave", () => hideSoon(400));
+		header.addEventListener("focusin", () => header.querySelector(":focus-visible") && show());
+		header.addEventListener("focusout", () => hideSoon(100));
+		tab.addEventListener("click", show);
+		document.addEventListener("pointermove", onPointerMove, { passive: true });
 		addEventListener("scroll", onScroll, { passive: true });
+		// Arriving mid-page (reload, #contact link): start hidden.
+		if (scrollY > TOP) hideSoon(800);
 		document.addEventListener("pointerdown", onPointerDown);
 		document.addEventListener("keydown", onKey);
 		desktop.addEventListener("change", onBreakpoint);
@@ -209,6 +278,8 @@ const current = links
 		cleanup = () => {
 			removeEventListener("scroll", onScroll);
 			document.removeEventListener("pointerdown", onPointerDown);
+			document.removeEventListener("pointermove", onPointerMove);
+			clearTimeout(hideTimer);
 			document.removeEventListener("keydown", onKey);
 			desktop.removeEventListener("change", onBreakpoint);
 		};
