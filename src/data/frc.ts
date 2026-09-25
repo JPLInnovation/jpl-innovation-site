@@ -105,6 +105,30 @@ export const season2026 = {
 		{ when: 'Mar 30 – Apr 5', title: 'Istanbul Regional', desc: 'Second regional competition, in Istanbul, Turkey.' },
 	],
 	robot: {
+		/** Photos of the 2026 robot (a modified KitBot). The first is shown large; w/h are the files' pixel sizes. */
+		photos: [
+			{
+				src: '/assets/FRCnew.jpg',
+				w: 2000,
+				h: 1333,
+				alt: "Team 10951's 2026 KitBot from the front: red star-wheel intake, blue and green feeder, and the white, blue and black launcher hood, with the team's practice goal behind it.",
+				caption: 'Front: intake, feeder and launcher hood',
+			},
+			{
+				src: '/assets/kitbot-back.jpg',
+				w: 1000,
+				h: 1501,
+				alt: 'The robot from the back: the clear hopper with the 10951 Saigon South Dragons decal, the banded launcher roller and the feeder.',
+				caption: 'Back: the clear hopper and our decal',
+			},
+			{
+				src: '/assets/FRC.JPG',
+				w: 2000,
+				h: 1333,
+				alt: "Our 2026 robot on the team's practice field among yellow FUEL balls, in front of the wooden practice goal.",
+				caption: 'Testing on our practice field',
+			},
+		],
 		philosophy:
 			'Reliability first. A robot that scores 80% reliably beats one that scores 95% once and fails the next.',
 		stats: [

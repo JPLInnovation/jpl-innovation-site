@@ -330,6 +330,41 @@ const Season2026 = memo(function Season2026() {
 					<p className="font-semiwide text-[clamp(1.25rem,2.4vw,1.75rem)] font-[650] leading-snug">{robot.philosophy}</p>
 				</Reveal>
 
+				{/* The KitBot we built: front and field shots stacked on the left, the tall rear shot on the right. */}
+				<ul aria-label="Photos of our 2026 KitBot" className="grid gap-4 md:grid-cols-[1.125fr_1fr] md:grid-rows-2">
+					{robot.photos.map((photo, i) => (
+						<Reveal
+							as="li"
+							delay={i * 0.08}
+							key={photo.src}
+							className={cn("min-h-0", i === 1 && "md:col-start-2 md:row-span-2 md:row-start-1")}
+						>
+							<figure className="flex h-full flex-col gap-2">
+								<a
+									href={photo.src}
+									target="_blank"
+									rel="noopener"
+									className="group block min-h-0 flex-1 overflow-hidden rounded-xl border surface"
+								>
+									<img
+										src={photo.src}
+										alt={photo.alt}
+										width={photo.w}
+										height={photo.h}
+										loading="lazy"
+										decoding="async"
+										className={cn(
+											"size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]",
+											i === 1 ? "aspect-[4/5] object-[50%_70%] md:aspect-auto" : "aspect-[3/2]",
+										)}
+									/>
+								</a>
+								<figcaption className="text-sm text-muted-foreground">{photo.caption}</figcaption>
+							</figure>
+						</Reveal>
+					))}
+				</ul>
+
 				<dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border md:grid-cols-4">
 					{robot.stats.map((s) => (
 						<div key={s.label} className="flex flex-col gap-1 bg-card p-5 md:p-6">
