@@ -17,38 +17,201 @@ const current = links
 
 <header
 	data-site-header
-	class="sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-300 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/80"
+	class="sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 transition-[border-color,background-color] duration-300 data-[menu-open]:border-border/70 data-[menu-open]:bg-background/95 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/80"
 >
 	<div class="wrapper flex h-18 items-center justify-between gap-3">
 		<a href="/" class="press flex items-center rounded-md" aria-label="JPL Innovation home">
 			<Logo class="h-11 sm:h-14" />
 		</a>
-		<nav aria-label="Main" class="flex items-center gap-1 sm:gap-2">
-			<ul class="flex items-center">
-				{
-					links.map((l) => (
-						<li>
-							<a
-								href={l.href}
-								aria-current={l.href === current ? "page" : undefined}
-								class="press relative inline-flex h-11 items-center px-2.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground sm:px-3.5 after:absolute after:inset-x-2.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100 sm:after:inset-x-3.5"
-							>
-								{l.label}
-							</a>
-						</li>
-					))
-				}
-			</ul>
+		<div class="flex items-center gap-1 sm:gap-2">
+			<!-- Desktop / tablet: links inline -->
+			<nav aria-label="Main" class="hidden sm:block">
+				<ul class="flex items-center">
+					{
+						links.map((l) => (
+							<li>
+								<a
+									href={l.href}
+									aria-current={l.href === current ? "page" : undefined}
+									class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100"
+								>
+									{l.label}
+								</a>
+							</li>
+						))
+					}
+				</ul>
+			</nav>
 			<ThemeToggle />
-		</nav>
+			<!-- Phones: menu button -->
+			<button
+				type="button"
+				data-menu-button
+				aria-expanded="false"
+				aria-controls="mobile-menu"
+				aria-label="Open menu"
+				class="menu-button inline-flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-secondary sm:hidden"
+			>
+				<span class="menu-icon" aria-hidden="true"><span></span><span></span></span>
+			</button>
+		</div>
 	</div>
+
+	<!-- Phone menu panel. Closes on scroll, link tap, tap outside, Escape, or widening to desktop (script below). -->
+	<nav
+		id="mobile-menu"
+		aria-label="Main"
+		data-menu-panel
+		inert
+		class="menu-panel absolute inset-x-0 top-full border-b bg-background/95 backdrop-blur-xl sm:hidden"
+	>
+		<ul class="wrapper flex flex-col py-2">
+			{
+				links.map((l, i) => (
+					<li class="menu-item border-t first:border-t-0" style={`--i: ${i}`}>
+						<a
+							href={l.href}
+							aria-current={l.href === current ? "page" : undefined}
+							class="flex min-h-14 items-center justify-between text-lg font-semibold text-muted-foreground aria-[current=page]:text-foreground"
+						>
+							{l.label}
+							{l.href === current && <span class="size-2 rounded-full bg-accent" aria-hidden="true" />}
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</nav>
 </header>
 
+<style>
+	/* Two bars that fold into an X when the menu is open. */
+	.menu-icon {
+		position: relative;
+		display: block;
+		width: 1.25rem;
+		height: 0.75rem;
+	}
+	.menu-icon > span {
+		position: absolute;
+		left: 0;
+		width: 100%;
+		height: 2px;
+		border-radius: 999px;
+		background: currentColor;
+		transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), top 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+	.menu-icon > span:first-child {
+		top: 0;
+	}
+	.menu-icon > span:last-child {
+		top: calc(100% - 2px);
+	}
+	[data-menu-open] .menu-icon > span {
+		top: calc(50% - 1px);
+	}
+	[data-menu-open] .menu-icon > span:first-child {
+		transform: rotate(45deg);
+	}
+	[data-menu-open] .menu-icon > span:last-child {
+		transform: rotate(-45deg);
+	}
+
+	/* Panel slides down; links follow one after another. */
+	.menu-panel {
+		visibility: hidden;
+		opacity: 0;
+		transform: translateY(-0.5rem);
+		transition:
+			opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+			transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+			visibility 0s linear 0.3s;
+	}
+	[data-menu-open] .menu-panel {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
+		transition-delay: 0s;
+	}
+	.menu-item {
+		opacity: 0;
+		transform: translateY(0.5rem);
+		transition:
+			opacity 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+			transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+	}
+	[data-menu-open] .menu-item {
+		opacity: 1;
+		transform: none;
+		transition-delay: calc(0.05s + var(--i) * 0.05s);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.menu-icon > span,
+		.menu-panel,
+		.menu-item {
+			transition: none;
+		}
+	}
+</style>
+
 <script>
-	// Scroll edge: the header's bottom border only appears once content is scrolling underneath it.
-	const update = () => {
-		document.querySelector("[data-site-header]")?.toggleAttribute("data-scrolled", scrollY > 4);
-	};
-	addEventListener("scroll", update, { passive: true });
-	document.addEventListener("astro:page-load", update);
+	let cleanup: (() => void) | undefined;
+
+	function init() {
+		cleanup?.();
+		const header = document.querySelector<HTMLElement>("[data-site-header]");
+		if (!header) return;
+
+		// Scroll edge: the header's bottom border only appears once content is scrolling underneath it.
+		const edge = () => header.toggleAttribute("data-scrolled", scrollY > 4);
+		edge();
+
+		const button = header.querySelector<HTMLButtonElement>("[data-menu-button]")!;
+		const panel = header.querySelector<HTMLElement>("[data-menu-panel]")!;
+		const desktop = matchMedia("(min-width: 40rem)");
+		let openedAt = 0;
+
+		const isOpen = () => header.hasAttribute("data-menu-open");
+		const setOpen = (open: boolean, returnFocus = false) => {
+			header.toggleAttribute("data-menu-open", open);
+			button.setAttribute("aria-expanded", String(open));
+			button.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+			panel.inert = !open;
+			if (open) openedAt = scrollY;
+			else if (returnFocus) button.focus();
+		};
+
+		const onScroll = () => {
+			edge();
+			// Close as soon as the page actually scrolls (a little slack for touch jitter).
+			if (isOpen() && Math.abs(scrollY - openedAt) > 8) setOpen(false);
+		};
+		const onPointerDown = (event: PointerEvent) => {
+			if (isOpen() && !header.contains(event.target as Node)) setOpen(false);
+		};
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape" && isOpen()) setOpen(false, true);
+		};
+		const onBreakpoint = () => desktop.matches && setOpen(false);
+
+		button.addEventListener("click", () => setOpen(!isOpen()));
+		panel.addEventListener("click", (event) => {
+			if ((event.target as Element).closest("a")) setOpen(false);
+		});
+		addEventListener("scroll", onScroll, { passive: true });
+		document.addEventListener("pointerdown", onPointerDown);
+		document.addEventListener("keydown", onKey);
+		desktop.addEventListener("change", onBreakpoint);
+
+		cleanup = () => {
+			removeEventListener("scroll", onScroll);
+			document.removeEventListener("pointerdown", onPointerDown);
+			document.removeEventListener("keydown", onKey);
+			desktop.removeEventListener("change", onBreakpoint);
+		};
+	}
+
+	// The header is re-rendered on every client-side navigation, so wire it up after each one.
+	document.addEventListener("astro:page-load", init);
 </script>
