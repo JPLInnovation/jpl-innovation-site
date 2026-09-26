@@ -2,18 +2,19 @@
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
+import { backToWork } from "@/text/work";
 import DroneIllustration from "@/components/DroneIllustration.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import PartsTable from "@/components/parts-table";
 import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { drone, earlierWork, partGroups, roadmap, systems } from "@/data/drone";
+// All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md)
+import { drone, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
 import { formatVnd } from "@/lib/format";
 import { DataIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
-// Card title/description live in src/content/work/drone.md; everything else in src/data/drone.ts.
 const entry = (await getEntry("work", "drone"))!;
 
 const groups = partGroups.map((g) => ({
@@ -28,7 +29,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	<!-- Hero -->
 	<header class="wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
 		<div class="flex flex-col gap-6">
-			<BackLink href="/work/">All work</BackLink>
+			<BackLink href="/work/">{backToWork}</BackLink>
 			<div data-reveal><StatusTag>{drone.status}</StatusTag></div>
 			<h1 data-reveal class="font-wide text-[clamp(2.8rem,8vw,6.25rem)] font-[900] leading-[0.94]">{drone.name}</h1>
 			<p class="max-w-[56ch] text-lg" data-reveal data-reveal-delay="150">{drone.intro}</p>
@@ -50,22 +51,22 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 			<ModelViewer
 				client:visible
 				model="drone"
-				label="3D model of the F450 drone: red front arms, white rear arms, four spinning 10-inch props, the flight controller, Raspberry Pi Zero 2 W, USB webcam, 4G modem and the LiPo battery."
+				label={text.model3d.description}
 				className="aspect-square w-full"
 			>
 				<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
 			</ModelViewer>
 			<figcaption class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-alliance-red" aria-hidden="true"></span>Front arms</span>
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-muted-foreground" aria-hidden="true"></span>Rear arms</span>
-				<span>Quad-X layout, 2 clockwise and 2 counter-clockwise props</span>
+				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
+				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
+				<span>{text.model3d.layoutNote}</span>
 			</figcaption>
 		</figure>
 	</header>
 
 	<!-- Progress -->
 	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">
-		<h2 data-reveal id="progress-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">From parts list to first flight</h2>
+		<h2 data-reveal id="progress-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.progressHeading}</h2>
 		<ol class="grid gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5" data-reveal-group>
 			{
 				roadmap.map((step, i) => (
@@ -80,14 +81,14 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 							)}
 						</span>
 						<p class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-							Step {i + 1}
+							{text.stepLabel} {i + 1}
 							{step.state === "done" && (
 								<span class="inline-flex items-center gap-1 text-foreground">
-									<CircleCheck className="size-4" aria-hidden="true" /> Done
+									<CircleCheck className="size-4" aria-hidden="true" /> {text.doneTag}
 								</span>
 							)}
 							{step.state === "current" && (
-								<span class="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">Now</span>
+								<span class="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{text.nowTag}</span>
 							)}
 						</p>
 						<h3 class="font-semiwide text-lg font-[760]">{step.title}</h3>
@@ -102,8 +103,8 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
 		<div class="wrapper flex flex-col gap-10 py-20 md:py-24">
 			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-				<h2 id="systems-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">Three systems, one drone</h2>
-				<p class="text-lg text-muted-foreground">How power, pilot commands and live video move through the build.</p>
+				<h2 id="systems-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.systemsHeading}</h2>
+				<p class="text-lg text-muted-foreground">{text.systemsIntro}</p>
 			</div>
 			<div class="flex flex-col gap-10">
 				{
@@ -133,7 +134,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 							{"branch" in sys && sys.branch && (
 								<div class="flex flex-col gap-2 pl-4 lg:pl-8">
 									<p class="flex items-center gap-2 text-sm text-muted-foreground">
-										<CornerDownRight className="size-4" aria-hidden="true" /> Also from the {sys.branch.from}
+										<CornerDownRight className="size-4" aria-hidden="true" /> {text.branchPrefix} {sys.branch.from}
 									</p>
 									<ol class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-0" data-reveal-group>
 										{sys.branch.steps.map((s, j) => (
@@ -162,14 +163,14 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 
 	<!-- Parts & budget -->
 	<section id="parts" class="wrapper flex flex-col gap-10 py-20 md:py-24" aria-labelledby="parts-heading">
-		<h2 data-reveal id="parts-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{partCount} parts, one budget</h2>
+		<h2 data-reveal id="parts-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{partCount} {text.partsHeadingSuffix}</h2>
 
 		<figure class="grid gap-8 rounded-xl border surface p-6 md:grid-cols-[1fr_1.4fr] md:p-8" data-reveal>
 			<div class="flex flex-col gap-2">
-				<p class="text-sm text-muted-foreground">Estimated total</p>
+				<p class="text-sm text-muted-foreground">{text.totalLabel}</p>
 				<p class="font-wide text-[clamp(2.2rem,5vw,3.25rem)] font-[880] leading-none tabular-nums" data-count={total} data-count-format="vnd">{formatVnd(total)}</p>
 				<figcaption class="text-sm text-muted-foreground">
-					Estimates from Vietnamese online stores. Parts that aren't priced yet aren't included.
+					{text.totalNote}
 				</figcaption>
 			</div>
 			<div class="flex flex-col gap-5">
@@ -211,7 +212,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 							<span class="size-3 rounded-[3px]" style={`background: ${g.color}`} aria-hidden="true" />
 							{g.title}
 						</h3>
-						<PartsTable caption={`${g.title} parts and prices`} parts={g.parts} subtotal={g.subtotal} />
+						<PartsTable caption={`${g.title} ${text.table.captionSuffix}`} parts={g.parts} subtotal={g.subtotal} />
 					</section>
 				))
 			}
@@ -222,7 +223,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	<section class="border-t bg-card/70" aria-labelledby="earlier-heading">
 		<div class="wrapper grid gap-8 py-20 md:grid-cols-[1fr_1.2fr] md:gap-14 md:py-24">
 			<div class="flex flex-col gap-3" data-reveal>
-				<p class="text-sm text-muted-foreground">Earlier work, {earlierWork.date}</p>
+				<p class="text-sm text-muted-foreground">{text.earlierLabel} {earlierWork.date}</p>
 				<h2 id="earlier-heading" class="font-wide text-3xl font-[850] md:text-4xl">{earlierWork.title}</h2>
 				<p class="text-lg">{earlierWork.summary}</p>
 			</div>

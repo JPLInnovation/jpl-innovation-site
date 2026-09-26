@@ -1,6 +1,7 @@
 ---
 import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
+import { backToWork } from "@/text/work";
 import FrcRobotReveal from "@/components/frc-robot-reveal";
 import FrcSeasons from "@/components/frc-seasons";
 import HardwareStack from "@/components/HardwareStack.astro";
@@ -9,24 +10,24 @@ import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { team } from "@/data/frc";
+// All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md)
+import { frcPage, team } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
 
-// Title, image and description for the project card live in src/content/work/frc.md;
-// season content lives in src/data/frc.ts.
 const entry = (await getEntry("work", "frc"))!;
 
+const { facts: f } = frcPage;
 const facts = [
-	{ label: "Rookie year", value: String(team.rookieYear) },
-	{ label: "Region", value: team.region },
-	{ label: "Home", value: "SSIS, Ho Chi Minh City" },
-	{ label: "Next season", value: "2027" },
+	{ label: f.rookieYear, value: String(team.rookieYear) },
+	{ label: f.region, value: team.region },
+	{ label: f.homeLabel, value: f.home },
+	{ label: f.nextSeasonLabel, value: f.nextSeason },
 ];
 ---
 
-<BaseLayout title="FIRST Robotics | JPL Innovation" description={entry.data.description}>
+<BaseLayout title={frcPage.seoTitle} description={entry.data.description}>
 	<div class="wrapper pt-6 md:pt-8">
-		<BackLink href="/work/">All work</BackLink>
+		<BackLink href="/work/">{backToWork}</BackLink>
 	</div>
 
 	<header class="wrapper flex flex-col items-center gap-6 pb-14 pt-6 text-center md:pb-20 md:pt-10">
@@ -35,7 +36,7 @@ const facts = [
 				<!-- Team 10951 logo. The source image has photo corners, so it's cropped to its circle. -->
 				<img
 					src={team.logo}
-					alt="Team 10951 Saigon South Dragons logo"
+					alt={frcPage.logoAlt}
 					width="764"
 					height="764"
 					class="size-14 rounded-full object-cover shadow-sm ring-1 ring-border md:size-16"
@@ -51,10 +52,10 @@ const facts = [
 					class="h-10 w-auto invert mix-blend-multiply md:h-12 dark:invert-0 dark:mix-blend-screen"
 				/>
 			</div>
-			<p class="text-[15px] font-medium text-muted-foreground">Saigon South Dragons · FIRST Robotics Competition</p>
+			<p class="text-[15px] font-medium text-muted-foreground">{frcPage.logoCaption}</p>
 		</div>
 		<h1 class="font-wide text-[clamp(3.25rem,12vw,10.5rem)] font-[900] leading-[0.9] tracking-[-0.03em]">
-			Team <Odometer value={String(team.number)} />
+			{frcPage.headingPrefix} <Odometer value={String(team.number)} />
 		</h1>
 		<p class="max-w-[56ch] text-lg text-muted-foreground md:text-xl" data-reveal data-reveal-delay="250">
 			{entry.data.description}
@@ -76,22 +77,18 @@ const facts = [
 	<section class="wrapper pt-20 md:pt-28" aria-labelledby="robot-3d-heading">
 		<div class="grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
 			<div class="flex flex-col gap-4" data-reveal>
-				<h2 id="robot-3d-heading" class="font-wide text-3xl font-[850] md:text-5xl">The 2026 robot in 3D</h2>
-				<p class="text-lg text-muted-foreground">
-					The official 2026 KitBot with our changes. Follow a ball of FUEL: the intake pulls it off the floor into the
-					clear hopper, the feeder lifts it into the launcher, and the hood sends it up and forward toward the goal. On a
-					computer you can drag to look around.
-				</p>
-				<p class="text-sm text-muted-foreground">A simplified model for illustration, not our CAD.</p>
+				<h2 id="robot-3d-heading" class="font-wide text-3xl font-[850] md:text-5xl">{frcPage.model3d.heading}</h2>
+				<p class="text-lg text-muted-foreground">{frcPage.model3d.text}</p>
+				<p class="text-sm text-muted-foreground">{frcPage.model3d.note}</p>
 			</div>
 			<div class="overflow-hidden rounded-xl border surface" data-reveal data-reveal-delay="150">
 				<ModelViewer
 					client:visible
 					model="frc-robot"
-					label="3D model of Team 10951's 2026 robot, based on the official KitBot: aluminium frame, red star-wheel intake, a blue and green feeder, a banded launcher roller under a white, blue and black hood that sends FUEL up and forward, Kraken X60 motors, a Limelight camera, a red signal light and a clear rear hopper with the 10951 Saigon South Dragons decal."
+					label={frcPage.model3d.description}
 					className="aspect-[4/3] w-full"
 				>
-					<img src="/assets/FRCnew.jpg" alt="Team 10951's 2026 robot" class="size-full object-cover object-[32%_68%]" loading="lazy" />
+					<img src="/assets/FRCnew.jpg" alt={frcPage.model3d.fallbackAlt} class="size-full object-cover object-[32%_68%]" loading="lazy" />
 				</ModelViewer>
 			</div>
 		</div>
@@ -116,7 +113,7 @@ const facts = [
 					class="size-16 shrink-0 rounded-full object-cover ring-1 ring-border md:size-20"
 				/>
 				<div class="flex flex-col gap-2">
-					<h2 id="team-heading" class="font-wide text-3xl font-[850] md:text-4xl">About Team {team.number}</h2>
+					<h2 id="team-heading" class="font-wide text-3xl font-[850] md:text-4xl">{frcPage.about.headingPrefix} {team.number}</h2>
 					<p class="text-lg text-muted-foreground">{team.name}, {team.school}. {team.mission}.</p>
 				</div>
 			</div>
@@ -134,10 +131,10 @@ const facts = [
 			<div class="mt-6 border-t pt-12">
 				<Leadership
 					lead="frc"
-					heading="Team leadership"
+					heading={frcPage.about.leadershipHeading}
 					headingLevel="h3"
 					id="frc-leadership"
-					intro="Mechanical and electrical are led by JPL Innovation's CEO and COO."
+					intro={frcPage.about.leadershipIntro}
 				/>
 			</div>
 		</div>

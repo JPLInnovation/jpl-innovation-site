@@ -9,7 +9,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { site } from "@/data/site";
+import { emailPopup as text, site } from "@/text/site";
 import { cn } from "@/lib/utils";
 
 const EMAIL = site.email;
@@ -29,8 +29,8 @@ type Props = {
  * so this offers the address to copy, Gmail in the browser, and the mail app.
  */
 export default function ContactDialog({
-	subject = "Hello JPL Innovation",
-	label = "Email us",
+	subject = text.defaultSubject,
+	label = text.defaultButton,
 	look = "ink",
 	className,
 }: Props) {
@@ -79,9 +79,9 @@ export default function ContactDialog({
 			</DialogTrigger>
 			<DialogContent className="gap-6 rounded-2xl p-6 sm:max-w-md sm:p-8">
 				<DialogHeader className="gap-2 text-left">
-					<DialogTitle className="font-wide text-2xl font-[850]">Email JPL Innovation</DialogTitle>
+					<DialogTitle className="font-wide text-2xl font-[850]">{text.title}</DialogTitle>
 					<DialogDescription className="text-[15px]">
-						Tell us about your project, or ask what we can help with. We read every message.
+						{text.description}
 					</DialogDescription>
 				</DialogHeader>
 
@@ -90,29 +90,29 @@ export default function ContactDialog({
 					<Button variant="secondary" size="sm" onClick={copy} className="shrink-0" aria-live="polite">
 						{copied === "done" ? (
 							<>
-								<Check aria-hidden="true" /> Copied
+								<Check aria-hidden="true" /> {text.copied}
 							</>
 						) : (
 							<>
-								<Copy aria-hidden="true" /> Copy
+								<Copy aria-hidden="true" /> {text.copy}
 							</>
 						)}
 					</Button>
 				</div>
 				{copied === "failed" && (
 					<p className="-mt-3 text-sm text-destructive" role="status">
-						Copying isn't allowed here. Select the address above and copy it.
+						{text.copyFailed}
 					</p>
 				)}
 
 				<div className="flex flex-col gap-2 sm:flex-row">
 					<Button asChild variant="signal" size="lg" className="flex-1">
 						<a href={gmail} target="_blank" rel="noopener noreferrer">
-							Open in Gmail <ExternalLink aria-hidden="true" />
+							{text.openGmail} <ExternalLink aria-hidden="true" />
 						</a>
 					</Button>
 					<Button asChild variant="outline" size="lg" className="flex-1">
-						<a href={mailto}>Open your mail app</a>
+						<a href={mailto}>{text.openMailApp}</a>
 					</Button>
 				</div>
 			</DialogContent>

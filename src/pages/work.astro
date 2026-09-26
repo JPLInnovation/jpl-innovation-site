@@ -4,12 +4,14 @@ import PageIntro from "@/components/PageIntro.astro";
 import ProjectList from "@/components/ProjectList.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getProjects } from "@/lib/content";
+// Words: src/text/work.ts
+import { workPage } from "@/text/work";
 
 const projects = await getProjects();
 ---
 
-<BaseLayout title="Work | JPL Innovation" description="JPL Innovation's projects: FRC Team 10951, the F450 4G drone, and cybersecurity.">
-	<PageIntro title="Work" lede="What we've built, what's on the bench now, and what's coming next." />
+<BaseLayout title={workPage.seoTitle} description={workPage.seoDescription}>
+	<PageIntro title={workPage.title} lede={workPage.lede} />
 	<section class="wrapper pb-20 md:pb-28">
 		<ProjectList projects={projects} headingLevel="h2" />
 	</section>

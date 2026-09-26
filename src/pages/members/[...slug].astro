@@ -7,6 +7,8 @@ import { badgeVariants } from "@/components/ui/badge";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { leadershipRoles, toBadge } from "@/lib/content";
 import { cn } from "@/lib/utils";
+// Headings: src/text/members.ts. This person's details: src/text/members/<name>.md
+import { memberPage } from "@/text/members";
 
 interface Props {
 	entry: CollectionEntry<"members">;
@@ -27,7 +29,7 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 
 <BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
 	<div class="wrapper pt-6 md:pt-10">
-		<BackLink href="/members/">All members</BackLink>
+		<BackLink href="/members/">{memberPage.backLink}</BackLink>
 	</div>
 
 	<header class="wrapper grid gap-8 pb-14 pt-4 md:grid-cols-[minmax(0,17rem)_1fr] md:gap-14 md:pb-20">
@@ -70,7 +72,7 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 
 	<section class="border-y bg-card/70" aria-labelledby="skills-heading">
 		<div class="wrapper py-14 md:py-20">
-			<h2 data-reveal id="skills-heading" class="mb-8 font-wide text-3xl font-[850] md:text-4xl">Technical skills</h2>
+			<h2 data-reveal id="skills-heading" class="mb-8 font-wide text-3xl font-[850] md:text-4xl">{memberPage.skillsHeading}</h2>
 			<ul class="grid gap-x-10 md:grid-cols-2" data-reveal-group>
 				{
 					data.technical_skills.map((s) => {
@@ -100,7 +102,7 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 	</section>
 
 	<article class="wrapper py-16 md:py-24" aria-labelledby="story-heading">
-		<h2 data-reveal id="story-heading" class="mb-6 font-wide text-3xl font-[850] md:text-4xl">Story</h2>
+		<h2 data-reveal id="story-heading" class="mb-6 font-wide text-3xl font-[850] md:text-4xl">{memberPage.storyHeading}</h2>
 		<div class="prose prose-lg prose-site max-w-[65ch]" data-reveal>
 			<Content />
 		</div>

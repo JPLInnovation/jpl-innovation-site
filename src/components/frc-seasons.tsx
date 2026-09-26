@@ -5,17 +5,21 @@ import ContactDialog from "@/components/contact-dialog";
 import { CountUp, Grow, Reveal } from "@/components/motion-primitives";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { season2026, season2027 } from "@/data/frc";
+// Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
+import { season2026, season2027, seasonsText } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 type Season = "2027" | "2026";
 
+const t27 = seasonsText.s2027;
+const t26 = seasonsText.s2026;
+
 const sections2026 = [
-	{ id: "s2026-game", label: "Game" },
-	{ id: "s2026-timeline", label: "Timeline" },
-	{ id: "s2026-robot", label: "Robot" },
-	{ id: "s2026-results", label: "Results" },
+	{ id: "s2026-game", label: t26.sectionLinks.game },
+	{ id: "s2026-timeline", label: t26.sectionLinks.timeline },
+	{ id: "s2026-robot", label: t26.sectionLinks.robot },
+	{ id: "s2026-results", label: t26.sectionLinks.results },
 ];
 
 /** Season switcher for the FRC page. Deep links: #2026, #2027, or a 2026 section like #s2026-robot. */
@@ -45,7 +49,7 @@ export default function FrcSeasons() {
 	return (
 		<Tabs value={season} onValueChange={change} className="gap-12" ref={tabsRef}>
 			<TabsList
-				aria-label="Choose a season"
+				aria-label={seasonsText.chooseSeason}
 				className="h-auto gap-1 rounded-xl p-1 group-data-[orientation=horizontal]/tabs:h-auto"
 			>
 				<SeasonTab value="2027" status={season2027.status} active={season === "2027"} />
@@ -108,22 +112,22 @@ const Season2027 = memo(function Season2027({ onShow2026 }: { onShow2026: (seaso
 	return (
 		<div className="flex flex-col gap-20">
 			<div className="flex max-w-3xl flex-col items-start gap-5">
-				<LiveTag>Preseason in progress</LiveTag>
+				<LiveTag>{t27.liveTag}</LiveTag>
 				<h2 className="font-wide text-[clamp(2.2rem,5.5vw,4.25rem)] font-[880] leading-[1]">
 					{season2027.headline}
 				</h2>
 				<p className="max-w-[60ch] text-lg">{season2027.intro}</p>
 				<div className="flex flex-wrap gap-3 pt-2">
-					<ContactDialog look="signal" label="Join or sponsor us" subject="FRC 2027: joining or sponsoring" />
+					<ContactDialog look="signal" label={t27.joinButton} subject={t27.joinEmailSubject} />
 					<Button variant="outline" size="lg" onClick={() => onShow2026("2026")}>
-						Look back at 2026 <ArrowRight aria-hidden="true" />
+						{t27.lookBackButton} <ArrowRight aria-hidden="true" />
 					</Button>
 				</div>
 			</div>
 
 			<section aria-labelledby="road-2027" className="flex flex-col gap-8">
 				<h2 id="road-2027" className="font-wide text-3xl font-[850] md:text-4xl">
-					Road to 2027
+					{t27.roadHeading}
 				</h2>
 				<Reveal as="ol" className="grid gap-8 md:grid-cols-4 md:gap-6">
 					{season2027.timeline.map((step) => {
@@ -148,9 +152,9 @@ const Season2027 = memo(function Season2027({ onShow2026 }: { onShow2026: (seaso
 			<section aria-labelledby="focus-2027" className="flex flex-col gap-8">
 				<div className="flex flex-col gap-2">
 					<h2 id="focus-2027" className="font-wide text-3xl font-[850] md:text-4xl">
-						What we're building toward
+						{t27.focusHeading}
 					</h2>
-					<p className="text-lg text-muted-foreground">Carried forward from our rookie year.</p>
+					<p className="text-lg text-muted-foreground">{t27.focusIntro}</p>
 				</div>
 				<ul className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
 					{season2027.focus.map((f, i) => (
@@ -196,10 +200,10 @@ const Season2026 = memo(function Season2026() {
 				<div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-14">
 					<div className="flex flex-col gap-5">
 						<h2 id="h-game" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
-							The 2026 game: precision scoring
+							{t26.gameHeading}
 						</h2>
 						<p className="text-lg">{game.summary}</p>
-						<p className="text-sm text-muted-foreground">Competition season: {game.season}</p>
+						<p className="text-sm text-muted-foreground">{t26.seasonLabel} {game.season}</p>
 					</div>
 					<figure className="flex flex-col gap-3">
 						<a
@@ -207,11 +211,11 @@ const Season2026 = memo(function Season2026() {
 							target="_blank"
 							rel="noopener"
 							className="group block overflow-hidden rounded-xl border surface"
-							aria-label="Open the 2026 playing field image full size"
+							aria-label={t26.fieldOpenLabel}
 						>
 							<img
 								src={game.fieldImage}
-								alt="Official 2026 FRC playing field layout"
+								alt={t26.fieldAlt}
 								loading="lazy"
 								className="w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
 							/>
@@ -225,7 +229,7 @@ const Season2026 = memo(function Season2026() {
 								height="115"
 								className="h-5 w-auto invert mix-blend-multiply dark:invert-0 dark:mix-blend-screen"
 							/>
-							Official 2026 playing field
+							{t26.fieldCaption}
 						</figcaption>
 					</figure>
 				</div>
@@ -234,9 +238,9 @@ const Season2026 = memo(function Season2026() {
 					<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 						<figcaption className="flex items-baseline justify-between gap-4">
 							<h3 className="flex items-center gap-2 text-lg font-semibold">
-								<Clock className="size-5" aria-hidden="true" /> Match structure
+								<Clock className="size-5" aria-hidden="true" /> {t26.matchHeading}
 							</h3>
-							<span className="text-sm text-muted-foreground">2:30 per match</span>
+							<span className="text-sm text-muted-foreground">{t26.matchLength}</span>
 						</figcaption>
 						{/* Proportional to seconds; each phase is also listed below with its time. */}
 						{/* Each phase fills in turn at constant speed, like the match clock (2.5 s for 2:30). */}
@@ -271,7 +275,7 @@ const Season2026 = memo(function Season2026() {
 
 					<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 						<figcaption>
-							<h3 className="text-lg font-semibold">Points per scoring action</h3>
+							<h3 className="text-lg font-semibold">{t26.scoringHeading}</h3>
 						</figcaption>
 						<ul className="flex flex-col gap-4">
 							{game.scoring.map((s, i) => (
@@ -299,7 +303,7 @@ const Season2026 = memo(function Season2026() {
 			{/* Timeline */}
 			<section id="s2026-timeline" aria-labelledby="h-timeline" className="flex scroll-mt-24 flex-col gap-8">
 				<h2 id="h-timeline" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
-					From kickoff to competition
+					{t26.timelineHeading}
 				</h2>
 				<ol className="flex flex-col">
 					{season2026.timeline.map((t) => {
@@ -323,7 +327,7 @@ const Season2026 = memo(function Season2026() {
 			{/* Robot */}
 			<section id="s2026-robot" aria-labelledby="h-robot" className="flex scroll-mt-24 flex-col gap-10">
 				<h2 id="h-robot" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
-					Built for reliability
+					{t26.robotHeading}
 				</h2>
 				<Reveal as="blockquote" className="flex max-w-4xl gap-4 border-l-4 border-accent pl-6">
 					<Quote className="mt-1 size-6 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -331,7 +335,7 @@ const Season2026 = memo(function Season2026() {
 				</Reveal>
 
 				{/* The KitBot we built: front and field shots stacked on the left, the tall rear shot on the right. */}
-				<ul aria-label="Photos of our 2026 KitBot" className="grid gap-4 md:grid-cols-[1.125fr_1fr] md:grid-rows-2">
+				<ul aria-label={t26.photosLabel} className="grid gap-4 md:grid-cols-[1.125fr_1fr] md:grid-rows-2">
 					{robot.photos.map((photo, i) => (
 						<Reveal
 							as="li"
@@ -395,7 +399,7 @@ const Season2026 = memo(function Season2026() {
 
 				<figure className="flex flex-col gap-5 rounded-xl border surface p-6 md:p-8">
 					<figcaption>
-						<h3 className="text-lg font-semibold">Performance in testing</h3>
+						<h3 className="text-lg font-semibold">{t26.testingHeading}</h3>
 					</figcaption>
 					<ul className="grid gap-6 md:grid-cols-3">
 						{robot.metrics.map((m) => (
@@ -427,7 +431,7 @@ const Season2026 = memo(function Season2026() {
 			{/* Results */}
 			<section id="s2026-results" aria-labelledby="h-results" className="flex scroll-mt-24 flex-col gap-10">
 				<h2 id="h-results" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
-					What our rookie season delivered
+					{t26.resultsHeading}
 				</h2>
 				<ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
 					{season2026.achievements.map((a, i) => (
@@ -451,7 +455,7 @@ const Season2026 = memo(function Season2026() {
 									{c.code}
 								</span>
 							</div>
-							<h4 className="text-sm font-semibold">Goals</h4>
+							<h4 className="text-sm font-semibold">{t26.goalsHeading}</h4>
 							<ul className="flex flex-col gap-2">
 								{c.goals.map((g) => (
 									<li key={g} className="flex gap-2.5">
@@ -478,5 +482,5 @@ function LiveTag({ children }: { children: ReactNode }) {
 }
 
 function NowTag() {
-	return <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">Now</span>;
+	return <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{t27.nowTag}</span>;
 }

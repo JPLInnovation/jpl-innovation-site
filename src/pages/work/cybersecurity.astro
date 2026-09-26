@@ -1,6 +1,7 @@
 ---
 import { getEntry, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
+import { backToWork } from "@/text/work";
 import IosTerminal from "@/components/IosTerminal.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
@@ -9,35 +10,37 @@ import StatusTag from "@/components/StatusTag.astro";
 import SubnetSplit from "@/components/SubnetSplit.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
-// Title, description, image and the written content live in src/content/work/cybersecurity.md.
+// Words: src/text/projects/cybersecurity.ts (title, intro and write-up: src/text/projects/cybersecurity.md)
+import { cyberPage } from "@/text/projects/cybersecurity";
 const entry = (await getEntry("work", "cybersecurity"))!;
 const { Content } = await render(entry);
 const { data } = entry;
 
+const { model3d, ccna } = cyberPage;
 const legend = [
-	{ color: "bg-chart-1", label: "VLAN 10" },
-	{ color: "bg-chart-2", label: "VLAN 20" },
-	{ color: "bg-chart-3", label: "Internet traffic the ACL allows" },
-	{ color: "bg-chart-4", label: "Traffic the ACL drops" },
+	{ color: "bg-chart-1", label: model3d.legend.vlan10 },
+	{ color: "bg-chart-2", label: model3d.legend.vlan20 },
+	{ color: "bg-chart-3", label: model3d.legend.allowed },
+	{ color: "bg-chart-4", label: model3d.legend.dropped },
 ];
 ---
 
 <BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
 	<PageIntro title={data.title} lede={data.description}>
 		<div slot="before" class="flex flex-col gap-4">
-			<BackLink href="/work/">All work</BackLink>
+			<BackLink href="/work/">{backToWork}</BackLink>
 			{data.badge && <StatusTag>{data.badge}</StatusTag>}
 		</div>
 	</PageIntro>
 
 	<section class="wrapper" aria-labelledby="lab-heading">
-		<h2 id="lab-heading" class="sr-only">The lab network in 3D</h2>
+		<h2 id="lab-heading" class="sr-only">{model3d.heading}</h2>
 		<figure class="flex flex-col gap-4" data-reveal data-reveal-delay="200">
 			<div class="overflow-hidden rounded-xl border surface">
 				<ModelViewer
 					client:visible
 					model="network"
-					label="3D lab network: internet, an ACL shield, a router, a Layer 3 switch, two Layer 2 switches on VLAN 10 and VLAN 20, four PCs and a Windows Server, with packets flowing between them. One packet is dropped at the ACL; another changes colour as it is routed between VLANs."
+					label={model3d.description}
 					className="aspect-[4/3] w-full md:aspect-[21/10]"
 				>
 					<img src={data.img} alt={data.img_alt ?? ""} transition:name={`project-${entry.id}`} class="size-full object-cover" />
@@ -54,10 +57,7 @@ const legend = [
 						))
 					}
 				</ul>
-				<p class="text-sm text-muted-foreground">
-					Watch a packet change colour as the L3 switch routes it from VLAN 10 to VLAN 20, and the shield flash when
-					the ACL drops one.
-				</p>
+				<p class="text-sm text-muted-foreground">{model3d.caption}</p>
 			</figcaption>
 		</figure>
 	</section>
@@ -71,11 +71,8 @@ const legend = [
 	<section class="border-y bg-card/70" aria-labelledby="ccna-heading">
 		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
 			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-				<h2 id="ccna-heading" class="font-wide text-3xl font-[850] md:text-5xl">CCNA in motion</h2>
-				<p class="text-lg text-muted-foreground">
-					The configs behind the lab above, typed out on a Cisco console, and the subnet maths every network starts
-					from.
-				</p>
+				<h2 id="ccna-heading" class="font-wide text-3xl font-[850] md:text-5xl">{ccna.heading}</h2>
+				<p class="text-lg text-muted-foreground">{ccna.intro}</p>
 			</div>
 			<div class="grid items-start gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-10">
 				<div data-reveal><IosTerminal /></div>

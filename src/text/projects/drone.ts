@@ -1,7 +1,47 @@
 /**
- * Content for the drone page (src/pages/work/drone.astro).
- * Prices are estimates in VND. Leave `price` out for parts that aren't priced yet.
+ * F450 4G DRONE PAGE TEXT (/work/drone/), from top to bottom.
+ *
+ * Edit the words between the quotes. Keep the quotes and the commas at the end of lines.
+ *   - The card title, description and picture on the Work page: src/text/projects/drone.md
+ *   - Prices are estimates in VND. Leave `price` out for parts that aren't priced yet; the totals add up by themselves.
+ *   - Labels inside the 3D drone: src/lib/three/models/drone.ts
  */
+
+/** Headings and small labels on the drone page. The content (facts, steps, parts...) is further down. */
+export const dronePage = {
+	model3d: {
+		/** Read aloud by screen readers instead of the 3D model. */
+		description:
+			'3D model of the F450 drone: red front arms, white rear arms, four spinning 10-inch props, the flight controller, Raspberry Pi Zero 2 W, USB webcam, 4G modem and the LiPo battery.',
+		frontArms: 'Front arms',
+		rearArms: 'Rear arms',
+		layoutNote: 'Quad-X layout, 2 clockwise and 2 counter-clockwise props',
+	},
+	progressHeading: 'From parts list to first flight',
+	stepLabel: 'Step',
+	doneTag: 'Done',
+	nowTag: 'Now',
+	systemsHeading: 'Three systems, one drone',
+	systemsIntro: 'How power, pilot commands and live video move through the build.',
+	/** Before a branch in a system diagram: "Also from the flight controller". */
+	branchPrefix: 'Also from the',
+	/** The parts heading is "<number> parts, one budget". */
+	partsHeadingSuffix: 'parts, one budget',
+	totalLabel: 'Estimated total',
+	totalNote: "Estimates from Vietnamese online stores. Parts that aren't priced yet aren't included.",
+	/** Parts table column headings. */
+	table: {
+		part: 'Part',
+		why: 'Why we need it',
+		price: 'Price',
+		notPriced: 'Not priced yet',
+		subtotal: 'Subtotal',
+		/** Screen-reader caption: "<group> parts and prices". */
+		captionSuffix: 'parts and prices',
+	},
+	/** Before the date in the last section: "Earlier work, <date>". */
+	earlierLabel: 'Earlier work,',
+};
 
 export interface Part {
 	name: string;

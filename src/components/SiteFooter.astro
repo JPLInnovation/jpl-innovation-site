@@ -1,16 +1,9 @@
 ---
 import Logo from "./Logo.astro";
-import { site } from "@/data/site";
+// Words and links: src/text/site.ts (`footer`).
+import { footer, site } from "@/text/site";
 
 const year = new Date().getFullYear();
-const links = [
-	{ label: "Services", href: "/#services" },
-	{ label: "Work", href: "/work/" },
-	{ label: "F450 4G Drone", href: "/work/drone/" },
-	{ label: "Cybersecurity", href: "/work/cybersecurity/" },
-	{ label: "FIRST Robotics", href: "/work/frc/" },
-	{ label: "Members", href: "/members/" },
-];
 const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline";
 ---
 
@@ -19,24 +12,24 @@ const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 ho
 		<div class="flex max-w-xs flex-col gap-4">
 			<a href="/" class="press w-fit" aria-label="JPL Innovation home"><Logo class="h-12" /></a>
 			<p class="text-sm text-muted-foreground">
-				A student-founded engineering startup in Ho Chi Minh City. We design, build and secure real technology: robots, drones, networks and the web.
+				{footer.blurb}
 			</p>
 		</div>
 		<nav aria-label="Footer">
-			<h2 class="mb-1 text-sm font-semibold">Pages</h2>
+			<h2 class="mb-1 text-sm font-semibold">{footer.pagesHeading}</h2>
 			<ul class="flex flex-col text-sm text-muted-foreground">
-				{links.map((l) => <li><a class={linkClass} href={l.href}>{l.label}</a></li>)}
+				{footer.pages.map((l) => <li><a class={linkClass} href={l.href}>{l.label}</a></li>)}
 			</ul>
 		</nav>
 		<div>
-			<h2 class="mb-1 text-sm font-semibold">Contact</h2>
+			<h2 class="mb-1 text-sm font-semibold">{footer.contactHeading}</h2>
 			<ul class="flex flex-col text-sm text-muted-foreground">
 				<li><a class={linkClass} href={`mailto:${site.email}`}>{site.email}</a></li>
-				<li><a class={linkClass} href={site.github} target="_blank" rel="noopener noreferrer">GitHub</a></li>
+				<li><a class={linkClass} href={site.github} target="_blank" rel="noopener noreferrer">{footer.githubLabel}</a></li>
 			</ul>
 		</div>
 	</div>
 	<div class="wrapper border-t py-5 text-sm text-muted-foreground">
-		&copy; {year} JPL Innovation
+		&copy; {year} {footer.copyright}
 	</div>
 </footer>

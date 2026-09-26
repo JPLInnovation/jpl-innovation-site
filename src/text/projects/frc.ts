@@ -1,7 +1,99 @@
 /**
- * Content for the FIRST Robotics page (src/pages/work/frc.astro).
- * Edit the text here — the page layout picks it up automatically.
+ * FIRST ROBOTICS PAGE TEXT (/work/frc/), from top to bottom.
+ *
+ * Edit the words between the quotes. Keep the quotes and the commas at the end of lines.
+ *   - The page's intro sentence, card title and main photo: src/text/projects/frc.md
+ *   - Team info, the 2027 and 2026 seasons, and the hardware lists: further down this file
+ *   - Labels inside the 3D robot ("Intake rollers"...): src/lib/three/models/frc-robot.ts
  */
+
+/** Top of the page, the photo scroll scene and the 3D robot. */
+export const frcPage = {
+	seoTitle: 'FIRST Robotics | JPL Innovation',
+	logoCaption: 'Saigon South Dragons · FIRST Robotics Competition',
+	logoAlt: 'Team 10951 Saigon South Dragons logo',
+	/** The big heading is "Team" + the team number. */
+	headingPrefix: 'Team',
+	/** The four facts under the intro. Rookie year and region come from `team` below. */
+	facts: {
+		rookieYear: 'Rookie year',
+		region: 'Region',
+		homeLabel: 'Home',
+		home: 'SSIS, Ho Chi Minh City',
+		nextSeasonLabel: 'Next season',
+		nextSeason: '2027',
+	},
+	/** Words that appear over the robot photo as you scroll. */
+	reveal: {
+		heading: 'Designed, built and programmed by students.',
+		text: 'Our 2026 rookie robot: 140 lb, 12 ft/s, and tuned until its autonomous routine worked 95% of the time.',
+		highlights: ['Six-wheel traction drivebase', 'Dual-flywheel shooter, 25°–65° hood', 'Pneumatic climb', 'Java, WPILib and OpenCV vision'],
+	},
+	model3d: {
+		heading: 'The 2026 robot in 3D',
+		text: 'The official 2026 KitBot with our changes. Follow a ball of FUEL: the intake pulls it off the floor into the clear hopper, the feeder lifts it into the launcher, and the hood sends it up and forward toward the goal. On a computer you can drag to look around.',
+		note: 'A simplified model for illustration, not our CAD.',
+		/** Read aloud by screen readers instead of the 3D model. */
+		description:
+			"3D model of Team 10951's 2026 robot, based on the official KitBot: aluminium frame, red star-wheel intake, a blue and green feeder, a banded launcher roller under a white, blue and black hood that sends FUEL up and forward, Kraken X60 motors, a Limelight camera, a red signal light and a clear rear hopper with the 10951 Saigon South Dragons decal.",
+		fallbackAlt: "Team 10951's 2026 robot",
+	},
+	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */
+	about: {
+		headingPrefix: 'About Team',
+		leadershipHeading: 'Team leadership',
+		leadershipIntro: "Mechanical and electrical are led by JPL Innovation's CEO and COO.",
+	},
+};
+
+/** Headings and buttons in the season switcher (2027 / 2026 tabs). The season content itself is further down. */
+export const seasonsText = {
+	chooseSeason: 'Choose a season',
+	s2027: {
+		liveTag: 'Preseason in progress',
+		joinButton: 'Join or sponsor us',
+		joinEmailSubject: 'FRC 2027: joining or sponsoring',
+		lookBackButton: 'Look back at 2026',
+		roadHeading: 'Road to 2027',
+		nowTag: 'Now',
+		focusHeading: "What we're building toward",
+		focusIntro: 'Carried forward from our rookie year.',
+	},
+	s2026: {
+		/** The quick links at the top of the 2026 tab. */
+		sectionLinks: { game: 'Game', timeline: 'Timeline', robot: 'Robot', results: 'Results' },
+		gameHeading: 'The 2026 game: precision scoring',
+		seasonLabel: 'Competition season:',
+		fieldAlt: 'Official 2026 FRC playing field layout',
+		fieldOpenLabel: 'Open the 2026 playing field image full size',
+		fieldCaption: 'Official 2026 playing field',
+		matchHeading: 'Match structure',
+		matchLength: '2:30 per match',
+		scoringHeading: 'Points per scoring action',
+		timelineHeading: 'From kickoff to competition',
+		robotHeading: 'Built for reliability',
+		photosLabel: 'Photos of our 2026 KitBot',
+		testingHeading: 'Performance in testing',
+		resultsHeading: 'What our rookie season delivered',
+		goalsHeading: 'Goals',
+	},
+};
+
+/** The "Hardware we use" section. The motors and devices themselves are the lists at the bottom of this file. */
+export const hardwareText = {
+	heading: 'Hardware we use',
+	intro: 'The stack: the motors that move the robot, the CAN control system that drives them, and the camera that sees the field.',
+	motorsHeading: 'Motors',
+	legacyHeading: 'Legacy motors',
+	legacySummary: 'Falcon 500, CIM / Mini CIM',
+	hide: 'Hide',
+	controlHeading: 'Control & electronics',
+	controllerChip: 'roboRIO',
+	controllerNote: ['2026 only', 'then SystemCore'],
+	busCaption:
+		'One two-wire bus back to the robot controller: the roboRIO for the 2026 season, SystemCore after that. Every device on it has its own CAN ID.',
+	visionHeading: 'Vision',
+};
 
 export const team = {
 	number: 10951,

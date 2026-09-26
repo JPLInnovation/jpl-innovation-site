@@ -6,16 +6,18 @@ import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, toBadge } from "@/lib/content";
+// Words: src/text/members.ts (people: src/text/members/*.md)
+import { membersPage } from "@/text/members";
 
 const members = await getMembers();
 const badges = members.map(toBadge);
 ---
 
-<BaseLayout title="Members | JPL Innovation" description="The students behind JPL Innovation.">
-	<PageIntro title="Members" lede="The students behind JPL Innovation." />
+<BaseLayout title={membersPage.seoTitle} description={membersPage.seoDescription}>
+	<PageIntro title={membersPage.title} lede={membersPage.lede} />
 
 	<section class="wrapper pb-14 md:pb-20">
-		<Leadership lead="jpl" intro="Who leads JPL Innovation, and the roles they also hold on FRC Team 10951." />
+		<Leadership lead="jpl" heading={membersPage.leadershipHeading} intro={membersPage.leadershipIntro} />
 	</section>
 
 	<section class="wrapper pb-14 md:pb-20" aria-labelledby="badges-heading">
@@ -33,7 +35,7 @@ const badges = members.map(toBadge);
 				</div>
 			</ModelViewer>
 		</div>
-		<p class="mt-3 text-sm text-muted-foreground">Point at a badge to turn it toward you; click to open that member.</p>
+		<p class="mt-3 text-sm text-muted-foreground">{membersPage.badgesHint}</p>
 	</section>
 
 	<section class="wrapper pb-20 md:pb-28">

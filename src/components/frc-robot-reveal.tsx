@@ -1,12 +1,10 @@
 import { useRef } from "react";
 import { motion, useMotionTemplate, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 
-const highlights = [
-	"Six-wheel traction drivebase",
-	"Dual-flywheel shooter, 25°–65° hood",
-	"Pneumatic climb",
-	"Java, WPILib and OpenCV vision",
-];
+// Words: src/text/projects/frc.ts (`frcPage.reveal`)
+import { frcPage } from "@/text/projects/frc";
+
+const { heading, text, highlights } = frcPage.reveal;
 
 /**
  * FRC page scroll scene. The robot photo starts as a rounded card, opens to fill the screen as you
@@ -79,10 +77,10 @@ function Copy({ l1, l2, l3 }: { l1?: Line; l2?: Line; l3?: Line }) {
 				style={l1}
 				className="max-w-4xl font-wide text-[clamp(2.2rem,6vw,5rem)] font-[900] leading-[0.98] tracking-[-0.02em]"
 			>
-				Designed, built and programmed by students.
+				{heading}
 			</motion.h2>
 			<motion.p style={l2} className="max-w-[52ch] text-lg text-white/85 md:text-xl">
-				Our 2026 rookie robot: 140 lb, 12 ft/s, and tuned until its autonomous routine worked 95% of the time.
+				{text}
 			</motion.p>
 			<motion.ul style={l3} className="flex flex-wrap gap-2">
 				{highlights.map((h) => (

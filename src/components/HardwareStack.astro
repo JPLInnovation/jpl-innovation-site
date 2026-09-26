@@ -1,10 +1,10 @@
 ---
 /**
  * "Hardware we use": motors and the CTRE/Phoenix CAN control stack, as a two-column spec sheet.
- * Content lives in src/data/frc.ts (`motors`, `controlStack`).
+ * Words and lists: src/text/projects/frc.ts (`hardwareText`, `motors`, `controlStack`, `vision`).
  */
 import HardwareRow from "@/components/HardwareRow.astro";
-import { controlStack, motors, vision } from "@/data/frc";
+import { controlStack, hardwareText as text, motors, vision } from "@/text/projects/frc";
 
 const current = motors.filter((m) => !m.legacy);
 const legacy = motors.filter((m) => m.legacy);
@@ -15,24 +15,22 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 <section class="border-t" aria-labelledby="hardware-heading">
 	<div class="wrapper flex flex-col gap-12 py-20 md:py-28">
 		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-			<h2 id="hardware-heading" class="font-wide text-3xl font-[850] md:text-5xl">Hardware we use</h2>
-			<p class="text-lg text-muted-foreground">
-				The stack: the motors that move the robot, the CAN control system that drives them, and the camera that sees the field.
-			</p>
+			<h2 id="hardware-heading" class="font-wide text-3xl font-[850] md:text-5xl">{text.heading}</h2>
+			<p class="text-lg text-muted-foreground">{text.intro}</p>
 		</div>
 
 		<div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
 			<!-- Motors -->
 			<div class="flex flex-col gap-6">
-				<h3 class="font-semiwide text-xl font-[780]">Motors</h3>
+				<h3 class="font-semiwide text-xl font-[780]">{text.motorsHeading}</h3>
 				<ul class="flex flex-col" data-reveal-group>
 					{current.map((item) => <HardwareRow item={item} />)}
 				</ul>
 				<details class="group rounded-xl border surface px-5 py-4 open:pb-2">
 					<summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 font-semibold [&::-webkit-details-marker]:hidden">
-						Legacy motors
-						<span class="text-sm font-normal text-muted-foreground group-open:hidden">Falcon 500, CIM / Mini CIM</span>
-						<span class="hidden text-sm font-normal text-muted-foreground group-open:inline">Hide</span>
+						{text.legacyHeading}
+						<span class="text-sm font-normal text-muted-foreground group-open:hidden">{text.legacySummary}</span>
+						<span class="hidden text-sm font-normal text-muted-foreground group-open:inline">{text.hide}</span>
 					</summary>
 					<ul class="flex flex-col">
 						{legacy.map((item) => <HardwareRow item={item} />)}
@@ -42,7 +40,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 
 			<!-- Control & electronics -->
 			<div class="flex flex-col gap-6">
-				<h3 class="font-semiwide text-xl font-[780]">Control &amp; electronics</h3>
+				<h3 class="font-semiwide text-xl font-[780]">{text.controlHeading}</h3>
 
 				<figure class="rounded-xl border surface p-5" data-reveal>
 					<div class="overflow-x-auto">
@@ -58,8 +56,8 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 							</div>
 							<ol class="relative flex items-start justify-between gap-2">
 								<li class="flex w-16 flex-col items-center gap-2 text-center">
-									<span class="grid h-9 w-16 place-items-center rounded-md bg-foreground text-[11px] font-bold text-background">roboRIO</span>
-									<span class="text-[10px] font-semibold leading-tight text-muted-foreground">2026 only<br />then SystemCore</span>
+									<span class="grid h-9 w-16 place-items-center rounded-md bg-foreground text-[11px] font-bold text-background">{text.controllerChip}</span>
+									<span class="text-[10px] font-semibold leading-tight text-muted-foreground">{text.controllerNote[0]}<br />{text.controllerNote[1]}</span>
 								</li>
 								{
 									busDevices.map((device) => (
@@ -73,8 +71,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 						</div>
 					</div>
 					<figcaption class="mt-3 text-sm text-muted-foreground">
-						One two-wire bus back to the robot controller: the roboRIO for the 2026 season, SystemCore after that. Every
-						device on it has its own CAN ID.
+						{text.busCaption}
 					</figcaption>
 				</figure>
 
@@ -82,7 +79,7 @@ const busDevices = ["Talon FX", "Talon FX", "CANcoder", "Pigeon 2.0", "CANdle", 
 					{controlStack.map((item) => <HardwareRow item={item} />)}
 				</ul>
 
-				<h3 class="mt-4 font-semiwide text-xl font-[780]">Vision</h3>
+				<h3 class="mt-4 font-semiwide text-xl font-[780]">{text.visionHeading}</h3>
 				<ul class="flex flex-col" data-reveal-group>
 					{vision.map((item) => <HardwareRow item={item} />)}
 				</ul>

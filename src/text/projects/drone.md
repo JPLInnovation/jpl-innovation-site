@@ -11,6 +11,6 @@ order: 1
 
 <!--
   The drone page has its own layout: src/pages/work/drone.astro
-  Edit the parts list, roadmap, and system diagram in: src/data/drone.ts
+  Edit the parts list, roadmap, and system diagram in: src/text/projects/drone.ts
   This file only provides the title, image, and description used on project cards.
 -->

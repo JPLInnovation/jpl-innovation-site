@@ -1,14 +1,8 @@
 ---
 import Logo from "./Logo.astro";
 import ThemeToggle from "./ThemeToggle.astro";
-
-const links = [
-	{ label: "Services", href: "/#services" },
-	{ label: "Work", href: "/work/" },
-	{ label: "Members", href: "/members/" },
-	// Every page ends with the contact section, so this jumps down the current page.
-	{ label: "Contact", href: "#contact" },
-];
+// Menu labels and links: src/text/site.ts (`menu`).
+import { menu as links } from "@/text/site";
 
 /** The most specific link that matches the current path (so /work/frc/ lights up "Work"). */
 const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;

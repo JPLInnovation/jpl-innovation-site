@@ -13,7 +13,7 @@ import {
 	type LucideProps,
 } from "lucide-react";
 
-/** Icon names used in src/data/*.ts, mapped to lucide icons. */
+/** Icon names used in the text files (src/text), mapped to lucide icons. */
 const icons = {
 	"rocket-launch": Rocket,
 	lightning: Zap,

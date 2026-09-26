@@ -3,13 +3,15 @@ import ContactSection from "@/components/ContactSection.astro";
 import { buttonVariants } from "@/components/ui/button";
 import PageIntro from "@/components/PageIntro.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+// Words: src/text/site.ts (`notFound`).
+import { notFound } from "@/text/site";
 ---
 
-<BaseLayout title="Page not found | JPL Innovation" description="This page doesn't exist.">
-	<PageIntro title="Page not found" lede="There's no page at this address. It may have moved when we rebuilt the site.">
+<BaseLayout title={`${notFound.title} | JPL Innovation`} description="This page doesn't exist.">
+	<PageIntro title={notFound.title} lede={notFound.lede}>
 		<div class="flex flex-wrap gap-3 pt-2 pb-20">
-			<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>Go to the home page</a>
-			<a href="/work/" class={buttonVariants({ variant: "outline", size: "lg" })}>See our work</a>
+			<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>{notFound.homeButton}</a>
+			<a href="/work/" class={buttonVariants({ variant: "outline", size: "lg" })}>{notFound.workButton}</a>
 		</div>
 	</PageIntro>
 	<ContactSection />

@@ -1,10 +1,11 @@
 ---
 /**
  * A Cisco IOS console that types out real configs (VLANs, inter-VLAN routing, an ACL, SSH hardening).
- * Scripts live in src/data/ccna.ts. Without JS it shows the first config in full; with reduced motion,
+ * Scripts live in src/text/projects/cybersecurity-terminal.ts. Without JS it shows the first config in full; with reduced motion,
  * each tab shows its full text instantly.
  */
-import { terminalScenes, type TerminalLine } from "@/data/ccna";
+import { terminalScenes, type TerminalLine } from "@/text/projects/cybersecurity-terminal";
+import { cyberPage } from "@/text/projects/cybersecurity";
 
 const first = terminalScenes[0];
 const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
@@ -19,7 +20,7 @@ const lineHtml = (line: TerminalLine) =>
 		<span class="size-3 rounded-full bg-[#f0596b]" aria-hidden="true"></span>
 		<span class="size-3 rounded-full bg-[#ffc20e]" aria-hidden="true"></span>
 		<span class="size-3 rounded-full bg-[#34d399]" aria-hidden="true"></span>
-		<span class="ml-2 text-xs font-medium text-[#93a4bd]">Console · Cisco IOS</span>
+		<span class="ml-2 text-xs font-medium text-[#93a4bd]">{cyberPage.ccna.consoleTitle}</span>
 	</div>
 	<div role="tablist" aria-label="Configuration" class="flex flex-wrap gap-1 border-b border-[#1b2c4d] px-2 py-2">
 		{
@@ -46,7 +47,7 @@ const lineHtml = (line: TerminalLine) =>
 </div>
 
 <script>
-	import type { TerminalLine, TerminalScene } from "@/data/ccna";
+	import type { TerminalLine, TerminalScene } from "@/text/projects/cybersecurity-terminal";
 
 	const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 	const promptHtml = (p = "") => `<span class="text-[#7cb4ff]">${esc(p)}</span> `;

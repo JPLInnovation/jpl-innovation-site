@@ -1,31 +1,31 @@
 ---
 /**
  * Contact section at the bottom of every page (id="contact", linked from the nav).
- * The address lives in src/data/site.ts. The band uses fixed blues (not theme variables) so its
+ * Words: src/text/site.ts (`contact`). The band uses fixed blues (not theme variables) so its
  * white text keeps AA contrast (≥ 6.7:1) in both light and dark mode.
  */
 import ContactDialog from "./contact-dialog";
-import { site } from "@/data/site";
+import { contact, site } from "@/text/site";
 ---
 
 <section id="contact" class="contact-band relative isolate overflow-hidden text-white" aria-labelledby="contact-heading">
 	<div class="wrapper flex flex-col gap-8 py-16 md:flex-row md:items-end md:justify-between md:py-24">
 		<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-			<h2 id="contact-heading" class="font-wide text-[clamp(1.9rem,4vw,3rem)] font-[850]">Let&rsquo;s work together.</h2>
+			<h2 id="contact-heading" class="font-wide text-[clamp(1.9rem,4vw,3rem)] font-[850]">{contact.heading}</h2>
 			<p class="text-lg text-white/90">
-				Have a project in mind, or want to learn more about what we do at JPL Innovation? Reach out at
+				{contact.before}
 				<a
 					href={`mailto:${site.email}`}
 					class="font-semibold text-white underline decoration-white/60 decoration-2 underline-offset-4 transition-[text-decoration-color] hover:decoration-white"
 					>{site.email}</a
-				>, and we&rsquo;d love to hear from you.
+				>{contact.after}
 			</p>
 		</div>
 		<ContactDialog
 			client:visible
-			label="Email us"
+			label={contact.button}
 			look="inverse"
-			subject="Project enquiry for JPL Innovation"
+			subject={contact.subject}
 			className="shrink-0"
 		/>
 	</div>

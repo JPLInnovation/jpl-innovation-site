@@ -1,5 +1,5 @@
 /**
- * The F450 4G drone in 3D, built from the parts list in src/data/drone.ts. Real scale (1 unit = 1 m):
+ * The F450 4G drone in 3D, built from the parts list in src/text/projects/drone.ts. Real scale (1 unit = 1 m):
  * 450 mm motor-to-motor diagonal and 10" (1045) props. Front is +z; the front arms are red like the real frame.
  * Props spin in the standard quad-X pattern: front-left and rear-right clockwise, the other two counter-clockwise.
  */

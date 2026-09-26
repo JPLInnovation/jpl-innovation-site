@@ -11,6 +11,6 @@ order: 3
 
 <!--
   The FRC page has its own layout: src/pages/work/frc.astro
-  Edit the season content (2026, 2027, team info) in: src/data/frc.ts
+  Edit the season content (2026, 2027, team info) in: src/text/projects/frc.ts
   This file only provides the title, image, and description used on project cards.
 -->

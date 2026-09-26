@@ -3,6 +3,10 @@
  * Subnetting, animated: 192.168.10.0/24 split into four /26 subnets.
  * The segments draw in one after another (data-draw); all numbers are computed, not typed.
  */
+// Words: src/text/projects/cybersecurity.ts (`subnet`)
+import { cyberPage } from "@/text/projects/cybersecurity";
+
+const text = cyberPage.subnet;
 const BASE = "192.168.10";
 const colors = ["bg-chart-1", "bg-chart-2", "bg-chart-3", "bg-chart-4"];
 const subnets = [0, 1, 2, 3].map((i) => {
@@ -18,10 +22,8 @@ const subnets = [0, 1, 2, 3].map((i) => {
 
 <figure class="flex flex-col gap-6 rounded-xl border surface p-5 md:p-8">
 	<figcaption class="flex flex-col gap-2">
-		<h3 class="font-semiwide text-xl font-[780]">Subnetting: one /24 into four /26s</h3>
-		<p class="max-w-[60ch] text-muted-foreground">
-			Borrowing 2 host bits gives 2² = 4 subnets, each with 2⁶ − 2 = 62 usable host addresses.
-		</p>
+		<h3 class="font-semiwide text-xl font-[780]">{text.heading}</h3>
+		<p class="max-w-[60ch] text-muted-foreground">{text.text}</p>
 	</figcaption>
 
 	<div class="flex flex-col gap-1.5 overflow-x-auto font-mono text-[13px] md:text-sm">
@@ -54,9 +56,9 @@ const subnets = [0, 1, 2, 3].map((i) => {
 	<table class="w-full text-left text-sm">
 		<thead class="text-muted-foreground">
 			<tr>
-				<th scope="col" class="pb-2 font-medium">Subnet</th>
-				<th scope="col" class="pb-2 font-medium">Usable hosts</th>
-				<th scope="col" class="hidden pb-2 font-medium sm:table-cell">Broadcast</th>
+				<th scope="col" class="pb-2 font-medium">{text.columns.subnet}</th>
+				<th scope="col" class="pb-2 font-medium">{text.columns.hosts}</th>
+				<th scope="col" class="hidden pb-2 font-medium sm:table-cell">{text.columns.broadcast}</th>
 			</tr>
 		</thead>
 		<tbody data-reveal-group>

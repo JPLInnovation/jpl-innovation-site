@@ -3,6 +3,7 @@ import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import "@/styles/global.css";
+import { site } from "@/text/site";
 
 interface Props {
 	title?: string | undefined;
@@ -11,7 +12,7 @@ interface Props {
 
 const {
 	title = "JPL Innovation",
-	description = "JPL Innovation is a student-founded engineering startup in Ho Chi Minh City: robotics and mechanical design, embedded systems and drones, networking and cybersecurity, and web development.",
+	description = site.description,
 } = Astro.props;
 ---
 

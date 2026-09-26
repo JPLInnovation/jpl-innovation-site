@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import GlyphPortal from "@/components/ui/glyph-portal";
 import { Button } from "@/components/ui/button";
-import { services } from "@/data/services";
+// Words: src/text/home.ts (`hero`, `services`)
+import { hero, services } from "@/text/home";
 
 const FACE = '"Archivo Variable", sans-serif';
 const FALLBACK = '"Arial Black", Arial, sans-serif';
 const WORD = "JPL";
 
-const kicker = "Student-founded engineering startup · Ho Chi Minh City";
-const support = "We design, build and secure real technology: robots, drones, networks and the web.";
+const { kicker, support } = hero;
 
 /**
  * Home page hero. The camera flies through the letters J-P-L into a photo of a build
@@ -48,7 +48,7 @@ export default function HomePortal() {
 				fontFamily={face}
 				fontWeight={900}
 				scrollLength={2.6}
-				enterLabel="See what we build"
+				enterLabel={hero.enterButton}
 				style={{
 					"--gp-paper": "var(--background)",
 					"--gp-ink": "var(--foreground)",
@@ -62,7 +62,7 @@ export default function HomePortal() {
 						<p data-jpl-kicker>{kicker}</p>
 						<p data-jpl-support>{support}</p>
 						<span data-jpl-scroll>
-							Scroll to fly in <ArrowDown className="size-4" aria-hidden="true" />
+							{hero.scrollHint} <ArrowDown className="size-4" aria-hidden="true" />
 						</span>
 					</>
 				}
@@ -92,18 +92,15 @@ function BuildPhoto() {
 	);
 }
 
-/** What JPL Innovation is, over the photo. Service names come from src/data/services.ts (placeholders, TODO: confirm). */
+/** What JPL Innovation is, over the photo. Service names come from src/text/home.ts (placeholders, TODO: confirm). */
 function Intro() {
 	return (
 		<div className="wrapper flex flex-col gap-10 !px-0">
 			<div className="flex max-w-3xl flex-col gap-5">
 				<h2 className="font-wide text-[clamp(2rem,4.6vw,3.75rem)] font-[820] leading-[1.02]">
-					Ideas in, working technology out.
+					{hero.heading}
 				</h2>
-				<p className="max-w-[58ch] text-lg text-white/85">
-					JPL Innovation is a small team of student engineers. We take projects from the first sketch to a tested,
-					working build (machines, networks and software) and document what we learn along the way.
-				</p>
+				<p className="max-w-[58ch] text-lg text-white/85">{hero.text}</p>
 			</div>
 			<ul className="grid max-w-3xl gap-x-8 gap-y-3 border-t border-white/20 pt-6 sm:grid-cols-2">
 				{services.map((s) => (
@@ -117,7 +114,7 @@ function Intro() {
 				<div className="flex flex-wrap gap-3">
 					<Button asChild variant="signal" size="lg">
 						<a href="/#services">
-							Our services <ArrowRight aria-hidden="true" />
+							{hero.servicesButton} <ArrowRight aria-hidden="true" />
 						</a>
 					</Button>
 					<Button
@@ -126,10 +123,10 @@ function Intro() {
 						size="lg"
 						className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white dark:bg-transparent"
 					>
-						<a href="/work/">See our work</a>
+						<a href="/work/">{hero.workButton}</a>
 					</Button>
 				</div>
-				<p className="text-sm text-white/70">Pictured: FRC Team 10951&rsquo;s 2026 robot, one of the projects we work on.</p>
+				<p className="text-sm text-white/70">{hero.photoCaption}</p>
 			</div>
 		</div>
 	);
@@ -149,7 +146,7 @@ function Poster() {
 			</p>
 			<p className="max-w-[40ch] text-lg">{support}</p>
 			<Button asChild variant="signal" size="lg">
-				<a href="/#services">Our services</a>
+				<a href="/#services">{hero.servicesButton}</a>
 			</Button>
 		</section>
 	);

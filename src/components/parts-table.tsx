@@ -1,6 +1,8 @@
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Part } from "@/data/drone";
+import { dronePage, type Part } from "@/text/projects/drone";
 import { formatVnd } from "@/lib/format";
+
+const t = dronePage.table;
 
 /** One drone part group as a table. Rendered at build time; no client JS. */
 export default function PartsTable({ caption, parts, subtotal }: { caption: string; parts: Part[]; subtotal: number }) {
@@ -9,9 +11,9 @@ export default function PartsTable({ caption, parts, subtotal }: { caption: stri
 			<caption className="sr-only">{caption}</caption>
 			<TableHeader>
 				<TableRow>
-					<TableHead className="w-[40%]">Part</TableHead>
-					<TableHead className="hidden md:table-cell">Why we need it</TableHead>
-					<TableHead className="text-right">Price</TableHead>
+					<TableHead className="w-[40%]">{t.part}</TableHead>
+					<TableHead className="hidden md:table-cell">{t.why}</TableHead>
+					<TableHead className="text-right">{t.price}</TableHead>
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -23,14 +25,14 @@ export default function PartsTable({ caption, parts, subtotal }: { caption: stri
 						</TableCell>
 						<TableCell className="hidden align-top whitespace-normal text-muted-foreground md:table-cell">{p.why}</TableCell>
 						<TableCell className="text-right align-top tabular-nums">
-							{p.price === undefined ? <span className="text-muted-foreground">Not priced yet</span> : formatVnd(p.price)}
+							{p.price === undefined ? <span className="text-muted-foreground">{t.notPriced}</span> : formatVnd(p.price)}
 						</TableCell>
 					</TableRow>
 				))}
 			</TableBody>
 			<TableFooter>
 				<TableRow>
-					<TableCell className="font-semibold">Subtotal</TableCell>
+					<TableCell className="font-semibold">{t.subtotal}</TableCell>
 					<TableCell className="hidden md:table-cell" />
 					<TableCell className="text-right font-semibold tabular-nums">{formatVnd(subtotal)}</TableCell>
 				</TableRow>

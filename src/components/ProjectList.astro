@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { ArrowRight } from "lucide-react";
 import StatusTag from "./StatusTag.astro";
+import { projectCard } from "@/text/work";
 
 interface Props {
 	projects: CollectionEntry<"work">[];
@@ -45,7 +46,7 @@ const { projects, headingLevel: Heading = "h3" } = Astro.props;
 							href={href}
 							class="press mt-1 inline-flex min-h-11 items-center gap-2 font-semibold transition-[gap,transform] hover:gap-3"
 						>
-							Read about {p.data.title}
+							{projectCard.readMore} {p.data.title}
 							<ArrowRight className="size-4" aria-hidden="true" />
 						</a>
 					</div>
