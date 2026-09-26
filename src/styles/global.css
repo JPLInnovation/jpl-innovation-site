@@ -12,14 +12,14 @@
  *   --accent     cyan: highlights and "live" markers; always paired with --accent-foreground
  *   --highlight  violet: only in gradients (buttons, contact band, background glow)
  *   --hero-field deep blue behind photo overlays, the terminal and the 3D badges
- *   --glow-*, --bg-dot, --bg-line  the animated background (src/scripts/background.ts); kept faint
+ *   --glow-*, --bg-star*, --bg-shoot, --cursor-glow  the animated background (src/scripts/background.ts); kept faint
  *                so text stays AA even with a dot or glow directly behind it
  * The two FRC alliance colours and the chart hues stay as they were (data colours, validated).
  */
 :root {
 	--radius: 0.75rem;
 
-	--background: #f4f7fc;
+	--background: #eef3fd;
 	--foreground: #0a1a33;
 	--card: #ffffff;
 	--card-foreground: #0a1a33;
@@ -27,27 +27,29 @@
 	--popover-foreground: #0a1a33;
 	--primary: #1d4ed8;
 	--primary-foreground: #ffffff;
-	--secondary: #e6edf8;
+	--secondary: #e2eafb;
 	--secondary-foreground: #0a1a33;
-	--muted: #e9eff8;
+	--muted: #e5ecfa;
 	--muted-foreground: #475569;
 	--accent: #22d3ee;
 	--accent-foreground: #04202b;
 	--highlight: #7c3aed;
 	--destructive: #c8283a;
-	--border: #d5deeb;
-	--input: #d5deeb;
+	--border: #cfdaef;
+	--input: #cfdaef;
 	--ring: #1d4ed8;
 
 	--hero-field: #071433;
 	--shadow-soft: 0 1px 2px rgb(16 42 90 / 0.06), 0 12px 32px -16px rgb(16 42 90 / 0.28);
 	--shadow-lift: 0 2px 6px rgb(16 42 90 / 0.08), 0 24px 48px -20px rgb(16 42 90 / 0.4);
 
-	--glow-1: rgb(29 78 216 / 0.12);
-	--glow-2: rgb(34 211 238 / 0.12);
-	--glow-3: rgb(124 58 237 / 0.09);
-	--bg-dot: rgb(29 78 216 / 0.22);
-	--bg-line: rgb(29 78 216 / 0.1);
+	--glow-1: rgb(37 99 235 / 0.16);
+	--glow-2: rgb(124 58 237 / 0.13);
+	--glow-3: rgb(56 140 255 / 0.1);
+	--bg-star: rgb(29 78 216 / 0.42);
+	--bg-star-alt: rgb(124 58 237 / 0.4);
+	--bg-shoot: rgb(124 58 237 / 0.55);
+	--cursor-glow: rgb(124 58 237 / 0.15);
 
 	--alliance-red: #c8283a;
 	--alliance-blue: #1f5fd1;
@@ -62,35 +64,37 @@
 }
 
 .dark {
-	--background: #060b18;
+	--background: #050a1f;
 	--foreground: #e6edf8;
-	--card: #0c1528;
+	--card: #0b1531;
 	--card-foreground: #e6edf8;
-	--popover: #0c1528;
+	--popover: #0b1531;
 	--popover-foreground: #e6edf8;
 	--primary: #2563eb;
 	--primary-foreground: #ffffff;
-	--secondary: #111d35;
+	--secondary: #111e3e;
 	--secondary-foreground: #e6edf8;
-	--muted: #0f1a31;
+	--muted: #0e1a39;
 	--muted-foreground: #94a3b8;
 	--accent: #22d3ee;
 	--accent-foreground: #04202b;
 	--highlight: #8b5cf6;
 	--destructive: #f0596b;
-	--border: #1b2944;
-	--input: #243554;
+	--border: #1a2a50;
+	--input: #233661;
 	--ring: #38bdf8;
 
-	--hero-field: #050d24;
+	--hero-field: #050c28;
 	--shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 34px -18px rgb(0 0 0 / 0.7);
 	--shadow-lift: 0 2px 6px rgb(0 0 0 / 0.4), 0 26px 50px -22px rgb(0 0 0 / 0.8);
 
-	--glow-1: rgb(37 99 235 / 0.16);
-	--glow-2: rgb(34 211 238 / 0.1);
-	--glow-3: rgb(139 92 246 / 0.14);
-	--bg-dot: rgb(56 189 248 / 0.18);
-	--bg-line: rgb(96 165 250 / 0.1);
+	--glow-1: rgb(37 99 235 / 0.22);
+	--glow-2: rgb(139 92 246 / 0.18);
+	--glow-3: rgb(56 140 255 / 0.1);
+	--bg-star: rgb(214 228 255 / 0.85);
+	--bg-star-alt: rgb(196 172 255 / 0.8);
+	--bg-shoot: rgb(221 214 255 / 0.9);
+	--cursor-glow: rgb(139 92 246 / 0.2);
 
 	--alliance-red: #f0596b;
 	--alliance-blue: #6d9bf2;
@@ -278,9 +282,10 @@
 
 /*
  * Animated site background (BaseLayout + src/scripts/background.ts): a fixed layer behind everything.
- *   .site-bg__mesh  three soft colour glows drifting very slowly (transform-only, so it stays on the GPU)
- *   .site-bg__net   a canvas of faint drifting nodes joined by lines, drawn by the script
- * Reduced motion: the glows stop and the script draws one still frame.
+ *   .site-bg__mesh  three soft blue/violet washes drifting very slowly (transform-only, so it stays on the GPU)
+ *   .site-bg__net   a canvas starfield, drawn by the script
+ *   .site-bg__glow  a soft purple light that trails the mouse (positioned by the script; mouse/trackpad only)
+ * Reduced motion: the washes stop, the script draws one still frame and the glow stays hidden.
  */
 .site-bg {
 	position: fixed;
@@ -305,6 +310,17 @@
 	width: 100%;
 	height: 100%;
 }
+.site-bg__glow {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 34rem;
+	height: 34rem;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, var(--cursor-glow), transparent);
+	opacity: 0;
+	will-change: transform, opacity;
+}
 @keyframes site-mesh-drift {
 	0% {
 		transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
@@ -319,6 +335,9 @@
 @media (prefers-reduced-motion: reduce) {
 	.site-bg__mesh {
 		animation: none;
+	}
+	.site-bg__glow {
+		display: none;
 	}
 }
 @media (forced-colors: active) {
