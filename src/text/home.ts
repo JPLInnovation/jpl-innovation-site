@@ -24,7 +24,7 @@ export const hero = {
 	text: "JPL Innovation is a small team of student engineers. We take projects from the first sketch to a tested, working build (machines, networks and software) and document what we learn along the way.",
 	servicesButton: "Our services",
 	workButton: "See our work",
-	photoCaption: "Pictured: FRC Team 10951’s 2026 robot, one of the projects we work on.",
+	photoCaption: "Pictured: FRC Team 10951’s 2026 robot, one of the projects we worked on.",
 };
 
 /**
