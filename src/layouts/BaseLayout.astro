@@ -2,6 +2,7 @@
 import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
+import IntroSplash from "@/components/IntroSplash.astro";
 import "@/styles/global.css";
 import { site } from "@/text/site";
 
@@ -65,6 +66,8 @@ const {
 				window.__jplThemeHook = true;
 			}
 		</script>
+		<!-- Animated logo intro, once per session. Remove this line to turn it off. -->
+		<IntroSplash />
 		<ClientRouter />
 	</head>
 	<body>
