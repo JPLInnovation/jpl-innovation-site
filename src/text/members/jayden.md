@@ -11,6 +11,10 @@ tags:
 - Software Developer
 - Robotics Enthusiast
 - Student
+achievements:
+- Cisco CCNA certificate (VnPro)
+- "Completed: Nhập môn Quản trị và An ninh mạng (Introduction to Network Administration and Security)"
+- "Completed: Quản trị Hạ tầng mạng (Infrastructure Administrator)"
 sports:
 - sport: Football
   team: SSIS JV
