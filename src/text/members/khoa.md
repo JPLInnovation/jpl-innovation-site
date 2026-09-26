@@ -11,6 +11,13 @@ tags:
 - Software Developer
 - Technology Enthusiast
 - Student
+achievements:
+- Qualified for the Southern Regional Round of the Vietnam Tin Hoc Tre Competition
+- HKICO Grade-level Champion
+- Participated in Lotus Hacks 2026
+sports:
+- sport: Badminton
+  team: SSIS B team
 technical_skills: 
 - title: Python
   level: Advanced

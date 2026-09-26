@@ -34,6 +34,10 @@ export const collections = {
 					frc: z.string().optional(),
 				})
 				.optional(),
+			/** Awards and competitions, one line each. */
+			achievements: z.array(z.string()).optional(),
+			/** School sports teams, e.g. { sport: "Tennis", team: "SSIS Varsity" }. */
+			sports: z.array(z.object({ sport: z.string(), team: z.string() })).optional(),
 			technical_skills: z.array(z.object({
 				title: z.string(),
 				level: z.string(),

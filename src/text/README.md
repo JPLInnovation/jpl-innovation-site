@@ -32,7 +32,7 @@
 | Cybersecurity: labels, "CCNA in motion", subnetting box | `projects/cybersecurity.ts` |
 | Cybersecurity: the commands typed in the Cisco console | `projects/cybersecurity-terminal.ts` |
 | **Members page** (`/members/`) headings | `members.ts` → `membersPage` |
-| **A person** (name, photo, roles, CEO/COO titles, skills, story) | `members/jayden.md`, `members/khoa.md` |
+| **A person** (name, photo, roles, CEO/COO titles, skills, achievements, sports, story) | `members/jayden.md`, `members/khoa.md` |
 
 Labels floating inside the 3D models ("Intake rollers", "TEAM MEMBER"...) are the only exception: they're in `src/lib/three/models/`.
 

@@ -11,6 +11,11 @@ tags:
 - Software Developer
 - Robotics Enthusiast
 - Student
+sports:
+- sport: Football
+  team: SSIS JV
+- sport: Tennis
+  team: SSIS Varsity
 technical_skills: 
 - title: Python
   level: Advanced

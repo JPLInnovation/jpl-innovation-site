@@ -21,5 +21,7 @@ export const membersPage = {
 export const memberPage = {
 	backLink: "All members",
 	skillsHeading: "Technical skills",
+	achievementsHeading: "Achievements",
+	sportsHeading: "Sports",
 	storyHeading: "Story",
 };

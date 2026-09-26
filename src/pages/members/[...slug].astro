@@ -7,6 +7,7 @@ import { badgeVariants } from "@/components/ui/badge";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { leadershipRoles, toBadge } from "@/lib/content";
 import { cn } from "@/lib/utils";
+import { Trophy } from "lucide-react";
 // Headings: src/text/members.ts. This person's details: src/text/members/<name>.md
 import { memberPage } from "@/text/members";
 
@@ -100,6 +101,39 @@ const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced:
 			</ul>
 		</div>
 	</section>
+
+	{
+		(data.achievements?.length || data.sports?.length) && (
+			<section class="wrapper grid gap-12 pt-14 md:grid-cols-2 md:gap-16 md:pt-20">
+				{data.achievements?.length && (
+					<div class="flex flex-col gap-6" aria-labelledby="achievements-heading">
+						<h2 data-reveal id="achievements-heading" class="font-wide text-3xl font-[850] md:text-4xl">{memberPage.achievementsHeading}</h2>
+						<ul class="flex flex-col" data-reveal-group>
+							{data.achievements.map((a) => (
+								<li class="flex gap-3 border-t py-4 text-lg">
+									<Trophy className="mt-1 size-5 shrink-0 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
+									{a}
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
+				{data.sports?.length && (
+					<div class="flex flex-col gap-6" aria-labelledby="sports-heading">
+						<h2 data-reveal id="sports-heading" class="font-wide text-3xl font-[850] md:text-4xl">{memberPage.sportsHeading}</h2>
+						<ul class="flex flex-col" data-reveal-group>
+							{data.sports.map((s) => (
+								<li class="flex items-baseline justify-between gap-4 border-t py-4 text-lg">
+									<span class="font-semibold">{s.sport}</span>
+									<span class="text-muted-foreground">{s.team}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
+			</section>
+		)
+	}
 
 	<article class="wrapper py-16 md:py-24" aria-labelledby="story-heading">
 		<h2 data-reveal id="story-heading" class="mb-6 font-wide text-3xl font-[850] md:text-4xl">{memberPage.storyHeading}</h2>
