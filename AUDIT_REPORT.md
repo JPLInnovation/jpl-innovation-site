@@ -1,7 +1,8 @@
 # JPL Innovation website audit (27 September 2026)
 
-> **Status: Phase 3 report, before any fixes.** The fix log, before/after results and deploy outcome are
-> added at the end as the work continues (sections 9 to 11).
+> **Status: fixed and verified on branch `audit-fixes-2026-09-27`, waiting for Jayden's OK to deploy.**
+> Sections 1–8 are the original audit (with corrections marked). Section 9 is the fix log, section 10 the
+> before/after verification, and section 11 the deploy.
 
 **Scope.** Every page of https://jpl-innovation.github.io, audited on commit `baf5d9d` (`main`, which is
 exactly what is live), at 375, 768 and 1440 px wide, in dark and light mode. I checked the local production
@@ -207,7 +208,9 @@ in section 8 and are **not** changed.
 - **Where:** `src/styles/global.css:269`, `src/scripts/motion.ts:77`.
 - **What:** Words rest at 18 % opacity, which gives contrast of 1.5:1 in dark and 1.45:1 in light. WCAG AA
   needs 3:1 for text this large. This caused home's only Accessibility loss (96).
-- **Fix:** Raise the resting floor to 45 %. The words still light up as you scroll, and at rest they pass 3:1.
+- **Fix:** Raise the resting floor to 50 %. The words still light up as you scroll, and at rest they pass 3:1.
+  (Correction: this report first proposed 45 %. Measured, 45 % passes in dark mode (4.0:1) but fails in light
+  mode (2.9:1). 50 % passes both: 4.7:1 dark, 3.3:1 light.)
 
 **M5 · Subnet labels fail contrast**
 - **Where:** `src/components/SubnetSplit.astro:11`.
@@ -228,6 +231,10 @@ in section 8 and are **not** changed.
 - **What:** The first render compiles every shader synchronously, as one 1.28 s task.
 - **Fix:** `await renderer.compileAsync(scene, camera)` before the first render (three r186), so shaders
   compile in parallel. It will be measured, and kept only if it helps.
+- **Outcome: dropped.** Measured on the same build (Lighthouse mobile, median of 3), it made blocking far
+  *worse*: Cybersecurity TBT went from 977 ms to 2,090 ms, and Jayden from 954 ms to 1,783 ms. The headless
+  Chrome that Lighthouse uses renders WebGL in software, with no parallel shader compile, so `compileAsync`
+  only added polling. It isn't on the branch.
 
 **M9 · Links to the public GitHub repository**
 - **Where:** `src/text/site.ts:13,40`, `src/text/home.ts:76`, `src/components/SiteFooter.astro:28`.
@@ -284,9 +291,11 @@ in section 8 and are **not** changed.
 - **What:** It affects esbuild's own `serve` mode, which Vite doesn't use.
 - **Fix:** Not applicable. Documented.
 
-**L9 · 24 unused files in `public/assets/`, about 600 KB**
-- **What:** `AI_pics.webp`, `IOT.jpg`, `IOT2.jpg`, `JPL_INNOVATION.jpg`, `zaloicon.jpg` and all of
-  `backgrounds/`. They still deploy, but nothing references them.
+**L9 · 23 unused files in `public/assets/`, about 500 KB**
+- **What:** `AI_pics.webp`, `IOT.jpg`, `IOT2.jpg`, `zaloicon.jpg` and all of `backgrounds/`. They still
+  deploy, but nothing references them.
+- **Correction:** this report first listed `JPL_INNOVATION.jpg` here too. It is the source image that
+  `scripts/make-logo-assets.mjs` builds the logos from, so keep it.
 - **Fix:** In **Needs Jayden**, because old links elsewhere may point at them.
 
 **L10 · `website-old-main/` is in the repository**
@@ -368,6 +377,10 @@ Full-page captures, split into columns so each fits one image:
 Blank stretches in the home and FRC captures are the pinned scroll scenes, which a static capture can't
 show mid-scroll. They aren't layout gaps.
 
+**After the fixes:** the same eight views are in `audit/after/`, with the same file names. The FRC phone view
+shows every hardware label in full, with the CAN diagram scrolling inside its own box. The Cybersecurity title
+fits, and the footer no longer has a GitHub link.
+
 ---
 
 ## 7. Motion audit (design-motion-principles, Audit mode)
@@ -441,7 +454,7 @@ What's working well
 
 Issues to address
 - ✗ 🟡 **Mission words unreadable at rest** — `src/styles/global.css:269`, `src/scripts/motion.ts:77`. A lovely effect,
-  but at 18 % opacity the unread words fail contrast (1.5:1). Recommended: a 45 % floor keeps the reveal but is readable.
+  but at 18 % opacity the unread words fail contrast (1.5:1). Recommended: a 50 % floor keeps the reveal but is readable.
   **Fixed on the branch (M4).**
 
 Opportunities
@@ -478,7 +491,7 @@ the FRC season switcher.
 | | Issue | File | Fix |
 | --- | --- | --- | --- |
 | 🔴 | Reduced motion ignored | `frc-seasons.tsx:50` | `MotionConfig reducedMotion="user"` (fixed, M3) |
-| 🟡 | Mission words 1.5:1 at rest | `global.css:269`, `motion.ts:77` | 45 % floor (fixed, M4) |
+| 🟡 | Mission words 1.5:1 at rest | `global.css:269`, `motion.ts:77` | 50 % floor (fixed, M4) |
 | 🟡 | One reveal on every block | `motion.ts:45-53` | Reserve it for cards and hero moments (Needs Jayden) |
 | 🟡 | Same hover zoom on four card types | `ProjectList`, `MemberList`, `frc-seasons` | Zoom only on project cards (Needs Jayden) |
 | 🟡 | No pause for ambient loops | `background.ts`, `global.css`, `ContactSection`, `DroneIllustration`, `HardwareStack` | Pause toggle (Needs Jayden) |
@@ -519,7 +532,7 @@ These change content meaning, design, colours, fonts or files, or delete things,
    - one reveal on every block
    - the hover zoom on four card types
    - a pause control for ambient animations (WCAG 2.2.2)
-8. **Unused images** (L9). 24 files, about 600 KB, in `public/assets/`. Delete them if nothing outside the site
+8. **Unused images** (L9). 23 files, about 500 KB, in `public/assets/`. Delete them if nothing outside the site
    links to them.
 9. **`website-old-main/`** (L10). 27 MB of an old site, visible to anyone who opens the public repo. Delete it?
 10. **Stale `bun.lock`** (L13). Delete it. The workflow already pins npm.
@@ -535,12 +548,170 @@ These change content meaning, design, colours, fonts or files, or delete things,
 
 ## 9. Fix log (Phase 4)
 
-*Filled in as fixes land on branch `audit-fixes-2026-09-27`.*
+Branch `audit-fixes-2026-09-27`, one logical change per commit.
+
+| Finding | Commit | What changed |
+| --- | --- | --- |
+| H1 FRC overflow | `b61bd49` | `grid-cols-1` on the hardware grid |
+| M1 Long titles | `d832dfb` | Page-title floor `min(2.6rem, 9.6vw)` |
+| H2 Layout shift | `82b054b` | Loading "JPL" sized to fit (42vw) |
+| H2 Layout shift | `a94ea8d` | Preload the Archivo latin font (same hashed file as the stylesheet) |
+| H3 Images | `dd03325` | WebP copies + `srcset`/`sizes` at every render site, WebP textures for 3D |
+| H3 Images | `623d3c2` | 480 px WebP logo; only the visible theme's logo downloads |
+| H4 npm audit | `9defe0a` | `npm audit fix`: svgo 4.1.0, smol-toml 1.9.0, vite 7.3.6 (6 → 4 advisories) |
+| M4 Mission words | `4350ed5` | Resting opacity 18 % → 50 % (CSS and JS) |
+| M2 Hydration error | `a469711` | Still version swaps in after mount |
+| M3 Season switcher | `460c498` | `MotionConfig reducedMotion="user"` |
+| M6 SEO tags | `9b1cd57` | Canonical, `og:url`, `og:site_name`, Twitter/X card, no canonical on the 404 page, Organization JSON-LD |
+| M7 Sitemap, robots | `7f9828b` | Build-time `sitemap.xml` and `robots.txt` endpoints |
+| (housekeeping) | `72f0e28` | Ignore `.playwright-mcp/` |
+| M9 GitHub links | `4f78719` | Removed (same edits as `wip-frc-splash`) |
+| L2 Meta descriptions | `4d793cf` | Name and roles first |
+| L3 Khoa alt text | `10730a3` | Describes the logo it actually is |
+| L4 Text slips | `c1522a4` | "i.e.,", VnPro, Tin Học Trẻ |
+| L5 Unused components | `2d159a8` | Deleted `glyph-portal-demo.tsx`, `ui/separator.tsx` |
+| M10 allowScripts | `3cf1343` | esbuild@0.27.7 and sharp@0.34.5 approved (pinned) |
+| L1 Odometer text | `ebd83e0` | Digit strip drawn with CSS generated content; heading text is "Team 10951" |
+| (review) | `521fb27` | Image helper tidy: required `src`, `webpCopy()`, accurate comments |
+| (review) | `481ace8` | 404 description and logo alt from `src/text/site.ts` |
+| (review) | `922f5c0` | `roleLine()` shared by the member cards and meta description |
+| (review) | `3c3291a` | Khoa's alt text purely descriptive |
+| (re-crawl) | `c45d47d` | CAN bus diagram: focusable scroll region named by its caption |
+| (Lighthouse) | `57fcefa` | 404 page: `noindex` removed (it cost SEO 100 → 66); still no canonical |
+| M8 Shader compile | not applied | Measured worse; see M8 |
+
+**Image bytes per page** (measured in Chrome, every image the page loads, scrolled to the end):
+
+| Page | Before (phone / desktop) | After (phone / desktop) |
+| --- | --- | --- |
+| Home | 1,039 / 1,039 KB | 311 / 235 KB |
+| Work | 555 / 555 KB | 133 / 57 KB |
+| FRC | 1,037 / 1,037 KB | 234 / 326 KB |
+| Members | 418 / 418 KB | 168 / 168 KB |
+| Jayden | 340 / 340 KB | 109 / 109 KB |
+| Khoa | 286 / 286 KB | 53 / 70 KB |
+
+**Layout shift** (Layout Instability API trace, mobile and desktop): home and FRC went from 0.19 / 0.40 (mobile)
+to **no shifts at all**. The phone layout viewport stays at the screen width, and Cybersecurity is exactly
+375 px wide at 375 px.
 
 ## 10. Verification (Phase 5)
 
-*Pending.*
+All checks ran on the final branch build (`57fcefa`), after a clean `npm ci`.
+
+| Check | Result |
+| --- | --- |
+| `npm ci` | 497 packages. The allowScripts warning is gone. 4 advisories remain (all need Astro 7). |
+| `astro check` | 0 errors, 0 warnings, 0 hints |
+| `npm run build` | Clean. 9 pages plus `sitemap.xml` and `robots.txt`, no warnings. |
+| Crawl (every page, 375/768/1440, dark and light) | No horizontal overflow on any page. No failed requests. No console errors except the deliberate 404 test URL. The only warning is the pre-existing Drone shader-precision message (L7). |
+| axe (WCAG 2.2 AA) | Clean everywhere except the Cybersecurity subnet labels (M5, Needs Jayden) |
+| Reduced motion | No console errors on any page (the FRC hydration error is gone), and no content left hidden |
+| Layout shift trace | No shifts at all on home or FRC, mobile or desktop |
+| Interactions | 67 buttons respond. All 13 links return 200 (no GitHub links). No missing anchors. 44 keyboard focus stops with visible rings at both widths. |
+| Target size | All at least 24 × 24 px (the skip link is 1 px until focused, by design) |
+
+### Lighthouse: before vs after
+
+Measured back to back on the same machine: `main` rebuilt and measured today, then this branch. Local
+production build, **median of 3 runs**, P = Performance, A = Accessibility, BP = Best practices.
+
+| Page | Mobile before → after (P · A · BP · SEO) | Mobile LCP / TBT / CLS before → after | Desktop before → after | Desktop CLS |
+| --- | --- | --- | --- | --- |
+| Home | 66 · 96 · 100 · 100 → **88 · 100 · 100 · 100** | 6.2 s / 5 ms / 0.19 → 3.7 s / 3 ms / 0.00 | 98 · 96 · 100 · 100 → **99 · 100 · 100 · 100** | 0.02 → 0.01 |
+| Work | 89 · 100 · 100 · 100 → **97 · 100 · 100 · 100** | 3.5 s / 0 ms / 0.00 → 2.4 s / 0 ms / 0.00 | 100 · 100 · 100 · 100 → **100 · 100 · 100 · 100** | 0.01 → 0.00 |
+| Drone | 60 · 100 · 100 · 100 → **59 · 100 · 100 · 100** | 5.7 s / 557 ms / 0.01 → 4.6 s / 925 ms / 0.00 | 94 · 100 · 100 · 100 → **86 · 100 · 100 · 100** | 0.02 → 0.00 |
+| Cybersecurity | 61 · 100 · 100 · 100 → **62 · 100 · 100 · 100** | 5.3 s / 696 ms / 0.00 → 4.3 s / 987 ms / 0.00 | 91 · 100 · 100 · 100 → **86 · 100 · 100 · 100** | 0.01 → 0.00 |
+| FRC | 55 · 100 · 100 · 100 → **85 · 100 · 100 · 100** | 6.9 s / 0 ms / 0.40 → 4.1 s / 0 ms / 0.00 | 93 · 100 · 100 · 100 → **99 · 100 · 100 · 100** | 0.13 → 0.01 |
+| Members | 58 · 100 · 100 · 100 → **57 · 100 · 100 · 100** | 6.6 s / 642 ms / 0.00 → 4.9 s / 770 ms / 0.00 | 95 · 100 · 100 · 100 → **88 · 100 · 100 · 100** | 0.01 → 0.00 |
+| Jayden | 58 · 100 · 100 · 100 → **53 · 100 · 100 · 100** | 6.2 s / 551 ms / 0.00 → 4.9 s / 947 ms / 0.00 | 95 · 100 · 100 · 100 → **86 · 100 · 100 · 100** | 0.01 → 0.00 |
+| Khoa | 61 · 100 · 100 · 100 → **52 · 100 · 100 · 100** | 5.5 s / 556 ms / 0.00 → 4.7 s / 1078 ms / 0.00 | 90 · 100 · 100 · 100 → **85 · 100 · 100 · 100** | 0.01 → 0.00 |
+| 404 | 85 · 100 · 100 · 100 → **94 · 100 · 100 · 100** | 3.9 s / 0 ms / 0.03 → 2.9 s / 0 ms / 0.00 | 100 · 100 · 100 · 100 → **100 · 100 · 100 · 100** | 0.01 → 0.00 |
+
+**What went better.**
+- Every page loads its largest content sooner (LCP 0.1–2.8 s faster).
+- Layout shift is gone everywhere.
+- Accessibility, Best practices and SEO are equal or better on every page, and home's accessibility went 96 → 100.
+- Performance on the pages without 3D models rose sharply: home 66 → 88, FRC 55 → 85, Work 89 → 97, 404 85 → 94
+  (mobile).
+
+**What went worse, and why.** On the five pages with a 3D model, Performance is 1–9 points lower, because of
+Total Blocking Time. The evidence says that isn't new work:
+- `stage.ts` (the 3D engine) is byte-identical to `main`.
+- three.js's own script time is unchanged within run-to-run noise (e.g. Cybersecurity mobile 3,021 → 2,995 ms).
+- What changed is *when* it runs. These pages no longer download about 700 KB of images first, so they reach
+  "interactive" 0.6–1.2 s sooner. The same 1–1.3 s three.js startup task now runs inside the window where
+  Lighthouse counts blocking time, whereas on `main` it ran later and was counted less.
+- Lighthouse renders WebGL in software, which makes that task far heavier than on a phone with a GPU.
+
+M8 (async shader compile) was tried to shrink the task and made it worse, so it isn't applied.
+
+**Earlier mistake, corrected:** a `noindex` tag on the 404 page dropped its SEO score to 66 (Lighthouse fails
+any page marked noindex). It was removed (`57fcefa`). The page keeps no canonical URL, and GitHub Pages' 404
+status already keeps it out of search results. Re-measured: 404 SEO 100.
+
+### Reviews of the branch
+
+**Security review** (security-review skill, a finder sub-task over the full diff): **no vulnerabilities found.**
+It checked:
+- the JSON-LD `set:html` (only fixed text from `src/text/site.ts`, no visitor input)
+- the sitemap and robots endpoints (build-time only, repo data only)
+- canonical URLs (paths fixed at build time)
+- the `srcset` helper and texture paths (hard-coded map)
+- `allowScripts` (exactly `esbuild@0.27.7` and `sharp@0.34.5`, which already run today)
+- the lockfile (every package from `registry.npmjs.org`)
+
+With no findings, the false-positive filter step had nothing to filter.
+
+**Code review** (code-review skill, two independent reviewers, fixed point `main`, spec = this report):
+
+*Standards* (the repo's documented rule: all words in `src/text/`; plus code-smell heuristics):
+- **Words typed into components:** the 404 description and the logo's alt text → **fixed** (`481ace8`, now from
+  `site.ts`).
+- **Duplicated code:** the member role line was built twice → **fixed** (`922f5c0`, `roleLine()`).
+- **Speculative generality:** `srcset()` accepted `undefined` though no caller passes it → **fixed** (`521fb27`).
+- **Unclear name:** `copy()` → renamed `webpCopy()` (`521fb27`).
+- **Stale comments** in `resize-images.mjs` and `badges.ts` → **fixed** (`521fb27`).
+- **Kept as is, with reasons:**
+  - The WebP width table lives in both `resize-images.mjs` and `images.ts`, joined by a "keep in sync" note (now
+    naming every file involved). A shared module would couple a build script to site code for four entries.
+  - The 50 % floor is written in both CSS and JS. That's the pattern the files already used, and each carries a
+    sync comment.
+  - The role line's organisation names come from the existing `ORG` constant, shared with the member cards.
+
+*Spec* (does the branch do what section 5 asked, and nothing from section 8?):
+- **Implemented as specified:** everything in section 5 that wasn't set aside.
+- **Untouched:** no "Needs Jayden" item. Astro, sharp and esbuild versions, `overrides`, assets, `bun.lock`,
+  `website-old-main/` and the bios are all unchanged.
+- **Checked correct:** every `srcset` width against the generated files, the `sizes` hints, the preload URL, the
+  canonical logic, the sitemap against the routes, the hydration fix, the `MotionConfig`
+  placement, and the 50 % floor in both CSS and JS.
+- **Khoa's alt text:** it said the logo stands in until his photo is added, which leans into a Needs Jayden
+  wording decision → **made purely descriptive** (`3c3291a`).
+- **Deliberate deviations:**
+  - The header logo is lazy-loaded, so only the visible theme's copy downloads. Switching theme can show the
+    other logo about 50 ms later.
+  - The 3D textures now use the WebP copies, not the originals. They're large enough: the logo is drawn at most
+    about 300 px and the photos at their full size.
+  - One small extra: `og:site_name`. (A `noindex` on the 404 page was tried and removed: see section 10, Lighthouse.)
+  - For reduced-motion visitors, the FRC scroll scene collapses to a still image after mounting. It's below the
+    first screen, so nothing visibly shifts.
+
+Summary: Standards: 9 findings (5 fixed, 4 kept with reasons); the worst was words typed outside
+`src/text/`. Spec: 0 missing requirements, 1 wording concern (fixed); the worst was the alt text leaning into a
+content decision.
+
+**New finding from the re-crawl (fixed):** fixing H1 made the 30rem CAN bus diagram scroll inside its own box
+on phones, and axe flagged it (`scrollable-region-focusable`). It's now a focusable region named by its caption
+(`c45d47d`).
+
+**Known, harmless console message:** on a full reload when the Archivo font is already cached, Chrome can warn
+that the preloaded font "was not used within a few seconds". The font is still requested only once (verified).
+Fresh loads and normal in-site clicks don't show it. The preload stays, because it removed the FRC heading's
+layout shift.
 
 ## 11. Deploy (Phase 6)
 
-*Pending.*
+*Waiting for Jayden's OK.* Once approved: merge into `main`, push `main` to both `origin` and `old-origin`
+(never force), watch the GitHub Actions deploy on `old-origin`, then check https://jpl-innovation.github.io page
+by page.
