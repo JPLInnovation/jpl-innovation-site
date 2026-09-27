@@ -27,9 +27,13 @@ const { data } = entry;
 
 /** Skill levels as a 3-step scale; unknown levels show just the label. */
 const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced: 3 };
+
+// Search snippet: name and roles first, so each member's description is distinct (the bios start alike).
+const roles = leadershipRoles(entry).map((r) => `${r.title}, ${r.org}`).join(" · ");
+const seoDescription = `${data.title}${roles ? ` (${roles})` : ""}: ${data.description.trim()}`;
 ---
 
-<BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
+<BaseLayout title={`${data.title} | JPL Innovation`} description={seoDescription}>
 	<div class="wrapper pt-6 md:pt-10">
 		<BackLink href="/members/">{memberPage.backLink}</BackLink>
 	</div>
