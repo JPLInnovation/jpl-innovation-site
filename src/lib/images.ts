@@ -9,16 +9,16 @@ const copies: Record<string, number[]> = {
 	"/assets/Jayden_pfp.jpg": [160, 480, 900],
 };
 
-const copy = (src: string, width: number) => `${src.replace(/\.[^.]+$/, "")}-${width}.webp`;
+/** Path of an image's WebP copy at `width`, e.g. /assets/FRC.JPG, 640 → /assets/FRC-640.webp. */
+const webpCopy = (src: string, width: number) => `${src.replace(/\.[^.]+$/, "")}-${width}.webp`;
 
 /** `srcset` listing an image's WebP copies, so the browser downloads the size it shows. Undefined = no copies. */
-export function srcset(src: string | undefined): string | undefined {
-	const widths = src ? copies[src] : undefined;
-	return widths?.map((w) => `${copy(src!, w)} ${w}w`).join(", ");
+export function srcset(src: string): string | undefined {
+	return copies[src]?.map((w) => `${webpCopy(src, w)} ${w}w`).join(", ");
 }
 
 /** The largest WebP copy of an image (for canvas and 3D textures), or the image itself if it has none. */
 export function largestCopy(src: string): string {
 	const widths = copies[src];
-	return widths ? copy(src, widths[widths.length - 1]) : src;
+	return widths ? webpCopy(src, widths[widths.length - 1]) : src;
 }

@@ -23,7 +23,7 @@ import {
 import { largestCopy } from "@/lib/images";
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
 
-/** 480 px WebP copy of the dark logo (scripts/resize-images.mjs); drawn about 170 px wide on the badge. */
+/** 480 px WebP copy of the dark logo (scripts/resize-images.mjs); drawn at most ~300 px wide (badge back). */
 const LOGO = "/assets/jpl-logo-dark-480.webp";
 
 export interface BadgeMember {
