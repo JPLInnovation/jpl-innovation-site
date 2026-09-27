@@ -5,7 +5,7 @@ import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import { badgeVariants } from "@/components/ui/badge";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { leadershipRoles, toBadge } from "@/lib/content";
+import { leadershipRoles, roleLine, toBadge } from "@/lib/content";
 import { srcset } from "@/lib/images";
 import { cn } from "@/lib/utils";
 import { Trophy } from "lucide-react";
@@ -29,7 +29,7 @@ const { data } = entry;
 const levels: Record<string, number> = { Developing: 1, Proficient: 2, Advanced: 3 };
 
 // Search snippet: name and roles first, so each member's description is distinct (the bios start alike).
-const roles = leadershipRoles(entry).map((r) => `${r.title}, ${r.org}`).join(" · ");
+const roles = roleLine(entry);
 const seoDescription = `${data.title}${roles ? ` (${roles})` : ""}: ${data.description.trim()}`;
 ---
 

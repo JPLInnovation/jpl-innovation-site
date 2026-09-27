@@ -35,6 +35,11 @@ export function leadershipRoles(member: Member, lead: "jpl" | "frc" = "jpl") {
 	return order.flatMap((key) => (titles[key] ? [{ key, title: titles[key]!, org: ORG[key] }] : []));
 }
 
+/** Those titles as one line, e.g. "CEO, JPL Innovation · Mechanical Lead, FRC Team 10951" ("" if none). */
+export function roleLine(member: Member) {
+	return leadershipRoles(member).map((r) => `${r.title}, ${r.org}`).join(" · ");
+}
+
 /** Members with a leadership title, CEO first, then COO, then everyone else by name. */
 export async function getLeaders() {
 	const rank = (m: Member) => {
