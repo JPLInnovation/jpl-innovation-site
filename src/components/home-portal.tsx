@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import GlyphPortal from "@/components/ui/glyph-portal";
 import { Button } from "@/components/ui/button";
+import { srcset } from "@/lib/images";
 // Words: src/text/home.ts (`hero`, `services`)
 import { hero, services } from "@/text/home";
 
@@ -78,6 +79,8 @@ function BuildPhoto() {
 		<div className="absolute inset-0" style={{ transform: "scale(var(--gp-field-scale,1))" }}>
 			<img
 				src="/assets/FRCnew.jpg"
+				srcSet={srcset("/assets/FRCnew.jpg")}
+				sizes="100vw"
 				alt=""
 				className="absolute inset-0 size-full object-cover object-[32%_68%]"
 				fetchPriority="high"

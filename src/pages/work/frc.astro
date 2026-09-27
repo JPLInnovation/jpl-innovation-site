@@ -13,6 +13,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md)
 import { frcPage, team } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
+import { srcset } from "@/lib/images";
 
 const entry = (await getEntry("work", "frc"))!;
 
@@ -36,6 +37,8 @@ const facts = [
 				<!-- Team 10951 logo. The source image has photo corners, so it's cropped to its circle. -->
 				<img
 					src={team.logo}
+					srcset={srcset(team.logo)}
+					sizes="64px"
 					alt={frcPage.logoAlt}
 					width="764"
 					height="764"
@@ -88,7 +91,14 @@ const facts = [
 					label={frcPage.model3d.description}
 					className="aspect-[4/3] w-full"
 				>
-					<img src="/assets/FRCnew.jpg" alt={frcPage.model3d.fallbackAlt} class="size-full object-cover object-[32%_68%]" loading="lazy" />
+					<img
+						src="/assets/FRCnew.jpg"
+						srcset={srcset("/assets/FRCnew.jpg")}
+						sizes="(min-width: 1024px) 60vw, 100vw"
+						alt={frcPage.model3d.fallbackAlt}
+						class="size-full object-cover object-[32%_68%]"
+						loading="lazy"
+					/>
 				</ModelViewer>
 			</div>
 		</div>
@@ -106,6 +116,8 @@ const facts = [
 			<div class="flex max-w-2xl items-center gap-5" data-reveal>
 				<img
 					src={team.logo}
+					srcset={srcset(team.logo)}
+					sizes="80px"
 					alt=""
 					width="764"
 					height="764"
