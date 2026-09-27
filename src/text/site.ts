@@ -10,7 +10,6 @@ export const site = {
 	name: "JPL Innovation",
 	/** The contact address. Change it here and it updates everywhere (menu, footer, contact box, pop-up). */
 	email: "jpl.innovation05@gmail.com",
-	github: "https://github.com/jpl-innovation",
 	/** Shown by Google and link previews when a page doesn't have its own description. */
 	description:
 		"JPL Innovation is a student-founded engineering startup in Ho Chi Minh City: robotics and mechanical design, embedded systems and drones, networking and cybersecurity, and web development.",
@@ -37,7 +36,6 @@ export const footer = {
 		{ label: "Members", href: "/members/" },
 	],
 	contactHeading: "Contact",
-	githubLabel: "GitHub",
 	/** After "© 2026" (the year updates itself). */
 	copyright: "JPL Innovation",
 };

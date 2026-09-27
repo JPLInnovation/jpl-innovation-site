@@ -5,7 +5,6 @@
  * The project cards in "Selected work" come from src/text/projects/*.md,
  * and the people in "The team" come from src/text/members/*.md.
  */
-import { site } from "./site";
 
 /** Hidden heading for screen readers and search engines. */
 export const pageHeading = "JPL Innovation: a student-founded engineering startup in Ho Chi Minh City";
@@ -46,8 +45,8 @@ export interface Service {
 	icon: "cog" | "drone" | "shield" | "code";
 	title: string;
 	desc: string;
-	/** The project on this site that shows this work. */
-	proof: { label: string; href: string };
+	/** The project on this site that shows this work. Leave it out and the card has no link. */
+	proof?: { label: string; href: string };
 }
 
 export const services: Service[] = [
@@ -73,7 +72,6 @@ export const services: Service[] = [
 		icon: "code",
 		title: "Web development",
 		desc: "Fast, accessible websites built and deployed end to end, like this one.",
-		proof: { label: "Source on GitHub", href: site.github },
 	},
 ];
 
