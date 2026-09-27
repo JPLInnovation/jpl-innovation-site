@@ -1,7 +1,7 @@
 ---
 title: Khoa Le
 img: /assets/10951.jpg
-img_alt: Khoa Le
+img_alt: Team 10951 Saigon South Dragons logo, shown until Khoa Le's photo is added
 leadership:
   jpl: COO
   frc: Electrical Lead
