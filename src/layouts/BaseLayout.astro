@@ -12,12 +12,17 @@ import { site } from "@/text/site";
 interface Props {
 	title?: string | undefined;
 	description?: string | undefined;
+	/** Keep this page out of search results (the 404 page). */
+	noindex?: boolean;
 }
 
 const {
 	title = "JPL Innovation",
 	description = site.description,
+	noindex = false,
 } = Astro.props;
+// The page's one official address, for search engines and link previews.
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
 ---
 
 <html lang="en">
@@ -28,11 +33,16 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<meta name="theme-color" content="#eef3fd" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#050a1f" media="(prefers-color-scheme: dark)" />
+		{noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
 		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={site.name} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
+		{!noindex && <meta property="og:url" content={canonical} />}
 		<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
+		<meta name="twitter:card" content="summary" />
 		<title>{title}</title>
+		<slot name="head" />
 		<link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />

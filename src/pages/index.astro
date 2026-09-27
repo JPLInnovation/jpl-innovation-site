@@ -9,15 +9,28 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
 import { getMembers, getProjects } from "@/lib/content";
 import { cn } from "@/lib/utils";
+import { site } from "@/text/site";
 
 const projects = await getProjects();
 const members = await getMembers();
 
 const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml };
 const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
+
+// Tells search engines who runs the site (schema.org Organization), from the same text as the footer.
+const organization = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	name: site.name,
+	url: new URL("/", Astro.site).href,
+	logo: new URL("/assets/logo.jpg", Astro.site).href,
+	email: site.email,
+	description: site.description,
+};
 ---
 
 <BaseLayout>
+	<script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(organization)} />
 	<h1 class="sr-only">{pageHeading}</h1>
 
 	<!-- Pulled up under the sticky header so the opening frame fills the screen. -->
