@@ -12,7 +12,7 @@ tags:
 - Technology Enthusiast
 - Student
 achievements:
-- Qualified for the Southern Regional Round of the Vietnam Tin Hoc Tre Competition
+- Qualified for the Southern Regional Round of the Vietnam Tin Học Trẻ Competition
 - HKICO Grade-level Champion
 - Participated in Lotus Hacks 2026
 sports:
