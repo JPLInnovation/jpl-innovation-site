@@ -4,6 +4,8 @@
  * both are 480 px WebP copies (scripts/resize-images.mjs), 3x the largest size shown.
  * `loading="lazy"` means only the theme's visible logo downloads: the hidden one is display:none.
  */
+import { site } from "@/text/site";
+
 interface Props {
 	class?: string;
 }
@@ -11,6 +13,6 @@ const { class: className } = Astro.props;
 ---
 
 <span class:list={["inline-flex", className]} data-site-logo>
-	<img src="/assets/jpl-logo-light-480.webp" alt="JPL Innovation" width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
-	<img src="/assets/jpl-logo-dark-480.webp" alt="JPL Innovation" width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
+	<img src="/assets/jpl-logo-light-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
+	<img src="/assets/jpl-logo-dark-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
 </span>
