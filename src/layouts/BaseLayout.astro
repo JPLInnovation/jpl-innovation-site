@@ -2,7 +2,9 @@
 import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
+import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
+import { splashFor } from "@/lib/splash";
 import "@/styles/global.css";
 import { site } from "@/text/site";
 
@@ -15,6 +17,8 @@ const {
 	title = "JPL Innovation",
 	description = site.description,
 } = Astro.props;
+// Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; everything else: IntroSplash).
+const splash = splashFor(Astro.url.pathname);
 ---
 
 <html lang="en">
@@ -66,8 +70,9 @@ const {
 				window.__jplThemeHook = true;
 			}
 		</script>
-		<!-- Animated logo intro, once per session. Remove this line to turn it off. -->
-		<IntroSplash />
+		<!-- Logo intros, on every full page load or refresh; the FRC one also when you click through to it (src/lib/splash.ts). Remove a line to turn that intro off. -->
+		{splash === "jpl" && <IntroSplash />}
+		{splash === "frc" && <FrcSplash />}
 		<ClientRouter />
 	</head>
 	<body>

@@ -1,61 +1,30 @@
 /**
- * Animated logo intro, about 3.2 s, "build then boot". Markup and CSS: src/components/IntroSplash.astro.
+ * JPL logo intro, "build then boot", 2.8 s. Markup and CSS: src/components/IntroSplash.astro.
+ * Shared overlay, skip, reduced motion and clean-up: src/scripts/splash-core.ts.
  *
- *   0.0–1.0  the wrench swings in from the left on an arc (stretched while it's fast), overshoots,
+ *   wrench   the wrench swings in from the left on an arc (stretched while it's fast), overshoots,
  *            tightens a quarter-turn with a small bounce and settles. It enters silver and turns teal
  *            as the screen lights up behind it, so it never disappears into the navy.
- *   1.0–1.8  boot: the ring draws itself round, the monitor outline draws on and fills, the screen
- *            flickers on with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
- *   1.8–2.6  type-on: J P L, a short pause, I N N O V A T I O N, with a cyan cursor that blinks twice.
- *   2.6–3.3  a light sweep, then the logo flies into the navbar logo (FLIP) while the overlay fades.
+ *   boot     the ring draws itself round, the monitor outline draws on and fills, the screen flickers on
+ *            with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
+ *   type-on  J P L, a short pause, I N N O V A T I O N, with a cyan cursor that blinks twice.
+ *   hand-off a light sweep, then the logo flies into the navbar logo (FLIP) while the overlay fades.
  *
- * Web Animations API only, no library: every animation is transform, opacity or stroke-dashoffset on a
- * custom cubic-bezier. All of them are created at once on one clock, so Skip just finishes them all, and in
- * development the whole timeline can be frozen at any moment with window.__intro.seek(seconds).
+ * The beats are written on a 3.28 s design clock and played back SPEED times faster (2.8 s in total).
+ * On a refresh the same timeline plays FAST_RATE times faster again (about 1.1 s), without the cursor.
  */
+import { E, flip, onScreen, runSplash, type Frames, type SplashContext } from "./splash-core";
 
-type Frames = Keyframe[];
+const SPEED = 3.28 / 2.8;
+const FAST_RATE = 2.5;
+const s = (t: number) => t / SPEED; // design seconds → real seconds
 
-const root = document.documentElement;
-const splash = document.querySelector<HTMLElement>("[data-intro]");
-
-/** Ease curves (the GSAP equivalents in the comments). Nothing is linear. */
-const E = {
-	out: "cubic-bezier(0.25, 1, 0.5, 1)", // power3.out
-	outExpo: "cubic-bezier(0.16, 1, 0.3, 1)", // expo.out
-	outBack: "cubic-bezier(0.34, 1.56, 0.64, 1)", // back.out(1.7)
-	outBackSoft: "cubic-bezier(0.3, 1.35, 0.5, 1)", // back.out(1.2)
-	inOut: "cubic-bezier(0.65, 0, 0.35, 1)", // power2.inOut
-	inOutSine: "cubic-bezier(0.37, 0, 0.63, 1)", // sine.inOut
-	outSine: "cubic-bezier(0.61, 1, 0.88, 1)", // sine.out
-	out2: "cubic-bezier(0.33, 1, 0.68, 1)", // power2.out
-	in: "cubic-bezier(0.32, 0, 0.67, 0)", // power2.in
-	fly: "cubic-bezier(0.7, 0, 0.18, 1)", // strong in-out for the hand-off
-};
-
-/** Timeline marks, in seconds. */
+/** Design-clock marks. */
 const FLY = 2.74; // the logo starts flying to the navbar
 const LAND = 3.14; // ...and lands
 const END = 3.28; // crossfade into the real navbar logo done
 
-const anims: Animation[] = [];
-let finished = false;
-
-/** Add one animation to the timeline: `frames` over [start, start + dur] seconds. */
-function tween(el: Element | null | undefined, frames: Frames, start: number, dur: number, easing = E.out) {
-	if (!el) return undefined;
-	const a = el.animate(frames, { delay: start * 1000, duration: dur * 1000, easing, fill: "both" });
-	anims.push(a);
-	return a;
-}
-
-function markDone() {
-	try {
-		sessionStorage.setItem("jpl-intro", "done");
-	} catch {
-		/* private mode: it will simply play again next session */
-	}
-}
+const root = document.documentElement;
 
 /** The navbar logo that's showing (light or dark variant). */
 function navLogo() {
@@ -64,27 +33,21 @@ function navLogo() {
 	return { wrap, img };
 }
 
-function start(el: HTMLElement) {
-	root.classList.add("intro-live"); // cancels the CSS failsafe
-	markDone();
+function play(ctx: SplashContext) {
+	const { el } = ctx;
+	/** Tween on the design clock. */
+	const tween = (target: Element | null | undefined, frames: Frames, start: number, dur: number, easing = E.out) => ctx.tween(target, frames, s(start), s(dur), easing);
 
 	const svg = el.querySelector<SVGSVGElement>("svg.jl-logo")!;
 	// Searches the whole splash: the wrench group gets lifted out of the main SVG into its own layer.
 	const $ = (id: string) => el.querySelector<SVGGraphicsElement>(`#jl-${id}`);
 	const logo = el.querySelector<HTMLElement>("[data-intro-logo]")!;
 	const parallax = el.querySelector<HTMLElement>("[data-intro-parallax]")!;
-	const bg = el.querySelector<HTMLElement>("[data-intro-bg]");
-	const skipButton = el.querySelector<HTMLElement>("[data-intro-skip]");
+	const bg = el.querySelector<HTMLElement>("[data-splash-bg]");
+	const skipButton = el.querySelector<HTMLElement>("[data-splash-skip]");
 	const { wrap: navWrap } = navLogo();
 
-	/* ---------- Reduced motion: no movement, just a quick 300 ms fade ---------- */
-	if (root.classList.contains("intro-reduced")) {
-		tween(el, [{ opacity: 1 }, { opacity: 0 }], 0.35, 0.3, E.out)!.finished.then(cleanup, () => {});
-		wireSkip(el);
-		return;
-	}
-
-	/* ---------- 1. Wrench (0.0–1.0 s) ---------- */
+	/* ---------- Wrench (design 0.0–1.0 s) ---------- */
 	// It flies while the page underneath is still starting up (layout, hydration, image decoding), so it
 	// moves on the compositor: the wrench group is lifted into its own small SVG stacked exactly over the
 	// logo, wrapped in HTML layers (x, y, stretch, spin, squash), each animating transform only.
@@ -143,7 +106,7 @@ function start(el: HTMLElement) {
 	// Silver while flying; turns teal as the screen lights up behind it.
 	tween($("wrench-metal"), [{ opacity: 1 }, { opacity: 0 }], 1.38, 0.34, E.inOut);
 
-	/* ---------- 2. Boot (1.0–1.8 s) ---------- */
+	/* ---------- Boot (design 1.0–1.8 s) ---------- */
 	tween($("badge-fill"), [{ opacity: 0, scale: "0.9" }, { opacity: 1, scale: "1" }], 1.0, 0.45, E.outExpo);
 	for (const id of ["ring-rim", "ring"]) {
 		tween(
@@ -228,7 +191,7 @@ function start(el: HTMLElement) {
 		}
 	});
 
-	/* ---------- 3. Type-on (1.8–2.6 s) ---------- */
+	/* ---------- Type-on (design 1.8–2.6 s) ---------- */
 	const letterIds = ["J", "P", "L", "I1", "N1", "N2", "O1", "V", "A", "T", "I2", "O2", "N3"];
 	const letterStart = (k: number) => (k < 3 ? 1.8 + k * 0.05 : 2.04 + (k - 3) * 0.045);
 	const boxes = letterIds.map((id) => $(id)!.getBBox());
@@ -245,7 +208,8 @@ function start(el: HTMLElement) {
 		);
 	});
 	// Cursor: glides to just after each new letter, blinks twice after the last one, then fades.
-	const cursor = $("cursor");
+	// (Left out of the fast version: its blinks are the slow part.)
+	const cursor = ctx.mode === "full" ? $("cursor") : null;
 	if (cursor) {
 		const top = Math.min(...boxes.map((b) => b.y));
 		const bottom = Math.max(...boxes.map((b) => b.y + b.height));
@@ -279,7 +243,7 @@ function start(el: HTMLElement) {
 		);
 	}
 
-	/* ---------- 4. Hand-off (2.46–3.28 s) ---------- */
+	/* ---------- Hand-off (design 2.46–3.28 s) ---------- */
 	tween(
 		$("sweep"),
 		[
@@ -295,13 +259,13 @@ function start(el: HTMLElement) {
 	// FLIP into the navbar logo. Measured now, and again just before take-off (fonts or the scrollbar can
 	// nudge the header while the intro plays).
 	const flight = tween(logo, [{ transform: "none" }, { transform: flightTarget(logo) }], FLY, LAND - FLY, E.fly);
-	window.setTimeout(() => {
+	const retarget = () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo) }]);
+	ctx.at(s(FLY - 0.06), () => {
 		// Only while it's genuinely about to take off (not paused, not already moving).
-		if (finished || !flight || flight.playState !== "running" || Number(flight.currentTime) >= FLY * 1000) return;
-		(flight.effect as KeyframeEffect).setKeyframes([{ transform: "none" }, { transform: flightTarget(logo) }]);
-	}, (FLY - 0.06) * 1000);
+		if (flight && flight.playState === "running" && Number(flight.currentTime) < s(FLY) * 1000) retarget();
+	});
 	tween(bg, [{ opacity: 1 }, { opacity: 0 }], 2.8, LAND - 2.8, E.out);
-	window.setTimeout(() => root.classList.add("intro-leaving"), 2800); // scrollbar back to the page's colours
+	ctx.at(s(2.8), () => root.classList.add("splash-leaving")); // scrollbar back to the page's colours
 	tween(skipButton, [{ opacity: 1 }, { opacity: 0 }], 2.6, 0.3, E.out);
 	if (!root.classList.contains("dark")) {
 		// Light theme: the navbar logo has navy "JPL", so the silver letters turn navy on the way.
@@ -310,25 +274,10 @@ function start(el: HTMLElement) {
 	// Crossfade into the real navbar image once they're on top of each other (the PNG has a soft shadow
 	// and bevel the flat vectors don't, so this is a blend rather than a swap).
 	tween(logo, [{ opacity: 1 }, { opacity: 0 }], LAND - 0.02, END - LAND, E.inOut);
-	const reveal = tween(navWrap, [{ opacity: 0 }, { opacity: 1 }], LAND - 0.02, END - LAND, E.inOut);
-	(reveal ?? anims[anims.length - 1]).finished.then(cleanup, () => {});
+	ctx.endWith(tween(navWrap, [{ opacity: 0 }, { opacity: 1 }], LAND - 0.02, END - LAND, E.inOut));
 
-	startParallax(parallax);
-	wireSkip(el);
-
-	if (import.meta.env.DEV) {
-		// Freeze the timeline at any moment for screenshots: __intro.seek(1.2)
-		(window as unknown as { __intro: object }).__intro = {
-			anims,
-			seek(t: number) {
-				for (const a of anims) {
-					a.pause();
-					a.currentTime = t * 1000;
-				}
-			},
-			retarget: () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo) }]),
-		};
-	}
+	if (ctx.mode === "full") startParallax(ctx, parallax);
+	ctx.devExtras({ retarget });
 }
 
 /* ---------- The wrench's own compositor layer ---------- */
@@ -368,102 +317,48 @@ function liftWrench(svg: SVGSVGElement, host: HTMLElement) {
 /** Transform (origin: top-left) that puts the splash logo exactly over the navbar logo. */
 function flightTarget(logo: HTMLElement) {
 	const from = logo.getBoundingClientRect();
-	const { img } = navLogo();
-	const to = img?.getBoundingClientRect();
+	const to = navLogo().img?.getBoundingClientRect();
 	// Header hidden or off-screen (e.g. the page opened scrolled down): shrink away in place instead.
-	if (!to || to.width === 0 || to.bottom <= 0 || to.top >= innerHeight) {
-		const s = 0.9;
-		return `translate(${(from.width * (1 - s)) / 2}px, ${(from.height * (1 - s)) / 2}px) scale(${s})`;
+	if (!onScreen(to)) {
+		const k = 0.9;
+		return `translate(${(from.width * (1 - k)) / 2}px, ${(from.height * (1 - k)) / 2}px) scale(${k})`;
 	}
-	return `translate(${to.left - from.left}px, ${to.top - from.top}px) scale(${to.width / from.width})`;
+	return flip(from, to!);
 }
 
 /* ---------- Parallax (desktop only): the logo leans a little toward the mouse ---------- */
-let parallaxRaf = 0;
-function startParallax(el: HTMLElement) {
+function startParallax(ctx: SplashContext, el: HTMLElement) {
 	if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 	const target = { x: 0, y: 0 };
 	const cur = { x: 0, y: 0 };
 	const t0 = performance.now();
+	let raf = 0;
 	const onMove = (e: PointerEvent) => {
 		if (e.pointerType !== "mouse") return;
 		target.x = (e.clientX / innerWidth - 0.5) * 2;
 		target.y = (e.clientY / innerHeight - 0.5) * 2;
 	};
 	addEventListener("pointermove", onMove, { passive: true });
+	const stop = () => {
+		cancelAnimationFrame(raf);
+		removeEventListener("pointermove", onMove);
+		el.style.transform = "";
+	};
+	ctx.onCleanup(stop);
 	const frame = (now: number) => {
 		const t = (now - t0) / 1000;
 		// Glide back to centre before take-off so the flight starts from the true position.
-		const settle = t > 2.4;
+		const settle = t > s(2.4);
 		const k = settle ? 0.2 : 0.08;
 		cur.x += ((settle ? 0 : target.x) - cur.x) * k;
 		cur.y += ((settle ? 0 : target.y) - cur.y) * k;
-		if (t >= FLY - 0.08) {
-			el.style.transform = "";
-			removeEventListener("pointermove", onMove);
-			return;
-		}
+		if (t >= s(FLY - 0.08)) return stop();
 		el.style.transform = `translate3d(${cur.x * 10}px, ${cur.y * 8}px, 0) rotateX(${-cur.y * 3}deg) rotateY(${cur.x * 4}deg)`;
-		parallaxRaf = requestAnimationFrame(frame);
+		raf = requestAnimationFrame(frame);
 	};
-	parallaxRaf = requestAnimationFrame(frame);
+	raf = requestAnimationFrame(frame);
 }
 
-/* ---------- Skip: the button, a click or tap anywhere, any key, or a scroll ---------- */
-let unwire = () => {};
-function wireSkip(el: HTMLElement) {
-	const skip = () => {
-		for (const a of anims) {
-			try {
-				a.finish();
-			} catch {
-				/* already cancelled */
-			}
-		}
-		cleanup();
-	};
-	const onKey = () => skip(); // Tab still moves focus into the page as usual
-	el.addEventListener("pointerdown", skip);
-	addEventListener("keydown", onKey, true);
-	addEventListener("wheel", skip, { passive: true });
-	addEventListener("touchmove", skip, { passive: true });
-	unwire = () => {
-		el.removeEventListener("pointerdown", skip);
-		removeEventListener("keydown", onKey, true);
-		removeEventListener("wheel", skip);
-		removeEventListener("touchmove", skip);
-	};
-}
-
-/** End state: overlay gone, navbar logo showing, nothing left running. */
-function cleanup() {
-	if (finished) return;
-	finished = true;
-	unwire();
-	cancelAnimationFrame(parallaxRaf);
-	root.classList.remove("intro", "intro-live", "intro-reduced", "intro-leaving");
-	for (const a of anims) a.cancel(); // the navbar logo's own opacity takes over again (1)
-	splash?.remove();
-}
-
-if (splash && root.classList.contains("intro")) {
-	if (performance.now() > 4000) {
-		// The script arrived so late that the CSS failsafe is about to hide the overlay: don't start now.
-		markDone();
-		cleanup();
-	} else if (document.hidden) {
-		// Opened in a background tab: hold the first frame until the visitor actually looks.
-		root.classList.add("intro-live");
-		document.addEventListener("visibilitychange", function onVisible() {
-			if (document.hidden) return;
-			document.removeEventListener("visibilitychange", onVisible);
-			start(splash);
-		});
-	} else {
-		start(splash);
-	}
-} else {
-	splash?.remove();
-}
+runSplash("jpl", play, { fastRate: FAST_RATE });
 
 export {};

@@ -1,0 +1,308 @@
+---
+/**
+ * FRC page intro (4.8 s; 1.5 s on a refresh): the FIRST shapes build the full-colour FIRST logo, the Team 10951
+ * dragon flies in and breathes a long stream of fire across it that burns the colours off to the header's black
+ * and white, the dragon settles into its badge, and the lockup flies into its place in the page header.
+ * Plays on a first entry to the FRC page(s), faster on a refresh, and when you click through to it from another
+ * page of the site (full the first time in a tab, fast after that); not on back/forward (src/lib/splash.ts).
+ * Every other page gets the JPL IntroSplash instead.
+ *
+ *   Turn it off: remove the FrcSplash line in src/layouts/BaseLayout.astro.
+ *   Artwork:     src/assets/intro/frc-badge.svg, frc-first.svg (scripts/build-frc-svg.mjs traces the header's logos)
+ *   Final frame: FrcLockup, the same component as the page header, so it lands exactly on it.
+ *   Animation:   src/scripts/frc-splash.ts; colour burn geometry: src/lib/frc-burn.ts;
+ *                shared overlay/engine: SplashShell.astro, src/scripts/splash-core.ts
+ */
+import badgeSvg from "@/assets/intro/frc-badge.svg?raw";
+import firstSvg from "@/assets/intro/frc-first.svg?raw";
+import { BURN, burnEdge } from "@/lib/frc-burn";
+import FrcLockup from "./FrcLockup.astro";
+import SplashShell from "./SplashShell.astro";
+
+/** One traced part's element (e.g. <path id="fb-dragon" .../>) out of a generated SVG. */
+const part = (svg: string, id: string) => {
+	const m = svg.match(new RegExp(`<(?:path|circle)[^>]*\\bid="${id}"[^>]*/>`));
+	if (!m) throw new Error(`FrcSplash: ${id} missing from the traced SVG`);
+	return m[0];
+};
+const layer = (viewBox: string, body: string, cls = "", attrs = "") =>
+	`<svg class="frc-layer ${cls}" viewBox="${viewBox}" ${attrs} aria-hidden="true" focusable="false">${body}</svg>`;
+const BADGE = "0 0 764 764";
+const FIRST = "0 0 438 115";
+
+// The FIRST logo's four parts, defined once and drawn by every layer with <use> in that layer's colour.
+const FIRST_PARTS = ["triangle", "circle", "square", "wordmark"];
+const defs = FIRST_PARTS.map((name) => {
+	const d = part(firstSvg, `ff-${name}`).match(/\bd="([^"]+)"/)![1];
+	return `<path id="frcs-${name}" fill-rule="evenodd" d="${d}"/>`;
+}).join("");
+const use = (name: string, fill?: string) => `<use href="#frcs-${name}"${fill ? ` fill="${fill}"` : ""}/>`;
+const wholeLogo = FIRST_PARTS.map((n) => use(n)).join("");
+
+/* ---------- The colour burn's windows (see src/lib/frc-burn.ts) ---------- */
+// Each window spans [x0, x1] logo widths around the burn front, and BURN.pad logo heights above and below the
+// logo. Its mask (a small SVG, stretched to the window) shapes the ragged edge; mask x/y run 0–1000.
+const SAMPLES = 48;
+const edgePoints = (toX: (x: number) => number, shift: number, reverse = false) => {
+	const pts = Array.from({ length: SAMPLES + 1 }, (_, i) => {
+		const y = i / SAMPLES;
+		const py = i === 0 ? -60 : i === SAMPLES ? 1060 : y * 1000;
+		return `${toX(burnEdge(y) + shift).toFixed(1)},${py.toFixed(1)}`;
+	});
+	return (reverse ? pts.reverse() : pts).join(" ");
+};
+type Window = { name: string; x0: number; x1: number; blur?: number; body: (toX: (x: number) => number) => string; grad?: (toX: (x: number) => number) => string };
+const reach = BURN.amp / 2 + 3 * BURN.soft; // past the ragged edge's furthest point
+const alphaRamp = (stops: Array<[number, number]>, from: number, to: number) =>
+	`<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="${from.toFixed(1)}" x2="${to.toFixed(1)}" y1="0" y2="0">${stops
+		.map(([o, a]) => `<stop offset="${o}" stop-color="#fff" stop-opacity="${a}"/>`)
+		.join("")}</linearGradient>`;
+const windows: Window[] = [
+	// Still in colour: everything right of the edge.
+	{ name: "colour", x0: -reach, x1: 1.3, body: (X) => `<polygon fill="#fff" points="${edgePoints(X, 0)} 1100,1060 1100,-60"/>` },
+	// Burnt: white, everything left of the edge (overlapping it a hair so no gap shows).
+	{ name: "mono", x0: -1.3, x1: reach, body: (X) => `<polygon fill="#fff" points="${edgePoints(X, 0.004)} -100,1060 -100,-60"/>` },
+	// Charcoal just behind the edge, cooling back to white further back.
+	{
+		name: "char",
+		x0: -0.42,
+		x1: reach,
+		grad: (X) => alphaRamp([[0, 0], [0.4, 0.3], [0.8, 0.62], [1, 0.66]], X(-0.42), X(BURN.amp / 2)),
+		body: (X) => `<polygon fill="url(#g)" points="${edgePoints(X, 0.004)} -100,1060 -100,-60"/>`,
+	},
+	// The glowing ember line on the edge, and its warm fringe behind it.
+	{
+		name: "ember",
+		x0: -0.22,
+		x1: reach,
+		grad: (X) => alphaRamp([[0, 0], [0.5, 0.3], [0.85, 0.9], [1, 1]], X(-0.22), X(BURN.amp / 2)),
+		body: (X) => `<polygon fill="url(#g)" points="${edgePoints(X, 0.004)} -100,1060 -100,-60"/>`,
+	},
+	{ name: "hot", x0: -0.08, x1: reach, blur: BURN.soft * 1.3, body: (X) => `<polygon fill="#fff" points="${edgePoints(X, 0.006)} ${edgePoints(X, -0.032, true)}"/>` },
+];
+const burnWindow = (w: Window) => {
+	const span = w.x1 - w.x0;
+	const X = (x: number) => ((x - w.x0) / span) * 1000;
+	const blur = w.blur ?? BURN.soft;
+	const sx = (blur / span) * 1000;
+	const sy = ((blur * BURN.aspect) / (1 + 2 * BURN.pad)) * 1000;
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" preserveAspectRatio="none"><defs><filter id="b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${sx.toFixed(1)} ${sy.toFixed(1)}"/></filter>${w.grad?.(X) ?? ""}</defs><g filter="url(#b)">${w.body(X)}</g></svg>`;
+	return {
+		window: `left:${(w.x0 * 100).toFixed(3)}%;width:${(span * 100).toFixed(3)}%;--frc-mask:url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+		inner: `left:${((-w.x0 / span) * 100).toFixed(3)}%;width:${(100 / span).toFixed(3)}%`,
+	};
+};
+const win = Object.fromEntries(windows.map((w) => [w.name, burnWindow(w)]));
+---
+
+<SplashShell kind="frc">
+	<div class="frc-frame wrapper flex flex-col items-center text-center" data-frc-frame>
+		<FrcLockup splash>
+			<Fragment slot="badge-layers">
+				<Fragment set:html={layer(BADGE, part(badgeSvg, "fb-disc"), "frc-disc")} />
+				<Fragment set:html={layer(BADGE, part(badgeSvg, "fb-gear"), "frc-gear")} />
+				<span class="frc-dragon-x" data-frc-dragon-x>
+					<span class="frc-dragon-y" data-frc-dragon-y>
+						<span class="frc-dragon-flap" data-frc-dragon-flap>
+							<span class="frc-dragon-pose" data-frc-dragon-pose>
+								<span class="frc-dragon-glow" data-frc-dragon-glow></span>
+								<Fragment set:html={layer(BADGE, part(badgeSvg, "fb-dragon") + part(badgeSvg, "fb-flame"), "frc-dragon")} />
+							</span>
+						</span>
+					</span>
+				</span>
+			</Fragment>
+			<Fragment slot="first-layers">
+				<Fragment set:html={`<svg class="frc-defs" aria-hidden="true" focusable="false"><defs>${defs}</defs></svg>`} />
+				<!-- The colour burn, bottom to top: burnt (white), colour, charcoal, ember glow, hot edge. -->
+				<span class="frc-burn frc-burn-mono" style={win.mono.window} data-frc-burn>
+					<span class="frc-burn-in" style={win.mono.inner} data-frc-burn-in><Fragment set:html={layer(FIRST, wholeLogo, "", 'fill="#FFFFFF" stroke="#FFFFFF" stroke-width="0.7"')} /></span>
+				</span>
+				<span class="frc-burn frc-burn-colour" style={win.colour.window} data-frc-burn>
+					<span class="frc-burn-in" style={win.colour.inner} data-frc-burn-in>
+						<Fragment set:html={layer(FIRST, use("triangle", "#ED1C24") + use("circle", "#FFFFFF") + use("square", "#0066B3"), "frc-knot")} />
+						<span class="frc-wipe" data-frc-wipe>
+							<span class="frc-wipe-inner" data-frc-wipe-inner>
+								<Fragment set:html={layer("190 0 248 115", use("wordmark", "#FFFFFF"), "frc-wordmark")} />
+							</span>
+						</span>
+					</span>
+				</span>
+				<span class="frc-burn frc-burn-char" style={win.char.window} data-frc-burn>
+					<span class="frc-burn-in" style={win.char.inner} data-frc-burn-in><Fragment set:html={layer(FIRST, wholeLogo, "", 'fill="#1c1512"')} /></span>
+				</span>
+				<span class="frc-burn frc-burn-ember" style={win.ember.window} data-frc-burn>
+					<span class="frc-burn-in" style={win.ember.inner} data-frc-burn-in><Fragment set:html={layer(FIRST, wholeLogo, "", 'fill="#ff6a1f"')} /></span>
+				</span>
+				<span class="frc-burn frc-burn-hot" style={win.hot.window} data-frc-burn>
+					<span class="frc-burn-in" style={win.hot.inner} data-frc-burn-in><Fragment set:html={layer(FIRST, wholeLogo, "", 'fill="#ffd98a"')} /></span>
+				</span>
+				<!-- The three shapes the knot is built from (the animation's own, not FIRST artwork). -->
+				<Fragment set:html={layer(FIRST, `<polygon points="27,2 4,109 99,71" fill="none" stroke="#ED1C24" stroke-width="9" stroke-linejoin="round"/>`, "frc-shape frc-shape-tri")} />
+				<Fragment set:html={layer(FIRST, `<ellipse cx="93" cy="59" rx="52" ry="52" fill="none" stroke="#FFFFFF" stroke-width="9"/>`, "frc-shape frc-shape-circle")} />
+				<Fragment set:html={layer(FIRST, `<polygon points="137,3 189,51 140,110 106,56" fill="none" stroke="#0066B3" stroke-width="9" stroke-linejoin="round"/>`, "frc-shape frc-shape-square")} />
+			</Fragment>
+		</FrcLockup>
+	</div>
+	<canvas class="frc-fire" data-frc-fire aria-hidden="true"></canvas>
+</SplashShell>
+
+<script>
+	import "@/scripts/frc-splash";
+</script>
+
+<style is:global>
+	/* The page header's lockup waits for the intro's copy to land on it. */
+	html.splash-frc:not(.splash-reduced) [data-frc-lockup="page"] {
+		opacity: 0;
+		animation: splash-reveal-failsafe 0.3s ease-out 5s forwards;
+	}
+	html.splash-live [data-frc-lockup="page"] {
+		animation: none;
+	}
+
+	.frc-frame {
+		position: relative;
+	}
+	[data-frc-lockup="splash"] {
+		transform-origin: 0 0;
+		will-change: transform, opacity;
+	}
+	.frc-layers {
+		position: absolute;
+		inset: 0;
+		display: block;
+		pointer-events: none;
+	}
+	[data-frc-first] {
+		transform-origin: 50% 50%; /* heat shimmer */
+	}
+	[data-frc-first-layers] {
+		transform-origin: 22% 50%; /* the knot's middle, for the "click" */
+		will-change: transform;
+	}
+	.frc-layer {
+		position: absolute;
+		inset: 0;
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+	.frc-defs {
+		position: absolute;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+	}
+
+	/* ---------- Colour burn windows ---------- */
+	.frc-burn {
+		position: absolute;
+		top: -30%;
+		height: 160%; /* BURN.pad above and below */
+		display: block;
+		overflow: hidden;
+		-webkit-mask: var(--frc-mask) 0 0 / 100% 100% no-repeat;
+		mask: var(--frc-mask) 0 0 / 100% 100% no-repeat;
+		will-change: transform;
+	}
+	.frc-burn-in {
+		position: absolute;
+		top: 18.75%; /* 0.3 of 1.6 */
+		height: 62.5%; /* 1 of 1.6 */
+		display: block;
+		will-change: transform;
+	}
+	.frc-burn-hot .frc-burn-in {
+		filter: drop-shadow(0 0 1.5px rgb(255 170 70 / 0.95)) drop-shadow(0 0 4px rgb(255 110 30 / 0.7));
+	}
+
+	/* ---------- Dragon ---------- */
+	.frc-dragon-x,
+	.frc-dragon-y,
+	.frc-dragon-flap,
+	.frc-dragon-pose {
+		position: absolute;
+		inset: 0;
+		display: block;
+		will-change: transform;
+	}
+	.frc-dragon-flap,
+	.frc-dragon-pose {
+		transform-origin: 50% 50%;
+	}
+	/* Firelight on the dragon while it breathes (toward its mouth, upper right). */
+	.frc-dragon-glow {
+		position: absolute;
+		left: 25%;
+		top: -5%;
+		width: 110%;
+		height: 90%;
+		display: block;
+		border-radius: 50%;
+		background: radial-gradient(closest-side, rgb(255 160 70 / 0.5), rgb(255 100 30 / 0.18) 55%, transparent);
+		will-change: opacity;
+	}
+	.frc-dragon #fb-flame {
+		transform-box: fill-box;
+		transform-origin: 0% 30%; /* where it leaves the mouth */
+	}
+	.frc-disc {
+		transform-origin: 50% 50%;
+	}
+
+	/* Wordmark wipe: the window slides right while its content slides back, so it reveals left to right. */
+	.frc-wipe {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 43.379%; /* x 190 of 438 */
+		width: 56.621%; /* 248 of 438 */
+		display: block;
+		overflow: hidden;
+	}
+	.frc-wipe-inner {
+		position: absolute;
+		inset: 0;
+		display: block;
+	}
+	.frc-shape {
+		will-change: transform, opacity;
+	}
+	.frc-shape-tri {
+		transform-origin: 9.89% 52.8%; /* centroid of the triangle */
+	}
+	.frc-shape-circle {
+		transform-origin: 21.23% 51.3%;
+	}
+	.frc-shape-square {
+		transform-origin: 32.65% 47.8%;
+	}
+	.frc-divider {
+		transform-origin: 50% 0;
+	}
+	.frc-fire {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+
+	/* Before the script runs everything is hidden; it brings each piece in. */
+	html.splash:not(.splash-reduced)
+		:is(.frc-real, .frc-divider, .frc-caption, .frc-disc, .frc-gear, .frc-knot, .frc-wipe, .frc-shape, .frc-burn-mono, .frc-burn-char, .frc-burn-ember, .frc-burn-hot, .frc-dragon-glow, [data-frc-dragon-x]) {
+		opacity: 0;
+	}
+	/* Reduced motion: the finished lockup only. */
+	html.splash-reduced .frc-layers,
+	html.splash-reduced .frc-fire {
+		display: none;
+	}
+	@media (forced-colors: active) {
+		html.splash [data-frc-lockup="page"] {
+			opacity: 1;
+		}
+	}
+</style>
