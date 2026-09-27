@@ -66,6 +66,8 @@ export const emailPopup = {
 /** The "Page not found" (404) page. */
 export const notFound = {
 	title: "Page not found",
+	/** For search results and link previews. */
+	description: "This page doesn't exist.",
 	lede: "There's no page at this address. It may have moved when we rebuilt the site.",
 	homeButton: "Go to the home page",
 	workButton: "See our work",
