@@ -49,20 +49,22 @@ const organization = {
 			{
 				services.map((s) => {
 					const Icon = serviceIcons[s.icon];
-					const external = s.proof.href.startsWith("http");
+					const external = s.proof?.href.startsWith("http");
 					return (
 						<li class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
 							<Icon className="size-8 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
 							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
 							<p class="text-muted-foreground">{s.desc}</p>
-							<a
-								href={s.proof.href}
-								class="press mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
-								{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-							>
-								{servicesSection.linkPrefix} {s.proof.label}
-								<ArrowUpRight className="size-4" aria-hidden="true" />
-							</a>
+							{s.proof && (
+								<a
+									href={s.proof.href}
+									class="press mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+									{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+								>
+									{servicesSection.linkPrefix} {s.proof.label}
+									<ArrowUpRight className="size-4" aria-hidden="true" />
+								</a>
+							)}
 						</li>
 					);
 				})
