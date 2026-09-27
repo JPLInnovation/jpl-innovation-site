@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
 import { season2026, season2027, seasonsText } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
+import { srcset } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
 type Season = "2027" | "2026";
@@ -352,6 +353,8 @@ const Season2026 = memo(function Season2026() {
 								>
 									<img
 										src={photo.src}
+										srcSet={srcset(photo.src)}
+										sizes="(min-width: 768px) 50vw, 100vw"
 										alt={photo.alt}
 										width={photo.w}
 										height={photo.h}
