@@ -4,6 +4,9 @@ import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
 import "@/styles/global.css";
+// The subset almost every page's text uses. Preloading it lets the display headings render in Archivo
+// straight away instead of reflowing when the font arrives (layout shift).
+import archivoLatin from "@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url";
 import { site } from "@/text/site";
 
 interface Props {
@@ -30,6 +33,7 @@ const {
 		<meta property="og:description" content={description} />
 		<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
 		<title>{title}</title>
+		<link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<script is:inline>
