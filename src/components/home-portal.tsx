@@ -137,9 +137,11 @@ function Poster() {
 	return (
 		<section className="relative flex min-h-[100svh] flex-col items-center justify-center gap-6 px-4 text-center">
 			<p className="text-[15px] text-muted-foreground">{kicker}</p>
+			{/* "JPL" is ~2em wide: 42vw keeps it at ~84% of the screen, like the portal's first frame, so it never
+			    overflows a phone (which would widen the layout viewport and shift the fixed background). */}
 			<p
 				className="font-black leading-none tracking-tight"
-				style={{ fontSize: "min(38svh, 60vw)" }}
+				style={{ fontSize: "min(38svh, 42vw)" }}
 				aria-hidden="true"
 			>
 				{WORD}
