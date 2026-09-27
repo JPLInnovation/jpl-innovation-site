@@ -1,0 +1,64 @@
+---
+/**
+ * The FRC page header's logo lockup: team badge | divider | FIRST logo, with the caption underneath.
+ * Used twice so the two are identical: in the page header (src/pages/work/frc.astro) and as the final frame of
+ * the FRC intro (FrcSplash), which then flies exactly onto the header's copy.
+ *
+ *   splash  The intro's copy. Always in the dark-background colours (the intro plays on dark navy in both
+ *           themes). FrcSplash stacks its animated artwork over the two logos through the "badge-layers" and
+ *           "first-layers" slots. Its FIRST logo is FRC_logo-white.png: the same official white artwork with the
+ *           black made transparent, because a blend mode can't reach the background from inside the intro's
+ *           moving layers.
+ */
+import { frcPage, team } from "@/text/projects/frc";
+import { srcset } from "@/lib/images";
+
+interface Props {
+	splash?: boolean;
+}
+const { splash = false } = Astro.props;
+---
+
+<div class="flex flex-col items-center gap-3" data-frc-lockup={splash ? "splash" : "page"} data-reveal={splash ? undefined : ""}>
+	<div class="flex items-center gap-4 md:gap-5" data-frc-row>
+		<span class="relative inline-flex" data-frc-badge>
+			<!-- Team 10951 logo. The source image has photo corners, so it's cropped to its circle. -->
+			<img
+				src={team.logo}
+				srcset={srcset(team.logo)}
+				sizes="64px"
+				alt={splash ? "" : frcPage.logoAlt}
+				width="764"
+				height="764"
+				class:list={["size-14 rounded-full object-cover shadow-sm ring-1 md:size-16", splash ? "frc-real ring-[#1a2a50]" : "ring-border"]}
+			/>
+			{
+				splash && (
+					<span class="frc-layers" data-frc-badge-layers>
+						<slot name="badge-layers" />
+					</span>
+				)
+			}
+		</span>
+		<span class:list={["h-10 w-px", splash ? "frc-divider bg-[#1a2a50]" : "bg-border"]} aria-hidden="true"></span>
+		<span class="relative inline-flex" data-frc-first>
+			<!-- Page: the FIRST logo file is white on black, so screen-blend drops the black in dark mode; in light
+			     mode it's inverted to black on white and multiply-blended. -->
+			{
+				splash ? (
+					<img src="/assets/FRC_logo-white.png" alt="" width="438" height="115" class="frc-real h-10 w-auto md:h-12" />
+				) : (
+					<img src="/assets/FRC_logo.png" alt="FIRST" width="438" height="115" class="h-10 w-auto invert mix-blend-multiply md:h-12 dark:invert-0 dark:mix-blend-screen" />
+				)
+			}
+			{
+				splash && (
+					<span class="frc-layers" data-frc-first-layers>
+						<slot name="first-layers" />
+					</span>
+				)
+			}
+		</span>
+	</div>
+	<p class:list={["text-[15px] font-medium", splash ? "frc-caption text-[#94a3b8]" : "text-muted-foreground"]}>{frcPage.logoCaption}</p>
+</div>
