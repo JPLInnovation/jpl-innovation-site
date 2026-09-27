@@ -1,0 +1,256 @@
+---
+/**
+ * Shared shell for the logo intros: the full-screen overlay, its background, the Skip button, and the small
+ * blocking script that shows it. IntroSplash (JPL) and FrcSplash (FRC page) pass their artwork as the slot.
+ * Which one a page gets is decided in src/lib/splash.ts; the engine is src/scripts/splash-core.ts.
+ *
+ * Goes in <head>. The overlay's markup is in the initial HTML as a <template>; the inline script puts it on the
+ * page while <head> is still being parsed, so it's already showing in the very first painted frame and the page
+ * never flashes behind it. The same script decides the version (getIntroMode in src/lib/splash.ts): full on a
+ * first entry, fast on a refresh, none on back/forward. It marks <html> with intro-full / intro-fast /
+ * intro-none either way.
+ * In-site navigation (Astro's router swaps the page, no reload): Astro re-runs head scripts on a page that has
+ * already loaded, and those runs do nothing. Instead, the first real load hooks the router once: when a click
+ * arrives at a page whose intro plays on arrival (arrivalMode: the FRC page), the overlay goes in as part of
+ * the page swap, so the new page never shows without it either.
+ * Without JavaScript it never shows; if the animation script fails to load, a CSS failsafe fades it out.
+ */
+import { arrivalMode, getIntroMode, isFrcRoute, type SplashKind } from "@/lib/splash";
+
+interface Props {
+	kind: SplashKind;
+}
+const { kind } = Astro.props;
+
+// Blocking, in <head>: runs before the page's first paint. The decision functions are inlined from
+// src/lib/splash.ts, so the browser and the build share one definition.
+const boot = `(() => {
+	if (document.readyState !== "loading") return; // in-site navigation: the page has already loaded
+	const kind = ${JSON.stringify(kind)};
+	const isFrcRoute = ${isFrcRoute.toString()};
+	const arrivalMode = ${arrivalMode.toString()};
+	const getIntroMode = ${getIntroMode.toString()};
+	const root = document.documentElement;
+	const kindOf = (path) => (isFrcRoute(path) ? "frc" : "jpl");
+	/** Put this page's overlay on screen (its <template> is in <head>). */
+	const show = (kind, mode, t0) => {
+		root.classList.add("intro-" + mode);
+		const tpl = document.getElementById("splash-template");
+		if (mode === "none" || !tpl) return;
+		root.classList.add("splash", "splash-" + kind);
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches) root.classList.add("splash-reduced");
+		const overlay = tpl.content.cloneNode(true);
+		if (t0) overlay.firstElementChild.dataset.splashT0 = String(t0); // when it went up (for a late script)
+		// Straight under <html>: during a real load <body> doesn't exist yet. It's position: fixed on top anyway.
+		root.appendChild(overlay);
+	};
+	if (!window.__splashNav) {
+		window.__splashNav = true;
+		document.addEventListener("astro:before-swap", (e) => {
+			const to = kindOf(e.to.pathname);
+			// Back/forward plays nothing, and neither does a move between pages that share an intro.
+			if (e.navigationType === "traverse" || to === kindOf(e.from.pathname)) return;
+			const mode = arrivalMode(to);
+			if (mode === "none") return;
+			const swap = e.swap;
+			e.swap = () => {
+				swap();
+				// Right after the swap, in the same frame, before the new page is shown (its <html> classes are
+				// the new page's now, so ours go on after).
+				if (!document.querySelector("[data-splash]")) show(to, mode, performance.now());
+			};
+		});
+	}
+	show(kind, kindOf(location.pathname) === kind ? getIntroMode(kind) : "none");
+})();`;
+---
+
+<template id="splash-template">
+<div class="splash-overlay" data-splash={kind} aria-hidden="true">
+	<div class="splash-bg" data-splash-bg>
+		<div class="splash-grid"></div>
+		<span class="splash-trace" style="--y: 22%; --d: 0s"></span>
+		<span class="splash-trace" style="--y: 61%; --d: 1.1s"></span>
+		<span class="splash-trace splash-trace--v" style="--x: 18%; --d: 0.5s"></span>
+		<span class="splash-trace splash-trace--v" style="--x: 83%; --d: 1.6s"></span>
+	</div>
+	<div class="splash-stage">
+		<slot />
+	</div>
+	<button type="button" class="splash-skip" data-splash-skip tabindex="-1">
+		Skip
+		<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 3l5 5-5 5M9 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+	</button>
+</div>
+</template>
+
+<script is:inline set:html={boot} />
+
+<style is:global>
+	.splash-overlay {
+		display: none;
+	}
+	html.splash .splash-overlay {
+		display: block;
+		position: fixed;
+		inset: 0;
+		z-index: 200;
+		overflow: hidden;
+		/* It lives outside <body>, so it takes the body's text settings explicitly (for identical text layout). */
+		font-family: var(--font-sans);
+		line-height: 1.6;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		cursor: pointer;
+		user-select: none;
+		-webkit-tap-highlight-color: transparent;
+		/* If the script never starts, get out of the way (the script cancels this as soon as it runs). */
+		animation: splash-failsafe 0.4s ease-out 5s forwards;
+	}
+	html.splash-live .splash-overlay {
+		animation: none;
+	}
+	@keyframes splash-failsafe {
+		to {
+			opacity: 0;
+			visibility: hidden;
+		}
+	}
+	/* Page elements a splash hides until it lands on them use this to reappear if the script never runs. */
+	@keyframes splash-reveal-failsafe {
+		to {
+			opacity: 1;
+		}
+	}
+	/* Only colours change, never the scrollbar's width, so nothing shifts. Back to normal as the overlay fades. */
+	html.splash:not(.splash-leaving) {
+		scrollbar-color: #1e3f78 #0a1a3a;
+	}
+
+	/* ---------- Background: a faint drifting grid and a few circuit traces ---------- */
+	.splash-bg {
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(120% 90% at 50% 45%, #1e5bb8 0%, #123a7d 38%, #0a1a3a 78%);
+	}
+	/* The FRC intro sits on the site's dark navy, like the page header it lands in. */
+	[data-splash="frc"] .splash-bg {
+		background: radial-gradient(120% 90% at 50% 42%, #0f2150 0%, #081333 45%, #050a1f 80%);
+	}
+	.splash-grid {
+		position: absolute;
+		inset: -48px;
+		background-image:
+			linear-gradient(rgb(16 157 192 / 0.13) 1px, transparent 1px),
+			linear-gradient(90deg, rgb(16 157 192 / 0.13) 1px, transparent 1px);
+		background-size: 48px 48px;
+		mask-image: radial-gradient(70% 60% at 50% 48%, #000 20%, transparent 100%);
+		animation: splash-grid 7s cubic-bezier(0.37, 0, 0.63, 1) infinite alternate;
+		will-change: transform;
+	}
+	[data-splash="frc"] .splash-grid {
+		opacity: 0.6;
+	}
+	@keyframes splash-grid {
+		to {
+			transform: translate3d(48px, 24px, 0);
+		}
+	}
+	.splash-trace {
+		position: absolute;
+		left: -20%;
+		top: var(--y);
+		width: 18%;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, rgb(34 211 238 / 0.55), transparent);
+		opacity: 0;
+		animation: splash-trace-x 3.2s cubic-bezier(0.65, 0, 0.35, 1) var(--d) infinite;
+		will-change: transform, opacity;
+	}
+	.splash-trace--v {
+		left: var(--x);
+		top: -20%;
+		width: 1px;
+		height: 18%;
+		background: linear-gradient(180deg, transparent, rgb(34 211 238 / 0.5), transparent);
+		animation-name: splash-trace-y;
+	}
+	@keyframes splash-trace-x {
+		0% {
+			transform: translate3d(0, 0, 0);
+			opacity: 0;
+		}
+		15%,
+		75% {
+			opacity: 0.8;
+		}
+		100% {
+			transform: translate3d(720%, 0, 0);
+			opacity: 0;
+		}
+	}
+	@keyframes splash-trace-y {
+		0% {
+			transform: translate3d(0, 0, 0);
+			opacity: 0;
+		}
+		15%,
+		75% {
+			opacity: 0.8;
+		}
+		100% {
+			transform: translate3d(0, 720%, 0);
+			opacity: 0;
+		}
+	}
+	.splash-stage {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		perspective: 900px;
+	}
+
+	/* ---------- Skip (showing from the very first frame) ---------- */
+	.splash-skip {
+		position: absolute;
+		right: max(1rem, env(safe-area-inset-right));
+		bottom: max(1rem, env(safe-area-inset-bottom));
+		z-index: 2;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
+		padding: 0 1rem;
+		border: 1px solid rgb(255 255 255 / 0.22);
+		border-radius: 999px;
+		background: rgb(10 26 58 / 0.35);
+		color: rgb(255 255 255 / 0.85);
+		font: 600 14px/1 "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+		letter-spacing: 0.02em;
+		backdrop-filter: blur(8px);
+		cursor: pointer;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+	}
+	.splash-skip:hover {
+		background: rgb(255 255 255 / 0.12);
+		color: #fff;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.splash-grid,
+		.splash-trace {
+			animation: none;
+		}
+		.splash-trace {
+			display: none;
+		}
+	}
+	@media (forced-colors: active) {
+		html.splash .splash-overlay {
+			display: none;
+		}
+	}
+</style>

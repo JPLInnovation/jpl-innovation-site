@@ -2,7 +2,9 @@
 import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
+import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
+import { splashFor } from "@/lib/splash";
 import "@/styles/global.css";
 // The subset almost every page's text uses. Preloading it lets the display headings render in Archivo
 // straight away instead of reflowing when the font arrives (layout shift).
@@ -26,6 +28,8 @@ const {
 } = Astro.props;
 // The page's one official address, for search engines and link previews.
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+// Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; everything else: IntroSplash).
+const splash = splashFor(Astro.url.pathname);
 ---
 
 <html lang="en">
@@ -83,8 +87,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
 				window.__jplThemeHook = true;
 			}
 		</script>
-		<!-- Animated logo intro, once per session. Remove this line to turn it off. -->
-		<IntroSplash />
+		<!-- Logo intros, on every full page load or refresh; the FRC one also when you click through to it (src/lib/splash.ts). Remove a line to turn that intro off. -->
+		{splash === "jpl" && <IntroSplash />}
+		{splash === "frc" && <FrcSplash />}
 		<ClientRouter />
 	</head>
 	<body>
