@@ -28,3 +28,6 @@ pnpm-debug.log*
 
 # local before/after screenshots
 screenshots/
+
+# full-size audit captures (the report uses the smaller sheets in audit/before/)
+audit/screenshots/
