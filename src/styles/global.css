@@ -265,8 +265,10 @@
 	transform: scaleY(0);
 	transform-origin: center top;
 }
+/* Words not yet lit rest at 50%: still clearly dimmer, but readable (3:1+ in both themes, WCAG AA for large
+   text). Keep in sync with the floor in src/scripts/motion.ts. */
 .motion [data-words] .motion-word {
-	opacity: 0.18;
+	opacity: 0.5;
 }
 [data-parallax] {
 	overflow: hidden;

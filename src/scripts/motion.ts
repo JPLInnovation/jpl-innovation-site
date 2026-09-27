@@ -74,7 +74,8 @@ function init() {
 			scroll(
 				(progress: number) => {
 					const lit = progress * (words.length + 2);
-					words.forEach((w, i) => (w.style.opacity = String(Math.min(1, Math.max(0.18, lit - i)))));
+					// 0.5 floor: unlit words stay readable (see .motion-word in global.css).
+					words.forEach((w, i) => (w.style.opacity = String(Math.min(1, Math.max(0.5, lit - i)))));
 				},
 				{ target: el, offset: ["start 0.9", "end 0.55"] },
 			),
