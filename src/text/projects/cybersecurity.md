@@ -13,7 +13,7 @@ order: 2
 
 Every robot, drone, and web app we build sits on a network. Knowing how that network is put together, and how it can be attacked, is what lets us keep our projects safe.
 
-This track grew out of infrastructure administration: learning how routers, switches, and servers fit together, first through CCNA-related study and then hands-on training at VN Pro academy.
+This track grew out of infrastructure administration: learning how routers, switches, and servers fit together, first through CCNA-related study and then hands-on training at VnPro academy.
 
 ### Networking: CCNA
 
