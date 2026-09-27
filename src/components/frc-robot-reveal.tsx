@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionTemplate, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 
 import { srcset } from "@/lib/images";
@@ -13,7 +13,12 @@ const { heading, text, highlights } = frcPage.reveal;
  */
 export default function FrcRobotReveal({ src, alt }: { src: string; alt: string }) {
 	const ref = useRef<HTMLElement>(null);
-	const reduce = useReducedMotion();
+	// The server can't know the visitor's setting, so the first client render must match its markup (the scroll
+	// scene); switching before mount made React throw a hydration error (#418) for reduced-motion visitors.
+	const prefersReduced = useReducedMotion();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+	const reduce = mounted && prefersReduced;
 	const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
 	// Function-form transforms keep these in JS. (Motion otherwise hands linear opacity/scale mappings to the
