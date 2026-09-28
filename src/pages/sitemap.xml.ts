@@ -7,6 +7,7 @@ export const GET: APIRoute = async ({ site }) => {
 		"/",
 		"/work/",
 		"/members/",
+		"/about/",
 		...(await getProjects()).map((p) => `/work/${p.id}/`),
 		...(await getMembers()).map((m) => `/members/${m.id}/`),
 	];
