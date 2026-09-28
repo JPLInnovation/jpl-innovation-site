@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight } from "lucide-react";
 import GlyphPortal from "@/components/ui/glyph-portal";
 import { Button } from "@/components/ui/button";
+import { srcset } from "@/lib/images";
 // Words: src/text/home.ts (`hero`, `services`)
 import { hero, services } from "@/text/home";
 
@@ -78,6 +79,8 @@ function BuildPhoto() {
 		<div className="absolute inset-0" style={{ transform: "scale(var(--gp-field-scale,1))" }}>
 			<img
 				src="/assets/FRCnew.jpg"
+				srcSet={srcset("/assets/FRCnew.jpg")}
+				sizes="100vw"
 				alt=""
 				className="absolute inset-0 size-full object-cover object-[32%_68%]"
 				fetchPriority="high"
@@ -137,9 +140,11 @@ function Poster() {
 	return (
 		<section className="relative flex min-h-[100svh] flex-col items-center justify-center gap-6 px-4 text-center">
 			<p className="text-[15px] text-muted-foreground">{kicker}</p>
+			{/* "JPL" is ~2em wide: 42vw keeps it at ~84% of the screen, like the portal's first frame, so it never
+			    overflows a phone (which would widen the layout viewport and shift the fixed background). */}
 			<p
 				className="font-black leading-none tracking-tight"
-				style={{ fontSize: "min(38svh, 60vw)" }}
+				style={{ fontSize: "min(38svh, 42vw)" }}
 				aria-hidden="true"
 			>
 				{WORD}

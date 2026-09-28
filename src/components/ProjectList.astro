@@ -2,6 +2,7 @@
 import type { CollectionEntry } from "astro:content";
 import { ArrowRight } from "lucide-react";
 import StatusTag from "./StatusTag.astro";
+import { srcset } from "@/lib/images";
 import { projectCard } from "@/text/work";
 
 interface Props {
@@ -28,6 +29,8 @@ const { projects, headingLevel: Heading = "h3" } = Astro.props;
 					>
 						<img
 							src={p.data.img}
+							srcset={srcset(p.data.img)}
+							sizes="(min-width: 1216px) 475px, (min-width: 768px) 40vw, 100vw"
 							alt=""
 							transition:name={p.id === "frc" ? undefined : `project-${p.id}`}
 							loading={i === 0 ? "eager" : "lazy"}

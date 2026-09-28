@@ -10,7 +10,6 @@ export const site = {
 	name: "JPL Innovation",
 	/** The contact address. Change it here and it updates everywhere (menu, footer, contact box, pop-up). */
 	email: "jpl.innovation05@gmail.com",
-	github: "https://github.com/jpl-innovation",
 	/** Shown by Google and link previews when a page doesn't have its own description. */
 	description:
 		"JPL Innovation is a student-founded engineering startup in Ho Chi Minh City: robotics and mechanical design, embedded systems and drones, networking and cybersecurity, and web development.",
@@ -21,6 +20,7 @@ export const menu = [
 	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
 	{ label: "Members", href: "/members/" },
+	{ label: "About", href: "/about/" },
 	{ label: "Contact", href: "#contact" },
 ];
 
@@ -35,9 +35,9 @@ export const footer = {
 		{ label: "Cybersecurity", href: "/work/cybersecurity/" },
 		{ label: "FIRST Robotics", href: "/work/frc/" },
 		{ label: "Members", href: "/members/" },
+		{ label: "About", href: "/about/" },
 	],
 	contactHeading: "Contact",
-	githubLabel: "GitHub",
 	/** After "© 2026" (the year updates itself). */
 	copyright: "JPL Innovation",
 };
@@ -68,6 +68,8 @@ export const emailPopup = {
 /** The "Page not found" (404) page. */
 export const notFound = {
 	title: "Page not found",
+	/** For search results and link previews. */
+	description: "This page doesn't exist.",
 	lede: "There's no page at this address. It may have moved when we rebuilt the site.",
 	homeButton: "Go to the home page",
 	workButton: "See our work",

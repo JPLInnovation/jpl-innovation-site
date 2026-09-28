@@ -1,6 +1,7 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useMotionTemplate, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 
+import { srcset } from "@/lib/images";
 // Words: src/text/projects/frc.ts (`frcPage.reveal`)
 import { frcPage } from "@/text/projects/frc";
 
@@ -12,7 +13,12 @@ const { heading, text, highlights } = frcPage.reveal;
  */
 export default function FrcRobotReveal({ src, alt }: { src: string; alt: string }) {
 	const ref = useRef<HTMLElement>(null);
-	const reduce = useReducedMotion();
+	// The server can't know the visitor's setting, so the first client render must match its markup (the scroll
+	// scene); switching before mount made React throw a hydration error (#418) for reduced-motion visitors.
+	const prefersReduced = useReducedMotion();
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => setMounted(true), []);
+	const reduce = mounted && prefersReduced;
 	const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
 
 	// Function-form transforms keep these in JS. (Motion otherwise hands linear opacity/scale mappings to the
@@ -40,7 +46,7 @@ export default function FrcRobotReveal({ src, alt }: { src: string; alt: string 
 	if (reduce) {
 		return (
 			<section className="relative overflow-hidden" aria-label="Our 2026 robot">
-				<img src={src} alt={alt} className="h-[70svh] w-full object-cover object-[55%_75%]" />
+				<img src={src} srcSet={srcset(src)} sizes="100vw" alt={alt} className="h-[70svh] w-full object-cover object-[55%_75%]" />
 				<div className="absolute inset-0 bg-gradient-to-t from-hero-field via-hero-field/70 to-transparent" />
 				<Copy />
 			</section>
@@ -53,6 +59,8 @@ export default function FrcRobotReveal({ src, alt }: { src: string; alt: string 
 				<motion.div className="absolute inset-0 overflow-hidden" style={{ clipPath }}>
 					<motion.img
 						src={src}
+						srcSet={srcset(src)}
+						sizes="100vw"
 						alt={alt}
 						className="size-full object-cover object-[55%_75%]"
 						style={{ scale }}

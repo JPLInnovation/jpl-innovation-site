@@ -3,6 +3,7 @@ import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
 import FrcRobotReveal from "@/components/frc-robot-reveal";
+import FrcLockup from "@/components/FrcLockup.astro";
 import FrcSeasons from "@/components/frc-seasons";
 import HardwareStack from "@/components/HardwareStack.astro";
 import Leadership from "@/components/Leadership.astro";
@@ -13,6 +14,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md)
 import { frcPage, team } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
+import { srcset } from "@/lib/images";
 
 const entry = (await getEntry("work", "frc"))!;
 
@@ -31,29 +33,8 @@ const facts = [
 	</div>
 
 	<header class="wrapper flex flex-col items-center gap-6 pb-14 pt-6 text-center md:pb-20 md:pt-10">
-		<div class="flex flex-col items-center gap-3" data-reveal>
-			<div class="flex items-center gap-4 md:gap-5">
-				<!-- Team 10951 logo. The source image has photo corners, so it's cropped to its circle. -->
-				<img
-					src={team.logo}
-					alt={frcPage.logoAlt}
-					width="764"
-					height="764"
-					class="size-14 rounded-full object-cover shadow-sm ring-1 ring-border md:size-16"
-				/>
-				<span class="h-10 w-px bg-border" aria-hidden="true"></span>
-				<!-- The FIRST logo file is white on black: screen-blend drops the black in dark mode;
-				     in light mode it's inverted to black on white and multiply-blended. -->
-				<img
-					src="/assets/FRC_logo.png"
-					alt="FIRST"
-					width="438"
-					height="115"
-					class="h-10 w-auto invert mix-blend-multiply md:h-12 dark:invert-0 dark:mix-blend-screen"
-				/>
-			</div>
-			<p class="text-[15px] font-medium text-muted-foreground">{frcPage.logoCaption}</p>
-		</div>
+		<!-- Logo lockup; the FRC intro (FrcSplash) lands exactly on this. -->
+		<FrcLockup />
 		<h1 class="font-wide text-[clamp(3.25rem,12vw,10.5rem)] font-[900] leading-[0.9] tracking-[-0.03em]">
 			{frcPage.headingPrefix} <Odometer value={String(team.number)} />
 		</h1>
@@ -88,7 +69,14 @@ const facts = [
 					label={frcPage.model3d.description}
 					className="aspect-[4/3] w-full"
 				>
-					<img src="/assets/FRCnew.jpg" alt={frcPage.model3d.fallbackAlt} class="size-full object-cover object-[32%_68%]" loading="lazy" />
+					<img
+						src="/assets/FRCnew.jpg"
+						srcset={srcset("/assets/FRCnew.jpg")}
+						sizes="(min-width: 1024px) 60vw, 100vw"
+						alt={frcPage.model3d.fallbackAlt}
+						class="size-full object-cover object-[32%_68%]"
+						loading="lazy"
+					/>
 				</ModelViewer>
 			</div>
 		</div>
@@ -106,6 +94,8 @@ const facts = [
 			<div class="flex max-w-2xl items-center gap-5" data-reveal>
 				<img
 					src={team.logo}
+					srcset={srcset(team.logo)}
+					sizes="80px"
 					alt=""
 					width="764"
 					height="764"

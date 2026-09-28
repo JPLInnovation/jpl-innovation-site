@@ -20,7 +20,11 @@ import {
 	Vector2,
 	BoxGeometry,
 } from "three";
+import { largestCopy } from "@/lib/images";
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
+
+/** 480 px WebP copy of the dark logo (scripts/resize-images.mjs); drawn at most ~300 px wide (badge back). */
+const LOGO = "/assets/jpl-logo-dark-480.webp";
 
 export interface BadgeMember {
 	id: string;
@@ -254,7 +258,7 @@ function fit(c: CanvasRenderingContext2D, text: string, weight: number, size: nu
 type Face = ReturnType<typeof makeCanvas>;
 
 async function drawFront({ c, texture }: Face, member: BadgeMember) {
-	const [photo, logo] = await Promise.all([loadImage(member.img), loadImage("/assets/jpl-logo-dark.png"), fontsReady()]);
+	const [photo, logo] = await Promise.all([loadImage(largestCopy(member.img)), loadImage(LOGO), fontsReady()]);
 	c.fillStyle = "#ffffff";
 	c.fillRect(0, 0, TEX_W, TEX_H);
 
@@ -309,7 +313,7 @@ async function drawFront({ c, texture }: Face, member: BadgeMember) {
 }
 
 async function drawBack({ c, texture }: Face, member: BadgeMember) {
-	const [logo] = await Promise.all([loadImage("/assets/jpl-logo-dark.png"), fontsReady()]);
+	const [logo] = await Promise.all([loadImage(LOGO), fontsReady()]);
 	c.fillStyle = NAVY;
 	c.fillRect(0, 0, TEX_W, TEX_H);
 	c.fillStyle = SLOT;

@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { leadershipRoles } from "@/lib/content";
+import { roleLine } from "@/lib/content";
+import { srcset } from "@/lib/images";
 
 interface Props {
 	members: CollectionEntry<"members">[];
@@ -17,6 +18,8 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 				<div class="overflow-hidden rounded-xl bg-muted">
 					<img
 						src={m.data.img}
+						srcset={srcset(m.data.img)}
+						sizes="(min-width: 1024px) 360px, (min-width: 640px) 45vw, 100vw"
 						transition:name={`member-${m.id}`}
 						alt={m.data.img_alt ?? ""}
 						loading="lazy"
@@ -31,7 +34,7 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 						</a>
 					</Heading>
 					{m.data.leadership && (
-						<p class="text-sm font-semibold">{leadershipRoles(m).map((r) => `${r.title}, ${r.org}`).join(" · ")}</p>
+						<p class="text-sm font-semibold">{roleLine(m)}</p>
 					)}
 					<p class="text-sm text-muted-foreground">{m.data.tags.join(", ")}</p>
 				</div>

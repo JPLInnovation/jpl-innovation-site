@@ -7,7 +7,7 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { notFound } from "@/text/site";
 ---
 
-<BaseLayout title={`${notFound.title} | JPL Innovation`} description="This page doesn't exist.">
+<BaseLayout title={`${notFound.title} | JPL Innovation`} description={notFound.description} canonical={false}>
 	<PageIntro title={notFound.title} lede={notFound.lede}>
 		<div class="flex flex-wrap gap-3 pt-2 pb-20">
 			<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>{notFound.homeButton}</a>
