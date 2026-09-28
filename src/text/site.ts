@@ -20,6 +20,7 @@ export const menu = [
 	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
 	{ label: "Members", href: "/members/" },
+	{ label: "About", href: "/about/" },
 	{ label: "Contact", href: "#contact" },
 ];
 
@@ -34,6 +35,7 @@ export const footer = {
 		{ label: "Cybersecurity", href: "/work/cybersecurity/" },
 		{ label: "FIRST Robotics", href: "/work/frc/" },
 		{ label: "Members", href: "/members/" },
+		{ label: "About", href: "/about/" },
 	],
 	contactHeading: "Contact",
 	/** After "© 2026" (the year updates itself). */
