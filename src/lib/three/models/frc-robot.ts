@@ -50,7 +50,7 @@ export const view: StageView = {
 
 const X_AXIS = Math.PI / 2; // rotate a y-axis cylinder onto the x axis
 const FONT = '"Archivo Variable", "Arial Black", sans-serif';
-const LOGO = "/assets/10951.jpg";
+const LOGO = "/assets/10951-400.webp"; // 400 px WebP copy (scripts/resize-images.mjs); drawn at most 340 px
 const DEG = Math.PI / 180;
 
 /** Launcher roller axis, in the side view (z forward, y up). */

@@ -1,7 +1,7 @@
 ---
 title: Khoa Le
 img: /assets/10951.jpg
-img_alt: Khoa Le
+img_alt: Team 10951 Saigon South Dragons logo
 leadership:
   jpl: COO
   frc: Electrical Lead
@@ -12,7 +12,7 @@ tags:
 - Technology Enthusiast
 - Student
 achievements:
-- Qualified for the Southern Regional Round of the Vietnam Tin Hoc Tre Competition
+- Qualified for the Southern Regional Round of the Vietnam Tin Học Trẻ Competition
 - HKICO Grade-level Champion
 - Participated in Lotus Hacks 2026
 sports:

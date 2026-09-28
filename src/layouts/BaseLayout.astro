@@ -2,19 +2,34 @@
 import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
+import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
+import { splashFor } from "@/lib/splash";
 import "@/styles/global.css";
+// The subset almost every page's text uses. Preloading it lets the display headings render in Archivo
+// straight away instead of reflowing when the font arrives (layout shift).
+import archivoLatin from "@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url";
 import { site } from "@/text/site";
 
 interface Props {
 	title?: string | undefined;
 	description?: string | undefined;
+	/**
+	 * false: no canonical URL or og:url (the 404 page, which has no address of its own). It isn't marked noindex:
+	 * GitHub Pages already serves it with a 404 status, which keeps it out of search results.
+	 */
+	canonical?: boolean;
 }
 
 const {
 	title = "JPL Innovation",
 	description = site.description,
+	canonical: hasCanonical = true,
 } = Astro.props;
+// The page's one official address, for search engines and link previews.
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+// Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; everything else: IntroSplash).
+const splash = splashFor(Astro.url.pathname);
 ---
 
 <html lang="en">
@@ -25,11 +40,17 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<meta name="theme-color" content="#eef3fd" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#050a1f" media="(prefers-color-scheme: dark)" />
+		{hasCanonical && <link rel="canonical" href={canonical} />}
 		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={site.name} />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
+		{hasCanonical && <meta property="og:url" content={canonical} />}
 		<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
+		<meta name="twitter:card" content="summary" />
 		<title>{title}</title>
+		<slot name="head" />
+		<link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<script is:inline>
@@ -66,8 +87,9 @@ const {
 				window.__jplThemeHook = true;
 			}
 		</script>
-		<!-- Animated logo intro, once per session. Remove this line to turn it off. -->
-		<IntroSplash />
+		<!-- Logo intros, on every full page load or refresh; the FRC one also when you click through to it (src/lib/splash.ts). Remove a line to turn that intro off. -->
+		{splash === "jpl" && <IntroSplash />}
+		{splash === "frc" && <FrcSplash />}
 		<ClientRouter />
 	</head>
 	<body>

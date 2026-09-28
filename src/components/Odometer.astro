@@ -17,10 +17,7 @@ const digits = [...value];
 		digits.map((d, i) =>
 			/\d/.test(d) ? (
 				<span class="odo-window" aria-hidden="true">
-					<span class="odo-strip" style={`--digit: ${d}; --i: ${i}`}>
-						{/* Two turns of the wheel, so every digit spins a full turn before landing. */}
-						{[...Array(20).keys()].map((n) => <span>{n % 10}</span>)}
-					</span>
+					<span class="odo-strip" style={`--digit: ${d}; --i: ${i}`} />
 				</span>
 			) : (
 				<span aria-hidden="true">{d}</span>
@@ -42,12 +39,15 @@ const digits = [...value];
 		overflow: hidden;
 	}
 	.odo-strip {
-		display: flex;
-		flex-direction: column;
+		display: block;
 		transform: translateY(calc((var(--digit) + 10) * -1em));
 	}
-	.odo-strip > span {
-		height: 1em;
+	/* Two turns of the wheel (0–9 twice, one per line), so every digit spins a full turn before landing.
+	   Generated content keeps these 20 digits out of the page's text (search engines, copy-paste);
+	   the space after each \A ends the escape, so "\A 1" is a line break then 1. */
+	.odo-strip::before {
+		content: "0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9";
+		white-space: pre;
 	}
 	/* Only rolls when motion is allowed (the `motion` class is set in BaseLayout). */
 	:global(.motion) .odo-strip {

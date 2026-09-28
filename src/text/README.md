@@ -6,7 +6,7 @@
 
 | On the website | Open this file |
 | :-- | :-- |
-| **Top menu** (Services, Work, Members, Contact) | `site.ts` → `menu` |
+| **Top menu** (Services, Work, Members, About, Contact) | `site.ts` → `menu` |
 | **Footer** (bottom of every page) | `site.ts` → `footer` |
 | **Blue "Let's work together" box** (bottom of every page) | `site.ts` → `contact` |
 | **Contact email address** (everywhere) | `site.ts` → `email` |
@@ -33,6 +33,8 @@
 | Cybersecurity: the commands typed in the Cisco console | `projects/cybersecurity-terminal.ts` |
 | **Members page** (`/members/`) headings | `members.ts` → `membersPage` |
 | **A person** (name, photo, roles, CEO/COO titles, skills, achievements, sports, story) | `members/jayden.md`, `members/khoa.md` |
+| **About page** (`/about/`): title and intro, "Our story", "What we work on" cards, "What we believe" | `about.ts` |
+| About: "The team" heading (the people themselves come from `members/*.md`) | `about.ts` → `team` |
 
 Labels floating inside the 3D models ("Intake rollers", "TEAM MEMBER"...) are the only exception: they're in `src/lib/three/models/`.
 

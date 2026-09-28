@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowRight, Clock, Flag, Quote, Trophy } from "lucide-react";
-import { motion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 import ContactDialog from "@/components/contact-dialog";
 import { CountUp, Grow, Reveal } from "@/components/motion-primitives";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
 import { season2026, season2027, seasonsText } from "@/text/projects/frc";
 import { DataIcon } from "@/lib/icons";
+import { srcset } from "@/lib/images";
 import { cn } from "@/lib/utils";
 
 type Season = "2027" | "2026";
@@ -47,26 +48,30 @@ export default function FrcSeasons() {
 	};
 
 	return (
-		<Tabs value={season} onValueChange={change} className="gap-12" ref={tabsRef}>
-			<TabsList
-				aria-label={seasonsText.chooseSeason}
-				className="h-auto gap-1 rounded-xl p-1 group-data-[orientation=horizontal]/tabs:h-auto"
-			>
-				<SeasonTab value="2027" status={season2027.status} active={season === "2027"} />
-				<SeasonTab value="2026" status={season2026.status} active={season === "2026"} />
-			</TabsList>
+		// Motion ignores the OS "reduce motion" setting unless told to: "user" drops the panel slide and the
+		// pill's layout animation for those visitors (opacity fades stay).
+		<MotionConfig reducedMotion="user">
+			<Tabs value={season} onValueChange={change} className="gap-12" ref={tabsRef}>
+				<TabsList
+					aria-label={seasonsText.chooseSeason}
+					className="h-auto gap-1 rounded-xl p-1 group-data-[orientation=horizontal]/tabs:h-auto"
+				>
+					<SeasonTab value="2027" status={season2027.status} active={season === "2027"} />
+					<SeasonTab value="2026" status={season2026.status} active={season === "2026"} />
+				</TabsList>
 
-			<TabsContent value="2027" forceMount className="data-[state=inactive]:hidden">
-				<Panel active={season === "2027"}>
-					<Season2027 onShow2026={showSeason} />
-				</Panel>
-			</TabsContent>
-			<TabsContent value="2026" forceMount className="data-[state=inactive]:hidden">
-				<Panel active={season === "2026"}>
-					<Season2026 />
-				</Panel>
-			</TabsContent>
-		</Tabs>
+				<TabsContent value="2027" forceMount className="data-[state=inactive]:hidden">
+					<Panel active={season === "2027"}>
+						<Season2027 onShow2026={showSeason} />
+					</Panel>
+				</TabsContent>
+				<TabsContent value="2026" forceMount className="data-[state=inactive]:hidden">
+					<Panel active={season === "2026"}>
+						<Season2026 />
+					</Panel>
+				</TabsContent>
+			</Tabs>
+		</MotionConfig>
 	);
 }
 
@@ -352,6 +357,8 @@ const Season2026 = memo(function Season2026() {
 								>
 									<img
 										src={photo.src}
+										srcSet={srcset(photo.src)}
+										sizes="(min-width: 768px) 50vw, 100vw"
 										alt={photo.alt}
 										width={photo.w}
 										height={photo.h}

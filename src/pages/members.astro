@@ -6,6 +6,7 @@ import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, toBadge } from "@/lib/content";
+import { srcset } from "@/lib/images";
 // Words: src/text/members.ts (people: src/text/members/*.md)
 import { membersPage } from "@/text/members";
 
@@ -31,7 +32,7 @@ const badges = members.map(toBadge);
 				className="aspect-[4/3] w-full sm:aspect-[16/8]"
 			>
 				<div class="flex h-full items-center justify-center gap-6 p-8">
-					{members.map((m) => <img src={m.data.img} alt="" class="h-3/4 w-auto rounded-xl object-cover shadow-sm" loading="lazy" />)}
+					{members.map((m) => <img src={m.data.img} srcset={srcset(m.data.img)} sizes="(min-width: 640px) 360px, 45vw" alt="" class="h-3/4 w-auto rounded-xl object-cover shadow-sm" loading="lazy" />)}
 				</div>
 			</ModelViewer>
 		</div>
