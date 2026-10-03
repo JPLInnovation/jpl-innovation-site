@@ -34,3 +34,7 @@ audit/screenshots/
 
 # Playwright MCP page snapshots
 .playwright-mcp/
+
+# Raw CAD exports (reference only — over GitHub's 100 MB push limit, and the 3D models on the site are
+# hand-built in src/lib/three/models/, not loaded from these files).
+CAD/
