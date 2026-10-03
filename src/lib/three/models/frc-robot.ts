@@ -1,7 +1,10 @@
 /**
  * Team 10951's 2026 robot in 3D: the official 2026 FRC KitBot layout with the team's modifications.
  *   KitBot layout: FIRST's 2026 KitBot Instruction Guide (Fuel Mechanism, Intake Base, Hopper).
- *   Team changes: photos in website-old-main/image (front: FRCnew.jpg, FRC.JPG; back: modifiedkitbot.jpg).
+ *   Team changes: photos in website-old-main/image (front: FRCnew.jpg, FRC.JPG; back: modifiedkitbot.jpg), checked
+ *   against the team's 2026 Onshape export (kept local, not in the repo: 142 MB, and this model is hand-built,
+ *   not a loaded mesh) for proportions — the Fuel Mechanism and hopper are a narrower sub-assembly than the full
+ *   chassis width (SUPER_X below), and the kit has full-perimeter team-colour bumpers.
  * Simplified, not CAD. ~1 unit = 1 m. The robot's front (intake) faces +z; its left side is +x.
  *
  * How FUEL moves, as on the KitBot: the front intake rollers pull it off the floor and back into the clear
@@ -62,6 +65,9 @@ const BALL_R = 0.075;
 const RIDE = LAUNCHER.r + BALL_R;
 /** Where the ball leaves the hood, and its direction of travel there (tangent to the arc). */
 const EXIT_ANGLE = 135 * DEG;
+/** Half-width of the Fuel Mechanism side plates and the hopper (Onshape export: ~454 mm between them,
+ * narrower than the ~650 mm chassis). The ball path stays on the x=0 centreline, so this doesn't affect it. */
+const SUPER_X = 0.227;
 
 export default function createRobot(ctx: StageContext): Model {
 	/* ---------- Materials ---------- */
@@ -125,6 +131,12 @@ export default function createRobot(ctx: StageContext): Model {
 	for (const x of [-0.3, 0.3]) add(new BoxGeometry(0.1, 0.11, 0.12), perforated(0.12), x, 0.1, 0.36); // front rail stubs
 	add(new BoxGeometry(0.44, 0.012, 0.64), plywood, 0, 0.156, -0.03);
 
+	// Full-perimeter bumpers (team blue), mounted just outside the chassis rails.
+	add(new BoxGeometry(0.045, 0.1, 0.76), blue, -0.365, 0.075, 0);
+	add(new BoxGeometry(0.045, 0.1, 0.76), blue, 0.365, 0.075, 0);
+	add(new BoxGeometry(0.77, 0.1, 0.045), blue, 0, 0.075, 0.3925);
+	add(new BoxGeometry(0.77, 0.1, 0.045), blue, 0, 0.075, -0.3925);
+
 	const wheelGeometry = new CylinderGeometry(0.076, 0.076, 0.04, 32);
 	const hubGeometry = new CylinderGeometry(0.03, 0.03, 0.042, 16);
 	for (const x of [-0.262, 0.262]) {
@@ -174,7 +186,7 @@ export default function createRobot(ctx: StageContext): Model {
 	plate.lineTo(-0.12, 0.66);
 	plate.closePath();
 	const plateGeometry = new ExtrudeGeometry(plate, { depth: 0.006, bevelEnabled: false, curveSegments: 14 });
-	for (const x of [-0.318, 0.324]) {
+	for (const x of [-SUPER_X, SUPER_X]) {
 		const side = add(plateGeometry, clear, x, 0, 0);
 		side.rotation.y = -Math.PI / 2; // shape x -> world z, extrusion -> world -x
 	}
@@ -260,7 +272,7 @@ export default function createRobot(ctx: StageContext): Model {
 
 	/* ---------- Rear hopper: clear floor, sides and back with the team decal ---------- */
 	const HOPPER_FLOOR = 0.2;
-	add(new BoxGeometry(0.62, 0.004, 0.3), clear, 0, HOPPER_FLOOR, -0.25);
+	add(new BoxGeometry(SUPER_X * 2, 0.004, 0.3), clear, 0, HOPPER_FLOOR, -0.25);
 	const hopperSide = new Shape();
 	hopperSide.moveTo(-0.4, 0.155);
 	hopperSide.lineTo(-0.12, 0.155);
@@ -269,13 +281,14 @@ export default function createRobot(ctx: StageContext): Model {
 	hopperSide.lineTo(-0.4, 0.48);
 	hopperSide.closePath();
 	const hopperSideGeometry = new ExtrudeGeometry(hopperSide, { depth: 0.005, bevelEnabled: false, curveSegments: 12 });
-	for (const x of [-0.352, 0.357]) {
+	for (const x of [-SUPER_X, SUPER_X]) {
 		const side = add(hopperSideGeometry, clear, x, 0, 0);
 		side.rotation.y = -Math.PI / 2;
 	}
-	add(new PlaneGeometry(0.71, 0.325), clear, 0, 0.3175, -0.4);
+	// Backing plane and decal keep the same aspect ratio as before, just narrower to match SUPER_X.
+	add(new PlaneGeometry(SUPER_X * 2.13, 0.198), clear, 0, 0.3175, -0.4);
 	const decalMaterial = new MeshStandardMaterial({ transparent: true, opacity: 0, roughness: 0.5, depthWrite: false });
-	const decal = add(new PlaneGeometry(0.66, 0.27), decalMaterial, 0, 0.32, -0.402);
+	const decal = add(new PlaneGeometry(SUPER_X * 1.98, 0.164), decalMaterial, 0, 0.32, -0.402);
 	decal.rotation.y = Math.PI; // faces backwards
 	drawDecal().then((texture) => {
 		decalMaterial.map = texture;
