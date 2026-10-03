@@ -9,6 +9,7 @@ export const GET: APIRoute = async ({ site }) => {
 		"/members/",
 		"/about/",
 		...(await getProjects()).map((p) => `/work/${p.id}/`),
+		"/work/drone/build-guide/",
 		...(await getMembers()).map((m) => `/members/${m.id}/`),
 	];
 	const urls = paths.map((path) => `<url><loc>${new URL(path, site).href}</loc></url>`).join("");
