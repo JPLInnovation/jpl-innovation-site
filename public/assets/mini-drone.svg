@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+	<defs>
+		<linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#0d1526"/>
+			<stop offset="1" stop-color="#090b11"/>
+		</linearGradient>
+		<radialGradient id="glow2" cx="0.5" cy="0.45" r="0.55">
+			<stop offset="0" stop-color="#1683c2" stop-opacity="0.45"/>
+			<stop offset="1" stop-color="#1683c2" stop-opacity="0"/>
+		</radialGradient>
+		<pattern id="grid2" width="32" height="32" patternUnits="userSpaceOnUse">
+			<path d="M32 0H0v32" fill="none" stroke="#5cc8ff" stroke-opacity="0.08" stroke-width="1"/>
+		</pattern>
+		<radialGradient id="disc2">
+			<stop offset="0.25" stop-color="#5cc8ff" stop-opacity="0"/>
+			<stop offset="0.9" stop-color="#5cc8ff" stop-opacity="0.16"/>
+			<stop offset="1" stop-color="#5cc8ff" stop-opacity="0.35"/>
+		</radialGradient>
+		<g id="rotor2">
+			<circle r="52" fill="url(#disc2)"/>
+			<ellipse rx="48" ry="4.5" fill="#e3eaf5" fill-opacity="0.85"/>
+			<circle r="12" fill="#2b3445" stroke="#6474a2" stroke-width="2.5"/>
+			<circle r="4" fill="#c3cadb"/>
+		</g>
+	</defs>
+
+	<rect width="800" height="600" fill="url(#bg2)"/>
+	<rect width="800" height="600" fill="url(#grid2)"/>
+	<rect width="800" height="600" fill="url(#glow2)"/>
+
+	<!-- Tiny micro-frame quad: just the flight-controller board -->
+	<g transform="translate(230 130) scale(1.05)">
+		<g stroke-width="10" stroke-linecap="round">
+			<line x1="170" y1="170" x2="90" y2="90" stroke="#e5484d"/>
+			<line x1="170" y1="170" x2="250" y2="90" stroke="#e5484d"/>
+			<line x1="170" y1="170" x2="90" y2="250" stroke="#c3cadb"/>
+			<line x1="170" y1="170" x2="250" y2="250" stroke="#c3cadb"/>
+		</g>
+		<use href="#rotor2" transform="translate(90 90) rotate(25)"/>
+		<use href="#rotor2" transform="translate(250 90) rotate(-40)"/>
+		<use href="#rotor2" transform="translate(90 250) rotate(70)"/>
+		<use href="#rotor2" transform="translate(250 250) rotate(-10)"/>
+		<!-- Center plate: Arduino Pro Mini + MPU-6050 -->
+		<rect x="128" y="128" width="84" height="84" rx="14" fill="#1b2433" stroke="#3d4663" stroke-width="3"/>
+		<rect x="150" y="150" width="40" height="40" rx="5" fill="#0f1a2b" stroke="#1daef1" stroke-width="2.2"/>
+		<circle cx="170" cy="170" r="3.5" fill="#1daef1"/>
+		<!-- NRF24L01 antenna -->
+		<line x1="170" y1="128" x2="170" y2="96" stroke="#8490b5" stroke-width="3" stroke-linecap="round"/>
+		<circle cx="170" cy="94" r="3.5" fill="#5cc8ff"/>
+	</g>
+
+	<!-- 2.4GHz radio link glyph -->
+	<g transform="translate(400 420)" fill="none" stroke="#5cc8ff" stroke-width="3" stroke-linecap="round">
+		<path d="M-18 10a24 24 0 0 1 36 0"/>
+		<path d="M-30 -2a40 40 0 0 1 60 0"/>
+		<circle cx="0" cy="22" r="4" fill="#5cc8ff" stroke="none"/>
+	</g>
+	<text x="400" y="480" text-anchor="middle" fill="#8490b5" font-family="ui-monospace,monospace" font-size="18" letter-spacing="2">2.4GHz NRF24L01</text>
+</svg>

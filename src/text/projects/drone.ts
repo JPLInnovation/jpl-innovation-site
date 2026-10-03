@@ -12,7 +12,7 @@ export const dronePage = {
 	model3d: {
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			'3D model of the F450 drone: red front arms, white rear arms, four spinning 10-inch props, the flight controller, Raspberry Pi Zero 2 W, USB webcam, 4G modem and the LiPo battery.',
+			'3D model of the F450 drone: red front arms, white rear arms, four spinning 10-inch props, the flight controller, Raspberry Pi 4, USB webcam, 4G modem and the LiPo battery.',
 		frontArms: 'Front arms',
 		rearArms: 'Rear arms',
 		layoutNote: 'Quad-X layout, 2 clockwise and 2 counter-clockwise props',
@@ -72,6 +72,11 @@ export const drone = {
 	status: 'Build in progress',
 	intro:
 		'A quadcopter built on the classic F450 frame that streams live, high-quality video over the 4G mobile network — so it can be watched from anywhere with signal, not just within Wi-Fi range.',
+	/** Who's building it. `members` are ids from src/text/members/*.md; leave a role's `member` out to show the name only. */
+	team: [
+		{ role: 'Electrical: soldering & wiring', member: 'khoa' },
+		{ role: 'Everything else: design, flight software & assembly', member: 'jayden' },
+	],
 	facts: [
 		{ icon: 'rocket-launch', label: 'Frame', value: 'F450 · 450 mm' },
 		{ icon: 'lightning', label: 'Battery', value: '3S 2200 mAh' },
@@ -85,7 +90,7 @@ export const roadmap = [
 	{ title: 'Sourcing parts', desc: 'Ordering components.', state: 'current' },
 	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, PDB, and wiring on the F450.', state: 'upcoming' },
 	{ title: 'Flight controller setup', desc: 'Calibration, radio binding, and first hover.', state: 'upcoming' },
-	{ title: '4G video link', desc: 'Pi Zero 2 W streaming a USB webcam over 4G.', state: 'upcoming' },
+	{ title: '4G video link', desc: 'Pi 4 streaming a USB webcam over 4G.', state: 'upcoming' },
 	{ title: 'Field testing', desc: 'Test flights and tuning.', state: 'upcoming' },
 ] as const;
 
@@ -104,7 +109,7 @@ export const systems = [
 			from: 'PDB',
 			steps: [
 				{ name: '5V BEC', detail: 'dedicated supply' },
-				{ name: 'Pi Zero 2 W', detail: '+ 4G modem' },
+				{ name: 'Pi 4', detail: '+ 4G modem' },
 			],
 		},
 	},
@@ -123,7 +128,7 @@ export const systems = [
 		icon: 'video-camera',
 		steps: [
 			{ name: 'USB webcam', detail: 'live video' },
-			{ name: 'Pi Zero 2 W', detail: 'encode & stream', link: 'USB' },
+			{ name: 'Pi 4', detail: 'encode & stream', link: 'USB' },
 			{ name: '4G modem', detail: 'ZTE MF833', link: 'OTG USB' },
 			{ name: 'Viewer', detail: 'anywhere online', link: 'mobile network' },
 		],
@@ -152,7 +157,7 @@ export const partGroups: PartGroup[] = [
 		parts: [
 			{ name: 'LiPo Battery 3S 2200 mAh', why: 'The power needed to lift this heavier rig.', price: 360_000 },
 			{ name: 'MicoAir PDB', why: 'Power distribution board that connects the battery to the ESCs.' },
-			{ name: '5V BEC', why: 'The flight controller’s onboard 5V regulator maxes out at 2 A — the Pi Zero and 4G modem together need their own supply.', price: 70_000 },
+			{ name: '5V BEC', why: 'The flight controller’s onboard 5V regulator maxes out at 2 A — the Pi 4 and 4G modem together need their own supply.', price: 70_000 },
 			{ name: 'LiPo Balance Charger', why: 'HotRC A400 for safely charging 2S–3S packs between flights.', price: 200_000 },
 		],
 	},
@@ -172,10 +177,9 @@ export const partGroups: PartGroup[] = [
 		icon: 'video-camera',
 		color: 'var(--chart-4)',
 		parts: [
-			{ name: 'Raspberry Pi Zero 2 W', why: 'Processes and streams the video over 4G.', price: 850_000 },
-			{ name: 'USB Webcam', why: 'Plugs into the Pi Zero over USB for the live video feed.' },
+			{ name: 'Raspberry Pi 4', why: 'Processes and streams the video over 4G.', price: 3_600_000 },
+			{ name: 'USB Webcam', why: 'Plugs into the Pi over USB for the live video feed.' },
 			{ name: 'ZTE MF833 4G Modem', why: 'The USB 4G stick that gives the drone internet.', price: 780_000 },
-			{ name: 'OTG Micro-USB Cable', why: 'Plugs the full-size 4G stick into the Pi Zero.', price: 15_000 },
 		],
 	},
 ];
