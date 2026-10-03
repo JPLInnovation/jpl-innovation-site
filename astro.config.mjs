@@ -11,6 +11,11 @@ export default defineConfig({
 		prefetchAll: true,
 		defaultStrategy: 'hover',
 	},
+	// CSS goes inside each page's HTML instead of a separate hashed file. GitHub Pages caches HTML for up to
+	// 10 minutes, and every deploy deletes the previous build's CSS file, so a cached page could point at a
+	// stylesheet that no longer exists and render unstyled (a "white page"). Inline, a page is always styled;
+	// if its old scripts are gone too, the CSS failsafes in SplashShell and BaseLayout still reveal it.
+	build: { inlineStylesheets: 'always' },
 	integrations: [react()],
 	vite: {
 		plugins: [tailwindcss()],
