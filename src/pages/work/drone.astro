@@ -2,6 +2,7 @@
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
+import { buttonVariants } from "@/components/ui/button";
 import { backToWork } from "@/text/work";
 import DroneIllustration from "@/components/DroneIllustration.astro";
 import ContactSection from "@/components/ContactSection.astro";
@@ -46,6 +47,11 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 					))
 				}
 			</dl>
+			<!-- data-astro-reload: the guide is a standalone page, so load it fully instead of a client-side swap. -->
+			<div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-reveal>
+				<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
+				<p class="max-w-[40ch] text-sm text-muted-foreground">{text.buildGuide.note}</p>
+			</div>
 		</div>
 		<figure transition:name="project-drone" class="flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
 			<ModelViewer

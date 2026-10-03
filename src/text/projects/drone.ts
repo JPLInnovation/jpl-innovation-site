@@ -41,6 +41,15 @@ export const dronePage = {
 	},
 	/** Before the date in the last section: "Earlier work, <date>". */
 	earlierLabel: 'Earlier work,',
+	/**
+	 * Button under the facts that opens the step-by-step build guide.
+	 * The guide itself is one self-contained file: public/work/drone/build-guide/index.html
+	 */
+	buildGuide: {
+		label: 'Open the build guide',
+		note: 'Every stage from parts list to first hover, with wiring diagrams and checklists.',
+		href: '/work/drone/build-guide/',
+	},
 };
 
 export interface Part {
