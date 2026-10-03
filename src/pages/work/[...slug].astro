@@ -13,7 +13,7 @@ interface Props {
 
 export async function getStaticPaths() {
 	// FRC, the drone and cybersecurity have their own pages in src/pages/work/.
-	const custom = ["frc", "drone", "cybersecurity"];
+	const custom = ["frc", "drone", "cybersecurity", "mini-drone"];
 	const work = await getCollection("work", (entry) => !custom.includes(entry.id));
 	return work.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
 }

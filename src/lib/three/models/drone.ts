@@ -111,8 +111,8 @@ export default function createDrone(ctx: StageContext): Model {
 	const fc = add(new Mesh(new BoxGeometry(0.036, 0.006, 0.036), board), 0, 0.05, 0.005);
 	const statusLed = add(new Mesh(new BoxGeometry(0.004, 0.003, 0.004), led), 0.012, 0.0045, 0.012, fc);
 
-	// Raspberry Pi Zero 2 W (65 × 30 mm) behind the flight controller
-	const pi = add(new Mesh(new BoxGeometry(0.065, 0.004, 0.03), piGreen), 0, 0.052, -0.045);
+	// Raspberry Pi 4 (85 × 56 mm) behind the flight controller, hanging slightly off the back of the plate
+	const pi = add(new Mesh(new BoxGeometry(0.085, 0.004, 0.056), piGreen), 0, 0.052, -0.06);
 	add(new Mesh(new BoxGeometry(0.012, 0.003, 0.012), chip), 0, 0.0035, 0, pi);
 
 	// USB webcam on the front edge, looking forward, with its USB lead running back to the Pi
@@ -123,7 +123,7 @@ export default function createDrone(ctx: StageContext): Model {
 	const lensMesh = add(new Mesh(new CylinderGeometry(0.0068, 0.0068, 0.006, 20), lens), -0.004, 0, 0.0095, camera);
 	lensMesh.rotation.x = Math.PI / 2;
 	add(new Mesh(new BoxGeometry(0.003, 0.003, 0.002), led), 0.012, 0.004, 0.0095, camera);
-	const usbLead = new QuadraticBezierCurve3(new Vector3(-0.016, 0.03, 0.07), new Vector3(-0.06, 0.07, 0.02), new Vector3(-0.03, 0.055, -0.045));
+	const usbLead = new QuadraticBezierCurve3(new Vector3(-0.016, 0.03, 0.07), new Vector3(-0.06, 0.07, 0.02), new Vector3(-0.03, 0.055, -0.06));
 	drone.add(new Mesh(new TubeGeometry(usbLead, 20, 0.0016, 6), webcamBody));
 
 	// ZTE MF833 4G USB modem on the side, with signal rings
@@ -160,7 +160,7 @@ export default function createDrone(ctx: StageContext): Model {
 	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
 	const tour = [
 		ctx.label("MicoAir H743 flight controller", anchor(-0.02, 0.1, 0.03), tourClass),
-		ctx.label("Raspberry Pi Zero 2 W", anchor(0, 0.08, -0.11), tourClass),
+		ctx.label("Raspberry Pi 4", anchor(0, 0.08, -0.13), tourClass),
 		ctx.label("USB webcam", anchor(0, 0.03, 0.15), tourClass),
 		ctx.label("ZTE MF833 4G modem", anchor(0.14, 0.07, -0.02), tourClass),
 		ctx.label("3S 2200 mAh LiPo", anchor(0, -0.065, 0), tourClass),

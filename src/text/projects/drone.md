@@ -4,7 +4,7 @@ img: /assets/f450-drone.svg
 img_alt: Illustration of the F450 quadcopter seen from above
 badge: Build in progress
 description: |
-  A quadcopter on the classic F450 frame that streams live video over 4G — Raspberry Pi Zero 2 W,
+  A quadcopter on the classic F450 frame that streams live video over 4G — Raspberry Pi 4,
   a USB webcam, and a MicoAir H743 flight controller.
 order: 1
 ---

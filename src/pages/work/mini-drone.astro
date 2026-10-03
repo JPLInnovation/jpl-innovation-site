@@ -1,0 +1,200 @@
+---
+import { getEntry } from "astro:content";
+import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight, ExternalLink } from "lucide-react";
+import BackLink from "@/components/BackLink.astro";
+import { backToWork } from "@/text/work";
+import ContactSection from "@/components/ContactSection.astro";
+import PartsTable from "@/components/parts-table";
+import StatusTag from "@/components/StatusTag.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+// All the words on this page: src/text/projects/mini-drone.ts (card on the Work page: src/text/projects/mini-drone.md)
+import { miniDrone, miniDronePage as text, partGroups, projectFiles, roadmap, systems } from "@/text/projects/mini-drone";
+import { DataIcon } from "@/lib/icons";
+
+const entry = (await getEntry("work", "mini-drone"))!;
+
+const team = await Promise.all(
+	miniDrone.team.map(async (t) => ({ role: t.role, member: t.member ? await getEntry("members", t.member) : null })),
+);
+
+const groups = partGroups.map((g) => ({
+	...g,
+	subtotal: g.parts.reduce((sum, p) => sum + (p.price ?? 0), 0),
+}));
+const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
+---
+
+<BaseLayout title={`${miniDrone.name} | JPL Innovation`} description={entry.data.description}>
+	<!-- Hero -->
+	<header class="wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
+		<div class="flex flex-col gap-6">
+			<BackLink href="/work/">{backToWork}</BackLink>
+			<div data-reveal><StatusTag>{miniDrone.status}</StatusTag></div>
+			<h1 data-reveal class="font-wide text-[clamp(2.8rem,8vw,6.25rem)] font-[900] leading-[0.94]">{miniDrone.name}</h1>
+			<p class="max-w-[56ch] text-lg" data-reveal data-reveal-delay="150">{miniDrone.intro}</p>
+			<dl class="grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-6 sm:grid-cols-4" data-reveal-group>
+				{
+					miniDrone.facts.map((f) => (
+						<div class="flex flex-col gap-1">
+							<dt class="flex items-center gap-1.5 text-sm text-muted-foreground">
+								<DataIcon name={f.icon} className="size-4" />
+								{f.label}
+							</dt>
+							<dd class="font-semibold">{f.value}</dd>
+						</div>
+					))
+				}
+			</dl>
+			<ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" data-reveal>
+				{
+					team.map((t) => (
+						<li>
+							{t.role}
+							{t.member && (
+								<>
+									{" — "}
+									<a href={`/members/${t.member.id}/`} class="font-medium text-foreground hover:underline">
+										{t.member.data.title}
+									</a>
+								</>
+							)}
+						</li>
+					))
+				}
+			</ul>
+			<a
+				href={projectFiles.href}
+				target="_blank"
+				rel="noopener"
+				class="press inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+				data-reveal
+			>
+				{projectFiles.label} <ExternalLink className="size-4" aria-hidden="true" />
+			</a>
+		</div>
+		<figure transition:name="project-mini-drone" class="flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
+			<img src={entry.data.img} alt={text.heroImgAlt} class="aspect-square w-full rounded-lg object-cover" />
+		</figure>
+	</header>
+
+	<!-- Progress -->
+	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">
+		<h2 data-reveal id="progress-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.progressHeading}</h2>
+		<ol class="grid gap-8 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5" data-reveal-group>
+			{
+				roadmap.map((step, i) => (
+					<li class="flex flex-col gap-2">
+						<span aria-hidden="true" class="mb-2 flex h-1.5 overflow-hidden rounded-full bg-foreground/15">
+							{step.state !== "upcoming" && (
+								<span
+									data-draw
+									data-reveal-delay={i * 150}
+									class:list={["block w-full rounded-full", step.state === "done" ? "bg-foreground" : "bg-accent"]}
+								/>
+							)}
+						</span>
+						<p class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+							{text.stepLabel} {i + 1}
+							{step.state === "done" && (
+								<span class="inline-flex items-center gap-1 text-foreground">
+									<CircleCheck className="size-4" aria-hidden="true" /> {text.doneTag}
+								</span>
+							)}
+							{step.state === "current" && (
+								<span class="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{text.nowTag}</span>
+							)}
+						</p>
+						<h3 class="font-semiwide text-lg font-[760]">{step.title}</h3>
+						<p class="text-muted-foreground">{step.desc}</p>
+					</li>
+				))
+			}
+		</ol>
+	</section>
+
+	<!-- How it works -->
+	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
+		<div class="wrapper flex flex-col gap-10 py-20 md:py-24">
+			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
+				<h2 id="systems-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.systemsHeading}</h2>
+				<p class="text-lg text-muted-foreground">{text.systemsIntro}</p>
+			</div>
+			<div class="flex flex-col gap-10">
+				{
+					systems.map((sys) => (
+						<div class="flex flex-col gap-4 border-t pt-6">
+							<h3 class="flex items-center gap-2.5 font-semiwide text-xl font-[780]">
+								<DataIcon name={sys.icon} className="size-5" strokeWidth={1.75} />
+								{sys.title}
+							</h3>
+							<ol class="flex flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-0" data-reveal-group>
+								{sys.steps.map((s, j) => (
+									<li class="flex flex-col lg:flex-1 lg:flex-row lg:items-center">
+										{j > 0 && (
+											<span class="flex items-center gap-2 py-1.5 pl-4 text-xs text-muted-foreground lg:flex-col lg:justify-center lg:gap-0.5 lg:px-2 lg:py-0">
+												<ArrowDown className="size-4 lg:hidden" aria-hidden="true" />
+												<ArrowRight className="hidden size-4 lg:block" aria-hidden="true" />
+												{"link" in s && s.link && <span class="lg:whitespace-nowrap">{s.link}</span>}
+											</span>
+										)}
+										<span class="flex flex-1 flex-col rounded-lg border bg-background px-4 py-3">
+											<strong class="font-semibold">{s.name}</strong>
+											<small class="text-sm text-muted-foreground">{s.detail}</small>
+										</span>
+									</li>
+								))}
+							</ol>
+							{"branch" in sys && sys.branch && (
+								<div class="flex flex-col gap-2 pl-4 lg:pl-8">
+									<p class="flex items-center gap-2 text-sm text-muted-foreground">
+										<CornerDownRight className="size-4" aria-hidden="true" /> {text.branchPrefix} {sys.branch.from}
+									</p>
+									<ol class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-0" data-reveal-group>
+										{sys.branch.steps.map((s, j) => (
+											<li class="flex flex-col sm:flex-row sm:items-center">
+												{j > 0 && (
+													<span class="py-1.5 pl-4 text-muted-foreground sm:px-2 sm:py-0" aria-hidden="true">
+														<ArrowDown className="size-4 sm:hidden" />
+														<ArrowRight className="hidden size-4 sm:block" />
+													</span>
+												)}
+												<span class="flex flex-col rounded-lg border bg-background px-4 py-3">
+													<strong class="font-semibold">{s.name}</strong>
+													<small class="text-sm text-muted-foreground">{s.detail}</small>
+												</span>
+											</li>
+										))}
+									</ol>
+								</div>
+							)}
+						</div>
+					))
+				}
+			</div>
+		</div>
+	</section>
+
+	<!-- Parts -->
+	<section id="parts" class="wrapper flex flex-col gap-10 py-20 md:py-24" aria-labelledby="parts-heading">
+		<div class="flex flex-col gap-2" data-reveal>
+			<h2 id="parts-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{partCount} {text.partsHeadingSuffix}</h2>
+			<p class="text-muted-foreground">{text.partsIntro}</p>
+		</div>
+
+		<div class="flex flex-col gap-12">
+			{
+				groups.map((g) => (
+					<section aria-labelledby={`group-${g.id}`} class="flex flex-col gap-3" data-reveal>
+						<h3 id={`group-${g.id}`} class="flex items-center gap-2.5 font-semiwide text-xl font-[780]">
+							<span class="size-3 rounded-[3px]" style={`background: ${g.color}`} aria-hidden="true" />
+							{g.title}
+						</h3>
+						<PartsTable caption={`${g.title} ${text.tableCaptionSuffix}`} parts={g.parts} subtotal={g.subtotal} />
+					</section>
+				))
+			}
+		</div>
+	</section>
+
+	<ContactSection />
+</BaseLayout>

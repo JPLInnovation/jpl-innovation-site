@@ -18,6 +18,10 @@ import { cn } from "@/lib/utils";
 
 const entry = (await getEntry("work", "drone"))!;
 
+const team = await Promise.all(
+	drone.team.map(async (t) => ({ role: t.role, member: t.member ? await getEntry("members", t.member) : null })),
+);
+
 const groups = partGroups.map((g) => ({
 	...g,
 	subtotal: g.parts.reduce((sum, p) => sum + (p.price ?? 0), 0),
@@ -47,6 +51,23 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 					))
 				}
 			</dl>
+			<ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" data-reveal>
+				{
+					team.map((t) => (
+						<li>
+							{t.role}
+							{t.member && (
+								<>
+									{" — "}
+									<a href={`/members/${t.member.id}/`} class="font-medium text-foreground hover:underline">
+										{t.member.data.title}
+									</a>
+								</>
+							)}
+						</li>
+					))
+				}
+			</ul>
 			<!-- data-astro-reload: the guide is a standalone page, so load it fully instead of a client-side swap. -->
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-reveal>
 				<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
