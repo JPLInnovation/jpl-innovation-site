@@ -7,8 +7,9 @@
  *     coloured section by section by the CAD material on their outside
  *   - everything else (plates, panels, bumpers, belts, frame rails, hood) is its real outline, extruded to its
  *     real thickness
- * Every part sits exactly where the CAD puts it, in the CAD's colours. Fasteners, bearings and small holes are
- * left out. Metres; y up; the intake end faces +z; wheels on y = 0.
+ * Every part sits exactly where the CAD puts it, in the CAD's colours, except the hopper, which is see-through
+ * (it's polycarbonate on the real robot) so the stored FUEL shows. Fasteners, bearings and small holes are left
+ * out. Metres; y up; the intake end faces +z; wheels on y = 0.
  *
  * How FUEL moves: the intake rollers pull a ball off the floor and up the intake ramp into the hopper, whose floor
  * slopes back down to the feeder roller. To shoot, the feeder pushes it up between the rollers into the launcher
@@ -18,6 +19,7 @@ import {
 	type BufferGeometry,
 	CatmullRomCurve3,
 	Color,
+	DoubleSide,
 	ExtrudeGeometry,
 	Group,
 	LatheGeometry,
@@ -50,6 +52,8 @@ export const view: StageView = {
 interface CadData {
 	/** CAD colours, "#rrggbb". */
 	materials: string[];
+	/** Materials drawn see-through: the hopper, so the FUEL inside shows. */
+	clear: number[];
 	/** Lathe: p = [radius, height, ...]. Extrude: o = outer loops, h = holes ([x, y, ...]), d = depth, r = rounded edges. */
 	shapes: Array<{ p: number[] } | { o: number[][]; h: number[][]; d: number; r?: number }>;
 	/** Roller shafts (y, z), intake first: intake, second intake roller, launcher, feeder. */
@@ -107,7 +111,11 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 		}
 		return new ExtrudeGeometry(list, { depth: s.d, bevelEnabled: false, curveSegments: 1 });
 	});
-	const materials = cad.materials.map((c) => standard(new Color(c), { roughness: 0.55, metalness: 0.15 }));
+	const materials = cad.materials.map((c, i) =>
+		cad.clear.includes(i)
+			? new MeshStandardMaterial({ color: c, transparent: true, opacity: 0.28, roughness: 0.12, metalness: 0, depthWrite: false, side: DoubleSide })
+			: standard(new Color(c), { roughness: 0.55, metalness: 0.15 }),
+	);
 
 	// The roller shafts spin, with everything mounted on them.
 	const rotors = cad.rotors.map(([y, z]) => {
