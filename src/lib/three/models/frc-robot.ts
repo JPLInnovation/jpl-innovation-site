@@ -142,25 +142,26 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 	}
 	shapes.forEach((g) => g.dispose());
 
-	/* ---------- "KITBOT" on the bumpers, as in the CAD ---------- */
+	/* ---------- Team number on the bumpers (where the CAD has "KITBOT") ---------- */
 	await document.fonts.load('700 96px "Archivo Variable"').catch(() => undefined);
-	const lettering = (text: string, width: number) => {
-		const canvasWidth = text.length > 3 ? 560 : 280;
-		const texture = textTexture(text, { width: canvasWidth, height: 120, font: '700 96px "Archivo Variable", "Arial", sans-serif', color: "#e8edf4" });
+	const TEAM = "10951";
+	/** `canvasWidth` sets the aspect: 560 px wide gives ~66 mm tall digits on a 0.31 m plane. */
+	const lettering = (width: number, canvasWidth: number) => {
+		const texture = textTexture(TEAM, { width: canvasWidth, height: 120, font: '700 96px "Archivo Variable", "Arial", sans-serif', color: "#e8edf4" });
 		return new Mesh(
-			new PlaneGeometry(width, (width * 120) / canvasWidth), // letters ~66 mm tall, as on the CAD bumpers
+			new PlaneGeometry(width, (width * 120) / canvasWidth),
 			new MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }),
 		);
 	};
-	const decals: Array<[string, number, [number, number, number], number]> = [
-		["KITBOT", 0.31, [0.4208, 0.137, 0.027], Math.PI / 2], // right side
-		["KITBOT", 0.31, [-0.4208, 0.137, 0.027], -Math.PI / 2], // left side
-		["KITBOT", 0.31, [0, 0.137, -0.4178], Math.PI], // back
-		["KIT", 0.155, [-0.314, 0.137, 0.4178], 0], // front corners, either side of the intake
-		["BOT", 0.155, [0.314, 0.137, 0.4178], 0],
+	const decals: Array<[number, number, [number, number, number], number]> = [
+		[0.31, 560, [0.4208, 0.137, 0.027], Math.PI / 2], // right side
+		[0.31, 560, [-0.4208, 0.137, 0.027], -Math.PI / 2], // left side
+		[0.31, 560, [0, 0.137, -0.4178], Math.PI], // back
+		[0.17, 380, [-0.314, 0.137, 0.4178], 0], // front corners, either side of the intake
+		[0.17, 380, [0.314, 0.137, 0.4178], 0],
 	];
-	for (const [text, width, [x, y, z], turn] of decals) {
-		const mesh = lettering(text, width);
+	for (const [width, canvasWidth, [x, y, z], turn] of decals) {
+		const mesh = lettering(width, canvasWidth);
 		mesh.position.set(x, y, z);
 		mesh.rotation.y = turn;
 		robot.add(mesh);

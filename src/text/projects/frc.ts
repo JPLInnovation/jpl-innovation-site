@@ -35,7 +35,7 @@ export const frcPage = {
 		note: 'Simplified from our CAD: every part in place, without the fasteners and small holes.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue KITBOT bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
+			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue 10951 bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */
