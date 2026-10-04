@@ -29,6 +29,8 @@ HARDWARE = re.compile(
 ROUNDISH = re.compile(r"gear|pulley|wheel|sprocket|hub|collar|spacer|motor|roller|flywheel|tread|signal light|\d+T\b", re.I)
 SKIP = {"Robot Battery"}  # a second, identical battery box in the export: drawing both would flicker
 ROUNDED = re.compile(r"^(Left|Right) Bumper$")  # pool-noodle bumpers: round the top and bottom edges
+# The hopper (side, back and floor panels; polycarbonate on the real robot): drawn see-through so the FUEL shows
+CLEAR = re.compile(r"^KB-260(04|05|06|14)\b")
 CENTRE_Y = -0.299  # CAD y of the frame centre (the CAD's intake end is towards -y, z is up)
 E3 = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
 t_start = time.time()
@@ -405,7 +407,7 @@ rotors = sorted({(round(axis_and_centre(p)[1][1], 4), round(axis_and_centre(p)[1
                  for p in placed if p["name"].startswith("KB-26002")}, key=lambda r: -r[1])
 
 q = lambda v: round(v, 5)
-shape_ids, shape_list, mat_ids, mat_list, parts = {}, [], {}, [], []
+shape_ids, shape_list, mat_ids, mat_list, clear_list, parts = {}, [], {}, [], [], []
 
 
 def shape_id(key, d):
@@ -415,11 +417,13 @@ def shape_id(key, d):
     return shape_ids[key]
 
 
-def mat_id(rgb):
-    key = tuple(round(c, 3) for c in rgb)
+def mat_id(rgb, clear=False):
+    key = (tuple(round(c, 3) for c in rgb), clear)
     if key not in mat_ids:  # Onshape's colour numbers are what it shows: treat them as sRGB
         mat_ids[key] = len(mat_list)
         mat_list.append("#%02x%02x%02x" % tuple(round(c * 255) for c in rgb))
+        if clear:
+            clear_list.append(mat_ids[key])
     return mat_ids[key]
 
 
@@ -433,7 +437,7 @@ for p in placed:
     else:
         d = {"o": [[q(c) for pt in l for c in pt] for l in s["outers"]], "h": [[q(c) for pt in l for c in pt] for l in s["holes"]],
              "d": q(s["depth"]), **({"r": 0.02} if ROUNDED.search(p["name"]) else {})}
-        pieces = [(shape_id(p["mesh"], d), mat_id(s["rgb"]))]
+        pieces = [(shape_id(p["mesh"], d), mat_id(s["rgb"], bool(CLEAR.search(p["name"]))))]
     for sid, mid in pieces:
         parts.append({"s": sid, "c": mid, "m": M, **({"g": rotor} if rotor >= 0 else {})})
 
@@ -451,7 +455,7 @@ anchors = {
     "battery": centre_of(r"^battery$"),
 }
 data = {"source": f"{GLB.replace(chr(92), '/').split('/')[-1]}, reduced by scripts/kitbot-cad.py", "materials": mat_list,
-        "shapes": shape_list, "rotors": rotors, "anchors": anchors, "parts": parts}
+        "clear": clear_list, "shapes": shape_list, "rotors": rotors, "anchors": anchors, "parts": parts}
 text = json.dumps(data, separators=(",", ":"))
 with open(OUT, "w") as f:
     f.write(text)

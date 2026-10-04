@@ -35,7 +35,7 @@ export const frcPage = {
 		note: 'Simplified from our CAD: every part in place, without the fasteners and small holes.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue KITBOT bumpers, intake rollers with yellow spacers, a sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
+			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue KITBOT bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */
@@ -194,7 +194,7 @@ export const season2026 = {
 		{ when: 'Jan 19 – Feb 8', title: 'Build phase', desc: 'Full robot fabrication, electrical assembly, initial software development.' },
 		{ when: 'Feb 12 – Mar 1', title: 'Testing & programming', desc: 'Fine-tuned the shooter to 95% repeatability, validated autonomous, prepared for competition.' },
 		{ when: 'Mar 2 – 8', title: 'Vancouver Regional', desc: 'First regional competition, in Vancouver, Canada.' },
-		{ when: 'Mar 30 – Apr 5', title: 'Istanbul Regional', desc: 'Second regional competition, in Istanbul, Turkey.' },
+		{ when: 'Mar 30 – Apr 5', title: 'Avrasya Regional', desc: 'Second regional competition, in Istanbul, Turkey.' },
 	],
 	robot: {
 		/** Photos of the 2026 robot (a modified KitBot). The first is shown large; w/h are the files' pixel sizes. */
@@ -288,7 +288,7 @@ export const season2026 = {
 		{
 			code: 'TUR',
 			city: 'Istanbul, Türkiye',
-			name: 'Istanbul Regional',
+			name: 'Avrasya Regional',
 			dates: 'March 30 – April 5, 2026',
 			goals: ['Target: top 8 with playoff progression', 'Consistent alliance scoring', 'Scout strong partners for alliance selection'],
 		},
