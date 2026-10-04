@@ -31,11 +31,11 @@ export const frcPage = {
 	},
 	model3d: {
 		heading: 'The 2026 robot in 3D',
-		text: 'The official 2026 KitBot with our changes. Follow a ball of FUEL: the intake pulls it off the floor into the clear hopper, the feeder lifts it into the launcher, and the hood sends it up and forward toward the goal. On a computer you can drag to look around.',
-		note: 'A simplified model for illustration, not our CAD.',
+		text: 'Our 2026 KitBot, built from our Onshape CAD. Follow a ball of FUEL: the intake rollers pull it off the floor into the hopper, the feeder pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
+		note: 'Simplified from our CAD: every part in place, without the fasteners and small holes.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of Team 10951's 2026 robot, based on the official KitBot: aluminium frame, red star-wheel intake, a blue and green feeder, a banded launcher roller under a white, blue and black hood that sends FUEL up and forward, Kraken X60 motors, a Limelight camera, a red signal light and a clear rear hopper with the 10951 Saigon South Dragons decal.",
+			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue KITBOT bumpers, intake rollers with yellow spacers, a sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */

@@ -16,7 +16,10 @@ interface Labels {
 	subtotal: string;
 }
 
-/** One project's part group as a table. Rendered at build time; no client JS. */
+/**
+ * One project's part group as a table. Rendered at build time; no client JS.
+ * A group with no prices at all (e.g. the mini drone) gets no Price column and no subtotal row.
+ */
 export default function PartsTable({
 	caption,
 	parts,
@@ -29,6 +32,7 @@ export default function PartsTable({
 	/** Column labels; defaults to the F450 drone page's (every project's labels are the same English words). */
 	labels?: Labels;
 }) {
+	const priced = parts.some((p) => p.price !== undefined);
 	return (
 		<Table className="text-[15px]">
 			<caption className="sr-only">{caption}</caption>
@@ -36,7 +40,7 @@ export default function PartsTable({
 				<TableRow>
 					<TableHead className="w-[40%]">{labels.part}</TableHead>
 					<TableHead className="hidden md:table-cell">{labels.why}</TableHead>
-					<TableHead className="text-right">{labels.price}</TableHead>
+					{priced && <TableHead className="text-right">{labels.price}</TableHead>}
 				</TableRow>
 			</TableHeader>
 			<TableBody>
@@ -47,21 +51,23 @@ export default function PartsTable({
 							<span className="mt-1 block text-sm text-muted-foreground md:hidden">{p.why}</span>
 						</TableCell>
 						<TableCell className="hidden align-top whitespace-normal text-muted-foreground md:table-cell">{p.why}</TableCell>
-						<TableCell className="text-right align-top tabular-nums">
-							{p.price === undefined ? <span className="text-muted-foreground">{labels.notPriced}</span> : formatVnd(p.price)}
-						</TableCell>
+						{priced && (
+							<TableCell className="text-right align-top tabular-nums">
+								{p.price === undefined ? <span className="text-muted-foreground">{labels.notPriced}</span> : formatVnd(p.price)}
+							</TableCell>
+						)}
 					</TableRow>
 				))}
 			</TableBody>
-			<TableFooter>
-				<TableRow>
-					<TableCell className="font-semibold">{labels.subtotal}</TableCell>
-					<TableCell className="hidden md:table-cell" />
-					<TableCell className="text-right font-semibold tabular-nums">
-						{subtotal > 0 ? formatVnd(subtotal) : <span className="font-normal text-muted-foreground">{labels.notPriced}</span>}
-					</TableCell>
-				</TableRow>
-			</TableFooter>
+			{priced && (
+				<TableFooter>
+					<TableRow>
+						<TableCell className="font-semibold">{labels.subtotal}</TableCell>
+						<TableCell className="hidden md:table-cell" />
+						<TableCell className="text-right font-semibold tabular-nums">{formatVnd(subtotal)}</TableCell>
+					</TableRow>
+				</TableFooter>
+			)}
 		</Table>
 	);
 }

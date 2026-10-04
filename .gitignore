@@ -35,6 +35,6 @@ audit/screenshots/
 # Playwright MCP page snapshots
 .playwright-mcp/
 
-# Raw CAD exports (reference only — over GitHub's 100 MB push limit, and the 3D models on the site are
-# hand-built in src/lib/three/models/, not loaded from these files).
+# Raw CAD exports: over GitHub's 100 MB file limit. scripts/kitbot-cad.py reduces the KitBot export to
+# src/lib/three/models/frc-robot-cad.json (50 KB), which is what the site's 3D robot is built from.
 CAD/
