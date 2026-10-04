@@ -19,9 +19,8 @@ export const miniDronePage = {
 	branchPrefix: 'Also from the',
 	/** The parts heading is "<number> parts, one tiny quad". */
 	partsHeadingSuffix: 'parts, one tiny quad',
-	partsIntro: "Prices aren't set yet — this is still a bill of materials, not a shopping list.",
-	/** Screen-reader table caption: "<group> parts and prices". Column headings are shared: src/components/parts-table.tsx */
-	tableCaptionSuffix: 'parts and prices',
+	/** Screen-reader table caption: "<group> parts". Column headings are shared: src/components/parts-table.tsx */
+	tableCaptionSuffix: 'parts',
 };
 
 export interface Part {
