@@ -480,8 +480,9 @@ function play(ctx: SplashContext) {
 	el.querySelectorAll(".js-jpl").forEach((letter, i) => {
 		tween(letter, [{ opacity: 0, translate: "0 -22px", scale: "0.85" }, { opacity: 1, translate: "0 0", scale: "1" }], RING + 0.48 + i * 0.06, 0.34, E.outBackSoft);
 	});
+	// Quick enough that the whole logo holds a moment before the lettering fades for the flight.
 	el.querySelectorAll(".js-innovation").forEach((letter, i) => {
-		tween(letter, [{ opacity: 0, scale: "0.4" }, { opacity: 1, scale: "1" }], RING + 0.6 + i * 0.04, 0.3, E.outBack);
+		tween(letter, [{ opacity: 0, scale: "0.4" }, { opacity: 1, scale: "1" }], RING + 0.52 + i * 0.03, 0.28, E.outBack);
 	});
 
 	/* ---------- 5. Into the navbar (5.0–5.6 s) ---------- */
