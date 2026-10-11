@@ -1301,7 +1301,7 @@ sudo reboot            <span class="c"># then: journalctl -u drone-telemetry -n 
   <div class="verify"><div class="verify-head"><svg class="tp" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="9" cy="9" r="2.6" fill="currentColor"/></svg><b>Verify</b></div>
     <ul><li>The probe prints INAV, 9.1.x and live attitude.</li><li>Your reader shows the same numbers.</li>
       <li>The quad arms and disarms normally with the Pi's cable plugged in (10.4).</li>
-      <li>After <code>sudo reboot</code>, <code>systemctl is-active mediamtx telemetry</code> prints <code>active</code> twice within a minute.</li></ul>
+      <li>After <code>sudo reboot</code>, <code>systemctl is-active mediamtx drone-telemetry</code> prints <code>active</code> twice within a minute.</li></ul>
     <label class="verify-tick"><input type="checkbox" id="v-10" data-tick>Stage 10 checks passed</label></div>
 </section>
 

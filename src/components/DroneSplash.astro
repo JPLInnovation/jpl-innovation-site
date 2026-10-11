@@ -111,7 +111,7 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	[data-splash="drone"] :is(.splash-grid, .splash-trace) {
 		display: none;
 	}
-	[data-splash="drone"] :is(.ds-3d, .ds-feed, .ds-black, .ds-feed-img, .ds-grain, .ds-scan, .ds-vignette, .ds-static) {
+	[data-splash="drone"] :is(.ds-3d, .ds-feed, .ds-black, .ds-feed-img, .ds-scan, .ds-vignette) {
 		position: absolute;
 		inset: 0;
 		width: 100%;
@@ -150,11 +150,14 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		transform-origin: 50% 47.4%; /* the horizon's centre, so it stays on the crosshair while the view pushes in */
 		will-change: transform;
 	}
-	/* Film grain and static share one noise tile, made by the script (--ds-noise). */
-	.ds-grain {
+	/* Film grain and static share one noise tile, made by the script (--ds-noise). They overhang the feed by 128 px on
+	   every side so their jitter (up to 64 px) never uncovers an edge. */
+	.ds-grain,
+	.ds-static {
+		position: absolute;
 		inset: -128px;
-		width: auto;
-		height: auto;
+	}
+	.ds-grain {
 		background: var(--ds-noise) 0 0 / 128px 128px;
 		opacity: 0.16;
 		animation: ds-grain 0.6s steps(1) infinite;
@@ -177,9 +180,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		background: var(--ds-noise) 0 0 / 256px 256px;
 		image-rendering: pixelated;
 		animation: ds-grain 0.24s steps(1) infinite;
-		inset: -128px;
-		width: auto;
-		height: auto;
 	}
 
 	/* The on-screen display: corners like the camera's, sized to the screen. */
@@ -187,6 +187,7 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		position: absolute;
 		inset: 0;
 		--big: clamp(12px, 2.5vmin, 30px);
+		--hud-bottom: max(6vh, calc(max(1rem, env(safe-area-inset-bottom)) + 44px + 12px)); /* clear of Skip (SplashShell) */
 		color: #eef3f2;
 		font: 500 var(--big) / 1.35 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 		letter-spacing: 0.08em;
@@ -204,8 +205,8 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	}
 	.ds-tl { left: 4vw; top: 6vh; }
 	.ds-tr { right: 4vw; top: 6vh; align-items: flex-end; }
-	.ds-bl { left: 4vw; bottom: 6vh; }
-	.ds-br { right: 4vw; bottom: 6vh; align-items: flex-end; }
+	.ds-bl { left: 4vw; bottom: var(--hud-bottom); }
+	.ds-br { right: 4vw; bottom: var(--hud-bottom); align-items: flex-end; }
 	.ds-small {
 		font-size: 0.72em;
 		color: #8e9a9c;
