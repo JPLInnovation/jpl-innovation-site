@@ -1,7 +1,8 @@
 ---
 /**
  * Shared shell for the logo intros: the full-screen overlay, its background, the Skip button, and the small
- * blocking script that shows it. IntroSplash (JPL) and FrcSplash (FRC page) pass their artwork as the slot.
+ * blocking script that shows it. IntroSplash (JPL), FrcSplash (FRC page) and DroneSplash (drone page) pass their
+ * artwork as the slot.
  * Which one a page gets is decided in src/lib/splash.ts; the engine is src/scripts/splash-core.ts.
  *
  * Goes in <head>. The overlay's markup is in the initial HTML as a <template>; the inline script puts it on the
@@ -11,11 +12,11 @@
  * intro-none either way.
  * In-site navigation (Astro's router swaps the page, no reload): Astro re-runs head scripts on a page that has
  * already loaded, and those runs do nothing. Instead, the first real load hooks the router once: when a click
- * arrives at a page whose intro plays on arrival (arrivalMode: the FRC page), the overlay goes in as part of
- * the page swap, so the new page never shows without it either.
+ * arrives at a page whose intro plays on arrival (arrivalMode: the FRC and drone pages), the overlay goes in as
+ * part of the page swap, so the new page never shows without it either.
  * Without JavaScript it never shows; if the animation script fails to load, a CSS failsafe fades it out.
  */
-import { arrivalMode, getIntroMode, isFrcRoute, type SplashKind } from "@/lib/splash";
+import { arrivalMode, getIntroMode, isDroneRoute, isFrcRoute, splashFor, type SplashKind } from "@/lib/splash";
 
 interface Props {
 	kind: SplashKind;
@@ -28,10 +29,11 @@ const boot = `(() => {
 	if (document.readyState !== "loading") return; // in-site navigation: the page has already loaded
 	const kind = ${JSON.stringify(kind)};
 	const isFrcRoute = ${isFrcRoute.toString()};
+	const isDroneRoute = ${isDroneRoute.toString()};
+	const kindOf = ${splashFor.toString()};
 	const arrivalMode = ${arrivalMode.toString()};
 	const getIntroMode = ${getIntroMode.toString()};
 	const root = document.documentElement;
-	const kindOf = (path) => (isFrcRoute(path) ? "frc" : "jpl");
 	/** Put this page's overlay on screen (its <template> is in <head>). */
 	const show = (kind, mode, t0) => {
 		root.classList.add("intro-" + mode);

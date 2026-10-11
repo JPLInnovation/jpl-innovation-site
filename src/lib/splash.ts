@@ -2,8 +2,9 @@
  * The logo intros: which one a page has, and which version of it plays.
  *
  * Which intro: decided here only, when each page is built, so every page's HTML carries exactly one splash and
- * the two can never both play or overlap:
+ * two can never both play or overlap:
  *   - FRC pages (the FIRST Robotics page and anything under it) → FrcSplash
+ *   - the F450 drone page → DroneSplash
  *   - every other page → the JPL IntroSplash
  *
  * Which version: decided once per real page load, before the first paint (SplashShell inlines these functions
@@ -12,32 +13,34 @@
  *   - "fast"  refresh (F5, Ctrl+R, Ctrl+Shift+R, the reload button): the same timeline, played faster
  *   - "none"  back/forward
  * Arriving from another page of this site (arrivalMode): an ordinary click doesn't reload, Astro's router swaps
- * the page, and SplashShell's script shows the intro then too, but only the FRC one:
- *   - FRC page → full the first time in this tab, fast after that (so it doesn't hold you up every visit)
+ * the page, and SplashShell's script shows the intro then too, but only the FRC and drone ones:
+ *   - FRC or drone page → full the first time in this tab, fast after that (so it doesn't hold you up every visit)
  *   - every other page → none (the JPL intro only greets you on the way in)
  * Back/forward inside the site plays nothing either.
  */
-export type SplashKind = "jpl" | "frc";
+export type SplashKind = "jpl" | "frc" | "drone";
 export type IntroMode = "full" | "fast" | "none";
 
 export const isFrcRoute = (path: string) => /^\/work\/frc(\/|$)/.test(path);
+export const isDroneRoute = (path: string) => /^\/work\/drone\/?$/.test(path);
 
-export const splashFor = (path: string): SplashKind => (isFrcRoute(path) ? "frc" : "jpl");
+/** Runs inlined in the browser too (SplashShell), next to the two route tests above. */
+export const splashFor = (path: string): SplashKind => (isFrcRoute(path) ? "frc" : isDroneRoute(path) ? "drone" : "jpl");
 
 /** Arriving at a page of this `kind` from another page of this site. Runs inlined in the browser: keep it self-contained. */
 export function arrivalMode(kind: SplashKind): IntroMode {
-	if (kind !== "frc") return "none";
+	if (kind === "jpl") return "none";
 	try {
-		return sessionStorage.getItem("frc-intro-seen") ? "fast" : "full";
+		return sessionStorage.getItem(kind + "-intro-seen") ? "fast" : "full";
 	} catch {
 		return "full"; // storage blocked
 	}
 }
 
-/** The FRC intro has played in this tab (arrivalMode's "fast after that"). */
-export function markFrcSeen() {
+/** This kind of intro has played in this tab (arrivalMode's "fast after that"). */
+export function markSeen(kind: SplashKind) {
 	try {
-		sessionStorage.setItem("frc-intro-seen", "1");
+		sessionStorage.setItem(kind + "-intro-seen", "1");
 	} catch {
 		/* storage blocked: every arrival plays the full version */
 	}

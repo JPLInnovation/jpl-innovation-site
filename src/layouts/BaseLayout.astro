@@ -2,6 +2,7 @@
 import { ClientRouter } from "astro:transitions";
 import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
+import DroneSplash from "@/components/DroneSplash.astro";
 import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
 import { splashFor } from "@/lib/splash";
@@ -28,7 +29,8 @@ const {
 } = Astro.props;
 // The page's one official address, for search engines and link previews.
 const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
-// Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; everything else: IntroSplash).
+// Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; the drone page: DroneSplash;
+// everything else: IntroSplash).
 const splash = splashFor(Astro.url.pathname);
 ---
 
@@ -87,9 +89,10 @@ const splash = splashFor(Astro.url.pathname);
 				window.__jplThemeHook = true;
 			}
 		</script>
-		<!-- Logo intros, on every full page load or refresh; the FRC one also when you click through to it (src/lib/splash.ts). Remove a line to turn that intro off. -->
+		<!-- Logo intros, on every full page load or refresh; the FRC and drone ones also when you click through to them (src/lib/splash.ts). Remove a line to turn that intro off. -->
 		{splash === "jpl" && <IntroSplash />}
 		{splash === "frc" && <FrcSplash />}
+		{splash === "drone" && <DroneSplash />}
 		<ClientRouter />
 	</head>
 	<body>
