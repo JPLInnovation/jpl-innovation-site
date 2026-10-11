@@ -8,34 +8,31 @@
  * first time in a tab, fast after that); not on back/forward (src/lib/splash.ts).
  *
  *   Turn it off: remove the DroneSplash line in src/layouts/BaseLayout.astro.
- *   Artwork:     src/assets/intro/drone-footage.webp, drone-sky.webp, jpl-stacked.svg (scripts/build-drone-intro.mjs);
- *                the badge is jpl-logo.svg's; the drone is the page's own 3D model (src/lib/three/models/drone.ts)
+ *   Artwork:     src/assets/intro/drone-footage.webp, drone-sky.webp (scripts/build-drone-intro.mjs); the logo,
+ *                jpl-stacked.svg and jpl-badge.svg (scripts/build-stacked-logo.mjs); the drone is the page's own 3D
+ *                model (src/lib/three/models/drone.ts)
  *   HUD text:    src/text/projects/drone.ts (droneIntro)
  *   Animation:   src/scripts/drone-splash.ts; shared overlay/engine: SplashShell.astro, src/scripts/splash-core.ts
  */
 import footageUrl from "@/assets/intro/drone-footage.webp?url";
 import skyUri from "@/assets/intro/drone-sky.webp?inline";
-import jplLogo from "@/assets/intro/jpl-logo.svg?raw";
+import badgeSvg from "@/assets/intro/jpl-badge.svg?raw";
 import stacked from "@/assets/intro/jpl-stacked.svg?raw";
 import { droneIntro as hud } from "@/text/projects/drone";
 import SplashShell from "./SplashShell.astro";
 
-// The lettering, traced from the stacked logo, in that frame's pixels; data-ring-* is where its ring sits.
+// The lettering, in logo.jpg's pixels; data-ring-* is where its ring sits.
 const num = (name: string) => Number(stacked.match(new RegExp(`${name}="([^"]+)"`))![1]);
 const [vx, vy, vw, vh] = stacked.match(/viewBox="([^"]+)"/)![1].split(" ").map(Number);
 const ring = { cx: num("data-ring-cx"), cy: num("data-ring-cy"), r: num("data-ring-r") };
 const letters = stacked.slice(stacked.indexOf("<path"), stacked.lastIndexOf("</svg>"));
 
-// The badge: jpl-logo.svg's traced badge (ring, monitor, stand, waves, wrench), renamed so nothing clashes with the
-// JPL intro's, drawn in a square round its ring and scaled so its ring lands on the stacked logo's ring.
-const BADGE = { cx: 610.9, cy: 163.9, r: 119.6, half: 128 }; // ring centre and radius in jpl-logo.svg; half the box
-const rename = (svg: string) => svg.replace(/jl-/g, "ds-");
-const defs = rename(jplLogo.match(/<linearGradient id="jl-metal-grad"[\s\S]*?<\/radialGradient>/)![0]);
-const badge = rename(jplLogo.slice(jplLogo.indexOf('<g id="jl-badge"'), jplLogo.indexOf('<g id="jl-letters"')));
+// The badge is drawn in jpl-logo.svg's units (ring centre and radius; half its square box), so it lands on the navbar
+// logo; its box is scaled so its ring sits on the stacked logo's ring.
+const BADGE = { cx: 610.9, cy: 163.9, r: 119.6, half: 128 };
 const k = ring.r / BADGE.r;
 const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
 const badgeBox = `left:${pct(ring.cx - BADGE.half * k - vx, vw)};top:${pct(ring.cy - BADGE.half * k - vy, vh)};width:${pct(2 * BADGE.half * k, vw)};height:${pct(2 * BADGE.half * k, vh)}`;
-const badgeSvg = `<svg class="ds-badge-svg" viewBox="${BADGE.cx - BADGE.half} ${BADGE.cy - BADGE.half} ${2 * BADGE.half} ${2 * BADGE.half}" aria-hidden="true" focusable="false"><defs>${defs}</defs>${badge}</svg>`;
 const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true" focusable="false">${letters}</svg>`;
 ---
 
@@ -357,15 +354,11 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		background: radial-gradient(closest-side, rgb(29 151 178 / 0.34), rgb(29 151 178 / 0.1) 62%, transparent);
 		scale: 1.55;
 	}
-	.ds-badge #ds-ring {
-		stroke-width: 7; /* the stacked logo's ring is bolder than the navbar logo's */
-	}
 	.ds-ring,
 	.ds-line {
 		stroke-dasharray: 1;
 	}
 	.ds-line,
-	.ds-metal,
 	#ds-screen-glow {
 		opacity: 0;
 	}
@@ -376,7 +369,7 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	.ds-badge .ds-wave,
 	.ds-badge #ds-wrench-x {
 		transform-box: view-box;
-		transform-origin: 610.5px 147.5px; /* wrench head centre */
+		transform-origin: 610.08px 148.58px; /* wrench head centre (scripts/build-stacked-logo.mjs prints it) */
 	}
 	.ds-badge .ds-stand {
 		transform-box: fill-box;

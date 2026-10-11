@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="482.9 35.900000000000006 256 256" class="ds-badge-svg" aria-hidden="true" focusable="false">
+<defs><radialGradient id="ds-glow-grad"><stop offset="0" stop-color="#7fe9ff" stop-opacity=".75"/><stop offset=".6" stop-color="#22d3ee" stop-opacity=".25"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></radialGradient></defs>
+<circle id="ds-badge-fill" class="ds-part" fill="#071F23" cx="610.9" cy="163.9" r="119.6"/>
+<path id="ds-ring-rim" class="ds-part ds-ring" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="0.9" pathLength="1" d="M610.9 41.47A122.43 122.43 0 1 1 610.9 286.33A122.43 122.43 0 1 1 610.9 41.47Z"/>
+<path id="ds-ring" class="ds-part ds-ring" fill="none" stroke="#1AA0C5" stroke-width="4.72" pathLength="1" d="M610.9 44.3A119.6 119.6 0 1 1 610.9 283.5A119.6 119.6 0 1 1 610.9 44.3Z"/>
+<g id="ds-monitor">
+<path id="ds-bezel" class="ds-part" fill="#F0F8FC" d="M538.8 93.02L681.36 93.02A16 16 0 0 1 697.36 109.02L697.36 186.58A16 16 0 0 1 681.36 202.58L598.81 202.58L598.81 186.85L591.47 186.85L591.47 202.58L538.8 202.58A16 16 0 0 1 522.8 186.58L522.8 109.02A16 16 0 0 1 538.8 93.02Z"/>
+<path id="ds-bezel-line" class="ds-line" fill="none" stroke="#F0F8FC" stroke-width="1.2" pathLength="1" d="M538.8 93.02L681.36 93.02A16 16 0 0 1 697.36 109.02L697.36 186.58A16 16 0 0 1 681.36 202.58L598.81 202.58L598.81 186.85L591.47 186.85L591.47 202.58L538.8 202.58A16 16 0 0 1 522.8 186.58L522.8 109.02A16 16 0 0 1 538.8 93.02Z"/>
+<path id="ds-frame" class="ds-part" fill="#0D3F4D" d="M536.19 101.93L683.98 101.93A5 5 0 0 1 688.98 106.93L688.98 143.86L697.36 143.86L697.36 150.68L688.98 150.68L688.98 189.19A5 5 0 0 1 683.98 194.19L598.81 194.19L598.81 186.85L591.47 186.85L591.47 194.19L536.19 194.19A5 5 0 0 1 531.19 189.19L531.19 148.58L522.8 148.58L522.8 141.77L531.19 141.77L531.19 106.93A5 5 0 0 1 536.19 101.93Z"/>
+<path id="ds-frame-line" class="ds-line" fill="none" stroke="#1AA0C5" stroke-width="1" pathLength="1" d="M536.19 101.93L683.98 101.93A5 5 0 0 1 688.98 106.93L688.98 143.86L697.36 143.86L697.36 150.68L688.98 150.68L688.98 189.19A5 5 0 0 1 683.98 194.19L598.81 194.19L598.81 186.85L591.47 186.85L591.47 194.19L536.19 194.19A5 5 0 0 1 531.19 189.19L531.19 148.58L522.8 148.58L522.8 141.77L531.19 141.77L531.19 106.93A5 5 0 0 1 536.19 101.93Z"/>
+<path id="ds-screen" class="ds-part" fill="#F0F8FC" d="M539.53 109.27L680.64 109.27A1 1 0 0 1 681.64 110.27L681.64 185.85A1 1 0 0 1 680.64 186.85L539.53 186.85A1 1 0 0 1 538.53 185.85L538.53 110.27A1 1 0 0 1 539.53 109.27Z"/>
+<ellipse id="ds-screen-glow" class="ds-part" fill="url(#ds-glow-grad)" cx="610.08" cy="148.58" rx="107.5" ry="70.4"/>
+</g>
+<g id="ds-stand">
+<path id="ds-stand-base" class="ds-part ds-stand" fill="#0D3F4D" d="M552.16 224.07L667.48 224.07L667.48 239.27L552.16 239.27L552.16 224.07Z"/>
+<path id="ds-stand-foot-l" class="ds-part ds-stand" fill="#F0F8FC" d="M546.91 224.07L551.16 224.07A1 1 0 0 1 552.16 225.07L552.16 238.27A1 1 0 0 1 551.16 239.27L539.22 239.27A1 1 0 0 1 538.35 237.77L546.05 224.57A1 1 0 0 1 546.91 224.07Z"/>
+<path id="ds-stand-block-l" class="ds-part ds-stand" fill="#F0F8FC" d="M561.02 224.07L569.5 224.07A1 1 0 0 1 570.5 225.07L570.5 238.27A1 1 0 0 1 569.5 239.27L561.02 239.27A1 1 0 0 1 560.02 238.27L560.02 225.07A1 1 0 0 1 561.02 224.07Z"/>
+<path id="ds-stand-plate" class="ds-part ds-stand" fill="#F0F8FC" d="M579.37 230.88L640.27 230.88A1 1 0 0 1 641.27 231.88L641.27 238.27A1 1 0 0 1 640.27 239.27L579.37 239.27A1 1 0 0 1 578.37 238.27L578.37 231.88A1 1 0 0 1 579.37 230.88Z"/>
+<path id="ds-stand-block-r" class="ds-part ds-stand" fill="#F0F8FC" d="M650.14 224.07L658.62 224.07A1 1 0 0 1 659.62 225.07L659.62 238.27A1 1 0 0 1 658.62 239.27L650.14 239.27A1 1 0 0 1 649.14 238.27L649.14 225.07A1 1 0 0 1 650.14 224.07Z"/>
+<path id="ds-stand-foot-r" class="ds-part ds-stand" fill="#F0F8FC" d="M668.48 224.07L673.3 224.07A1 1 0 0 1 674.17 224.57L681.82 237.77A1 1 0 0 1 680.95 239.27L668.48 239.27A1 1 0 0 1 667.48 238.27L667.48 225.07A1 1 0 0 1 668.48 224.07Z"/>
+</g>
+<g id="ds-waves">
+<path id="ds-wave-l3" class="ds-part ds-wave" fill="#0D3F4D" d="M565.49 115.08A55.67 55.67 0 0 0 564.07 180.12L568.22 177.26A50.64 50.64 0 0 1 569.51 118.11Z"/>
+<path id="ds-wave-l2" class="ds-part ds-wave" fill="#0D3F4D" d="M574.7 122.02A44.14 44.14 0 0 0 573.58 173.58L577.81 170.67A39 39 0 0 1 578.8 125.11Z"/>
+<path id="ds-wave-l1" class="ds-part ds-wave" fill="#0D3F4D" d="M583.95 128.99A32.55 32.55 0 0 0 583.12 167.02L587.31 164.14A27.47 27.47 0 0 1 588.01 132.05Z"/>
+<path id="ds-wave-r1" class="ds-part ds-wave" fill="#0D3F4D" d="M635.95 128.99A32.55 32.55 0 0 1 636.78 167.02L632.59 164.14A27.47 27.47 0 0 0 631.89 132.05Z"/>
+<path id="ds-wave-r2" class="ds-part ds-wave" fill="#0D3F4D" d="M645.2 122.02A44.14 44.14 0 0 1 646.33 173.58L642.09 170.67A39 39 0 0 0 641.1 125.11Z"/>
+<path id="ds-wave-r3" class="ds-part ds-wave" fill="#0D3F4D" d="M654.41 115.08A55.67 55.67 0 0 1 655.83 180.12L651.68 177.26A50.64 50.64 0 0 0 650.39 118.11Z"/>
+</g>
+<g id="ds-wrench-x" class="ds-part"><g id="ds-wrench">
+<path id="ds-wrench-body" fill="#0D3F4D" d="M610.08 125.52A23.07 23.07 0 1 1 610.08 171.65A23.07 23.07 0 1 1 610.08 125.52ZM598.81 164.05L621.35 164.05L621.35 230.88L598.81 230.88L598.81 164.05Z"/>
+<path id="ds-wrench-inner" fill="#F0F8FC" d="M610.08 132.59A15.99 15.99 0 1 1 610.08 164.57A15.99 15.99 0 1 1 610.08 132.59ZM604.05 126.32A23.07 23.07 0 0 1 616.11 126.32L616.11 134.69L604.05 134.69Z"/>
+<path id="ds-wrench-jaws" fill="#0D3F4D" d="M596.32 132.59L604.05 132.59L604.05 145.57L610.08 148.58L616.11 145.57L616.11 132.59L623.84 132.59L623.84 149.57L610.08 156.45L596.32 149.57L596.32 132.59Z"/>
+<path id="ds-wrench-stripe" fill="#F0F8FC" d="M606.15 172.17L614.01 172.17L614.01 211.23L606.15 211.23L606.15 172.17Z"/>
+<path id="ds-wrench-accent" fill="#1AA0C5" d="M606.15 206.77L614.01 206.77L614.01 219.61A3.93 3.93 0 0 1 606.15 219.61Z"/>
+</g></g>
+</svg>
