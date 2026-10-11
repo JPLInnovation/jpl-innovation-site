@@ -1,5 +1,7 @@
+import type { SplashKind } from "@/lib/splash";
+
 /**
- * Shared engine for the logo intros (IntroSplash on most pages, FrcSplash on the FRC page).
+ * Shared engine for the logo intros (IntroSplash on most pages, FrcSplash on the FRC page, DroneSplash on the drone page).
  * Markup and shared CSS: src/components/SplashShell.astro. Each intro supplies its own timeline via runSplash().
  *
  * It handles everything the two have in common:
@@ -81,7 +83,7 @@ function cleanup(el: HTMLElement) {
 	unwire();
 	for (const t of timers) clearTimeout(t);
 	for (const fn of cleanups) fn();
-	root.classList.remove("splash", "splash-live", "splash-reduced", "splash-leaving", "splash-jpl", "splash-frc", "splash-fast");
+	root.classList.remove("splash", "splash-live", "splash-reduced", "splash-leaving", "splash-jpl", "splash-frc", "splash-drone", "splash-fast");
 	for (const a of anims) a.cancel(); // page elements the splash hid get their own styles back
 	el.remove();
 }
@@ -115,7 +117,7 @@ function wireSkip(el: HTMLElement) {
  * a real page load or an in-site page swap). `play` builds the timeline; reduced motion gets a quick fade instead.
  * `fastRate`: how much faster the refresh version plays. Safe to call again: an intro already playing is left be.
  */
-export function runSplash(kind: "jpl" | "frc", play: (ctx: SplashContext) => void, { fastRate }: { fastRate: number }) {
+export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, { fastRate }: { fastRate: number }) {
 	const el = document.querySelector<HTMLElement>(`[data-splash="${kind}"]`);
 	if (el?.hasAttribute("data-splash-run")) return; // already playing
 	if (!el || !root.classList.contains("splash")) {

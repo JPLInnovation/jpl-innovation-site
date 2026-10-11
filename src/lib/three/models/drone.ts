@@ -5,6 +5,7 @@
  * Flight parts sit on the top plate, power wiring between the plates and an ESC under each arm; the battery, Pi 4,
  * Matek BEC, C920-C and 4G stick hang under the frame on tall legs. Props spin as in INAV's default (props-in):
  * front-left and rear-right clockwise. The layout's GPS mast (a later upgrade), spin arrows and CG marker are left out.
+ * buildDrone() makes the drone itself; the drone page intro (src/scripts/drone-splash.ts) flies the same one.
  */
 import {
 	BoxGeometry,
@@ -196,13 +197,29 @@ function twistedPairGeometry(points: Vector3[], r: number) {
 	return [a, b].map((side) => new TubeGeometry(new CatmullRomCurve3(side), n * 2, r, 7, false));
 }
 
-export default function createDrone(ctx: StageContext): Model {
-	const drone = new Group(); // bobs and sways
-	ctx.root.add(drone);
+/** Where the parts are, for labels (layout millimetres, see DroneRig.anchor). */
+type Spot = "fc" | "io" | "rx" | "cam" | "lipo" | "pi" | "bec" | "modem";
+
+/** The built drone, for whatever shows it: the drone page's 3D (below) and its intro (src/scripts/drone-splash.ts). */
+export interface DroneRig {
+	/** The whole drone in metres: front +z, the bottom plate's centre at the origin. */
+	model: Group;
+	/** Spins the props, blinks the FC's LED and pulses the 4G rings. dt = 0 for a still frame. */
+	animate(t: number, dt: number): void;
+	/** An object at a point given in the layout's millimetres, which moves with the drone. */
+	anchor(x: number, y: number, z: number): Object3D;
+	/** Points just outside the main parts, where their labels hang (layout millimetres). */
+	spots: Record<Spot, [number, number, number]>;
+	/** At the centre of the webcam's lens glass; its +z axis looks out the way the camera does. */
+	lens: Object3D;
+}
+
+export function buildDrone(): DroneRig {
+	const model = new Group();
 	const layout = new Group(); // the layout's millimetres, turned so its front (−z) faces +z
 	layout.scale.setScalar(0.001);
 	layout.rotation.y = Math.PI;
-	drone.add(layout);
+	model.add(layout);
 
 	const M = (color: number, { r = 0.62, m = 0, op = 1 }: MaterialOptions = {}) =>
 		standard(color, { roughness: r, metalness: m, transparent: op < 1, opacity: op });
@@ -381,6 +398,10 @@ export default function createDrone(ctx: StageContext): Model {
 	add(cyl(9.5, 3, 28), M(COL.lens, { r: 0.15, m: 0.4 }), 0, 0, -12.6, camera).rotation.x = Math.PI / 2;
 	add(new TorusGeometry(10, 1.1, 8, 28), M(0x6b7270, { r: 0.3, m: 0.8 }), 0, 0, -14, camera);
 	add(box(8, 3, 1), M(0xe8e9e8, { r: 0.6 }), -32, 6, -12.3, camera);
+	const lens = new Group(); // on the glass, turned so its +z looks out of the lens
+	lens.position.set(0, 0, -14.1);
+	lens.rotation.y = Math.PI;
+	camera.add(lens);
 	add(box(30, 14, 3), M(0x2d3230, { r: 0.5, m: 0.4 }), 0, -6.6, -84);
 	add(box(30, 3, 26), M(0x2d3230, { r: 0.5, m: 0.4 }), 0, -12.5, -96);
 	// Plugs: the FC's USB cable in a blue port, USB-C power, the webcam's 90° adapter, the modem extension
@@ -431,45 +452,9 @@ export default function createDrone(ctx: StageContext): Model {
 	// Modem extension: black USB 2 port → down the rear-left leg
 	wire([WIRE.net], 2.3, [v(portX - 12, -9, 58), v(portX - 18, -10, 58), v(-66, -24, 56), v(modemTop.x + 4, modemTop.y + 18, modemTop.z - 4), v(modemTop.x, modemTop.y + 2, modemTop.z)]);
 
-	/* ---------- Floor and labels ---------- */
-	const shadow = contactShadow(0.24, 0.3);
-	shadow.position.y = -0.235;
-	ctx.root.add(shadow);
-
-	// Labels hang off points just outside each part, so they don't cover it.
-	const anchor = (x: number, y: number, z: number) => {
-		const point = new Group();
-		point.position.set(x, y, z);
-		layout.add(point);
-		return point;
-	};
-	// One part is called out at a time (a guided tour). The still frame (reduced motion) shows only the four marked
-	// `still`, which sit apart from the starting camera; all eight at once would pile up in the middle.
-	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
-	const tour = [
-		{ el: ctx.label("MicoAir743 V2 flight controller", anchor(0, TY + 26, FCZ + 7), tourClass), still: true },
-		{ el: ctx.label("IO board, the power hub", anchor(0, TY + 22, -8), tourClass) },
-		{ el: ctx.label("MC7RE receiver", anchor(40, TY + 22, -46), tourClass) },
-		{ el: ctx.label("Logitech C920-C webcam", anchor(0, -62, -140), tourClass), still: true },
-		{ el: ctx.label("3S 2200 mAh LiPo", anchor(0, -45, -40), tourClass) },
-		{ el: ctx.label("Raspberry Pi 4", anchor(0, -50, 110), tourClass), still: true },
-		{ el: ctx.label("Matek BEC for the Pi", anchor(BEC.x + 24, -17, BEC.z), tourClass) },
-		{ el: ctx.label("ZTE MF833 4G modem", anchor(-100, -150, 100), tourClass), still: true },
-	];
-	let shown = -1;
-
 	return {
-		update(t, dt) {
-			// Still frame: the `still` labels; otherwise one label at a time, 2.5 s each.
-			const current = dt === 0 ? -2 : Math.floor(t / 2.5) % tour.length;
-			if (current !== shown) {
-				shown = current;
-				tour.forEach(({ el, still }, i) => el.toggleAttribute("data-on", current === -2 ? !!still : i === current));
-			}
-			// Hover: a slow bob with a little sway.
-			drone.position.y = Math.sin(t * 1.6) * 0.012;
-			drone.rotation.z = Math.sin(t * 0.9) * 0.035;
-			drone.rotation.x = Math.sin(t * 0.7 + 1) * 0.03;
+		model,
+		animate(t, dt) {
 			if (dt > 0) {
 				for (const { hub, cw } of props) hub.rotation.y += (cw ? -1 : 1) * dt * 30;
 			}
@@ -481,6 +466,67 @@ export default function createDrone(ctx: StageContext): Model {
 				ring.position.y = modemAt.y + phase * 30;
 				(ring.material as MeshBasicMaterial).opacity = dt > 0 ? (1 - phase) * 0.8 : 0;
 			});
+		},
+		anchor(x, y, z) {
+			const point = new Group();
+			point.position.set(x, y, z);
+			layout.add(point);
+			return point;
+		},
+		spots: {
+			fc: [0, TY + 26, FCZ + 7],
+			io: [0, TY + 22, -8],
+			rx: [40, TY + 22, -46],
+			cam: [0, -62, -140],
+			lipo: [0, -45, -40],
+			pi: [0, -50, 110],
+			bec: [BEC.x + 24, -17, BEC.z],
+			modem: [-100, -150, 100],
+		},
+		lens,
+	};
+}
+
+export default function createDrone(ctx: StageContext): Model {
+	const drone = new Group(); // bobs and sways
+	ctx.root.add(drone);
+	const rig = buildDrone();
+	drone.add(rig.model);
+
+	const shadow = contactShadow(0.24, 0.3);
+	shadow.position.y = -0.235;
+	ctx.root.add(shadow);
+
+	// Labels hang off points just outside each part, so they don't cover it. One part is called out at a time (a guided
+	// tour). The still frame (reduced motion) shows only the four marked `still`, which sit apart from the starting
+	// camera; all eight at once would pile up in the middle.
+	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
+	const label = (text: string, spot: Spot, still = false) => ({ el: ctx.label(text, rig.anchor(...rig.spots[spot]), tourClass), still });
+	const tour = [
+		label("MicoAir743 V2 flight controller", "fc", true),
+		label("IO board, the power hub", "io"),
+		label("MC7RE receiver", "rx"),
+		label("Logitech C920-C webcam", "cam", true),
+		label("3S 2200 mAh LiPo", "lipo"),
+		label("Raspberry Pi 4", "pi", true),
+		label("Matek BEC for the Pi", "bec"),
+		label("ZTE MF833 4G modem", "modem", true),
+	];
+	let shown = -1;
+
+	return {
+		update(t, dt) {
+			// Still frame: the `still` labels; otherwise one label at a time, 2.5 s each.
+			const current = dt === 0 ? -2 : Math.floor(t / 2.5) % tour.length;
+			if (current !== shown) {
+				shown = current;
+				tour.forEach(({ el, still }, i) => el.toggleAttribute("data-on", current === -2 ? still : i === current));
+			}
+			// Hover: a slow bob with a little sway.
+			drone.position.y = Math.sin(t * 1.6) * 0.012;
+			drone.rotation.z = Math.sin(t * 0.9) * 0.035;
+			drone.rotation.x = Math.sin(t * 0.7 + 1) * 0.03;
+			rig.animate(t, dt);
 		},
 		applyPalette(p) {
 			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.55 : 0.28;

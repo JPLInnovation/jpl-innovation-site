@@ -202,6 +202,25 @@ export const partGroups: PartGroup[] = [
 	},
 ];
 
+/**
+ * The drone page intro (src/components/DroneSplash.astro): the on-screen display over the drone's live camera view.
+ * The timecode, link, speed and altitude numbers tick by themselves (src/scripts/drone-splash.ts).
+ */
+export const droneIntro = {
+	camera: 'CAM 1',
+	video: '1080P30',
+	network: '4G',
+	/** "LINK: WEAK" while the 4G link connects, then "LINK: GOOD". */
+	link: 'LINK:',
+	linkWeak: 'WEAK',
+	linkGood: 'GOOD',
+	/** The 3S LiPo: cells, per-cell voltage, pack voltage and charge. */
+	cells: '3S',
+	cellVoltage: 'CELL 3.90V',
+	packVoltage: '11.7V',
+	charge: '78%',
+};
+
 /** Earlier drone work, kept for the record. */
 export const earlierWork = {
 	title: 'Flight controller experiments',

@@ -21,7 +21,7 @@
  * windows move as HTML layers, so the GPU compositor keeps them smooth.
  */
 import { BURN_CLEAR } from "@/lib/frc-burn";
-import { markFrcSeen } from "@/lib/splash";
+import { markSeen } from "@/lib/splash";
 import { E, flip, onScreen, runSplash, type SplashContext } from "./splash-core";
 
 const FAST_RATE = 3.2; // refresh version: 4.8 s → 1.5 s
@@ -64,7 +64,7 @@ type Step = [number, Keyframe, string?];
 
 function play(ctx: SplashContext) {
 	const { el, tween } = ctx;
-	markFrcSeen(); // later in-site arrivals in this tab get the fast version
+	markSeen("frc"); // later in-site arrivals in this tab get the fast version
 	const q = <T extends Element = HTMLElement>(sel: string) => el.querySelector<T>(sel);
 	const lockup = q('[data-frc-lockup="splash"]')!;
 	const frame = q("[data-frc-frame]")!;

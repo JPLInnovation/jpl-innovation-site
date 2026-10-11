@@ -25,6 +25,25 @@ const models = {
 
 export type ModelName = keyof typeof models;
 
+/**
+ * Resolves once no logo intro covers the page (src/lib/splash.ts), so a model doesn't build and render underneath it
+ * while the intro needs the GPU (the drone page's intro flies a 3D drone itself). Gives up waiting after 8 s.
+ */
+function afterIntro() {
+	const root = document.documentElement;
+	if (!root.classList.contains("splash")) return Promise.resolve();
+	return new Promise<void>((resolve) => {
+		const done = () => {
+			observer.disconnect();
+			clearTimeout(timer);
+			resolve();
+		};
+		const observer = new MutationObserver(() => !root.classList.contains("splash") && done());
+		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+		const timer = setTimeout(done, 8000);
+	});
+}
+
 interface Props {
 	model: ModelName;
 	/** Accessible description of what the model shows. */
@@ -45,7 +64,7 @@ export default function ModelViewer({ model, label, options, hint = true, classN
 	useEffect(() => {
 		let cancelled = false;
 		let dispose: (() => void) | undefined;
-		Promise.all([import("@/lib/three/stage"), models[model]()])
+		Promise.all([import("@/lib/three/stage"), models[model](), afterIntro()])
 			.then(async ([stage, loaded]) => {
 				if (cancelled || !wrapRef.current || !canvasRef.current) return;
 				const mod = loaded as unknown as ModelModule;

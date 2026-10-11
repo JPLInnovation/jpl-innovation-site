@@ -1,0 +1,404 @@
+---
+/**
+ * Drone page intro (5.6 s; 1.9 s on a refresh): the F450 flies in over a dusk horizon and brakes into a hover facing
+ * the camera, the camera dives into its webcam's lens and comes out as the drone's own live 4G view, with its
+ * on-screen display, the feed switches off into a dot of light, and the dot opens into the JPL Innovation logo,
+ * whose badge then flies into the navbar logo.
+ * Plays like the FRC intro: on a first entry, faster on a refresh, and when you click through to the page (full the
+ * first time in a tab, fast after that); not on back/forward (src/lib/splash.ts).
+ *
+ *   Turn it off: remove the DroneSplash line in src/layouts/BaseLayout.astro.
+ *   Artwork:     src/assets/intro/drone-footage.webp, drone-sky.webp, jpl-stacked.svg (scripts/build-drone-intro.mjs);
+ *                the badge is jpl-logo.svg's; the drone is the page's own 3D model (src/lib/three/models/drone.ts)
+ *   HUD text:    src/text/projects/drone.ts (droneIntro)
+ *   Animation:   src/scripts/drone-splash.ts; shared overlay/engine: SplashShell.astro, src/scripts/splash-core.ts
+ */
+import footageUrl from "@/assets/intro/drone-footage.webp?url";
+import skyUri from "@/assets/intro/drone-sky.webp?inline";
+import jplLogo from "@/assets/intro/jpl-logo.svg?raw";
+import stacked from "@/assets/intro/jpl-stacked.svg?raw";
+import { droneIntro as hud } from "@/text/projects/drone";
+import SplashShell from "./SplashShell.astro";
+
+// The lettering, traced from the stacked logo, in that frame's pixels; data-ring-* is where its ring sits.
+const num = (name: string) => Number(stacked.match(new RegExp(`${name}="([^"]+)"`))![1]);
+const [vx, vy, vw, vh] = stacked.match(/viewBox="([^"]+)"/)![1].split(" ").map(Number);
+const ring = { cx: num("data-ring-cx"), cy: num("data-ring-cy"), r: num("data-ring-r") };
+const letters = stacked.slice(stacked.indexOf("<path"), stacked.lastIndexOf("</svg>"));
+
+// The badge: jpl-logo.svg's traced badge (ring, monitor, stand, waves, wrench), renamed so nothing clashes with the
+// JPL intro's, drawn in a square round its ring and scaled so its ring lands on the stacked logo's ring.
+const BADGE = { cx: 610.9, cy: 163.9, r: 119.6, half: 128 }; // ring centre and radius in jpl-logo.svg; half the box
+const rename = (svg: string) => svg.replace(/jl-/g, "ds-");
+const defs = rename(jplLogo.match(/<linearGradient id="jl-metal-grad"[\s\S]*?<\/radialGradient>/)![0]);
+const badge = rename(jplLogo.slice(jplLogo.indexOf('<g id="jl-badge"'), jplLogo.indexOf('<g id="jl-letters"')));
+const k = ring.r / BADGE.r;
+const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
+const badgeBox = `left:${pct(ring.cx - BADGE.half * k - vx, vw)};top:${pct(ring.cy - BADGE.half * k - vy, vh)};width:${pct(2 * BADGE.half * k, vw)};height:${pct(2 * BADGE.half * k, vh)}`;
+const badgeSvg = `<svg class="ds-badge-svg" viewBox="${BADGE.cx - BADGE.half} ${BADGE.cy - BADGE.half} ${2 * BADGE.half} ${2 * BADGE.half}" aria-hidden="true" focusable="false"><defs>${defs}</defs>${badge}</svg>`;
+const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true" focusable="false">${letters}</svg>`;
+---
+
+<SplashShell kind="drone">
+	<!-- 1. The flight: a far, soft dusk sky (inlined, so it's there in the first frame) and the 3D drone. -->
+	<div class="ds-sky" data-ds-sky style={`background-image:url(${skyUri})`}></div>
+	<canvas class="ds-3d" data-ds-3d aria-hidden="true"></canvas>
+
+	<!-- 2. The drone's camera feed, with its on-screen display. -->
+	<div class="ds-feed" data-ds-feed>
+		<img class="ds-feed-img" data-ds-feed-img src={footageUrl} alt="" decoding="async" fetchpriority="high" />
+		<div class="ds-grain"></div>
+		<div class="ds-scan"></div>
+		<div class="ds-vignette"></div>
+		<div class="ds-hud">
+			<div class="ds-hud-block ds-tl" data-ds-hud-block>
+				<p class="ds-big"><span class="ds-rec" data-ds-rec></span>REC&nbsp; <span data-ds-tc>00:03:18:00</span></p>
+				<p class="ds-small">{hud.camera}&nbsp;&nbsp; {hud.video}</p>
+			</div>
+			<div class="ds-hud-block ds-tr" data-ds-hud-block>
+				<p class="ds-big"><span class="ds-bars" data-ds-bars data-level="1"><i></i><i></i><i></i><i></i></span>{hud.network}</p>
+				<p class="ds-big">{hud.link} <span data-ds-link data-weak={hud.linkWeak} data-good={hud.linkGood}>{hud.linkWeak}</span></p>
+				<p class="ds-small"><span data-ds-mbps>0.9</span> MBPS&nbsp;&nbsp; <span data-ds-ms>340</span> MS</p>
+			</div>
+			<div class="ds-hud-block ds-bl" data-ds-hud-block>
+				<p class="ds-small">{hud.cells}&nbsp;&nbsp; {hud.cellVoltage}</p>
+				<p class="ds-big"><span class="ds-batt"></span>{hud.packVoltage}&nbsp;&nbsp; {hud.charge}</p>
+			</div>
+			<div class="ds-hud-block ds-br" data-ds-hud-block>
+				<p class="ds-small">SPD <span data-ds-spd>10.1</span> M/S</p>
+				<p class="ds-big">ALT&nbsp;&nbsp; <span data-ds-alt>42.9</span> M</p>
+			</div>
+			<svg class="ds-cross" data-ds-cross viewBox="-20 -20 40 40" aria-hidden="true"><path d="M0-20v12M0 8v12M-20 0h12M8 0h12" fill="none" stroke="currentColor" stroke-width="2.2"></path></svg>
+			<span class="ds-bracket ds-bracket-l" data-ds-bracket></span>
+			<span class="ds-bracket ds-bracket-r" data-ds-bracket></span>
+		</div>
+		<div class="ds-static" data-ds-static></div>
+	</div>
+
+	<!-- 3. Black (through the lens glass, and once the feed switches off), and the switch-off line, dot and ripple. -->
+	<div class="ds-black" data-ds-black></div>
+	<span class="ds-crt-line" data-ds-crt-line></span>
+	<span class="ds-crt-dot" data-ds-crt-dot></span>
+	<span class="ds-ripple" data-ds-ripple></span>
+
+	<!-- 4. The JPL Innovation logo, stacked, glowing on black. -->
+	<div class="ds-logo" data-ds-logo style={`aspect-ratio:${vw}/${vh};--ds-ratio:${(vw / vh).toFixed(4)}`}>
+		<span class="ds-glow" data-ds-glow style={badgeBox}></span>
+		<Fragment set:html={lettersSvg} />
+		<div class="ds-badge" data-ds-badge style={badgeBox} data-half={BADGE.half}>
+			<Fragment set:html={badgeSvg} />
+		</div>
+	</div>
+</SplashShell>
+
+<script>
+	import "@/scripts/drone-splash";
+</script>
+
+<style is:global>
+	/* The navbar logo waits for the intro's badge to land on it. */
+	html.splash-drone:not(.splash-reduced) [data-site-header] [data-site-logo] {
+		opacity: 0;
+		animation: splash-reveal-failsafe 0.3s ease-out 5s forwards;
+	}
+	html.splash-live [data-site-header] [data-site-logo] {
+		animation: none;
+	}
+
+	[data-splash="drone"] .splash-bg {
+		background: #000;
+	}
+	[data-splash="drone"] :is(.splash-grid, .splash-trace) {
+		display: none;
+	}
+	[data-splash="drone"] :is(.ds-3d, .ds-feed, .ds-black, .ds-feed-img, .ds-grain, .ds-scan, .ds-vignette, .ds-static) {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	/* ---------- 1. Sky and 3D ---------- */
+	/* Half as wide again as the screen-covering size, so it can slide while the camera turns; the horizon (47 % down)
+	   sits where it does in the drone's own view. */
+	.ds-sky {
+		position: absolute;
+		left: 50%;
+		top: 47%;
+		width: calc(1.5 * max(100vw, 177.78vh));
+		aspect-ratio: 16 / 9;
+		translate: -50% -47%;
+		background: #031217 center / 100% 100% no-repeat;
+		transform-origin: 50% 47%;
+		will-change: transform;
+	}
+	.ds-sky::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: radial-gradient(120% 90% at 50% 46%, transparent 35%, rgb(0 0 0 / 0.55));
+	}
+
+	/* ---------- 2. The feed ---------- */
+	.ds-feed {
+		overflow: hidden;
+		background: #000;
+		will-change: transform, opacity;
+	}
+	.ds-feed-img {
+		object-fit: cover;
+		transform-origin: 50% 47.4%; /* the horizon's centre, so it stays on the crosshair while the view pushes in */
+		will-change: transform;
+	}
+	/* Film grain and static share one noise tile, made by the script (--ds-noise). */
+	.ds-grain {
+		inset: -128px;
+		width: auto;
+		height: auto;
+		background: var(--ds-noise) 0 0 / 128px 128px;
+		opacity: 0.16;
+		animation: ds-grain 0.6s steps(1) infinite;
+	}
+	@keyframes ds-grain {
+		0% { transform: translate(0, 0); }
+		17% { transform: translate(-37px, 22px); }
+		33% { transform: translate(51px, -14px); }
+		50% { transform: translate(-19px, -61px); }
+		67% { transform: translate(64px, 43px); }
+		83% { transform: translate(-58px, 9px); }
+	}
+	.ds-scan {
+		background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.22) 0 1px, transparent 1px 3px);
+	}
+	.ds-vignette {
+		background: radial-gradient(110% 85% at 50% 48%, transparent 50%, rgb(0 0 0 / 0.6));
+	}
+	.ds-static {
+		background: var(--ds-noise) 0 0 / 256px 256px;
+		image-rendering: pixelated;
+		animation: ds-grain 0.24s steps(1) infinite;
+		inset: -128px;
+		width: auto;
+		height: auto;
+	}
+
+	/* The on-screen display: corners like the camera's, sized to the screen. */
+	.ds-hud {
+		position: absolute;
+		inset: 0;
+		--big: clamp(12px, 2.5vmin, 30px);
+		color: #eef3f2;
+		font: 500 var(--big) / 1.35 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+		letter-spacing: 0.08em;
+		text-shadow: 0 0 6px rgb(0 0 0 / 0.6);
+	}
+	.ds-hud p {
+		margin: 0;
+		white-space: nowrap;
+	}
+	.ds-hud-block {
+		position: absolute;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25em;
+	}
+	.ds-tl { left: 4vw; top: 6vh; }
+	.ds-tr { right: 4vw; top: 6vh; align-items: flex-end; }
+	.ds-bl { left: 4vw; bottom: 6vh; }
+	.ds-br { right: 4vw; bottom: 6vh; align-items: flex-end; }
+	.ds-small {
+		font-size: 0.72em;
+		color: #8e9a9c;
+	}
+	.ds-rec {
+		display: inline-block;
+		width: 0.62em;
+		height: 0.62em;
+		margin-right: 0.5em;
+		border-radius: 50%;
+		background: #1fb0d6;
+		box-shadow: 0 0 8px rgb(31 176 214 / 0.8);
+		vertical-align: 0.02em;
+	}
+	.ds-bars {
+		display: inline-flex;
+		align-items: flex-end;
+		gap: 0.16em;
+		height: 0.95em;
+		margin-right: 0.55em;
+		vertical-align: -0.05em;
+	}
+	.ds-bars i {
+		width: 0.3em;
+		background: rgb(238 243 242 / 0.28);
+	}
+	.ds-bars i:nth-child(1) { height: 35%; }
+	.ds-bars i:nth-child(2) { height: 55%; }
+	.ds-bars i:nth-child(3) { height: 75%; }
+	.ds-bars i:nth-child(4) { height: 100%; }
+	.ds-bars[data-level="1"] i:nth-child(-n + 1),
+	.ds-bars[data-level="2"] i:nth-child(-n + 2),
+	.ds-bars[data-level="3"] i:nth-child(-n + 3),
+	.ds-bars[data-level="4"] i {
+		background: #eef3f2;
+	}
+	.ds-batt {
+		position: relative;
+		display: inline-block;
+		width: 1.6em;
+		height: 0.78em;
+		margin-right: 0.6em;
+		border: 0.12em solid currentColor;
+		vertical-align: -0.04em;
+		background: linear-gradient(90deg, currentColor 78%, transparent 78%) 0.12em 0.12em / calc(100% - 0.24em) calc(100% - 0.24em) no-repeat;
+	}
+	.ds-batt::after {
+		content: "";
+		position: absolute;
+		right: -0.3em;
+		top: 22%;
+		width: 0.16em;
+		height: 56%;
+		background: currentColor;
+	}
+	/* Crosshair and horizon brackets sit on the footage's horizon: it's 47.4 % down the frame, which object-fit:
+	   cover scales to max(100vh, 56.25vw) tall about the middle. */
+	.ds-cross {
+		position: absolute;
+		left: 50%;
+		top: calc(50% - 0.026 * max(100vh, 56.25vw));
+		width: clamp(26px, 3.7vmin, 44px);
+		color: #e6ecec;
+		translate: -50% -50%;
+	}
+	.ds-bracket {
+		position: absolute;
+		top: calc(50% - 0.0245 * max(100vh, 56.25vw));
+		width: calc(0.0526 * max(100vw, 177.78vh));
+		height: clamp(5px, 0.8vmin, 9px);
+		border-top: 2px solid #c9d2d3;
+	}
+	.ds-bracket-l {
+		right: calc(50% + 0.0797 * max(100vw, 177.78vh));
+		border-right: 2px solid #c9d2d3;
+		transform-origin: 100% 0;
+	}
+	.ds-bracket-r {
+		left: calc(50% + 0.0755 * max(100vw, 177.78vh));
+		border-left: 2px solid #c9d2d3;
+		transform-origin: 0 0;
+	}
+
+	/* ---------- 3. Black, and the switch-off ---------- */
+	.ds-black {
+		background: #000;
+	}
+	.ds-crt-line,
+	.ds-crt-dot,
+	.ds-ripple {
+		position: absolute;
+		left: var(--ds-cx, 50%);
+		top: var(--ds-cy, 50%);
+		display: block;
+		pointer-events: none;
+		will-change: transform, opacity;
+	}
+	.ds-crt-line {
+		width: 100vw;
+		height: 3px;
+		margin: -1.5px 0 0 -50vw;
+		background: linear-gradient(90deg, transparent, #bff3ff 18%, #fff 50%, #bff3ff 82%, transparent);
+		box-shadow: 0 0 12px 2px rgb(64 200 232 / 0.7);
+	}
+	.ds-crt-dot {
+		width: 14px;
+		height: 14px;
+		margin: -7px 0 0 -7px;
+		border-radius: 50%;
+		background: radial-gradient(circle, #fff 0 30%, #7fe3ff 55%, transparent 72%);
+		box-shadow: 0 0 22px 8px rgb(29 151 178 / 0.75);
+	}
+	.ds-ripple {
+		width: var(--ds-ring, 40vmin);
+		height: var(--ds-ring, 40vmin);
+		margin: calc(var(--ds-ring, 40vmin) / -2) 0 0 calc(var(--ds-ring, 40vmin) / -2);
+		border: 2px solid #4fd6f2;
+		border-radius: 50%;
+		box-shadow: 0 0 18px rgb(29 151 178 / 0.8), inset 0 0 18px rgb(29 151 178 / 0.5);
+	}
+
+	/* ---------- 4. The logo ---------- */
+	.ds-logo {
+		position: relative;
+		width: min(82vw, calc(64vh * var(--ds-ratio)));
+	}
+	.ds-letters,
+	.ds-badge-svg {
+		position: absolute;
+		inset: 0;
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+	.ds-badge,
+	.ds-glow {
+		position: absolute;
+		display: block;
+	}
+	.ds-badge {
+		transform-origin: 0 0;
+		filter: drop-shadow(0 0 0.8vmin rgb(29 151 178 / 0.85)) drop-shadow(0 0 3vmin rgb(29 151 178 / 0.4));
+		will-change: transform, opacity;
+	}
+	.ds-glow {
+		border-radius: 50%;
+		background: radial-gradient(closest-side, rgb(29 151 178 / 0.34), rgb(29 151 178 / 0.1) 62%, transparent);
+		scale: 1.55;
+	}
+	.ds-badge #ds-ring {
+		stroke-width: 7; /* the stacked logo's ring is bolder than the navbar logo's */
+	}
+	.ds-ring,
+	.ds-line {
+		stroke-dasharray: 1;
+	}
+	.ds-line,
+	.ds-metal,
+	#ds-screen-glow {
+		opacity: 0;
+	}
+	.ds-badge #ds-badge-fill {
+		transform-box: view-box;
+		transform-origin: 610.9px 163.9px;
+	}
+	.ds-badge .ds-wave,
+	.ds-badge #ds-wrench-x {
+		transform-box: view-box;
+		transform-origin: 610.5px 147.5px; /* wrench head centre */
+	}
+	.ds-badge .ds-stand {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+	}
+	.ds-letters .js-letter {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+	}
+
+	/* Before the script runs: the sky only. Everything else is brought in by the script. */
+	html.splash:not(.splash-reduced) :is(.ds-feed, .ds-black, .ds-crt-line, .ds-crt-dot, .ds-ripple, .ds-glow, .ds-static, .ds-hud-block, .ds-cross, .ds-bracket),
+	html.splash:not(.splash-reduced) [data-splash="drone"] :is(.ds-part, .js-letter) {
+		opacity: 0;
+	}
+	/* Reduced motion: the finished logo only. */
+	html.splash-reduced [data-splash="drone"] :is(.ds-sky, .ds-3d, .ds-feed, .ds-black, .ds-crt-line, .ds-crt-dot, .ds-ripple) {
+		display: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.ds-grain,
+		.ds-static {
+			animation: none;
+		}
+	}
+</style>
