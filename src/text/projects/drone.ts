@@ -12,7 +12,7 @@ export const dronePage = {
 	model3d: {
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			'3D model of the F450 drone: red front arms, white rear arms and four spinning 10-inch props. The IO board, flight controller and receiver sit on the top plate; the LiPo battery, C920-C webcam, Raspberry Pi 4 with its Matek BEC and the 4G modem hang under the frame on tall landing legs.',
+			'3D model of the F450 drone: red front arms, white rear arms and four spinning 10-inch props. The IO board, flight controller and receiver sit on the top plate. Under the frame, on tall white landing legs, hang the Camera Module 3 on its printed tilt mount at the front, the Raspberry Pi 4 with its Matek BEC, the LiPo battery and its alarm, and the 4G modem on a rear leg.',
 		frontArms: 'Front arms',
 		rearArms: 'Rear arms',
 		layoutNote: 'Quad-X layout, 2 clockwise and 2 counter-clockwise props',
@@ -42,17 +42,22 @@ export const dronePage = {
 	/** Before the date in the last section: "Earlier work, <date>". */
 	earlierLabel: 'Earlier work,',
 	/**
-	 * Buttons under the facts: the step-by-step build guide and the interactive 3D layout.
-	 * Each is one self-contained file: public/work/drone/build-guide/index.html and public/work/drone/3d-layout/index.html
+	 * Buttons under the facts: the step-by-step build guide, the interactive 3D layout and the printed camera mount.
+	 * Each is one self-contained file in public/work/drone/ (build-guide, 3d-layout, camera-mount); scripts/import-drone-pages.mjs
+	 * brings in a new version of them from the artifacts.
 	 */
 	buildGuide: {
 		label: 'Open the build guide',
-		note: 'Every stage from parts list to first hover, with wiring diagrams and checklists, and every part and wire in 3D.',
+		note: 'Every stage from parts list to first hover, with wiring diagrams and checklists. The 3D layout shows every part and wire, and the camera mount has the print files.',
 		href: '/work/drone/build-guide/',
 	},
 	layout3d: {
 		label: 'Open the 3D layout',
 		href: '/work/drone/3d-layout/',
+	},
+	cameraMount: {
+		label: 'Camera mount',
+		href: '/work/drone/camera-mount/',
 	},
 };
 
@@ -92,10 +97,10 @@ export const drone = {
 
 export const roadmap = [
 	{ title: 'Design & parts list', desc: 'Components chosen and budgeted.', state: 'done' },
-	{ title: 'Sourcing parts', desc: 'Main parts in hand; the Matek BEC, landing gear and cables still to order.', state: 'current' },
-	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, IO board, battery switch and Matek BEC on the F450.', state: 'upcoming' },
-	{ title: 'Flight controller setup', desc: 'INAV 9.1, calibration, radio binding, and first hover.', state: 'upcoming' },
-	{ title: '4G video link', desc: 'Pi 4 streaming the C920-C over 4G, and reading flight data from the FC over USB.', state: 'upcoming' },
+	{ title: 'Sourcing parts', desc: 'Main parts in hand; the printed camera mount and a few cables still to get.', state: 'current' },
+	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, IO board, battery switch, Matek BEC and 150 mm legs on the F450.', state: 'upcoming' },
+	{ title: 'Flight controller setup', desc: 'INAV 9.1, calibration, radio binding, failsafe tests and the first hover.', state: 'upcoming' },
+	{ title: '4G video link', desc: 'Pi 4 streaming the Camera Module 3 over 4G, with a live dashboard of the flight data.', state: 'upcoming' },
 	{ title: 'Field testing', desc: 'Test flights and tuning.', state: 'upcoming' },
 ] as const;
 
@@ -116,7 +121,7 @@ export const systems = [
 			from: 'PDB',
 			steps: [
 				{ name: 'Matek BEC', detail: '5 V, 5 A, its own supply' },
-				{ name: 'Pi 4', detail: '+ webcam & 4G modem' },
+				{ name: 'Pi 4', detail: '+ camera & 4G modem' },
 			],
 		},
 	},
@@ -135,6 +140,7 @@ export const systems = [
 			steps: [
 				{ name: 'USB-C cable', detail: 'MSP telemetry' },
 				{ name: 'Pi 4', detail: 'reads attitude & battery' },
+				{ name: 'Dashboard', detail: 'live video & flight data' },
 			],
 		},
 	},
@@ -142,8 +148,8 @@ export const systems = [
 		title: 'Live video',
 		icon: 'video-camera',
 		steps: [
-			{ name: 'C920-C webcam', detail: 'live video' },
-			{ name: 'Pi 4', detail: 'encode & stream', link: 'USB 2.0' },
+			{ name: 'Camera Module 3', detail: 'on a printed tilt mount' },
+			{ name: 'Pi 4', detail: 'encode & stream', link: 'CSI ribbon' },
 			{ name: '4G modem', detail: 'ZTE MF833', link: 'USB 2.0' },
 			{ name: 'Viewer', detail: 'anywhere online', link: '4G + Tailscale' },
 		],
@@ -161,8 +167,8 @@ export const partGroups: PartGroup[] = [
 			{ name: '4× A2212 1000KV Brushless Motors', why: 'The classic motors for the F450 frame — 2 clockwise, 2 counter-clockwise.', price: 142_000 },
 			{ name: '4× BLHeli_S 30A ESCs', why: 'Electronic speed controllers that drive the brushless motors, one under each arm.', price: 150_000 },
 			{ name: '1045 Propellers', why: 'Big 10-inch propellers matched to the 2212 motors.', price: 40_000 },
-			{ name: 'Tall Landing Gear', why: 'The battery, Pi and webcam hang under the frame, so the legs keep them at least 6 cm off the ground.', price: 130_000 },
-			{ name: 'Anti-vibration Dampers', why: 'Rubber grommets for the flight controller and a soft pad for the webcam bracket.', price: 30_000 },
+			{ name: 'High Landing Gear (150 mm)', why: 'The battery, Pi and camera hang under the frame, so these white legs keep them about 11 cm off the ground.', price: 130_000 },
+			{ name: 'Anti-vibration Dampers', why: 'Rubber grommets that isolate the flight controller from motor vibration.', price: 30_000 },
 		],
 	},
 	{
@@ -173,7 +179,7 @@ export const partGroups: PartGroup[] = [
 		parts: [
 			{ name: 'LiPo Battery 3S 2200 mAh', why: 'The power needed to lift this heavier rig.', price: 360_000 },
 			{ name: 'Battery On/Off Switch', why: 'In the battery’s + wire and rated 60 A or more, so the drone powers up and down without unplugging.' },
-			{ name: 'Matek BEC12S-PRO', why: 'Its own 5 V, 5 A supply for the Pi 4, webcam and 4G modem, so they can never brown out the flight controller. Recommended by a professional drone builder in Vietnam.', price: 550_000 },
+			{ name: 'Matek BEC12S-PRO', why: 'Its own 5 V, 5 A supply for the Pi 4, camera and 4G modem, so they can never brown out the flight controller. Recommended by a professional drone builder in Vietnam.', price: 550_000 },
 			{ name: 'LiPo Balance Charger', why: 'HotRC A400 for safely charging 2S–3S packs between flights.', price: 200_000 },
 		],
 	},
@@ -195,8 +201,9 @@ export const partGroups: PartGroup[] = [
 		icon: 'video-camera',
 		color: 'var(--chart-4)',
 		parts: [
-			{ name: 'Raspberry Pi 4 (4 GB)', why: 'Streams the video over 4G and reads flight data from the flight controller over USB.', price: 3_600_000 },
-			{ name: 'Logitech C920-C Webcam', why: 'Full-HD USB webcam on a soft-mounted bracket under the front of the frame.' },
+			{ name: 'Raspberry Pi 4 (4 GB)', why: 'Streams the video over 4G, reads flight data from the flight controller over USB and serves the live dashboard.', price: 3_600_000 },
+			{ name: 'Raspberry Pi Camera Module 3', why: '12 MP autofocus camera that plugs straight into the Pi with a ribbon and streams 720p at 60 fps.', price: 864_000 },
+			{ name: 'Printed Camera Tilt Mount', why: 'PETG case and hinge under the front of the frame: tilts the camera from 0 to 45° down. Includes its screws.', price: 130_000 },
 			{ name: 'ZTE MF833 4G Modem', why: 'The USB 4G stick that gives the drone internet.', price: 780_000 },
 		],
 	},

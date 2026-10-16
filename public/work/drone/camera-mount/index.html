@@ -1,0 +1,1037 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Camera Module 3 Tilt Mount | JPL Innovation</title><meta name="description" content="The 3D-printed tilt mount for the F450's Camera Module 3: try every angle from 0 to 45 degrees, download the STL files, and follow the print and assembly sheet."><link rel="canonical" href="https://jpl-innovation.github.io/work/drone/camera-mount/"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><script>/* The page saves its files through Claude's runtime (window.claude); here, an ordinary browser download does the same. */
+if(!window.claude)window.claude={use:function(n){return Promise.resolve(n==="downloads"?{save:function(o){var u=URL.createObjectURL(o.data),a=document.createElement("a");a.href=u;a.download=o.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4e4);return Promise.resolve()}}:null)}};</script><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&amp;family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&amp;family=Atkinson+Hyperlegible+Mono:wght@400;600&amp;display=swap">
+<style>
+/* A small workbench for one part: the model on the left with the tilt slider, the build sheet on the right.
+   Same tokens and type as the F450 build guide and the 3D layout. */
+:root{
+  --bg:#ECF0EE; --surface:#FBFCFB; --surface-2:#E1E8E4; --ink:#15201B; --ink-2:#44524C; --ink-3:#65746D; --rule:#C4CEC9;
+  --pcb:#0C7353; --pcb-soft:#D2E8DE; --on-pcb:#FFFFFF; --danger:#B42318; --danger-soft:#FAE1DC; --check:#8A5200; --check-soft:#F6E6C8;
+  --stage-a:#F4F7F5; --stage-b:#D9E2DD; --grid:#B9C5BF; --label-bg:#FBFCFB; --label-ink:#15201B; --shadow:rgba(21,32,27,.16); --code:#E3E9E6;
+  --display:"Saira Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --body:"Atkinson Hyperlegible Next","Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"Atkinson Hyperlegible Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1311; --surface:#141C19; --surface-2:#1C2622; --ink:#E1E9E5; --ink-2:#A5B4AD; --ink-3:#82918A; --rule:#2B3833;
+  --pcb:#45C79C; --pcb-soft:#133A2D; --on-pcb:#04201A; --danger:#F28B82; --danger-soft:#3A1612; --check:#F0B04A; --check-soft:#38290E;
+  --stage-a:#2B3A34; --stage-b:#141C19; --grid:#2E3B36; --label-bg:#1C2622; --label-ink:#E1E9E5; --shadow:rgba(0,0,0,.45); --code:#0F1714;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1311; --surface:#141C19; --surface-2:#1C2622; --ink:#E1E9E5; --ink-2:#A5B4AD; --ink-3:#82918A; --rule:#2B3833;
+  --pcb:#45C79C; --pcb-soft:#133A2D; --on-pcb:#04201A; --danger:#F28B82; --danger-soft:#3A1612; --check:#F0B04A; --check-soft:#38290E;
+  --stage-a:#2B3A34; --stage-b:#141C19; --grid:#2E3B36; --label-bg:#1C2622; --label-ink:#E1E9E5; --shadow:rgba(0,0,0,.45); --code:#0F1714;
+  color-scheme:dark}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--body)}
+*{box-sizing:border-box}
+a{color:var(--pcb)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pcb);outline-offset:2px}
+code{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+
+.app{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:100%}
+.bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.brand{display:flex;flex-direction:column;min-width:0}
+.eyebrow{margin:0;font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--pcb)}
+.eyebrow .back{color:inherit;text-decoration:none}.eyebrow .back:hover{text-decoration:underline}
+h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:balance}
+.bar-links{display:flex;gap:8px;flex-wrap:wrap}
+.btn-link{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;border:1px solid var(--pcb);color:var(--pcb);text-decoration:none;font:600 13px/1 var(--body);background:transparent}
+.btn-link:hover{background:var(--pcb-soft)}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 400px;min-height:0}
+.view{position:relative;min-height:440px;overflow:hidden;background:radial-gradient(120% 90% at 50% 30%,var(--stage-a),var(--stage-b))}
+.view canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.vtools{position:absolute;left:12px;top:12px;right:12px;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:3px;gap:2px;pointer-events:auto;box-shadow:0 1px 4px var(--shadow)}
+.seg button{border:0;background:none;padding:6px 10px;border-radius:7px;font:600 12.5px/1 var(--body);cursor:pointer;color:var(--ink-2)}
+.seg button:hover{color:var(--ink);background:var(--surface-2)}
+.seg button[aria-pressed="true"]{background:var(--pcb);color:var(--on-pcb)}
+.tilt{position:absolute;left:12px;right:12px;bottom:34px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:8px 12px;box-shadow:0 1px 4px var(--shadow);max-width:560px}
+.tilt label{font:600 13px/1.2 var(--body);color:var(--ink-2)}
+.tilt input{flex:1 1 180px;min-width:140px;accent-color:var(--pcb)}
+.tilt output{font:700 22px/1 var(--display);min-width:5.2ch;text-align:right}
+.tilt small{display:block;font:500 11.5px/1.3 var(--mono);color:var(--ink-3)}
+.hint{position:absolute;left:12px;bottom:8px;margin:0;font:12px/1.35 var(--body);color:var(--ink-3);pointer-events:none;max-width:calc(100% - 24px)}
+.fallback{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink-2)}
+.fallback p{max-width:42ch;margin:0}
+
+.side{background:var(--surface);border-left:1px solid var(--rule);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.side h2{margin:0 0 8px;font:600 13px/1.2 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.side h3{margin:0 0 6px;font:700 21px/1.1 var(--display);letter-spacing:.01em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:6px 11px;font:600 12.5px/1 var(--body);cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="true"]{border-color:var(--pcb);background:var(--pcb-soft);color:var(--ink)}
+.chip[aria-pressed="true"]::before{content:"✓ ";color:var(--pcb)}
+.lensrow{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--ink-2)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden;margin:0}
+.stats div{background:var(--bg);padding:8px 11px;min-width:0}
+.stats dt{font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.stats dd{margin:2px 0 0;font:600 18px/1.2 var(--display)}
+.stats dd small{display:block;font:500 12px/1.35 var(--body);color:var(--ink-2)}
+.dl{display:grid;gap:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:10px;border:0;background:var(--pcb);color:var(--on-pcb);font:700 14px/1 var(--body);cursor:pointer}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.dl p{margin:0;font-size:12.5px;color:var(--ink-3)}
+.sheet section{border-top:1px solid var(--rule);padding-top:14px}
+.sheet p{margin:6px 0;font-size:14.5px}
+.sheet ol,.sheet ul{margin:6px 0;padding-left:20px;font-size:14.5px}
+.sheet li{margin:5px 0}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.4}
+th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);background:var(--surface-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{border-left:3px solid var(--check);background:var(--check-soft);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13.5px;margin:8px 0}
+.warn{border-left:3px solid var(--danger);background:var(--danger-soft);padding:8px 10px;border-radius:0 8px 8px 0;font-size:13.5px;margin:8px 0}
+.search{font-family:var(--mono);font-size:.86em;background:var(--code);padding:1px 5px;border-radius:4px}
+
+@media (min-width:901px){.app{height:100%}.stage{overflow:hidden}}
+@media (max-width:900px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .view{height:68vh;height:68svh;min-height:420px}
+  .side{border-left:0;border-top:1px solid var(--rule);overflow:visible}
+  h1{font-size:24px}
+}
+@media (max-width:520px){ .tilt{bottom:10px} .hint{display:none} .stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)} }
+</style>
+
+<div class="app">
+  <header class="bar">
+    <div class="brand">
+      <p class="eyebrow"><a class="back" href="/work/drone/">← F450 4G Drone · JPL Innovation</a></p>
+      <h1>Camera Module 3 tilt mount</h1>
+    </div>
+    <div class="bar-links">
+      <a class="btn-link" href="/work/drone/build-guide/#s07" target="_blank" rel="noopener">Build guide ↗</a>
+      <a class="btn-link" href="/work/drone/3d-layout/" target="_blank" rel="noopener">F450 3D layout ↗</a>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="view" id="view">
+      <canvas id="cv" role="img" aria-label="3D model of the 3D-printed Camera Module 3 mount: a small case holding the camera board hangs between two arms under the front of the F450 bottom plate, on a hinge bolt, and tilts from 0 to 45 degrees down. An arc slot with tick marks on each arm and a lock screw hold the angle."></canvas>
+      <div class="vtools">
+        <div class="seg" role="group" aria-label="Camera view" id="views">
+          <button type="button" data-view="iso" aria-pressed="true">3D</button>
+          <button type="button" data-view="side" aria-pressed="false">Side</button>
+          <button type="button" data-view="front" aria-pressed="false">Front</button>
+          <button type="button" data-view="back" aria-pressed="false">Back</button>
+          <button type="button" data-view="print" aria-pressed="false">Print layout</button>
+        </div>
+      </div>
+      <div class="tilt" id="tiltbox">
+        <label for="tilt">Camera tilt</label>
+        <input type="range" id="tilt" min="0" max="45" step="1" value="15" aria-describedby="tilt-note">
+        <div><output id="tilt-out" for="tilt">15° down</output><small id="tilt-note">horizon 13% from the top</small></div>
+      </div>
+      <p class="hint" id="hint">Drag to orbit · scroll or pinch to zoom · right-drag or two fingers to pan</p>
+      <div class="fallback" id="fallback" hidden><p>The 3D view needs WebGL, which this browser didn't provide. The build sheet on the right has every measurement and step.</p></div>
+    </div>
+
+    <aside class="side" aria-label="Build sheet">
+      <section>
+        <h2>Show</h2>
+        <div class="chips" id="toggles">
+          <button type="button" class="chip" data-t="board" aria-pressed="true">Camera board</button>
+          <button type="button" class="chip" data-t="hw" aria-pressed="true">Screws</button>
+          <button type="button" class="chip" data-t="plate" aria-pressed="true">F450 plate + Pi</button>
+          <button type="button" class="chip" data-t="ribbon" aria-pressed="true">Ribbon</button>
+          <button type="button" class="chip" data-t="fov" aria-pressed="false">Field of view</button>
+          <button type="button" class="chip" data-t="explode" aria-pressed="false">Pull apart</button>
+        </div>
+        <div class="lensrow"><span>Lens</span>
+          <div class="seg" role="group" aria-label="Camera Module 3 lens" id="lens">
+            <button type="button" data-lens="std" aria-pressed="true">Standard 66°</button>
+            <button type="button" data-lens="wide" aria-pressed="false">Wide 102°</button>
+          </div></div>
+      </section>
+
+      <section>
+        <dl class="stats">
+          <div><dt>Tilt</dt><dd>0–45° down<small>ticks every 10°, last one 45°</small></dd></div>
+          <div><dt>Printed parts</dt><dd>2<small>case + mount, no supports</small></dd></div>
+          <div><dt>Case</dt><dd>32 × 29 × 24 mm<small>≈ 5 g in PETG</small></dd></div>
+          <div><dt>Mount</dt><dd>45 × 39 × 40 mm<small>≈ 10 g in PETG</small></dd></div>
+          <div><dt>On the drone</dt><dd>≈ 28 g<small>with camera and screws</small></dd></div>
+          <div><dt>Fixing</dt><dd>2 × M3<small>through the bottom plate's front slots</small></dd></div>
+        </dl>
+      </section>
+
+      <section class="dl">
+        <button type="button" class="btn" id="dlbtn">Download STL + GLB (.zip)</button>
+        <p id="dlnote">Two STL files to print (millimetres, already in print orientation) and a GLB of the assembled mount at the tilt shown.</p>
+      </section>
+
+      <div class="sheet">
+        <section>
+          <h3>Print</h3>
+          <div class="tbl"><table>
+            <thead><tr><th>Part</th><th>File</th><th>Lay it</th></tr></thead>
+            <tbody>
+              <tr><td>Case</td><td><code>cam3-case.stl</code></td><td>front face on the bed</td></tr>
+              <tr><td>Mount</td><td><code>cam3-mount.stl</code></td><td>top of the base on the bed, arms up; 5 mm brim</td></tr>
+            </tbody></table></div>
+          <ul>
+            <li><b>PETG</b>, not PLA: PLA softens around 55–60 °C, which a black part reaches in Saigon sun or a parked car.</li>
+            <li>0.4 mm nozzle, 0.2 mm layers, 4 walls, 40 % gyroid infill, no supports.</li>
+            <li>Each file is a set of overlapping solid blocks. PrusaSlicer, Bambu Studio and Cura join them automatically; if your slicer reports errors, let it repair the mesh.</li>
+            <li>No printer? Search Shopee for <span class="search">in 3D theo yêu cầu</span>, send both STL files and ask for PETG, 4 walls, 40 % infill.</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Hardware</h3>
+          <div class="tbl"><table>
+            <thead><tr><th class="num">Qty</th><th>Part</th><th>For</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>M3 × 45 socket-head bolt (M3 × 50 also fits)</td><td>hinge, through both arms and the case</td></tr>
+              <tr><td class="num">3</td><td>M3 nyloc nut</td><td>hinge, base bolts</td></tr>
+              <tr><td class="num">2</td><td>M3 × 8 screw</td><td>angle lock, one per side</td></tr>
+              <tr><td class="num">2</td><td>M3 × 12 bolt</td><td>base to the bottom plate</td></tr>
+              <tr><td class="num">4</td><td>M3 washer</td><td>under the base bolt heads, hinge</td></tr>
+              <tr><td class="num">4</td><td>M2 × 6 self-tapping screw</td><td>camera board into the case</td></tr>
+            </tbody></table></div>
+          <p>Shopee searches: <span class="search">ốc lục giác M3x45</span>, <span class="search">đai ốc M3 chống tuột</span>, <span class="search">vít tự ren M2x6</span>.</p>
+        </section>
+
+        <section>
+          <h3>Assemble</h3>
+          <ol>
+            <li>Clear any stringing from the holes. The hinge holes are 3.3 mm (the bolt slides through); the lock holes are 2.6 mm and the board posts 1.8 mm, so the screws cut their own threads.</li>
+            <li>Check the ribbon is seated in the camera: blue side facing away from the lens, latch closed. Slide the board into the case from the back, lens through the window, connector at the bottom, ribbon out through the notch.</li>
+            <li>Four M2 × 6 screws through the board's corner holes into the posts. Snug only: they bite into plastic, and the board is thin.</li>
+            <li>Continuity-test the bottom plate's two front slots first (guide step 2.3): the beeper must stay silent from each slot edge to every + and − pad. Then the base goes under the front tab, numbers on the arms facing outward: an M3 × 12 bolt with a washer down through each slot, through the base, nyloc nut underneath.</li>
+            <li>Lift the case between the arms with its ears inside them, line up the holes and push the M3 × 45 bolt through arm, ear, ear, arm. Washer and nyloc nut on the far side. Tighten until the camera holds its angle but still turns with a firm push.</li>
+            <li>An M3 × 8 screw through the arc slot into each side of the case. Turn slowly the first time while it cuts its thread.</li>
+          </ol>
+        </section>
+
+        <section>
+          <h3>Set the angle</h3>
+          <ol>
+            <li>Loosen both lock screws half a turn (and the hinge nut a quarter turn if it's stiff).</li>
+            <li>Tilt the camera. The lock screw's centre points at the angle: long ticks at 0°, 20° and 40° have numbers, short ticks are 10° and 30°, and the last short tick is 45°.</li>
+            <li>Tighten both lock screws, then the hinge nut. Check the live view on the dashboard.</li>
+          </ol>
+          <div class="tbl"><table>
+            <thead><tr><th class="num">Tilt</th><th>Use</th><th class="num">Horizon, standard</th><th class="num">Horizon, wide</th></tr></thead>
+            <tbody id="horizon"></tbody></table></div>
+          <p class="muted" style="font-size:13px;color:var(--ink-3)">Horizon = how far down from the top edge of the picture the horizon sits when the quad hovers level. "Above" means the horizon is out of the picture. Your Camera Module 3 is the standard lens unless its box says Wide; <code>rpicam-hello --list-cameras</code> on the Pi prints <code>imx708_wide</code> for the wide one.</p>
+          <div class="note">Flying forward tips the whole drone nose-down by roughly 5–15°, and the camera tips with it, so the picture looks further down than in a hover. If you mostly fly forward, use less tilt than for hovering: 0–10°.</div>
+        </section>
+
+        <section>
+          <h3>Fit on the F450</h3>
+          <ul>
+            <li>The hinge sits 17 mm under the bottom plate and 94 mm ahead of its centre. The lens ends up 2 cm ahead of the plate's front edge.</li>
+            <li>Props stay out of the picture at every tilt: the nearest prop tip is more than 50° above the lens, and the top of the picture is at most 34° above it (wide lens at 0°).</li>
+            <li>The landing legs sit behind the lens, so they never appear in the picture either.</li>
+            <li>The Pi case goes right behind the mount, fan and camera slot facing down, HDMI and USB-C side toward the rear. At 45° the case's lower back edge still clears the Pi case by 6 mm.</li>
+            <li>The ribbon runs back under the Pi case and up into its camera slot, about 5 cm behind the case's front edge. That uses about 9 cm, a little less as the camera tilts down. Fold the rest of the 20 cm ribbon flat under the Pi case and tape it, or fit a 15 cm Raspberry Pi camera cable (15-pin, 1 mm pitch).</li>
+            <li>No slots in your plate's front tab? Two 2.5 mm cable ties through the base's two small slots and around the tab also work, with a strip of foam tape in between. Bolts are stiffer, so the picture shakes less.</li>
+          </ul>
+          <div class="warn">Bolts through the bottom plate: the plate is a circuit board carrying battery voltage. Never drill it, and continuity-test each slot first.</div>
+        </section>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>window.GLYPHS={"0":{"w":0.7934,"shapes":[{"outer":[[0.7676,0.7124],[0.6901,0.8699],[0.6331,0.9268],[0.4865,0.9919],[0.397,1.0],[0.3072,0.9919],[0.1604,0.9268],[0.1033,0.8699],[0.0258,0.7124],[0.0,0.4997],[0.0258,0.2876],[0.1033,0.1301],[0.1604,0.0732],[0.3072,0.0081],[0.397,0.0],[0.4865,0.0081],[0.6331,0.0732],[0.6901,0.1301],[0.7676,0.2876],[0.7934,0.4997]],"holes":[[[0.5343,0.3482],[0.5089,0.2478],[0.4642,0.1926],[0.397,0.1741],[0.3295,0.1926],[0.2845,0.2478],[0.2592,0.3482],[0.2507,0.5017],[0.2592,0.6534],[0.2845,0.7524],[0.3295,0.807],[0.397,0.8253],[0.4646,0.807],[0.5093,0.7524],[0.5344,0.6534],[0.5427,0.5017]]]}]},"10":{"w":1.6274,"shapes":[{"outer":[[0.0058,0.0188],[0.6798,0.0188],[0.6798,0.1905],[0.4602,0.1905],[0.4602,0.9826],[0.2239,0.9826],[0.0,0.9362],[0.0,0.767],[0.2254,0.8135],[0.2254,0.1905],[0.0058,0.1905]],"holes":[]},{"outer":[[1.6016,0.7124],[1.5241,0.8699],[1.467,0.9268],[1.3205,0.9919],[1.231,1.0],[1.1412,0.9919],[0.9943,0.9268],[0.9372,0.8699],[0.8598,0.7124],[0.8339,0.4997],[0.8598,0.2876],[0.9372,0.1301],[0.9943,0.0732],[1.1412,0.0081],[1.231,0.0],[1.3205,0.0081],[1.467,0.0732],[1.5241,0.1301],[1.6016,0.2876],[1.6274,0.4997]],"holes":[[[1.3682,0.3482],[1.3429,0.2478],[1.2981,0.1926],[1.231,0.1741],[1.1635,0.1926],[1.1184,0.2478],[1.0931,0.3482],[1.0847,0.5017],[1.0931,0.6534],[1.1184,0.7524],[1.1635,0.807],[1.231,0.8253],[1.2985,0.807],[1.3433,0.7524],[1.3683,0.6534],[1.3767,0.5017]]]}]},"20":{"w":1.672,"shapes":[{"outer":[[0.4823,0.3822],[0.5903,0.485],[0.6534,0.5646],[0.6839,0.6354],[0.6941,0.7114],[0.6701,0.8327],[0.5982,0.9238],[0.4831,0.9809],[0.3293,1.0],[0.2497,0.9963],[0.1686,0.9853],[0.0861,0.9676],[0.0027,0.9432],[0.0027,0.7315],[0.079,0.7745],[0.1504,0.8054],[0.2168,0.824],[0.2776,0.8302],[0.3457,0.8199],[0.3987,0.7889],[0.4328,0.741],[0.4441,0.6798],[0.4385,0.6368],[0.4216,0.5953],[0.3929,0.5542],[0.3518,0.5121],[0.0,0.2014],[0.0,0.0188],[0.7005,0.0188],[0.7005,0.2014],[0.2764,0.2014]],"holes":[]},{"outer":[[1.6462,0.7124],[1.5687,0.8699],[1.5117,0.9268],[1.3651,0.9919],[1.2756,1.0],[1.1858,0.9919],[1.0389,0.9268],[0.9818,0.8699],[0.9044,0.7124],[0.8786,0.4997],[0.9044,0.2876],[0.9818,0.1301],[1.0389,0.0732],[1.1858,0.0081],[1.2756,0.0],[1.3651,0.0081],[1.5117,0.0732],[1.5687,0.1301],[1.6462,0.2876],[1.672,0.4997]],"holes":[[[1.4128,0.3482],[1.3875,0.2478],[1.3427,0.1926],[1.2756,0.1741],[1.2081,0.1926],[1.1631,0.2478],[1.1377,0.3482],[1.1293,0.5017],[1.1377,0.6534],[1.1631,0.7524],[1.2081,0.807],[1.2756,0.8253],[1.3431,0.807],[1.3879,0.7524],[1.4129,0.6534],[1.4213,0.5017]]]}]},"30":{"w":1.6881,"shapes":[{"outer":[[0.6039,0.5684],[0.659,0.6143],[0.6924,0.6759],[0.7036,0.7527],[0.6802,0.8611],[0.6102,0.9382],[0.4934,0.9846],[0.3293,1.0],[0.2588,0.9974],[0.1872,0.9897],[0.1145,0.9768],[0.0413,0.9587],[0.0413,0.7767],[0.1022,0.7999],[0.1634,0.8166],[0.2244,0.8268],[0.2847,0.8302],[0.3568,0.8226],[0.4105,0.7998],[0.4439,0.7632],[0.4551,0.7141],[0.4436,0.6617],[0.4092,0.6247],[0.3515,0.6027],[0.2698,0.5953],[0.1653,0.5953],[0.1653,0.4352],[0.2646,0.4352],[0.3571,0.4268],[0.4239,0.4014],[0.4643,0.3595],[0.4778,0.3016],[0.4646,0.245],[0.4251,0.2033],[0.3609,0.1777],[0.2737,0.1692],[0.2066,0.1736],[0.1384,0.1869],[0.0695,0.209],[0.0,0.2396],[0.0,0.0479],[0.0733,0.027],[0.1475,0.012],[0.222,0.003],[0.2964,0.0],[0.4816,0.0186],[0.6164,0.0746],[0.6988,0.1663],[0.7263,0.2925],[0.7136,0.3802],[0.6755,0.4509],[0.6131,0.504],[0.5274,0.5385]],"holes":[]},{"outer":[[1.6623,0.7124],[1.5848,0.8699],[1.5278,0.9268],[1.3812,0.9919],[1.2917,1.0],[1.2019,0.9919],[1.0551,0.9268],[0.998,0.8699],[0.9205,0.7124],[0.8947,0.4997],[0.9205,0.2876],[0.998,0.1301],[1.0551,0.0732],[1.2019,0.0081],[1.2917,0.0],[1.3812,0.0081],[1.5278,0.0732],[1.5848,0.1301],[1.6623,0.2876],[1.6881,0.4997]],"holes":[[[1.4289,0.3482],[1.4036,0.2478],[1.3588,0.1926],[1.2917,0.1741],[1.2242,0.1926],[1.1792,0.2478],[1.1538,0.3482],[1.1454,0.5017],[1.1538,0.6534],[1.1792,0.7524],[1.2242,0.807],[1.2917,0.8253],[1.3593,0.807],[1.404,0.7524],[1.429,0.6534],[1.4374,0.5017]]]}]},"40":{"w":1.717,"shapes":[{"outer":[[0.0,0.4074],[0.0,0.1944],[0.4272,0.1944],[0.4272,0.0188],[0.6623,0.0188],[0.6623,0.1944],[0.7996,0.1944],[0.7996,0.3745],[0.6623,0.3745],[0.6623,0.9826],[0.3859,0.9826]],"holes":[[[0.4258,0.3765],[0.1576,0.3765],[0.4258,0.7739]]]},{"outer":[[1.6912,0.7124],[1.6137,0.8699],[1.5567,0.9268],[1.4101,0.9919],[1.3206,1.0],[1.2308,0.9919],[1.084,0.9268],[1.0269,0.8699],[0.9494,0.7124],[0.9236,0.4997],[0.9494,0.2876],[1.0269,0.1301],[1.084,0.0732],[1.2308,0.0081],[1.3206,0.0],[1.4101,0.0081],[1.5567,0.0732],[1.6137,0.1301],[1.6912,0.2876],[1.717,0.4997]],"holes":[[[1.4579,0.3482],[1.4325,0.2478],[1.3878,0.1926],[1.3206,0.1741],[1.2531,0.1926],[1.2081,0.2478],[1.1828,0.3482],[1.1743,0.5017],[1.1828,0.6534],[1.2081,0.7524],[1.2531,0.807],[1.3206,0.8253],[1.3882,0.807],[1.4329,0.7524],[1.458,0.6534],[1.4663,0.5017]]]}]},"45":{"w":1.7177,"shapes":[{"outer":[[0.0,0.4145],[0.0,0.1978],[0.4347,0.1978],[0.4347,0.0191],[0.674,0.0191],[0.674,0.1978],[0.8137,0.1978],[0.8137,0.3811],[0.674,0.3811],[0.674,1.0],[0.3927,1.0]],"holes":[[[0.4333,0.3832],[0.1604,0.3832],[0.4333,0.7876]]]},{"outer":[[1.0181,0.4482],[1.0868,0.4738],[1.1508,0.4917],[1.2108,0.5024],[1.2672,0.506],[1.3493,0.4948],[1.4118,0.4612],[1.4516,0.4084],[1.4648,0.3391],[1.4516,0.2701],[1.4118,0.2172],[1.3493,0.1834],[1.2672,0.1722],[1.2013,0.1779],[1.1314,0.1951],[1.0575,0.2239],[0.9794,0.2642],[0.9794,0.0652],[1.0604,0.0365],[1.1419,0.0162],[1.2241,0.004],[1.3072,0.0],[1.4792,0.0225],[1.609,0.09],[1.6905,0.1973],[1.7177,0.3391],[1.6927,0.4817],[1.6179,0.589],[1.4981,0.6563],[1.3387,0.6788],[1.3077,0.6777],[1.2779,0.6744],[1.2488,0.6692],[1.2199,0.6622],[1.2199,0.814],[1.6469,0.814],[1.6469,1.0],[1.0181,1.0]],"holes":[]}]},"F":{"w":0.6957,"shapes":[{"outer":[[0.0,0.0],[0.2578,0.0],[0.2578,0.4239],[0.6697,0.4239],[0.6697,0.6189],[0.2578,0.6189],[0.2578,0.805],[0.6957,0.805],[0.6957,1.0],[0.0,1.0]],"holes":[]}]}};</script>
+<script>/* Camera Module 3 tilt mount for the JPL F450 (shared by the export script and both web pages).
+ *
+ * Two printed parts:
+ *   case  - holds the Camera Module 3 board (4 x M2 self-tapping screws into posts), with an ear on
+ *           each side for the hinge bolt and a pad with an M3 pilot hole for the angle-lock screw.
+ *   mount - a base plate that bolts under the front tab of the F450 bottom plate (2 x M3 through the
+ *           plate's front slots) and two arms that carry the hinge and a 0-45 degree arc slot with
+ *           raised tick marks.
+ * Coordinates are millimetres. x = right, y = up, z = back (forward is -z), like the drone model.
+ * "head" coordinates: Camera Module 3 board centre at the origin, board front face at z = 0.
+ * "mount" coordinates: the hinge axis through the origin, along x.
+ * Every solid is built as a closed extrusion (a "shell"); a part is the union of its overlapping
+ * shells, which slicers merge on their own. Holes are cut inside each shell's own profile.
+ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory;
+  else root.buildCamMount = factory;
+})(typeof self !== "undefined" ? self : this, function buildCamMount(THREE, GLYPHS, opt) {
+  "use strict";
+  opt = opt || {};
+  var P = {
+    pcbW: 25, pcbH: 24, pcbT: 1.0,
+    holes: [[-10.5, 10.0], [10.5, 10.0], [-10.5, -2.5], [10.5, -2.5]],   // board-centre coords (same pattern as Camera Module 2)
+    lensFront: 9.0, back: 1.6,
+    wall: 1.8, face: 1.8, clr: 0.7,
+    win: { w: 16, h: 16, cy: 2.5 },
+    pivot: [4.0, 7.7],            // hinge axis in head coords (y, z)
+    earR: 5.5, pivotHoleR: 1.65,
+    lock: [4.0, -4.5], lockPilotR: 1.3, lockR: 12.2,
+    padOut: 1.0,                  // pads stand 1.0 mm proud of the side walls
+    armT: 3.5, armGap: 0.1,
+    slotHalf: 1.7, angMin: 0, angMax: 45,
+    baseT: 3.0,
+    seg: 40
+  };
+  P.halfW = P.pcbW / 2 + P.clr + P.wall;     // 15.0
+  P.halfH = P.pcbH / 2 + P.clr + P.wall;     // 14.5
+  P.inX = P.halfW - P.wall;                  // 13.2
+  P.inY = P.halfH - P.wall;                  // 12.7
+  P.zFace = -P.lensFront - P.face + 0.2;     // -10.6, outer face of the front
+  P.zFaceIn = P.zFace + P.face;              // -8.8
+  P.zBack = P.pcbT + P.back;                 // 2.6
+  P.padX = P.halfW + P.padOut;               // 16.0
+  P.armIn = P.padX + P.armGap;               // 16.1
+  P.armOut = P.armIn + P.armT;               // 19.6
+  P.baseHalfX = 22.5;
+  // where the mount sits on the drone: hinge axis 17 mm under the bottom plate, 94 mm ahead of the centre
+  P.pivotDrone = opt.pivotDrone || [0, -17, -94];
+  P.baseTopRel = -P.pivotDrone[1];           // 17: base top face (touches the bottom plate)
+  P.baseBotRel = P.baseTopRel - P.baseT;     // 13
+  P.baseZ = [-22, 15];                       // relative to the hinge (drone z -116 .. -79)
+  P.boltZ = 11.5;                            // drone z -82.5, inside the bottom plate front slots
+  P.boltX = [11.5, 15.5];                    // slotted for small differences between plates
+
+  var V3 = THREE.Vector3;
+  var DEG = Math.PI / 180;
+
+  /* ---------------------------------------------------------------- 2D helpers */
+  function circle(cx, cy, r, n) { n = n || P.seg; var p = []; for (var i = 0; i < n; i++) { var a = i / n * Math.PI * 2; p.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return p; }
+  function rrect(x0, y0, x1, y1, r, n) {
+    n = n || 6; var p = [];
+    var c = [[x1 - r, y1 - r, 0], [x0 + r, y1 - r, 90], [x0 + r, y0 + r, 180], [x1 - r, y0 + r, 270]];
+    c.forEach(function (k) { for (var i = 0; i <= n; i++) { var a = (k[2] + 90 * i / n) * DEG; p.push([k[0] + r * Math.cos(a), k[1] + r * Math.sin(a)]); } });
+    return p;
+  }
+  function stadium(x0, x1, y, r, n) {   // horizontal slot from x0 to x1 (centres), half-width r
+    n = n || 12; var p = [];
+    for (var i = 0; i <= n; i++) { var a = (-90 + 180 * i / n) * DEG; p.push([x1 + r * Math.cos(a), y + r * Math.sin(a)]); }
+    for (var j = 0; j <= n; j++) { var b = (90 + 180 * j / n) * DEG; p.push([x0 + r * Math.cos(b), y + r * Math.sin(b)]); }
+    return p;
+  }
+  function area(p) { var a = 0; for (var i = 0; i < p.length; i++) { var q = p[i], r = p[(i + 1) % p.length]; a += q[0] * r[1] - r[0] * q[1]; } return a / 2; }
+  function shapeOf(outer, holes) {   // outer counter-clockwise, holes clockwise, so ExtrudeGeometry keeps faces outward
+    if (area(outer) < 0) outer = outer.slice().reverse();
+    var s = new THREE.Shape(outer.map(function (q) { return new THREE.Vector2(q[0], q[1]); }));
+    (holes || []).forEach(function (h) { if (area(h) > 0) h = h.slice().reverse(); s.holes.push(new THREE.Path(h.map(function (q) { return new THREE.Vector2(q[0], q[1]); }))); });
+    return s;
+  }
+  /* prism: profile (outer + holes) extruded along an axis between two coordinates.
+     axis "z": profile coords (x, y); "x": (y, z); "y": (z, x). All three are proper rotations, so faces keep pointing outward. */
+  var AX = {
+    z: new THREE.Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
+    x: new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
+    y: new THREE.Matrix4().set(0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1)
+  };
+  function prism(outer, holes, axis, from, to, curveSeg) {
+    var g = new THREE.ExtrudeGeometry(shapeOf(outer, holes), { depth: to - from, bevelEnabled: false, curveSegments: curveSeg || 2 });
+    g.translate(0, 0, from);
+    g.applyMatrix4(AX[axis]);
+    return g;
+  }
+  function box(x0, x1, y0, y1, z0, z1) { return prism([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], null, "z", z0, z1); }
+  function tube(axis, a, b, r, rin, from, to, n) {
+    return prism(circle(a, b, r, n), rin ? [circle(a, b, rin, n).reverse()] : null, axis, from, to);
+  }
+  function glyphShapes(str, h, place) {   // place(gx, gy) -> [a, b] in the prism's profile plane
+    var gl = GLYPHS && GLYPHS[str]; if (!gl) return [];
+    var w = gl.w * h, out = [];
+    gl.shapes.forEach(function (sh) {
+      var map = function (q) { return place(q[0] * h - w / 2, q[1] * h - h / 2); };
+      out.push({ outer: sh.outer.map(map), holes: sh.holes.map(function (hh) { return hh.map(map); }) });
+    });
+    return out;
+  }
+
+  /* ---------------------------------------------------------------- printed part 1: the case (head coords) */
+  function buildCase() {
+    var S = [], hx = P.halfW, hy = P.halfH, ix = P.inX, iy = P.inY, zf = P.zFace, zfi = P.zFaceIn, zb = P.zBack, ov = 0.05;
+    var py = P.pivot[0], pz = P.pivot[1], ly = P.lock[0], lz = P.lock[1];
+    // front face with the lens window
+    var win = rrect(-P.win.w / 2, P.win.cy - P.win.h / 2, P.win.w / 2, P.win.cy + P.win.h / 2, 1.5);
+    S.push(prism(rrect(-hx, -hy, hx, hy, 2.5), [win], "z", zf, zfi));
+    // side walls with the hinge ear (profile in (y, z))
+    var ear = [];
+    ear.push([hy, zfi - ov], [hy, zb], [py + P.earR, pz]);
+    for (var i = 1; i < 24; i++) { var t = i / 24 * Math.PI; ear.push([py + P.earR * Math.cos(t), pz + P.earR * Math.sin(t)]); }
+    ear.push([py - P.earR, pz], [-hy, zb], [-hy, zfi - ov]);
+    var earHoles = [circle(py, pz, P.pivotHoleR, 32), circle(ly, lz, P.lockPilotR, 28)];
+    S.push(prism(ear, earHoles, "x", -hx, -ix + ov));
+    S.push(prism(ear, earHoles, "x", ix - ov, hx));
+    // top wall
+    S.push(prism([[zfi - ov, -ix - ov], [zb, -ix - ov], [zb, ix + ov], [zfi - ov, ix + ov]], null, "y", iy - ov, hy));
+    // bottom wall with the ribbon notch at the back (profile in (z, x))
+    var nx = 8.75, nz = 0.6;
+    S.push(prism([[zfi - ov, -ix - ov], [zb, -ix - ov], [zb, -nx], [nz, -nx], [nz, nx], [zb, nx], [zb, ix + ov], [zfi - ov, ix + ov]], null, "y", -hy, -iy + ov));
+    // board posts with M2 pilot holes
+    P.holes.forEach(function (h) { S.push(tube("z", h[0], h[1], 2.2, 0.9, zfi - ov, 0, 28)); });
+    // lock blocks inside, pads outside (lock and hinge), both sides
+    [-1, 1].forEach(function (s) {
+      var blk = rrect(ly - 3.5, zfi - ov, ly + 3.5, -1.0, 1.0);
+      var x0 = s > 0 ? 10.9 : -ix - ov, x1 = s > 0 ? ix + ov : -10.9;
+      S.push(prism(blk, [circle(ly, lz, P.lockPilotR, 28)], "x", x0, x1));
+      var p0 = s > 0 ? hx - ov : -P.padX, p1 = s > 0 ? P.padX : -hx + ov;
+      S.push(prism(circle(ly, lz, 3.6, 36), [circle(ly, lz, P.lockPilotR, 28)], "x", p0, p1));
+      S.push(prism(circle(py, pz, 4.2, 36), [circle(py, pz, P.pivotHoleR, 32)], "x", p0, p1));
+    });
+    return S;
+  }
+
+  /* ---------------------------------------------------------------- printed part 2: the mount (mount coords) */
+  function pol(R, phi) { return [-R * Math.sin(phi * DEG), -R * Math.cos(phi * DEG)]; }   // (y, z): phi 0 = forward, + = downward
+  function armProfile() {
+    var top = P.baseBotRel + 0.05, R = 24, out = [];
+    var phi0 = Math.asin(-top / R) / DEG;            // where the outer arc meets the top edge (about -33 degrees)
+    out.push([top, 2.0]);
+    var a0 = pol(R, phi0); out.push([top, a0[1]]);
+    for (var k = 1; k <= 30; k++) out.push(pol(R, phi0 + (70 - phi0) * k / 30));
+    var bossR = 7;
+    for (var q = 110; q <= 180.0001; q += 7) out.push(pol(bossR, q));
+    return out;
+  }
+  function slotProfile() {
+    var r0 = P.lockR - P.slotHalf, r1 = P.lockR + P.slotHalf, a = P.angMin, b = P.angMax, pts = [], n = 22, i;
+    for (i = 0; i <= n; i++) pts.push(pol(r0, a + (b - a) * i / n));
+    for (i = 1; i < 12; i++) pts.push(capPoint(b, i, 1));
+    for (i = 0; i <= n; i++) pts.push(pol(r1, b - (b - a) * i / n));
+    for (i = 1; i < 12; i++) pts.push(capPoint(a, i, -1));
+    return pts;
+  }
+  function capPoint(ang, i, side) {   // semicircular end cap of the arc slot at angle ang
+    var c = pol(P.lockR, ang), t = Math.PI * i / 12;
+    // radial unit vector (outward) and tangential unit vector (direction of increasing angle) in (y, z)
+    var rad = [-Math.sin(ang * DEG), -Math.cos(ang * DEG)], tan = [-Math.cos(ang * DEG), Math.sin(ang * DEG)];
+    // side 1 (end at the max angle): go from inner to outer through the far side; side -1: outer to inner through the near side
+    var u = side > 0 ? -Math.cos(t) : Math.cos(t), v = Math.sin(t) * side;
+    return [c[0] + P.slotHalf * (rad[0] * u + tan[0] * v), c[1] + P.slotHalf * (rad[1] * u + tan[1] * v)];
+  }
+  function buildMount() {
+    var S = [], ai = P.armIn, ao = P.armOut, bt = P.baseTopRel, bb = P.baseBotRel, hx = P.baseHalfX;
+    var holes = [circle(0, 0, P.pivotHoleR, 32), slotProfile()];
+    var prof = armProfile();
+    S.push(prism(prof, holes, "x", -ao, -ai));
+    S.push(prism(prof, holes, "x", ai, ao));
+    // base plate (profile in (z, x)) with two slotted M3 holes and two cable-tie slots
+    var z0 = P.baseZ[0], z1 = P.baseZ[1];
+    var bh = [];
+    [-1, 1].forEach(function (s) {
+      var a = P.boltX[0], b = P.boltX[1];
+      var st = stadium(a, b, P.boltZ, 1.7);                 // (x, z) points
+      bh.push(st.map(function (q) { return [q[1], s * q[0]]; }));
+      bh.push(rrect(P.boltZ - 2.5, s * 6 - 1.4, P.boltZ + 2.5, s * 6 + 1.4, 0.6));   // (z, x) already
+    });
+    bh.push(rrect(-16, -10, 3, 10, 2.5));   // lightening window between the arms
+    S.push(prism(rrect(z0, -hx, z1, hx, 3), bh, "y", bb, bt));
+    // outer gussets between the base and each arm (profile in (x, y))
+    [-1, 1].forEach(function (s) {
+      var tri = [[s * (ao - 0.05), bb + 0.05], [s * hx, bb + 0.05], [s * (ao - 0.05), bb - 6]];
+      S.push(prism(tri, null, "z", -19, 0));
+    });
+    // raised ticks and numbers on both arms' outer faces
+    [-1, 1].forEach(function (s) {
+      var x0 = s > 0 ? ao - 0.05 : -ao - 0.6, x1 = s > 0 ? ao + 0.6 : -ao + 0.05;
+      [0, 10, 20, 30, 40, 45].forEach(function (ang) {
+        var long = ang % 20 === 0, r0 = 15.3, r1 = long ? 18.8 : 17.6, hw = 0.4;
+        var rad = [-Math.sin(ang * DEG), -Math.cos(ang * DEG)], tan = [-Math.cos(ang * DEG), Math.sin(ang * DEG)];
+        var q = [[r0, -hw], [r1, -hw], [r1, hw], [r0, hw]].map(function (k) { return [rad[0] * k[0] + tan[0] * k[1], rad[1] * k[0] + tan[1] * k[1]]; });
+        S.push(prism(q, null, "x", x0, x1));
+      });
+      [0, 20, 40].forEach(function (ang) {
+        var c = pol(20.5, ang);
+        // right arm seen from +x: reading direction = -z; left arm seen from -x: reading direction = +z
+        var place = function (gx, gy) { return [c[0] + gy, c[1] - s * gx]; };
+        glyphShapes(String(ang), 3.2, place).forEach(function (g) { S.push(prism(g.outer, g.holes, "x", x0, x1)); });
+      });
+    });
+    return S;
+  }
+
+  /* ---------------------------------------------------------------- visual-only parts */
+  function buildBoard() {   // Camera Module 3, head coords
+    var L = [];
+    var pcb = prism(rrect(-12.5, -12, 12.5, 12, 1.0), P.holes.map(function (h) { return circle(h[0], h[1], 1.1, 20); }), "z", 0, P.pcbT);
+    L.push({ g: pcb, c: 0x1f6b45, r: 0.5, name: "Camera Module 3 board" });
+    P.holes.forEach(function (h) { L.push({ g: tube("z", h[0], h[1], 1.9, 1.1, -0.03, P.pcbT + 0.03, 20), c: 0xc9a54b, r: 0.35, m: 0.7, name: "Camera Module 3 board" }); });
+    L.push({ g: box(-4.6, 4.6, P.win.cy - 4.6, P.win.cy + 4.6, -4.2, 0), c: 0x141616, r: 0.5, name: "Camera Module 3 lens" });
+    L.push({ g: tube("z", 0, P.win.cy, 3.6, 0, -P.lensFront, -4.2, 32), c: 0x1b1d1e, r: 0.35, name: "Camera Module 3 lens" });
+    L.push({ g: tube("z", 0, P.win.cy, 1.9, 0, -P.lensFront - 0.15, -P.lensFront + 0.1, 32), c: 0x2a4a7a, r: 0.08, m: 0.4, name: "Camera Module 3 lens" });
+    L.push({ g: box(-10, 10, -12.2, -8.3, P.pcbT, P.pcbT + 1.5), c: 0x2b2b2b, r: 0.6, name: "Camera Module 3 connector" });
+    L.push({ g: box(-8, 8, -12.4, -11.0, P.pcbT + 1.5, P.pcbT + 1.7), c: 0xd9c9a3, r: 0.6, name: "Camera Module 3 connector" });
+    return L;
+  }
+  function screw(axis, a, b, from, to, headR, headH, shaftR, col, name, nut) {   // socket-head screw from 'from' (under the head) to 'to'
+    var L = [], dir = to > from ? -1 : 1;
+    L.push({ g: tube(axis, a, b, headR, 0, Math.min(from, from + dir * headH), Math.max(from, from + dir * headH), 24), c: col, r: 0.3, m: 0.85, name: name });
+    L.push({ g: tube(axis, a, b, shaftR, 0, Math.min(from, to), Math.max(from, to), 16), c: col, r: 0.35, m: 0.85, name: name });
+    return L;
+  }
+  function hexNut(axis, a, b, from, to, af, col, name) {
+    var r = af / Math.sqrt(3), pts = [];
+    for (var i = 0; i < 6; i++) { var t = (30 + 60 * i) * DEG; pts.push([a + r * Math.cos(t), b + r * Math.sin(t)]); }
+    var hole = circle(a, b, 1.6, 16).reverse();
+    return [{ g: prism(pts, [hole], axis, Math.min(from, to), Math.max(from, to)), c: col, r: 0.3, m: 0.85, name: name }];
+  }
+  function buildCaseHardware() {   // head coords: board screws only (they move with the case)
+    var L = [], steel = 0x9da3a6;
+    P.holes.forEach(function (h) { L = L.concat(screw("z", h[0], h[1], P.pcbT, P.pcbT - 6, 1.9, 1.3, 0.95, steel, "M2 x 6 self-tapping screw")); });
+    return L;
+  }
+  function buildMountHardware(alpha) {   // mount coords: hinge bolt + nut, both lock screws (at the angle), base bolts + nuts
+    var L = [], steel = 0x9da3a6, blk = 0x2b2f31;
+    var ao = P.armOut, w = 0.5;
+    function tag(list, g) { list.forEach(function (o) { o.grp = g; }); return list; }
+    L = L.concat(tag([{ g: tube("x", 0, 0, 3.2, 1.6, ao, ao + w, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "hinge"));
+    L = L.concat(tag(screw("x", 0, 0, ao + w, ao + w - 45, 2.75, 3.0, 1.5, blk, "M3 x 45 hinge bolt"), "hinge"));
+    L = L.concat(tag([{ g: tube("x", 0, 0, 3.2, 1.6, -ao - w, -ao, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "hinge"));
+    L = L.concat(tag(hexNut("x", 0, 0, -ao - w - 4, -ao - w, 5.5, steel, "M3 nyloc nut"), "hinge"));
+    var lp = pol(P.lockR, alpha || 0);
+    [-1, 1].forEach(function (s) {
+      var from = s * ao, to = s * (ao - 8);
+      L = L.concat(tag(screw("x", lp[0], lp[1], from, to, 2.75, 3.0, 1.5, blk, "M3 x 8 lock screw"), s > 0 ? "lockR" : "lockL"));
+    });
+    // base bolts (from above the drone's bottom plate) and nuts under the base
+    [-1, 1].forEach(function (s) {
+      var x = s * 13.5, bt = P.baseTopRel, plate = 1.6;
+      L = L.concat(tag(screw("y", P.boltZ, x, bt + plate + 0.5, bt + plate + 0.5 - 12, 2.75, 3.0, 1.5, blk, "M3 x 12 base bolt"), "base"));
+      L = L.concat(tag([{ g: tube("y", P.boltZ, x, 3.2, 1.6, bt + plate, bt + plate + 0.5, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "base"));
+      L = L.concat(tag(hexNut("y", P.boltZ, x, P.baseBotRel - 4, P.baseBotRel, 5.5, steel, "M3 nyloc nut"), "base"));
+    });
+    return L;
+  }
+
+  /* ---------------------------------------------------------------- transforms */
+  function headToMount(alpha) {   // case/board -> mount coords, tilted alpha degrees nose-down about the hinge
+    var m = new THREE.Matrix4().makeRotationX(-alpha * DEG);
+    m.multiply(new THREE.Matrix4().makeTranslation(0, -P.pivot[0], -P.pivot[1]));
+    return m;
+  }
+  function mountToDrone() { return new THREE.Matrix4().makeTranslation(P.pivotDrone[0], P.pivotDrone[1], P.pivotDrone[2]); }
+  function printCase() { return new THREE.Matrix4().makeTranslation(0, 0, -P.zFace); }                 // front face on the bed
+  function printMount() {                                                                            // base top on the bed, arms up
+    var r = new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
+    return new THREE.Matrix4().makeTranslation(0, 0, P.baseTopRel).multiply(r);
+  }
+  function lockPoint(alpha) { var p = pol(P.lockR, alpha); return new V3(0, p[0], p[1]); }
+  /* ribbon exit point (head coords): bottom notch, behind the board */
+  var ribbonExit = new V3(0, -P.halfH - 0.5, 1.5);
+
+  return {
+    P: P,
+    caseShells: buildCase,
+    mountShells: buildMount,
+    board: buildBoard,
+    caseHardware: buildCaseHardware,
+    mountHardware: buildMountHardware,
+    headToMount: headToMount,
+    mountToDrone: mountToDrone,
+    printCase: printCase,
+    printMount: printMount,
+    lockPoint: lockPoint,
+    ribbonExit: ribbonExit
+  };
+});
+</script>
+<script>/* Small, dependency-free writers for binary STL and GLB (glTF 2.0), plus a closed-mesh check.
+   Works in Node and in the browser with three.js (r147) loaded. */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory;
+  else root.F450Export = factory;
+})(typeof self !== "undefined" ? self : this, function (THREE) {
+  "use strict";
+
+  function srgbToLinear(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+
+  /* geometry -> plain arrays, transformed by an optional Matrix4 */
+  function flatten(geometry, matrix) {
+    var g = geometry.index ? geometry : geometry; // keep index when present
+    var pos = g.getAttribute("position"), nor = g.getAttribute("normal");
+    if (!nor) { g.computeVertexNormals(); nor = g.getAttribute("normal"); }
+    var n = pos.count, P = new Float32Array(n * 3), N = new Float32Array(n * 3);
+    var v = new THREE.Vector3(), nm = matrix ? new THREE.Matrix3().getNormalMatrix(matrix) : null;
+    for (var i = 0; i < n; i++) {
+      v.fromBufferAttribute(pos, i); if (matrix) v.applyMatrix4(matrix);
+      P[i * 3] = v.x; P[i * 3 + 1] = v.y; P[i * 3 + 2] = v.z;
+      v.fromBufferAttribute(nor, i); if (nm) v.applyMatrix3(nm).normalize();
+      N[i * 3] = v.x; N[i * 3 + 1] = v.y; N[i * 3 + 2] = v.z;
+    }
+    var I;
+    if (g.index) { I = new Uint32Array(g.index.count); for (var k = 0; k < I.length; k++) I[k] = g.index.getX(k); }
+    else { I = new Uint32Array(n); for (var j = 0; j < n; j++) I[j] = j; }
+    var det = matrix ? matrix.determinant() : 1;
+    if (det < 0) for (var t = 0; t < I.length; t += 3) { var tmp = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = tmp; }
+    return { P: P, N: N, I: I };
+  }
+
+  /* -------- STL (binary), millimetres */
+  function stl(items, header) {
+    var tris = [];
+    items.forEach(function (it) {
+      var f = flatten(it.geometry, it.matrix);
+      for (var t = 0; t < f.I.length; t += 3) tris.push([f.I[t], f.I[t + 1], f.I[t + 2], f.P]);
+    });
+    var buf = new ArrayBuffer(84 + tris.length * 50), dv = new DataView(buf);
+    var h = (header || "F450 camera mount").slice(0, 79);
+    for (var i = 0; i < h.length; i++) dv.setUint8(i, h.charCodeAt(i) & 127);
+    dv.setUint32(80, tris.length, true);
+    var o = 84, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), nn = new THREE.Vector3();
+    tris.forEach(function (tr) {
+      var P = tr[3];
+      a.set(P[tr[0] * 3], P[tr[0] * 3 + 1], P[tr[0] * 3 + 2]);
+      b.set(P[tr[1] * 3], P[tr[1] * 3 + 1], P[tr[1] * 3 + 2]);
+      c.set(P[tr[2] * 3], P[tr[2] * 3 + 1], P[tr[2] * 3 + 2]);
+      nn.subVectors(c, b).cross(new THREE.Vector3().subVectors(a, b)).normalize();
+      [nn, a, b, c].forEach(function (v) { dv.setFloat32(o, v.x, true); dv.setFloat32(o + 4, v.y, true); dv.setFloat32(o + 8, v.z, true); o += 12; });
+      dv.setUint16(o, 0, true); o += 2;
+    });
+    return buf;
+  }
+
+  /* -------- closed-mesh check for one shell */
+  function checkClosed(geometry, matrix) {
+    var f = flatten(geometry, matrix), key = {}, ids = [], idx = 0;
+    var vid = new Uint32Array(f.P.length / 3);
+    for (var i = 0; i < vid.length; i++) {
+      var k = Math.round(f.P[i * 3] * 1e4) + "," + Math.round(f.P[i * 3 + 1] * 1e4) + "," + Math.round(f.P[i * 3 + 2] * 1e4);
+      if (key[k] === undefined) key[k] = idx++;
+      vid[i] = key[k];
+    }
+    var edges = {}, vol = 0, degenerate = 0;
+    for (var t = 0; t < f.I.length; t += 3) {
+      var A = vid[f.I[t]], B = vid[f.I[t + 1]], C = vid[f.I[t + 2]];
+      if (A === B || B === C || A === C) { degenerate++; continue; }
+      [[A, B], [B, C], [C, A]].forEach(function (e) { var s = e[0] + ">" + e[1]; edges[s] = (edges[s] || 0) + 1; });
+      var p = f.P, ia = f.I[t] * 3, ib = f.I[t + 1] * 3, ic = f.I[t + 2] * 3;
+      vol += (p[ia] * (p[ib + 1] * p[ic + 2] - p[ib + 2] * p[ic + 1]) - p[ia + 1] * (p[ib] * p[ic + 2] - p[ib + 2] * p[ic]) + p[ia + 2] * (p[ib] * p[ic + 1] - p[ib + 1] * p[ic])) / 6;
+    }
+    var bad = 0, dup = 0;
+    Object.keys(edges).forEach(function (s) {
+      var parts = s.split(">"), rev = parts[1] + ">" + parts[0];
+      if (edges[s] > 1) dup++;
+      if (!edges[rev]) bad++;
+    });
+    return { triangles: f.I.length / 3, openEdges: bad, repeatedEdges: dup, degenerate: degenerate, volume: vol };
+  }
+
+  /* -------- GLB (glTF 2.0). items: {name, geometry, matrix?, color (hex sRGB), opacity?, metalness?, roughness?, doubleSided?}
+     opts.scale (default 0.001: mm -> m), opts.frontToPlusZ (default true: the model's -z front faces glTF's +Z) */
+  function glb(items, opts) {
+    opts = opts || {};
+    var scale = opts.scale != null ? opts.scale : 0.001;
+    var json = { asset: { version: "2.0", generator: opts.generator || "JPL F450 exporter" }, scene: 0, scenes: [{ name: opts.sceneName || "F450", nodes: [0] }], nodes: [], meshes: [], materials: [], accessors: [], bufferViews: [], buffers: [] };
+    var chunks = [], byteLen = 0;
+    function addView(typed, target) {
+      var pad = (4 - (byteLen % 4)) % 4;
+      if (pad) { chunks.push(new Uint8Array(pad)); byteLen += pad; }
+      var view = { buffer: 0, byteOffset: byteLen, byteLength: typed.byteLength };
+      if (target) view.target = target;
+      json.bufferViews.push(view);
+      chunks.push(new Uint8Array(typed.buffer, typed.byteOffset, typed.byteLength));
+      byteLen += typed.byteLength;
+      return json.bufferViews.length - 1;
+    }
+    var matKey = {};
+    function material(it) {
+      var col = new THREE.Color(it.color != null ? it.color : 0xcccccc);
+      var op = it.opacity != null ? it.opacity : 1, met = it.metalness || 0, rou = it.roughness != null ? it.roughness : 0.6;
+      var k = [col.getHexString(), op, met, rou, !!it.doubleSided].join("|");
+      if (matKey[k] !== undefined) return matKey[k];
+      var m = { name: it.materialName || ("#" + col.getHexString()), pbrMetallicRoughness: { baseColorFactor: [srgbToLinear(col.r), srgbToLinear(col.g), srgbToLinear(col.b), op], metallicFactor: met, roughnessFactor: rou } };
+      if (op < 1) m.alphaMode = "BLEND";
+      if (it.doubleSided) m.doubleSided = true;
+      json.materials.push(m);
+      matKey[k] = json.materials.length - 1;
+      return matKey[k];
+    }
+    // group by name, then by material
+    var byName = {}, order = [];
+    items.forEach(function (it) {
+      var nm = it.name || "part";
+      if (!byName[nm]) { byName[nm] = {}; order.push(nm); }
+      var mi = material(it);
+      (byName[nm][mi] = byName[nm][mi] || []).push(it);
+    });
+    var root = { name: opts.rootName || "F450", children: [] };
+    if (scale !== 1) root.scale = [scale, scale, scale];
+    if (opts.frontToPlusZ !== false) root.rotation = [0, 1, 0, 0];
+    json.nodes.push(root);
+    order.forEach(function (nm) {
+      var prims = [];
+      Object.keys(byName[nm]).forEach(function (mi) {
+        var list = byName[nm][mi], Ps = [], Ns = [], Is = [], nv = 0, ni = 0;
+        list.forEach(function (it) { var f = flatten(it.geometry, it.matrix); Ps.push(f.P); Ns.push(f.N); Is.push([f.I, nv]); nv += f.P.length / 3; ni += f.I.length; });
+        var P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+        var o = 0; Ps.forEach(function (a, i) { P.set(a, o); N.set(Ns[i], o); o += a.length; });
+        var oi = 0; Is.forEach(function (pair) { var arr = pair[0], base = pair[1]; for (var j = 0; j < arr.length; j++) I[oi++] = arr[j] + base; });
+        var mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+        for (var q = 0; q < nv; q++) for (var d = 0; d < 3; d++) { var val = P[q * 3 + d]; if (val < mn[d]) mn[d] = val; if (val > mx[d]) mx[d] = val; }
+        json.accessors.push({ bufferView: addView(P, 34962), componentType: 5126, count: nv, type: "VEC3", min: mn, max: mx });
+        var pa = json.accessors.length - 1;
+        json.accessors.push({ bufferView: addView(N, 34962), componentType: 5126, count: nv, type: "VEC3" });
+        var na = json.accessors.length - 1;
+        json.accessors.push({ bufferView: addView(I, 34963), componentType: I instanceof Uint32Array ? 5125 : 5123, count: ni, type: "SCALAR" });
+        prims.push({ attributes: { POSITION: pa, NORMAL: na }, indices: json.accessors.length - 1, material: +mi, mode: 4 });
+      });
+      json.meshes.push({ name: nm, primitives: prims });
+      json.nodes.push({ name: nm, mesh: json.meshes.length - 1 });
+      root.children.push(json.nodes.length - 1);
+    });
+    var pad = (4 - (byteLen % 4)) % 4; if (pad) { chunks.push(new Uint8Array(pad)); byteLen += pad; }
+    json.buffers.push({ byteLength: byteLen });
+    var jsonText = JSON.stringify(json);
+    var jsonBytes = typeof TextEncoder !== "undefined" ? new TextEncoder().encode(jsonText) : Buffer.from(jsonText, "utf8");
+    var jpad = (4 - (jsonBytes.length % 4)) % 4;
+    var total = 12 + 8 + jsonBytes.length + jpad + 8 + byteLen;
+    var out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out), off = 0;
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true); off = 12;
+    dv.setUint32(off, jsonBytes.length + jpad, true); dv.setUint32(off + 4, 0x4E4F534A, true); off += 8;
+    u8.set(jsonBytes, off); off += jsonBytes.length; for (var s = 0; s < jpad; s++) u8[off++] = 0x20;
+    dv.setUint32(off, byteLen, true); dv.setUint32(off + 4, 0x004E4942, true); off += 8;
+    chunks.forEach(function (c) { u8.set(c, off); off += c.byteLength; });
+    return out;
+  }
+
+  /* -------- ZIP (stored, no compression) */
+  var CRC = null;
+  function crc32(u8) {
+    if (!CRC) { CRC = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC[n] = c >>> 0; } }
+    var crc = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) crc = CRC[(crc ^ u8[i]) & 255] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function zip(files) {   // files: [{name, data: Uint8Array|ArrayBuffer|string}]
+    var enc = function (s) { return typeof TextEncoder !== "undefined" ? new TextEncoder().encode(s) : new Uint8Array(Buffer.from(s, "utf8")); };
+    var parts = [], central = [], offset = 0;
+    files.forEach(function (f) {
+      var data = typeof f.data === "string" ? enc(f.data) : new Uint8Array(f.data.buffer ? f.data.buffer : f.data, f.data.byteOffset || 0, f.data.byteLength);
+      var name = enc(f.name), crc = crc32(data);
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, 0, true); lh.setUint16(12, 0x5A21, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), name, data);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+      ch.setUint16(12, 0, true); ch.setUint16(14, 0x5A21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+      ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    var cdSize = central.reduce(function (s, a) { return s + a.length; }, 0);
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    var all = parts.concat(central, [new Uint8Array(end.buffer)]);
+    var total = all.reduce(function (s, a) { return s + a.length; }, 0), out = new Uint8Array(total), o = 0;
+    all.forEach(function (a) { out.set(a, o); o += a.length; });
+    return out;
+  }
+
+  return { stl: stl, glb: glb, zip: zip, checkClosed: checkClosed, flatten: flatten };
+});
+</script>
+<script>
+(function () {
+"use strict";
+var HORIZON = [
+  [0, "bench, straight ahead"], [10, "fast forward flight"], [15, "everyday flying"], [20, "hover, more ground"],
+  [30, "looking at the ground ahead"], [45, "looking down"]
+];
+var VFOV = {std: 41, wide: 67}, HFOV = {std: 66, wide: 102};
+function horizonText(t, lens) {
+  var r = Math.tan(t * Math.PI / 180) / Math.tan(VFOV[lens] / 2 * Math.PI / 180);
+  if (r >= 1) return "above";
+  return Math.round((0.5 - r / 2) * 100) + "% down";
+}
+(function fillTable() {
+  var tb = document.getElementById("horizon"), html = "";
+  HORIZON.forEach(function (h) { html += "<tr><td class=\"num\">" + h[0] + "°</td><td>" + h[1] + "</td><td class=\"num\">" + horizonText(h[0], "std") + "</td><td class=\"num\">" + horizonText(h[0], "wide") + "</td></tr>"; });
+  tb.innerHTML = html;
+})();
+
+var tiltEl = document.getElementById("tilt"), tiltOut = document.getElementById("tilt-out"), tiltNote = document.getElementById("tilt-note");
+var state = {tilt: 15, board: true, hw: true, plate: true, ribbon: true, fov: false, explode: false, lens: "std", view: "iso"};
+function noteText() {
+  var h = horizonText(state.tilt, state.lens);
+  return h === "above" ? "horizon above the picture (" + (state.lens === "std" ? "standard" : "wide") + " lens)" : "horizon " + h.replace(" down", "") + " from the top";
+}
+function tiltLabel() { tiltOut.textContent = state.tilt + "° down"; tiltNote.textContent = noteText(); }
+tiltLabel();
+
+var view = document.getElementById("view"), canvas = document.getElementById("cv");
+var hasGL = false;
+try { var t = document.createElement("canvas"); hasGL = !!(window.WebGLRenderingContext && (t.getContext("webgl") || t.getContext("experimental-webgl"))); } catch (e) {}
+var ok3d = typeof THREE !== "undefined" && THREE.OrbitControls && hasGL && typeof buildCamMount === "function";
+
+/* ---------- download (works with or without the 3D view) */
+var M = (typeof THREE !== "undefined" && typeof buildCamMount === "function") ? buildCamMount(THREE, window.GLYPHS) : null;
+var EX = (typeof THREE !== "undefined" && typeof F450Export === "function") ? F450Export(THREE) : null;
+var dlBtn = document.getElementById("dlbtn"), dlNote = document.getElementById("dlnote");
+var README = [
+  "JPL Innovation - F450 4G quad - Camera Module 3 tilt mount",
+  "",
+  "Files",
+  "  cam3-case.stl         holds the Camera Module 3 board. Print it on its front face.",
+  "  cam3-mount.stl        bolts under the F450 bottom plate. Print it on the top of its base, arms up, 5 mm brim.",
+  "  cam3-tilt-mount.glb   the assembled mount (for viewing; glTF binary, metres).",
+  "Units: millimetres. The STL files are made of overlapping closed solids; slicers join them.",
+  "",
+  "Print: PETG, 0.4 mm nozzle, 0.2 mm layers, 4 walls, 40 % gyroid infill, no supports.",
+  "",
+  "Hardware: 1 x M3x45 bolt (hinge), 3 x M3 nyloc nut, 2 x M3x8 screw (angle lock),",
+  "          2 x M3x12 bolt (base to plate), 4 x M3 washer, 4 x M2x6 self-tapping screw (board).",
+  "",
+  "Holes: hinge 3.3 mm (clearance), lock 2.6 mm (M3 cuts its thread), board posts 1.8 mm (M2 self-tapping),",
+  "       base slots 3.4 mm wide, bolt centres 23-31 mm apart.",
+  "",
+  "Tilt: 0-45 degrees down. Ticks every 10 degrees, numbers at 0, 20, 40; the last short tick is 45.",
+  "Loosen both lock screws, tilt, tighten the lock screws, then the hinge nut.",
+  "",
+  "Guide: https://jpl-innovation.github.io/work/drone/build-guide/"
+].join("\n");
+function buildZip() {
+  var caseItems = M.caseShells().map(function (g) { return {geometry: g, matrix: M.printCase()}; });
+  var mountItems = M.mountShells().map(function (g) { return {geometry: g, matrix: M.printMount()}; });
+  var files = [
+    {name: "cam3-case.stl", data: new Uint8Array(EX.stl(caseItems, "JPL F450 - Camera Module 3 case - mm"))},
+    {name: "cam3-mount.stl", data: new Uint8Array(EX.stl(mountItems, "JPL F450 - Camera Module 3 tilt mount - mm"))},
+    {name: "cam3-tilt-mount.glb", data: new Uint8Array(EX.glb(assemblyItems(state.tilt), {sceneName: "Camera Module 3 tilt mount", rootName: "CM3 tilt mount", generator: "JPL F450 camera mount"}))},
+    {name: "README.txt", data: README}
+  ];
+  return EX.zip(files);
+}
+function assemblyItems(alpha) {
+  var items = [], hm = M.headToMount(alpha);
+  M.caseShells().forEach(function (g) { items.push({name: "Camera case (printed)", geometry: g, matrix: hm, color: 0x2a2e2d, roughness: 0.62}); });
+  M.mountShells().forEach(function (g) { items.push({name: "Tilt mount (printed)", geometry: g, color: 0x3b4140, roughness: 0.6}); });
+  M.board().forEach(function (o) { items.push({name: o.name, geometry: o.g, matrix: hm, color: o.c, roughness: o.r, metalness: o.m || 0}); });
+  M.caseHardware().forEach(function (o) { items.push({name: o.name, geometry: o.g, matrix: hm, color: o.c, roughness: o.r, metalness: o.m || 0}); });
+  M.mountHardware(alpha).forEach(function (o) { items.push({name: o.name, geometry: o.g, color: o.c, roughness: o.r, metalness: o.m || 0}); });
+  return items;
+}
+var downloads = null;
+if (!M || !EX) { dlBtn.disabled = true; dlNote.textContent = "The file builder didn't load in this view. Ask Claude in the chat for the files."; }
+else if (window.claude && typeof window.claude.use === "function") {
+  dlBtn.disabled = true; dlNote.textContent = "Checking whether downloads work here…";
+  window.claude.use("downloads").then(function (d) {
+    downloads = d;
+    if (d) { dlBtn.disabled = false; dlNote.textContent = "Two STL files to print (millimetres, already in print orientation), a GLB of the assembled mount at the tilt shown, and a README."; }
+    else { dlNote.textContent = "Downloads aren't available in this view. Ask Claude in the chat for the files."; }
+  }, function () { dlNote.textContent = "Downloads aren't available in this view. Ask Claude in the chat for the files."; });
+} else { dlBtn.disabled = true; dlNote.textContent = "Downloads work when this page is opened in Claude. Ask Claude in the chat for the files."; }
+dlBtn.addEventListener("click", function () {
+  if (!downloads) return;
+  dlBtn.disabled = true; dlNote.textContent = "Building the files…";
+  setTimeout(function () {
+    var data;
+    try { data = buildZip(); } catch (e) { dlBtn.disabled = false; dlNote.textContent = "Couldn't build the files here. Ask Claude in the chat for them."; return; }
+    downloads.save({filename: "f450-cam3-tilt-mount.zip", data: new Blob([data], {type: "application/zip"})}).then(function () {
+      dlBtn.disabled = false; dlNote.textContent = "Saved: f450-cam3-tilt-mount.zip (" + Math.round(data.length / 1024) + " KB).";
+    }, function (err) {
+      dlBtn.disabled = false;
+      var c = err && err.code;
+      dlNote.textContent = c === "declined" ? "Download cancelled." : c === "rate_limited" ? "Another download prompt is open. Try again in a moment." : "The download didn't go through here. Ask Claude in the chat for the files.";
+    });
+  }, 30);
+});
+
+if (!ok3d) {
+  document.getElementById("fallback").hidden = false;
+  document.getElementById("hint").hidden = true;
+  document.getElementById("views").parentNode.hidden = true;
+  tiltEl.addEventListener("input", function () { state.tilt = +tiltEl.value; tiltLabel(); });
+  return;
+}
+
+/* ---------- scene */
+var V3 = THREE.Vector3, DEG = Math.PI / 180, P = M.P;
+var renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true, alpha: true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setClearColor(0x000000, 0);
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera(32, 1, 2, 4000);
+var controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.dampingFactor = 0.09; controls.minDistance = 50; controls.maxDistance = 900;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8d948f, 0.85));
+var sun = new THREE.DirectionalLight(0xffffff, 0.9); sun.position.set(160, 260, 120); scene.add(sun);
+var fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-200, 60, -160); scene.add(fill);
+var rim = new THREE.DirectionalLight(0xdfeee8, 0.3); rim.position.set(-60, -120, 220); scene.add(rim);
+
+function mat(c, o) { o = o || {}; return new THREE.MeshStandardMaterial({color: c, roughness: o.r != null ? o.r : 0.6, metalness: o.m || 0, transparent: !!o.op, opacity: o.op || 1, side: o.ds ? THREE.DoubleSide : THREE.FrontSide, depthWrite: o.op ? o.op > 0.5 : true}); }
+var assembly = new THREE.Group(); scene.add(assembly);
+var mountG = new THREE.Group(), caseG = new THREE.Group(), boardG = new THREE.Group(), caseHwG = new THREE.Group();
+var hingeG = new THREE.Group(), lockG = new THREE.Group(), baseHwG = new THREE.Group(), plateG = new THREE.Group(), ribbonG = new THREE.Group(), fovG = new THREE.Group();
+var tiltG = new THREE.Group(); tiltG.matrixAutoUpdate = false;
+assembly.add(mountG, tiltG, hingeG, lockG, baseHwG, plateG, ribbonG);
+tiltG.add(caseG, boardG, caseHwG, fovG);
+var caseMat = mat(0x2a2e2d, {r: 0.62}), mountMat = mat(0x3b4140, {r: 0.6});
+M.caseShells().forEach(function (g) { caseG.add(new THREE.Mesh(g, caseMat)); });
+M.mountShells().forEach(function (g) { mountG.add(new THREE.Mesh(g, mountMat)); });
+M.board().forEach(function (o) { boardG.add(new THREE.Mesh(o.g, mat(o.c, {r: o.r, m: o.m}))); });
+M.caseHardware().forEach(function (o) { caseHwG.add(new THREE.Mesh(o.g, mat(o.c, {r: o.r, m: o.m}))); });
+var lockL = new THREE.Group(), lockR = new THREE.Group(); lockG.add(lockL, lockR);
+M.mountHardware(0).forEach(function (o) {
+  var m = new THREE.Mesh(o.g, mat(o.c, {r: o.r, m: o.m}));
+  if (o.grp === "hinge") hingeG.add(m); else if (o.grp === "lockL") lockL.add(m); else if (o.grp === "lockR") lockR.add(m); else baseHwG.add(m);
+});
+/* F450 bottom plate, front tab (mount coordinates: drone y 0..1.6 -> 17..18.6, drone z +94) */
+(function plate() {
+  var pd = P.pivotDrone, dz = -pd[2], y0 = -pd[1];
+  var pts = [[-26, -90], [26, -90], [32, -84], [32, -56], [42, -56], [56, -42], [56, -20], [-56, -20], [-56, -42], [-42, -56], [-32, -56], [-32, -84]];
+  var s = new THREE.Shape(pts.map(function (p) { return new THREE.Vector2(p[0], p[1] + dz); }));
+  [[-15, -74], [15, -74]].forEach(function (c) {
+    var h = new THREE.Path(), x0 = c[0] - 3, x1 = c[0] + 3, z0 = c[1] - 11 + dz, z1 = c[1] + 11 + dz;
+    h.moveTo(x0, z0 + 3); h.absarc(c[0], z0 + 3, 3, Math.PI, 0, false); h.lineTo(x1, z1 - 3); h.absarc(c[0], z1 - 3, 3, 0, Math.PI, false); h.lineTo(x0, z0 + 3);
+    s.holes.push(h);
+  });
+  var g = new THREE.ExtrudeGeometry(s, {depth: 1.6, bevelEnabled: false, curveSegments: 8});
+  g.rotateX(Math.PI / 2); g.translate(0, y0 + 1.6, 0);
+  plateG.add(new THREE.Mesh(g, mat(0x1d2925, {r: 0.5, op: 0.82})));
+  var edge = new THREE.LineSegments(new THREE.EdgesGeometry(g, 30), new THREE.LineBasicMaterial({color: 0xc9a54b}));
+  plateG.add(edge);
+})();
+/* the front of the Pi 4 case, right behind the mount (drone z -78..-10, y -6..-36) */
+(function piGhost() {
+  var pd = P.pivotDrone, g = new THREE.BoxGeometry(97, 30, 68);
+  var m = new THREE.Mesh(g, mat(0x5b6461, {r: 0.6, op: 0.14}));
+  m.position.set(0, -21 - pd[1], -44 - pd[2]);
+  var e = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({color: 0x7d8a84, transparent: true, opacity: 0.6}));
+  e.position.copy(m.position);
+  plateG.add(m, e);
+})();
+/* field-of-view pyramid on the lens axis */
+function makeFov() {
+  while (fovG.children.length) { var c = fovG.children.pop(); c.geometry.dispose(); }
+  var L = 220, h = Math.tan(HFOV[state.lens] / 2 * DEG) * L, v = Math.tan(VFOV[state.lens] / 2 * DEG) * L;
+  var o = new V3(0, P.win.cy, -P.lensFront), corners = [[-h, -v], [h, -v], [h, v], [-h, v]].map(function (q) { return new V3(q[0], P.win.cy + q[1], -P.lensFront - L); });
+  var pos = [];
+  for (var i = 0; i < 4; i++) { var a = corners[i], b = corners[(i + 1) % 4]; pos.push(o.x, o.y, o.z, a.x, a.y, a.z, b.x, b.y, b.z); }
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+  fovG.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial({color: 0x2563eb, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false})));
+  var lp = []; corners.forEach(function (c) { lp.push(o.x, o.y, o.z, c.x, c.y, c.z); });
+  for (var j = 0; j < 4; j++) { var p = corners[j], q = corners[(j + 1) % 4]; lp.push(p.x, p.y, p.z, q.x, q.y, q.z); }
+  var lg = new THREE.BufferGeometry(); lg.setAttribute("position", new THREE.Float32BufferAttribute(lp, 3));
+  fovG.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color: 0x2563eb, transparent: true, opacity: 0.55})));
+}
+makeFov();
+/* ribbon: a flat strip from the case's bottom notch back toward the Pi's camera connector */
+var ribbonMat = mat(0xe9e7df, {r: 0.7, ds: true}), stiffMat = mat(0x2f6fd6, {r: 0.5, ds: true});
+var piSlot = new V3(-2.5, -19, 66.5);   // mount coords: the camera slot under the Pi case, 50 mm behind its front edge (drone -2.5, -36, -27.5)
+function strip(pts, w, material) {
+  var pos = [], idx = [];
+  pts.forEach(function (p, i) { pos.push(-w / 2, p.y, p.z, w / 2, p.y, p.z); if (i) { var k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); } });
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return new THREE.Mesh(g, material);
+}
+function buildRibbon(ex) {
+  while (ribbonG.children.length) { var c = ribbonG.children.pop(); c.geometry.dispose(); }
+  var h = M.headToMount(state.tilt).premultiply(new THREE.Matrix4().makeTranslation(0, -ex * 10, -ex * 24));
+  var a = M.ribbonExit.clone().applyMatrix4(h), a2 = new V3(0, M.ribbonExit.y - 5, M.ribbonExit.z).applyMatrix4(h);
+  var low = Math.min(a2.y, piSlot.y) - 4;
+  var curve = new THREE.CatmullRomCurve3([a, a2, new V3(0, low, a2.z + 8), new V3(0, low, piSlot.z - 10), new V3(0, piSlot.y - 1.5, piSlot.z - 2), piSlot], false, "centripetal");
+  var pts = curve.getSpacedPoints(60);
+  ribbonG.add(strip(pts, 16, ribbonMat));
+  var end = curve.getSpacedPoints(60).slice(-5).map(function (p) { return p.clone().add(new V3(0, -0.15, 0)); });
+  ribbonG.add(strip(end, 16, stiffMat));
+}
+
+/* ---------- state -> scene */
+function applyTilt() {
+  var ex = state.explode ? 1 : 0;
+  var h = M.headToMount(state.tilt);
+  var off = new THREE.Matrix4().makeTranslation(0, -ex * 10, -ex * 24);
+  tiltG.matrix.copy(off.multiply(h)); tiltG.matrixWorldNeedsUpdate = true;
+  boardG.position.set(0, 0, ex * 20); caseHwG.position.set(0, 0, ex * 34);
+  lockL.rotation.x = -state.tilt * DEG; lockR.rotation.x = -state.tilt * DEG;
+  lockL.position.set(-ex * 16, 0, 0); lockR.position.set(ex * 16, 0, 0);
+  hingeG.position.set(ex * 36, 0, 0);
+  baseHwG.position.set(0, ex * 16, 0); plateG.position.set(0, ex * 10, 0);
+  buildRibbon(ex);
+  tiltLabel(); needs = true;
+}
+function applyVis() {
+  boardG.visible = state.board; caseHwG.visible = state.hw; hingeG.visible = lockG.visible = baseHwG.visible = state.hw;
+  plateG.visible = state.plate && state.view !== "print"; ribbonG.visible = state.ribbon && state.board; fovG.visible = state.fov;
+  needs = true;
+}
+/* print layout: both parts as they lie on the bed */
+var printG = new THREE.Group(); scene.add(printG); printG.visible = false;
+(function () {
+  var bedMat = mat(0x8e9a94, {r: 0.9, op: 0.35});
+  var bed = new THREE.Mesh(new THREE.BoxGeometry(150, 1, 90), bedMat); bed.position.set(0, -0.5, 0); printG.add(bed);
+  var toBed = new THREE.Matrix4().makeRotationX(-Math.PI / 2);
+  M.caseShells().forEach(function (g) { var m = new THREE.Mesh(g, caseMat); m.matrixAutoUpdate = false; m.matrix.copy(new THREE.Matrix4().makeTranslation(-32, 0, 0).multiply(toBed).multiply(M.printCase())); printG.add(m); });
+  M.mountShells().forEach(function (g) { var m = new THREE.Mesh(g, mountMat); m.matrixAutoUpdate = false; m.matrix.copy(new THREE.Matrix4().makeTranslation(30, 0, 0).multiply(toBed).multiply(M.printMount())); printG.add(m); });
+})();
+
+var VIEWS = {
+  iso: {pos: [1.0, 0.55, -1.1], t: [0, -1, -6], r: 40},
+  side: {pos: [1, 0.03, 0], t: [0, -2, -4], r: 38},
+  front: {pos: [0.18, 0.06, -1], t: [0, -2, -4], r: 34},
+  back: {pos: [0.45, 0.4, 1], t: [0, 0, 4], r: 40},
+  print: {pos: [0.5, 0.9, 1.0], t: [0, 12, 0], r: 62}
+};
+var fly = null, needs = true;
+function goView(name, instant) {
+  state.view = name;
+  var v = VIEWS[name], tgt = new V3(v.t[0], v.t[1], v.t[2]);
+  var vf = camera.fov * DEG, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect), half = Math.min(vf, hf) / 2;
+  var d = (v.r || 42) / Math.sin(half) * 1.04;
+  var pos = new V3(v.pos[0], v.pos[1], v.pos[2]).normalize().multiplyScalar(d).add(tgt);
+  assembly.visible = name !== "print"; printG.visible = name === "print";
+  document.getElementById("tiltbox").hidden = name === "print";
+  applyVis();
+  if (instant || matchMedia("(prefers-reduced-motion: reduce)").matches) { camera.position.copy(pos); controls.target.copy(tgt); controls.update(); needs = true; }
+  else fly = {p0: camera.position.clone(), t0: controls.target.clone(), p1: pos, t1: tgt, s: performance.now(), dur: 600};
+  document.querySelectorAll("#views button").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.view === name ? "true" : "false"); });
+}
+document.getElementById("views").addEventListener("click", function (e) { var b = e.target.closest("button"); if (b) goView(b.dataset.view); });
+document.getElementById("toggles").addEventListener("click", function (e) {
+  var b = e.target.closest(".chip"); if (!b) return;
+  var k = b.dataset.t; state[k] = !state[k]; b.setAttribute("aria-pressed", state[k] ? "true" : "false");
+  if (k === "explode") applyTilt(); applyVis();
+});
+document.getElementById("lens").addEventListener("click", function (e) {
+  var b = e.target.closest("button"); if (!b) return;
+  state.lens = b.dataset.lens;
+  document.querySelectorAll("#lens button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+  makeFov(); tiltLabel(); needs = true;
+});
+var tiltPending = false;
+tiltEl.addEventListener("input", function () {
+  state.tilt = +tiltEl.value; tiltLabel();
+  if (!tiltPending) { tiltPending = true; requestAnimationFrame(function () { tiltPending = false; applyTilt(); }); }
+});
+controls.addEventListener("change", function () { needs = true; });
+controls.addEventListener("start", function () { fly = null; });
+
+function resize() {
+  var w = view.clientWidth, h = view.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); needs = true;
+}
+new ResizeObserver(resize).observe(view);
+resize();
+applyTilt(); applyVis(); goView("iso", true);
+function frame(now) {
+  requestAnimationFrame(frame);
+  if (fly) {
+    var k = Math.min(1, (now - fly.s) / fly.dur), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e);
+    if (k >= 1) fly = null; needs = true;
+  }
+  if (controls.update()) needs = true;
+  if (!needs) return; needs = false;
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(frame);
+window.__mount = {state: state, goView: goView, applyTilt: applyTilt, applyVis: applyVis, tiltEl: tiltEl, buildZip: buildZip};
+})();
+</script>
+
+</body></html>

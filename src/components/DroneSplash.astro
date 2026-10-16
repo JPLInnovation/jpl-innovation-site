@@ -1,7 +1,7 @@
 ---
 /**
  * Drone page intro (5.6 s; 1.9 s on a refresh): the F450 flies in over a dusk horizon and brakes into a hover facing
- * the camera, the camera dives into its webcam's lens and comes out as the drone's own live 4G view, with its
+ * the camera, the camera dives into the drone's camera lens and comes out as the drone's own live 4G view, with its
  * on-screen display, the feed switches off into a dot of light, and the dot opens into the JPL Innovation logo,
  * whose badge then flies into the navbar logo.
  * Plays like the FRC intro: on a first entry, faster on a refresh, and when you click through to the page (full the
@@ -10,10 +10,11 @@
  *   Turn it off: remove the DroneSplash line in src/layouts/BaseLayout.astro.
  *   Artwork:     src/assets/intro/drone-footage.webp, drone-sky.webp (scripts/build-drone-intro.mjs); the logo,
  *                jpl-stacked.svg and jpl-badge.svg (scripts/build-stacked-logo.mjs); the drone is the page's own 3D
- *                model (src/lib/three/models/drone.ts)
+ *                model (src/lib/three/models/drone.ts, from f450-cad.bin)
  *   HUD text:    src/text/projects/drone.ts (droneIntro)
  *   Animation:   src/scripts/drone-splash.ts; shared overlay/engine: SplashShell.astro, src/scripts/splash-core.ts
  */
+import cadUrl from "@/lib/three/models/f450-cad.bin?url";
 import footageUrl from "@/assets/intro/drone-footage.webp?url";
 import skyUri from "@/assets/intro/drone-sky.webp?inline";
 import badgeSvg from "@/assets/intro/jpl-badge.svg?raw";
@@ -35,6 +36,9 @@ const pct = (v: number, of: number) => `${((v / of) * 100).toFixed(3)}%`;
 const badgeBox = `left:${pct(ring.cx - BADGE.half * k - vx, vw)};top:${pct(ring.cy - BADGE.half * k - vy, vh)};width:${pct(2 * BADGE.half * k, vw)};height:${pct(2 * BADGE.half * k, vh)}`;
 const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" aria-hidden="true" focusable="false">${letters}</svg>`;
 ---
+
+<!-- Start fetching the drone model now: the script that flies it needs it a moment later. -->
+<link rel="preload" as="fetch" href={cadUrl} crossorigin="anonymous" />
 
 <SplashShell kind="drone">
 	<!-- 1. The flight: a far, soft dusk sky (inlined, so it's there in the first frame) and the 3D drone. -->

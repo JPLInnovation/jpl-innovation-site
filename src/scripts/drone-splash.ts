@@ -7,7 +7,7 @@
  *
  *   0.0–1.4  the F450 (the drone page's own 3D model) flies in from the far left over a dusk horizon, banking as it
  *            turns toward the camera, flares nose-up to brake and settles into a hover facing it.
- *   1.3–2.0  the camera dives at the drone's webcam and into its lens, until the glass fills the screen.
+ *   1.3–2.0  the camera dives at the drone's camera and into its lens, until the glass fills the screen.
  *   2.0–3.6  out through the lens as the drone's own view: a burst of static, then the live feed (pushing slowly
  *            forward, film grain, scanlines) and its on-screen display booting: REC with a running timecode, the 4G
  *            link going from WEAK to GOOD, the battery, speed and a climbing altitude, crosshair and horizon brackets.
@@ -20,9 +20,9 @@
  * (window.__splash.seek) all follow it; it's freed as soon as the lens fills the screen. The rest is transform and
  * opacity animations.
  */
-import { DirectionalLight, HemisphereLight, type Material, type Mesh, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
+import { DirectionalLight, Group, HemisphereLight, type Material, type Mesh, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
 import { markSeen } from "@/lib/splash";
-import { buildDrone } from "@/lib/three/models/drone";
+import { type DroneRig, loadDrone } from "@/lib/three/models/drone";
 import { E, flip, onScreen, runSplash, type SplashContext } from "./splash-core";
 
 const FAST_RATE = 3; // refresh version: 5.6 s → 1.9 s
@@ -103,7 +103,9 @@ function noiseTile() {
 
 /**
  * The 3D flight: the drone, a camera that follows it a little and then dives into its lens, and the sky behind
- * them panning the opposite way. Built and drawn once before the timeline starts, so the first frame is ready.
+ * them panning the opposite way. The scene is drawn once before the timeline starts, so the first frame is ready; the
+ * drone itself (f450-cad.bin, about 450 KB) joins as soon as it has loaded, so on a slow connection it appears
+ * partway along its flight instead of holding the intro up.
  */
 function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 	let renderer: WebGLRenderer;
@@ -125,10 +127,20 @@ function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 	scene.add(key, rim);
 	const aspect = innerWidth / innerHeight;
 	const camera = new PerspectiveCamera(FOV, aspect, 0.002, 60);
-	const rig = buildDrone();
-	const drone = rig.model;
+	const drone = new Group(); // placed and turned every frame; the model goes inside it once loaded
 	drone.rotation.order = "YXZ"; // heading, then pitch, then bank
 	scene.add(drone);
+	let rig: DroneRig | undefined;
+	let freed = false;
+	loadDrone().then(
+		(loaded) => {
+			if (freed) return;
+			rig = loaded;
+			drone.add(loaded.model);
+			renderer.compile(scene, camera); // build the shaders now, not in the middle of a frame
+		},
+		() => {}, // no model: the sky and the rest of the intro still play
+	);
 
 	// On a narrow (phone) screen the whole flight happens further away, so the hovering drone still fits across it,
 	// and the camera turns further toward the drone, so it's in the frame sooner. The camera starts looking straight
@@ -170,13 +182,18 @@ function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 			camera.lookAt(flightAim(aim));
 		} else {
 			// Into the lens: a curve that ends straight down the lens's axis, speeding up all the way.
-			rig.lens.getWorldPosition(lensAt);
-			rig.lens.getWorldDirection(lensDir);
+			if (rig) {
+				rig.lens.getWorldPosition(lensAt);
+				rig.lens.getWorldDirection(lensDir);
+			} else {
+				lensAt.copy(drone.position);
+				lensDir.set(0, 0, 1);
+			}
 			const u = clamp01((t - DIVE) / (LENS - DIVE));
 			const e = u ** 2.4;
 			handheld(DIVE, start);
 			via.copy(lensAt).addScaledVector(lensDir, 0.42 * s);
-			end.copy(lensAt).addScaledVector(lensDir, 0.011);
+			end.copy(lensAt).addScaledVector(lensDir, 0.004); // the lens glass is 4 mm across, so this close it fills the screen
 			camera.position.set(0, 0, 0).addScaledVector(start, (1 - e) ** 2).addScaledVector(via, 2 * (1 - e) * e).addScaledVector(end, e * e);
 			camera.fov = FOV + 8 * e;
 			const look = flightAim(aim).lerp(lensAt, smooth(u / 0.55));
@@ -197,7 +214,7 @@ function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 	let last = 0;
 	const draw = (t: number, playing: boolean) => {
 		pose(t);
-		rig.animate(t, playing ? Math.max(0, t - last) : 0);
+		rig?.animate(t, playing ? Math.max(0, t - last) : 0);
 		last = t;
 		renderer.render(scene, camera);
 	};
@@ -206,9 +223,10 @@ function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 	renderer.compile(scene, camera);
 	draw(0, false);
 
-	let freed = false;
 	return {
 		draw,
+		/** Dev seeks past the flight leave the last frame on the canvas; playback frees the canvas instead. */
+		blank: () => renderer.clear(),
 		free() {
 			if (freed) return;
 			freed = true;
@@ -507,7 +525,8 @@ function play(ctx: SplashContext) {
 		const paused = clock.playState === "paused"; // a dev seek
 		if (flight) {
 			if (t <= FLIGHT_END) flight.draw(t, !paused);
-			else if (!paused) flight.free();
+			else if (paused) flight.blank();
+			else flight.free();
 		}
 		hud(t);
 		if (t >= OFF && !paused) return;
