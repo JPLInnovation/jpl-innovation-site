@@ -5,7 +5,7 @@ img_alt: Illustration of the F450 quadcopter seen from above
 badge: Build in progress
 description: |
   A quadcopter on the classic F450 frame that streams live video over 4G — Raspberry Pi 4,
-  a USB webcam, and a MicoAir H743 flight controller.
+  a Camera Module 3 on a printed tilt mount, and a MicoAir H743 flight controller.
 order: 1
 ---
 

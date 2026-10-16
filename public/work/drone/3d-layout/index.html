@@ -1,4 +1,5 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>F450 3D Layout | JPL Innovation</title><meta name="description" content="Interactive 3D model of JPL Innovation's F450 4G drone: every part and wire from the build guide in place, with the layers pulled apart and the power path on its own."><link rel="canonical" href="https://jpl-innovation.github.io/work/drone/3d-layout/"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>F450 3D Layout | JPL Innovation</title><meta name="description" content="Interactive 3D model of JPL Innovation's F450 4G drone: every part and wire from the build guide in place, a camera-tilt slider, and a download of the whole quad as a GLB plus the STL files to print."><link rel="canonical" href="https://jpl-innovation.github.io/work/drone/3d-layout/"><link rel="icon" href="/favicon.png" type="image/png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><script>/* The page saves its files through Claude's runtime (window.claude); here, an ordinary browser download does the same. */
+if(!window.claude)window.claude={use:function(n){return Promise.resolve(n==="downloads"?{save:function(o){var u=URL.createObjectURL(o.data),a=document.createElement("a");a.href=u;a.download=o.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4e4);return Promise.resolve()}}:null)}};</script><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&amp;family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&amp;family=Atkinson+Hyperlegible+Mono:wght@400;600&amp;display=swap">
@@ -105,6 +106,15 @@ h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:bal
 .credits{border-top:1px solid var(--rule);padding-top:12px;font-size:13px;color:var(--ink-2)}
 .credits p{margin:0 0 6px}
 .credits b{color:var(--ink)}
+.bar-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;min-width:0}
+.btn-dl{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:999px;border:1px solid var(--pcb);background:var(--pcb);color:var(--on-pcb);font:700 13px/1 var(--body);cursor:pointer}
+.btn-dl:hover{filter:brightness(1.07)}
+.btn-dl[disabled]{opacity:.55;cursor:default;filter:none}
+.btn-dl svg{width:14px;height:14px;flex:none}
+.dlnote{margin:0;font-size:12px;line-height:1.35;color:var(--ink-3);text-align:right;max-width:52ch}
+.tiltnote{margin:4px 0 0;font-size:12.5px;line-height:1.4;color:var(--ink-3)}
+.plist .sw,.flow i{box-shadow:inset 0 0 0 1px rgba(0,0,0,.16)}
+@media (max-width:700px){.bar-actions{align-items:flex-start}.dlnote{text-align:left}}
 
 @media (min-width:901px){.app{height:100%}.stage{overflow:hidden}}
 @media (max-width:900px){
@@ -122,14 +132,19 @@ h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:bal
       <p class="eyebrow"><a class="back" href="/work/drone/">← F450 4G Drone · JPL Innovation</a></p>
       <h1>F450 3D layout</h1>
     </div>
-    <div class="bar-links">
-      <a class="btn-link" href="/work/drone/build-guide/" target="_blank" rel="noopener">Open the build guide ↗</a>
+    <div class="bar-actions">
+      <div class="bar-links">
+        <button type="button" class="btn-dl" id="dlbtn"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2v8.2m0 0L4.6 7M8 10.4 11.4 7M3 13.6h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Download 3D files (.zip)</button>
+        <a class="btn-link" href="/work/drone/camera-mount/" target="_blank" rel="noopener">Camera mount ↗</a>
+        <a class="btn-link" href="/work/drone/build-guide/" target="_blank" rel="noopener">Build guide ↗</a>
+      </div>
+      <p class="dlnote" id="dlnote" aria-live="polite">The whole quad as a GLB file, plus the STL files for the camera mount and the BEC sleeve.</p>
     </div>
   </header>
 
   <div class="stage">
     <div class="view" id="view">
-      <canvas id="cv" role="img" aria-label="Interactive 3D model of the F450 build: flight-critical parts on the top plate, power wiring between the plates, one ESC under each arm, and the battery, Raspberry Pi, BEC, camera and 4G stick under the frame. The parts list beside the model describes every part."></canvas>
+      <canvas id="cv" role="img" aria-label="Interactive 3D model of the F450 build: flight-critical parts on the top plate, power wiring between the plates, one ESC under each arm, white high landing legs, and under the frame the Camera Module 3 in its printed tilt mount at the front, the Raspberry Pi with its BEC behind it, the battery with its alarm at the rear and the 4G stick on the rear-left leg. The parts list beside the model describes every part."></canvas>
       <div class="labels" id="labels"></div>
       <div class="vtools">
         <div class="seg" role="group" aria-label="Camera view" id="views">
@@ -158,6 +173,8 @@ h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:bal
           <button type="button" class="chip" data-t="spin" aria-pressed="false">Spin props</button>
         </div>
         <label class="slider" for="explode"><span>Explode</span><input type="range" id="explode" min="0" max="100" value="0"><output id="explode-out">0%</output></label>
+        <label class="slider" for="tilt"><span>Camera tilt</span><input type="range" id="tilt" min="0" max="45" step="1" value="15"><output id="tilt-out">15°</output></label>
+        <p class="tiltnote" id="tilt-note">Horizon 14% down from the top of the picture (standard lens).</p>
         <div class="seg focusrow" role="group" aria-label="Focus on a zone" id="zones">
           <button type="button" data-z="all" aria-pressed="true">All</button>
           <button type="button" data-z="top" aria-pressed="false">Top plate</button>
@@ -180,7 +197,7 @@ h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:bal
 
       <section class="credits">
         <p><b>Credits.</b> Built by <b>JPL Innovation</b> (Jayden Phan Le). Power-system advice, including the Matek BEC for the Pi, from a <b>professional drone builder in Vietnam</b>. Cảm ơn anh đã tư vấn!</p>
-        <p>Frame from the F450 drawing (455 mm motor to motor, 40 mm between the plates). Part sizes from their datasheets; positions follow the build guide's layout plan and are good to about 1–2 cm. Weigh and balance the real quad as the guide describes.</p>
+        <p>Frame from the F450 drawing (455 mm motor to motor, 40 mm between the plates), the 150 mm high landing legs, and the printed camera mount from its own page. Part sizes from their datasheets; positions follow the build guide's layout plan and are good to about 1–2 cm. Weigh and balance the real quad as the guide describes.</p>
       </section>
     </aside>
   </div>
@@ -188,72 +205,700 @@ h1{margin:0;font:700 28px/1.05 var(--display);letter-spacing:.01em;text-wrap:bal
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>window.GLYPHS={"0":{"w":0.7934,"shapes":[{"outer":[[0.7676,0.7124],[0.6901,0.8699],[0.6331,0.9268],[0.4865,0.9919],[0.397,1.0],[0.3072,0.9919],[0.1604,0.9268],[0.1033,0.8699],[0.0258,0.7124],[0.0,0.4997],[0.0258,0.2876],[0.1033,0.1301],[0.1604,0.0732],[0.3072,0.0081],[0.397,0.0],[0.4865,0.0081],[0.6331,0.0732],[0.6901,0.1301],[0.7676,0.2876],[0.7934,0.4997]],"holes":[[[0.5343,0.3482],[0.5089,0.2478],[0.4642,0.1926],[0.397,0.1741],[0.3295,0.1926],[0.2845,0.2478],[0.2592,0.3482],[0.2507,0.5017],[0.2592,0.6534],[0.2845,0.7524],[0.3295,0.807],[0.397,0.8253],[0.4646,0.807],[0.5093,0.7524],[0.5344,0.6534],[0.5427,0.5017]]]}]},"10":{"w":1.6274,"shapes":[{"outer":[[0.0058,0.0188],[0.6798,0.0188],[0.6798,0.1905],[0.4602,0.1905],[0.4602,0.9826],[0.2239,0.9826],[0.0,0.9362],[0.0,0.767],[0.2254,0.8135],[0.2254,0.1905],[0.0058,0.1905]],"holes":[]},{"outer":[[1.6016,0.7124],[1.5241,0.8699],[1.467,0.9268],[1.3205,0.9919],[1.231,1.0],[1.1412,0.9919],[0.9943,0.9268],[0.9372,0.8699],[0.8598,0.7124],[0.8339,0.4997],[0.8598,0.2876],[0.9372,0.1301],[0.9943,0.0732],[1.1412,0.0081],[1.231,0.0],[1.3205,0.0081],[1.467,0.0732],[1.5241,0.1301],[1.6016,0.2876],[1.6274,0.4997]],"holes":[[[1.3682,0.3482],[1.3429,0.2478],[1.2981,0.1926],[1.231,0.1741],[1.1635,0.1926],[1.1184,0.2478],[1.0931,0.3482],[1.0847,0.5017],[1.0931,0.6534],[1.1184,0.7524],[1.1635,0.807],[1.231,0.8253],[1.2985,0.807],[1.3433,0.7524],[1.3683,0.6534],[1.3767,0.5017]]]}]},"20":{"w":1.672,"shapes":[{"outer":[[0.4823,0.3822],[0.5903,0.485],[0.6534,0.5646],[0.6839,0.6354],[0.6941,0.7114],[0.6701,0.8327],[0.5982,0.9238],[0.4831,0.9809],[0.3293,1.0],[0.2497,0.9963],[0.1686,0.9853],[0.0861,0.9676],[0.0027,0.9432],[0.0027,0.7315],[0.079,0.7745],[0.1504,0.8054],[0.2168,0.824],[0.2776,0.8302],[0.3457,0.8199],[0.3987,0.7889],[0.4328,0.741],[0.4441,0.6798],[0.4385,0.6368],[0.4216,0.5953],[0.3929,0.5542],[0.3518,0.5121],[0.0,0.2014],[0.0,0.0188],[0.7005,0.0188],[0.7005,0.2014],[0.2764,0.2014]],"holes":[]},{"outer":[[1.6462,0.7124],[1.5687,0.8699],[1.5117,0.9268],[1.3651,0.9919],[1.2756,1.0],[1.1858,0.9919],[1.0389,0.9268],[0.9818,0.8699],[0.9044,0.7124],[0.8786,0.4997],[0.9044,0.2876],[0.9818,0.1301],[1.0389,0.0732],[1.1858,0.0081],[1.2756,0.0],[1.3651,0.0081],[1.5117,0.0732],[1.5687,0.1301],[1.6462,0.2876],[1.672,0.4997]],"holes":[[[1.4128,0.3482],[1.3875,0.2478],[1.3427,0.1926],[1.2756,0.1741],[1.2081,0.1926],[1.1631,0.2478],[1.1377,0.3482],[1.1293,0.5017],[1.1377,0.6534],[1.1631,0.7524],[1.2081,0.807],[1.2756,0.8253],[1.3431,0.807],[1.3879,0.7524],[1.4129,0.6534],[1.4213,0.5017]]]}]},"30":{"w":1.6881,"shapes":[{"outer":[[0.6039,0.5684],[0.659,0.6143],[0.6924,0.6759],[0.7036,0.7527],[0.6802,0.8611],[0.6102,0.9382],[0.4934,0.9846],[0.3293,1.0],[0.2588,0.9974],[0.1872,0.9897],[0.1145,0.9768],[0.0413,0.9587],[0.0413,0.7767],[0.1022,0.7999],[0.1634,0.8166],[0.2244,0.8268],[0.2847,0.8302],[0.3568,0.8226],[0.4105,0.7998],[0.4439,0.7632],[0.4551,0.7141],[0.4436,0.6617],[0.4092,0.6247],[0.3515,0.6027],[0.2698,0.5953],[0.1653,0.5953],[0.1653,0.4352],[0.2646,0.4352],[0.3571,0.4268],[0.4239,0.4014],[0.4643,0.3595],[0.4778,0.3016],[0.4646,0.245],[0.4251,0.2033],[0.3609,0.1777],[0.2737,0.1692],[0.2066,0.1736],[0.1384,0.1869],[0.0695,0.209],[0.0,0.2396],[0.0,0.0479],[0.0733,0.027],[0.1475,0.012],[0.222,0.003],[0.2964,0.0],[0.4816,0.0186],[0.6164,0.0746],[0.6988,0.1663],[0.7263,0.2925],[0.7136,0.3802],[0.6755,0.4509],[0.6131,0.504],[0.5274,0.5385]],"holes":[]},{"outer":[[1.6623,0.7124],[1.5848,0.8699],[1.5278,0.9268],[1.3812,0.9919],[1.2917,1.0],[1.2019,0.9919],[1.0551,0.9268],[0.998,0.8699],[0.9205,0.7124],[0.8947,0.4997],[0.9205,0.2876],[0.998,0.1301],[1.0551,0.0732],[1.2019,0.0081],[1.2917,0.0],[1.3812,0.0081],[1.5278,0.0732],[1.5848,0.1301],[1.6623,0.2876],[1.6881,0.4997]],"holes":[[[1.4289,0.3482],[1.4036,0.2478],[1.3588,0.1926],[1.2917,0.1741],[1.2242,0.1926],[1.1792,0.2478],[1.1538,0.3482],[1.1454,0.5017],[1.1538,0.6534],[1.1792,0.7524],[1.2242,0.807],[1.2917,0.8253],[1.3593,0.807],[1.404,0.7524],[1.429,0.6534],[1.4374,0.5017]]]}]},"40":{"w":1.717,"shapes":[{"outer":[[0.0,0.4074],[0.0,0.1944],[0.4272,0.1944],[0.4272,0.0188],[0.6623,0.0188],[0.6623,0.1944],[0.7996,0.1944],[0.7996,0.3745],[0.6623,0.3745],[0.6623,0.9826],[0.3859,0.9826]],"holes":[[[0.4258,0.3765],[0.1576,0.3765],[0.4258,0.7739]]]},{"outer":[[1.6912,0.7124],[1.6137,0.8699],[1.5567,0.9268],[1.4101,0.9919],[1.3206,1.0],[1.2308,0.9919],[1.084,0.9268],[1.0269,0.8699],[0.9494,0.7124],[0.9236,0.4997],[0.9494,0.2876],[1.0269,0.1301],[1.084,0.0732],[1.2308,0.0081],[1.3206,0.0],[1.4101,0.0081],[1.5567,0.0732],[1.6137,0.1301],[1.6912,0.2876],[1.717,0.4997]],"holes":[[[1.4579,0.3482],[1.4325,0.2478],[1.3878,0.1926],[1.3206,0.1741],[1.2531,0.1926],[1.2081,0.2478],[1.1828,0.3482],[1.1743,0.5017],[1.1828,0.6534],[1.2081,0.7524],[1.2531,0.807],[1.3206,0.8253],[1.3882,0.807],[1.4329,0.7524],[1.458,0.6534],[1.4663,0.5017]]]}]},"45":{"w":1.7177,"shapes":[{"outer":[[0.0,0.4145],[0.0,0.1978],[0.4347,0.1978],[0.4347,0.0191],[0.674,0.0191],[0.674,0.1978],[0.8137,0.1978],[0.8137,0.3811],[0.674,0.3811],[0.674,1.0],[0.3927,1.0]],"holes":[[[0.4333,0.3832],[0.1604,0.3832],[0.4333,0.7876]]]},{"outer":[[1.0181,0.4482],[1.0868,0.4738],[1.1508,0.4917],[1.2108,0.5024],[1.2672,0.506],[1.3493,0.4948],[1.4118,0.4612],[1.4516,0.4084],[1.4648,0.3391],[1.4516,0.2701],[1.4118,0.2172],[1.3493,0.1834],[1.2672,0.1722],[1.2013,0.1779],[1.1314,0.1951],[1.0575,0.2239],[0.9794,0.2642],[0.9794,0.0652],[1.0604,0.0365],[1.1419,0.0162],[1.2241,0.004],[1.3072,0.0],[1.4792,0.0225],[1.609,0.09],[1.6905,0.1973],[1.7177,0.3391],[1.6927,0.4817],[1.6179,0.589],[1.4981,0.6563],[1.3387,0.6788],[1.3077,0.6777],[1.2779,0.6744],[1.2488,0.6692],[1.2199,0.6622],[1.2199,0.814],[1.6469,0.814],[1.6469,1.0],[1.0181,1.0]],"holes":[]}]},"F":{"w":0.6957,"shapes":[{"outer":[[0.0,0.0],[0.2578,0.0],[0.2578,0.4239],[0.6697,0.4239],[0.6697,0.6189],[0.2578,0.6189],[0.2578,0.805],[0.6957,0.805],[0.6957,1.0],[0.0,1.0]],"holes":[]}]}};</script>
+<script>/* Camera Module 3 tilt mount for the JPL F450 (shared by the export script and both web pages).
+ *
+ * Two printed parts:
+ *   case  - holds the Camera Module 3 board (4 x M2 self-tapping screws into posts), with an ear on
+ *           each side for the hinge bolt and a pad with an M3 pilot hole for the angle-lock screw.
+ *   mount - a base plate that bolts under the front tab of the F450 bottom plate (2 x M3 through the
+ *           plate's front slots) and two arms that carry the hinge and a 0-45 degree arc slot with
+ *           raised tick marks.
+ * Coordinates are millimetres. x = right, y = up, z = back (forward is -z), like the drone model.
+ * "head" coordinates: Camera Module 3 board centre at the origin, board front face at z = 0.
+ * "mount" coordinates: the hinge axis through the origin, along x.
+ * Every solid is built as a closed extrusion (a "shell"); a part is the union of its overlapping
+ * shells, which slicers merge on their own. Holes are cut inside each shell's own profile.
+ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory;
+  else root.buildCamMount = factory;
+})(typeof self !== "undefined" ? self : this, function buildCamMount(THREE, GLYPHS, opt) {
+  "use strict";
+  opt = opt || {};
+  var P = {
+    pcbW: 25, pcbH: 24, pcbT: 1.0,
+    holes: [[-10.5, 10.0], [10.5, 10.0], [-10.5, -2.5], [10.5, -2.5]],   // board-centre coords (same pattern as Camera Module 2)
+    lensFront: 9.0, back: 1.6,
+    wall: 1.8, face: 1.8, clr: 0.7,
+    win: { w: 16, h: 16, cy: 2.5 },
+    pivot: [4.0, 7.7],            // hinge axis in head coords (y, z)
+    earR: 5.5, pivotHoleR: 1.65,
+    lock: [4.0, -4.5], lockPilotR: 1.3, lockR: 12.2,
+    padOut: 1.0,                  // pads stand 1.0 mm proud of the side walls
+    armT: 3.5, armGap: 0.1,
+    slotHalf: 1.7, angMin: 0, angMax: 45,
+    baseT: 3.0,
+    seg: 40
+  };
+  P.halfW = P.pcbW / 2 + P.clr + P.wall;     // 15.0
+  P.halfH = P.pcbH / 2 + P.clr + P.wall;     // 14.5
+  P.inX = P.halfW - P.wall;                  // 13.2
+  P.inY = P.halfH - P.wall;                  // 12.7
+  P.zFace = -P.lensFront - P.face + 0.2;     // -10.6, outer face of the front
+  P.zFaceIn = P.zFace + P.face;              // -8.8
+  P.zBack = P.pcbT + P.back;                 // 2.6
+  P.padX = P.halfW + P.padOut;               // 16.0
+  P.armIn = P.padX + P.armGap;               // 16.1
+  P.armOut = P.armIn + P.armT;               // 19.6
+  P.baseHalfX = 22.5;
+  // where the mount sits on the drone: hinge axis 17 mm under the bottom plate, 94 mm ahead of the centre
+  P.pivotDrone = opt.pivotDrone || [0, -17, -94];
+  P.baseTopRel = -P.pivotDrone[1];           // 17: base top face (touches the bottom plate)
+  P.baseBotRel = P.baseTopRel - P.baseT;     // 13
+  P.baseZ = [-22, 15];                       // relative to the hinge (drone z -116 .. -79)
+  P.boltZ = 11.5;                            // drone z -82.5, inside the bottom plate front slots
+  P.boltX = [11.5, 15.5];                    // slotted for small differences between plates
+
+  var V3 = THREE.Vector3;
+  var DEG = Math.PI / 180;
+
+  /* ---------------------------------------------------------------- 2D helpers */
+  function circle(cx, cy, r, n) { n = n || P.seg; var p = []; for (var i = 0; i < n; i++) { var a = i / n * Math.PI * 2; p.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return p; }
+  function rrect(x0, y0, x1, y1, r, n) {
+    n = n || 6; var p = [];
+    var c = [[x1 - r, y1 - r, 0], [x0 + r, y1 - r, 90], [x0 + r, y0 + r, 180], [x1 - r, y0 + r, 270]];
+    c.forEach(function (k) { for (var i = 0; i <= n; i++) { var a = (k[2] + 90 * i / n) * DEG; p.push([k[0] + r * Math.cos(a), k[1] + r * Math.sin(a)]); } });
+    return p;
+  }
+  function stadium(x0, x1, y, r, n) {   // horizontal slot from x0 to x1 (centres), half-width r
+    n = n || 12; var p = [];
+    for (var i = 0; i <= n; i++) { var a = (-90 + 180 * i / n) * DEG; p.push([x1 + r * Math.cos(a), y + r * Math.sin(a)]); }
+    for (var j = 0; j <= n; j++) { var b = (90 + 180 * j / n) * DEG; p.push([x0 + r * Math.cos(b), y + r * Math.sin(b)]); }
+    return p;
+  }
+  function area(p) { var a = 0; for (var i = 0; i < p.length; i++) { var q = p[i], r = p[(i + 1) % p.length]; a += q[0] * r[1] - r[0] * q[1]; } return a / 2; }
+  function shapeOf(outer, holes) {   // outer counter-clockwise, holes clockwise, so ExtrudeGeometry keeps faces outward
+    if (area(outer) < 0) outer = outer.slice().reverse();
+    var s = new THREE.Shape(outer.map(function (q) { return new THREE.Vector2(q[0], q[1]); }));
+    (holes || []).forEach(function (h) { if (area(h) > 0) h = h.slice().reverse(); s.holes.push(new THREE.Path(h.map(function (q) { return new THREE.Vector2(q[0], q[1]); }))); });
+    return s;
+  }
+  /* prism: profile (outer + holes) extruded along an axis between two coordinates.
+     axis "z": profile coords (x, y); "x": (y, z); "y": (z, x). All three are proper rotations, so faces keep pointing outward. */
+  var AX = {
+    z: new THREE.Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
+    x: new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
+    y: new THREE.Matrix4().set(0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1)
+  };
+  function prism(outer, holes, axis, from, to, curveSeg) {
+    var g = new THREE.ExtrudeGeometry(shapeOf(outer, holes), { depth: to - from, bevelEnabled: false, curveSegments: curveSeg || 2 });
+    g.translate(0, 0, from);
+    g.applyMatrix4(AX[axis]);
+    return g;
+  }
+  function box(x0, x1, y0, y1, z0, z1) { return prism([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], null, "z", z0, z1); }
+  function tube(axis, a, b, r, rin, from, to, n) {
+    return prism(circle(a, b, r, n), rin ? [circle(a, b, rin, n).reverse()] : null, axis, from, to);
+  }
+  function glyphShapes(str, h, place) {   // place(gx, gy) -> [a, b] in the prism's profile plane
+    var gl = GLYPHS && GLYPHS[str]; if (!gl) return [];
+    var w = gl.w * h, out = [];
+    gl.shapes.forEach(function (sh) {
+      var map = function (q) { return place(q[0] * h - w / 2, q[1] * h - h / 2); };
+      out.push({ outer: sh.outer.map(map), holes: sh.holes.map(function (hh) { return hh.map(map); }) });
+    });
+    return out;
+  }
+
+  /* ---------------------------------------------------------------- printed part 1: the case (head coords) */
+  function buildCase() {
+    var S = [], hx = P.halfW, hy = P.halfH, ix = P.inX, iy = P.inY, zf = P.zFace, zfi = P.zFaceIn, zb = P.zBack, ov = 0.05;
+    var py = P.pivot[0], pz = P.pivot[1], ly = P.lock[0], lz = P.lock[1];
+    // front face with the lens window
+    var win = rrect(-P.win.w / 2, P.win.cy - P.win.h / 2, P.win.w / 2, P.win.cy + P.win.h / 2, 1.5);
+    S.push(prism(rrect(-hx, -hy, hx, hy, 2.5), [win], "z", zf, zfi));
+    // side walls with the hinge ear (profile in (y, z))
+    var ear = [];
+    ear.push([hy, zfi - ov], [hy, zb], [py + P.earR, pz]);
+    for (var i = 1; i < 24; i++) { var t = i / 24 * Math.PI; ear.push([py + P.earR * Math.cos(t), pz + P.earR * Math.sin(t)]); }
+    ear.push([py - P.earR, pz], [-hy, zb], [-hy, zfi - ov]);
+    var earHoles = [circle(py, pz, P.pivotHoleR, 32), circle(ly, lz, P.lockPilotR, 28)];
+    S.push(prism(ear, earHoles, "x", -hx, -ix + ov));
+    S.push(prism(ear, earHoles, "x", ix - ov, hx));
+    // top wall
+    S.push(prism([[zfi - ov, -ix - ov], [zb, -ix - ov], [zb, ix + ov], [zfi - ov, ix + ov]], null, "y", iy - ov, hy));
+    // bottom wall with the ribbon notch at the back (profile in (z, x))
+    var nx = 8.75, nz = 0.6;
+    S.push(prism([[zfi - ov, -ix - ov], [zb, -ix - ov], [zb, -nx], [nz, -nx], [nz, nx], [zb, nx], [zb, ix + ov], [zfi - ov, ix + ov]], null, "y", -hy, -iy + ov));
+    // board posts with M2 pilot holes
+    P.holes.forEach(function (h) { S.push(tube("z", h[0], h[1], 2.2, 0.9, zfi - ov, 0, 28)); });
+    // lock blocks inside, pads outside (lock and hinge), both sides
+    [-1, 1].forEach(function (s) {
+      var blk = rrect(ly - 3.5, zfi - ov, ly + 3.5, -1.0, 1.0);
+      var x0 = s > 0 ? 10.9 : -ix - ov, x1 = s > 0 ? ix + ov : -10.9;
+      S.push(prism(blk, [circle(ly, lz, P.lockPilotR, 28)], "x", x0, x1));
+      var p0 = s > 0 ? hx - ov : -P.padX, p1 = s > 0 ? P.padX : -hx + ov;
+      S.push(prism(circle(ly, lz, 3.6, 36), [circle(ly, lz, P.lockPilotR, 28)], "x", p0, p1));
+      S.push(prism(circle(py, pz, 4.2, 36), [circle(py, pz, P.pivotHoleR, 32)], "x", p0, p1));
+    });
+    return S;
+  }
+
+  /* ---------------------------------------------------------------- printed part 2: the mount (mount coords) */
+  function pol(R, phi) { return [-R * Math.sin(phi * DEG), -R * Math.cos(phi * DEG)]; }   // (y, z): phi 0 = forward, + = downward
+  function armProfile() {
+    var top = P.baseBotRel + 0.05, R = 24, out = [];
+    var phi0 = Math.asin(-top / R) / DEG;            // where the outer arc meets the top edge (about -33 degrees)
+    out.push([top, 2.0]);
+    var a0 = pol(R, phi0); out.push([top, a0[1]]);
+    for (var k = 1; k <= 30; k++) out.push(pol(R, phi0 + (70 - phi0) * k / 30));
+    var bossR = 7;
+    for (var q = 110; q <= 180.0001; q += 7) out.push(pol(bossR, q));
+    return out;
+  }
+  function slotProfile() {
+    var r0 = P.lockR - P.slotHalf, r1 = P.lockR + P.slotHalf, a = P.angMin, b = P.angMax, pts = [], n = 22, i;
+    for (i = 0; i <= n; i++) pts.push(pol(r0, a + (b - a) * i / n));
+    for (i = 1; i < 12; i++) pts.push(capPoint(b, i, 1));
+    for (i = 0; i <= n; i++) pts.push(pol(r1, b - (b - a) * i / n));
+    for (i = 1; i < 12; i++) pts.push(capPoint(a, i, -1));
+    return pts;
+  }
+  function capPoint(ang, i, side) {   // semicircular end cap of the arc slot at angle ang
+    var c = pol(P.lockR, ang), t = Math.PI * i / 12;
+    // radial unit vector (outward) and tangential unit vector (direction of increasing angle) in (y, z)
+    var rad = [-Math.sin(ang * DEG), -Math.cos(ang * DEG)], tan = [-Math.cos(ang * DEG), Math.sin(ang * DEG)];
+    // side 1 (end at the max angle): go from inner to outer through the far side; side -1: outer to inner through the near side
+    var u = side > 0 ? -Math.cos(t) : Math.cos(t), v = Math.sin(t) * side;
+    return [c[0] + P.slotHalf * (rad[0] * u + tan[0] * v), c[1] + P.slotHalf * (rad[1] * u + tan[1] * v)];
+  }
+  function buildMount() {
+    var S = [], ai = P.armIn, ao = P.armOut, bt = P.baseTopRel, bb = P.baseBotRel, hx = P.baseHalfX;
+    var holes = [circle(0, 0, P.pivotHoleR, 32), slotProfile()];
+    var prof = armProfile();
+    S.push(prism(prof, holes, "x", -ao, -ai));
+    S.push(prism(prof, holes, "x", ai, ao));
+    // base plate (profile in (z, x)) with two slotted M3 holes and two cable-tie slots
+    var z0 = P.baseZ[0], z1 = P.baseZ[1];
+    var bh = [];
+    [-1, 1].forEach(function (s) {
+      var a = P.boltX[0], b = P.boltX[1];
+      var st = stadium(a, b, P.boltZ, 1.7);                 // (x, z) points
+      bh.push(st.map(function (q) { return [q[1], s * q[0]]; }));
+      bh.push(rrect(P.boltZ - 2.5, s * 6 - 1.4, P.boltZ + 2.5, s * 6 + 1.4, 0.6));   // (z, x) already
+    });
+    bh.push(rrect(-16, -10, 3, 10, 2.5));   // lightening window between the arms
+    S.push(prism(rrect(z0, -hx, z1, hx, 3), bh, "y", bb, bt));
+    // outer gussets between the base and each arm (profile in (x, y))
+    [-1, 1].forEach(function (s) {
+      var tri = [[s * (ao - 0.05), bb + 0.05], [s * hx, bb + 0.05], [s * (ao - 0.05), bb - 6]];
+      S.push(prism(tri, null, "z", -19, 0));
+    });
+    // raised ticks and numbers on both arms' outer faces
+    [-1, 1].forEach(function (s) {
+      var x0 = s > 0 ? ao - 0.05 : -ao - 0.6, x1 = s > 0 ? ao + 0.6 : -ao + 0.05;
+      [0, 10, 20, 30, 40, 45].forEach(function (ang) {
+        var long = ang % 20 === 0, r0 = 15.3, r1 = long ? 18.8 : 17.6, hw = 0.4;
+        var rad = [-Math.sin(ang * DEG), -Math.cos(ang * DEG)], tan = [-Math.cos(ang * DEG), Math.sin(ang * DEG)];
+        var q = [[r0, -hw], [r1, -hw], [r1, hw], [r0, hw]].map(function (k) { return [rad[0] * k[0] + tan[0] * k[1], rad[1] * k[0] + tan[1] * k[1]]; });
+        S.push(prism(q, null, "x", x0, x1));
+      });
+      [0, 20, 40].forEach(function (ang) {
+        var c = pol(20.5, ang);
+        // right arm seen from +x: reading direction = -z; left arm seen from -x: reading direction = +z
+        var place = function (gx, gy) { return [c[0] + gy, c[1] - s * gx]; };
+        glyphShapes(String(ang), 3.2, place).forEach(function (g) { S.push(prism(g.outer, g.holes, "x", x0, x1)); });
+      });
+    });
+    return S;
+  }
+
+  /* ---------------------------------------------------------------- visual-only parts */
+  function buildBoard() {   // Camera Module 3, head coords
+    var L = [];
+    var pcb = prism(rrect(-12.5, -12, 12.5, 12, 1.0), P.holes.map(function (h) { return circle(h[0], h[1], 1.1, 20); }), "z", 0, P.pcbT);
+    L.push({ g: pcb, c: 0x1f6b45, r: 0.5, name: "Camera Module 3 board" });
+    P.holes.forEach(function (h) { L.push({ g: tube("z", h[0], h[1], 1.9, 1.1, -0.03, P.pcbT + 0.03, 20), c: 0xc9a54b, r: 0.35, m: 0.7, name: "Camera Module 3 board" }); });
+    L.push({ g: box(-4.6, 4.6, P.win.cy - 4.6, P.win.cy + 4.6, -4.2, 0), c: 0x141616, r: 0.5, name: "Camera Module 3 lens" });
+    L.push({ g: tube("z", 0, P.win.cy, 3.6, 0, -P.lensFront, -4.2, 32), c: 0x1b1d1e, r: 0.35, name: "Camera Module 3 lens" });
+    L.push({ g: tube("z", 0, P.win.cy, 1.9, 0, -P.lensFront - 0.15, -P.lensFront + 0.1, 32), c: 0x2a4a7a, r: 0.08, m: 0.4, name: "Camera Module 3 lens" });
+    L.push({ g: box(-10, 10, -12.2, -8.3, P.pcbT, P.pcbT + 1.5), c: 0x2b2b2b, r: 0.6, name: "Camera Module 3 connector" });
+    L.push({ g: box(-8, 8, -12.4, -11.0, P.pcbT + 1.5, P.pcbT + 1.7), c: 0xd9c9a3, r: 0.6, name: "Camera Module 3 connector" });
+    return L;
+  }
+  function screw(axis, a, b, from, to, headR, headH, shaftR, col, name, nut) {   // socket-head screw from 'from' (under the head) to 'to'
+    var L = [], dir = to > from ? -1 : 1;
+    L.push({ g: tube(axis, a, b, headR, 0, Math.min(from, from + dir * headH), Math.max(from, from + dir * headH), 24), c: col, r: 0.3, m: 0.85, name: name });
+    L.push({ g: tube(axis, a, b, shaftR, 0, Math.min(from, to), Math.max(from, to), 16), c: col, r: 0.35, m: 0.85, name: name });
+    return L;
+  }
+  function hexNut(axis, a, b, from, to, af, col, name) {
+    var r = af / Math.sqrt(3), pts = [];
+    for (var i = 0; i < 6; i++) { var t = (30 + 60 * i) * DEG; pts.push([a + r * Math.cos(t), b + r * Math.sin(t)]); }
+    var hole = circle(a, b, 1.6, 16).reverse();
+    return [{ g: prism(pts, [hole], axis, Math.min(from, to), Math.max(from, to)), c: col, r: 0.3, m: 0.85, name: name }];
+  }
+  function buildCaseHardware() {   // head coords: board screws only (they move with the case)
+    var L = [], steel = 0x9da3a6;
+    P.holes.forEach(function (h) { L = L.concat(screw("z", h[0], h[1], P.pcbT, P.pcbT - 6, 1.9, 1.3, 0.95, steel, "M2 x 6 self-tapping screw")); });
+    return L;
+  }
+  function buildMountHardware(alpha) {   // mount coords: hinge bolt + nut, both lock screws (at the angle), base bolts + nuts
+    var L = [], steel = 0x9da3a6, blk = 0x2b2f31;
+    var ao = P.armOut, w = 0.5;
+    function tag(list, g) { list.forEach(function (o) { o.grp = g; }); return list; }
+    L = L.concat(tag([{ g: tube("x", 0, 0, 3.2, 1.6, ao, ao + w, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "hinge"));
+    L = L.concat(tag(screw("x", 0, 0, ao + w, ao + w - 45, 2.75, 3.0, 1.5, blk, "M3 x 45 hinge bolt"), "hinge"));
+    L = L.concat(tag([{ g: tube("x", 0, 0, 3.2, 1.6, -ao - w, -ao, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "hinge"));
+    L = L.concat(tag(hexNut("x", 0, 0, -ao - w - 4, -ao - w, 5.5, steel, "M3 nyloc nut"), "hinge"));
+    var lp = pol(P.lockR, alpha || 0);
+    [-1, 1].forEach(function (s) {
+      var from = s * ao, to = s * (ao - 8);
+      L = L.concat(tag(screw("x", lp[0], lp[1], from, to, 2.75, 3.0, 1.5, blk, "M3 x 8 lock screw"), s > 0 ? "lockR" : "lockL"));
+    });
+    // base bolts (from above the drone's bottom plate) and nuts under the base
+    [-1, 1].forEach(function (s) {
+      var x = s * 13.5, bt = P.baseTopRel, plate = 1.6;
+      L = L.concat(tag(screw("y", P.boltZ, x, bt + plate + 0.5, bt + plate + 0.5 - 12, 2.75, 3.0, 1.5, blk, "M3 x 12 base bolt"), "base"));
+      L = L.concat(tag([{ g: tube("y", P.boltZ, x, 3.2, 1.6, bt + plate, bt + plate + 0.5, 20), c: steel, r: 0.35, m: 0.8, name: "M3 washer" }], "base"));
+      L = L.concat(tag(hexNut("y", P.boltZ, x, P.baseBotRel - 4, P.baseBotRel, 5.5, steel, "M3 nyloc nut"), "base"));
+    });
+    return L;
+  }
+
+  /* ---------------------------------------------------------------- transforms */
+  function headToMount(alpha) {   // case/board -> mount coords, tilted alpha degrees nose-down about the hinge
+    var m = new THREE.Matrix4().makeRotationX(-alpha * DEG);
+    m.multiply(new THREE.Matrix4().makeTranslation(0, -P.pivot[0], -P.pivot[1]));
+    return m;
+  }
+  function mountToDrone() { return new THREE.Matrix4().makeTranslation(P.pivotDrone[0], P.pivotDrone[1], P.pivotDrone[2]); }
+  function printCase() { return new THREE.Matrix4().makeTranslation(0, 0, -P.zFace); }                 // front face on the bed
+  function printMount() {                                                                            // base top on the bed, arms up
+    var r = new THREE.Matrix4().set(1, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1);
+    return new THREE.Matrix4().makeTranslation(0, 0, P.baseTopRel).multiply(r);
+  }
+  function lockPoint(alpha) { var p = pol(P.lockR, alpha); return new V3(0, p[0], p[1]); }
+  /* ribbon exit point (head coords): bottom notch, behind the board */
+  var ribbonExit = new V3(0, -P.halfH - 0.5, 1.5);
+
+  return {
+    P: P,
+    caseShells: buildCase,
+    mountShells: buildMount,
+    board: buildBoard,
+    caseHardware: buildCaseHardware,
+    mountHardware: buildMountHardware,
+    headToMount: headToMount,
+    mountToDrone: mountToDrone,
+    printCase: printCase,
+    printMount: printMount,
+    lockPoint: lockPoint,
+    ribbonExit: ribbonExit
+  };
+});
+</script>
+<script>/* Printed sleeve for the Matek BEC12S-PRO on the JPL F450 (shared by the export script and the 3D layout page).
+ *
+ * The sleeve is a rectangular tube that slides over the BEC from its far end, so it fits a BEC whose wires are
+ * already soldered: the pad end (IN, G, G, OUT) stays just outside the open end and the wires leave from there.
+ * Inside, two rails hold the board 1.5 mm off the back wall (room for solder tails); a lip at the far end stops it.
+ * Vents in the front and both sides let the prop wash through. The flat back sticks to the Pi case with foam tape.
+ *
+ * "bec" coordinates, millimetres: X along the board from the pad edge (X = 0) to the far edge (X = 35),
+ * Y across the board (pads IN, G, G, OUT from +Y to -Y), Z through it (PCB bottom Z = 0, parts on the +Z side).
+ * Every solid is a closed extrusion ("shell"); overlapping shells are merged by the slicer.
+ */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory;
+  else root.buildBecSleeve = factory;
+})(typeof self !== "undefined" ? self : this, function buildBecSleeve(THREE, opt) {
+  "use strict";
+  opt = opt || {};
+  var P = {
+    L: 35, W: 24, T: 1.6, parts: 3.9,          // BEC12S-PRO: 35 x 24 mm board, 5.5 mm over its parts
+    padX: 2.5, pitch: 3.81,                     // pad centres from the pad edge, 3.81 mm apart
+    wall: 1.2,
+    x0: 5.5,                                    // open end, just behind the pads
+    endGap: 0.4,                                // board far edge to the lip
+    halfIn: 12.8,                               // cavity half-width: fits a 24 or 25 mm wide board (sellers list both)
+    zIn0: -1.5,                                 // cavity floor: 1.5 mm under the board for solder tails
+    zIn1: 6.9,                                  // cavity roof: 1.4 mm over the tallest part, for a foam pad
+    railW: 2.0,
+    seg: 12
+  };
+  P.x1 = P.L + P.endGap + P.wall;               // 36.6, outer far end
+  P.halfOut = P.halfIn + P.wall;                // 13.8
+  P.zOut0 = P.zIn0 - P.wall;                    // -2.7, the flat back
+  P.zOut1 = P.zIn1 + P.wall;                    // 8.1
+  P.size = [P.x1 - P.x0, 2 * P.halfOut, P.zOut1 - P.zOut0];
+  var DEG = Math.PI / 180;
+
+  /* ---------------------------------------------------------------- 2D helpers (as in mountcad.js) */
+  function circle(cx, cy, r, n) { n = n || 24; var p = []; for (var i = 0; i < n; i++) { var a = i / n * Math.PI * 2; p.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return p; }
+  function rrect(x0, y0, x1, y1, r, n) {
+    n = n || 6; var p = [];
+    var c = [[x1 - r, y1 - r, 0], [x0 + r, y1 - r, 90], [x0 + r, y0 + r, 180], [x1 - r, y0 + r, 270]];
+    c.forEach(function (k) { for (var i = 0; i <= n; i++) { var a = (k[2] + 90 * i / n) * DEG; p.push([k[0] + r * Math.cos(a), k[1] + r * Math.sin(a)]); } });
+    return p;
+  }
+  function area(p) { var a = 0; for (var i = 0; i < p.length; i++) { var q = p[i], r = p[(i + 1) % p.length]; a += q[0] * r[1] - r[0] * q[1]; } return a / 2; }
+  function shapeOf(outer, holes) {
+    if (area(outer) < 0) outer = outer.slice().reverse();
+    var s = new THREE.Shape(outer.map(function (q) { return new THREE.Vector2(q[0], q[1]); }));
+    (holes || []).forEach(function (h) { if (area(h) > 0) h = h.slice().reverse(); s.holes.push(new THREE.Path(h.map(function (q) { return new THREE.Vector2(q[0], q[1]); }))); });
+    return s;
+  }
+  /* axis "z": profile (x, y); "x": (y, z); "y": (z, x). All proper rotations. */
+  var AX = {
+    z: new THREE.Matrix4().set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1),
+    x: new THREE.Matrix4().set(0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
+    y: new THREE.Matrix4().set(0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1)
+  };
+  function prism(outer, holes, axis, from, to) {
+    var g = new THREE.ExtrudeGeometry(shapeOf(outer, holes), { depth: to - from, bevelEnabled: false, curveSegments: 2 });
+    g.translate(0, 0, from);
+    g.applyMatrix4(AX[axis]);
+    return g;
+  }
+  function box(x0, x1, y0, y1, z0, z1) { return prism([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], null, "z", z0, z1); }
+
+  /* ---------------------------------------------------------------- the printed sleeve */
+  function buildSleeve() {
+    var S = [], x0 = P.x0, x1 = P.x1, xl = x1 - P.wall, hi = P.halfIn, ho = P.halfOut, ov = 0.05;
+    var zi0 = P.zIn0, zi1 = P.zIn1, zo0 = P.zOut0, zo1 = P.zOut1;
+    // flat back (against the Pi case)
+    S.push(box(x0, xl + ov, -ho, ho, zo0, zi0 + ov));
+    // front with three vent slots along the board (profile in (x, y))
+    var vx0 = x0 + 4, vx1 = xl - 4;
+    var front = [-7, 0, 7].map(function (y) { return rrect(vx0, y - 1.1, vx1, y + 1.1, 1.0, 4); });
+    S.push(prism([[x0, -ho], [xl + ov, -ho], [xl + ov, ho], [x0, ho]], front, "z", zi1 - ov, zo1));
+    // side walls with two vent windows each above the board (profile in (z, x))
+    var mid = (vx0 + vx1) / 2;
+    var side = [[vx0, mid - 1.5], [mid + 1.5, vx1]].map(function (r) { return rrect(2.2, r[0], 5.6, r[1], 1.0, 4); });
+    var sideOuter = [[zo0, x0], [zo1, x0], [zo1, xl + ov], [zo0, xl + ov]];
+    S.push(prism(sideOuter, side, "y", hi - ov, ho));
+    S.push(prism(sideOuter, side, "y", -ho, -hi + ov));
+    // rails the board slides on, 1.5 mm off the back
+    [-1, 1].forEach(function (s) {
+      var a = s > 0 ? hi - P.railW : -hi - ov, b = s > 0 ? hi + ov : -hi + P.railW;
+      S.push(box(x0, xl + ov, a, b, zi0 - ov, -0.05));
+    });
+    // far-end lip with a vent window narrower than the board, so the board stops against it (profile in (y, z))
+    S.push(prism([[-ho, zo0], [ho, zo0], [ho, zo1], [-ho, zo1]], [rrect(-9.5, -0.6, 9.5, 5.6, 1.5, 4)], "x", xl, x1));
+    return S;
+  }
+
+  /* ---------------------------------------------------------------- the BEC itself (visual only) */
+  function buildBec() {
+    var L = [], T = P.T, pads = [];
+    for (var i = 0; i < 4; i++) pads.push([P.padX, (1.5 - i) * P.pitch]);
+    var holes = pads.map(function (p) { return circle(p[0], p[1], 0.65, 16); });
+    L.push({ g: prism(rrect(0, -P.W / 2, P.L, P.W / 2, 1.0, 3), holes, "z", 0, T), c: 0x1d58b8, r: 0.45, name: "Matek BEC12S-PRO" });
+    pads.forEach(function (p) {
+      L.push({ g: prism(circle(p[0], p[1], 1.25, 20), [circle(p[0], p[1], 0.65, 16).reverse()], "z", -0.05, T + 0.05), c: 0xd9dcd8, r: 0.35, m: 0.6, name: "Matek BEC12S-PRO pads" });
+    });
+    L.push({ g: box(13, 23, -5.2, 4.8, T, T + 3.9), c: 0x8e9392, r: 0.35, m: 0.6, name: "Matek BEC12S-PRO" });      // inductor
+    L.push({ g: box(25.5, 30.5, -3, 3, T, T + 1.2), c: 0x1b1d1e, r: 0.5, name: "Matek BEC12S-PRO" });                // regulator
+    [[8.5, 6.5], [8.5, -6.5], [27, 8.2], [27, -8.2]].forEach(function (c) {
+      L.push({ g: box(c[0] - 1.6, c[0] + 1.6, c[1] - 0.9, c[1] + 0.9, T, T + 1.6), c: 0x8a6b3e, r: 0.5, name: "Matek BEC12S-PRO" });  // capacitors
+    });
+    return L;
+  }
+
+  /* ---------------------------------------------------------------- transforms */
+  /* print standing on the far-end lip, open end up: (x, y, z) = (-Y, Z, x1 - X) */
+  function printSleeve() {
+    return new THREE.Matrix4().set(0, -1, 0, 0, 0, 0, 1, -P.zOut0, -1, 0, 0, P.x1, 0, 0, 0, 1);
+  }
+  /* on the drone: flat back on the Pi case's right end, parts facing out (+x), pads toward the rear,
+     IN on top, sleeve top 13.5 mm under the plate so the Pi's microSD slot above it stays clear */
+  P.place = opt.place || { backX: 49.5, topY: -13.5, padZ: -6 };
+  function toDrone() {
+    var p = P.place;
+    return new THREE.Matrix4().set(0, 0, 1, p.backX - P.zOut0, 0, 1, 0, p.topY - P.halfOut, -1, 0, 0, p.padZ, 0, 0, 0, 1);
+  }
+  function padPoint(i, lift) {   // pad i (0 = IN, 1 = G, 2 = G, 3 = OUT), lifted off the board's top face, in bec coords
+    return new THREE.Vector3(P.padX, (1.5 - i) * P.pitch, P.T + (lift || 0));
+  }
+
+  return { P: P, shells: buildSleeve, bec: buildBec, printSleeve: printSleeve, toDrone: toDrone, padPoint: padPoint };
+});
+</script>
+<script>/* Small, dependency-free writers for binary STL and GLB (glTF 2.0), plus a closed-mesh check.
+   Works in Node and in the browser with three.js (r147) loaded. */
+(function (root, factory) {
+  if (typeof module === "object" && module.exports) module.exports = factory;
+  else root.F450Export = factory;
+})(typeof self !== "undefined" ? self : this, function (THREE) {
+  "use strict";
+
+  function srgbToLinear(c) { return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+
+  /* geometry -> plain arrays, transformed by an optional Matrix4 */
+  function flatten(geometry, matrix) {
+    var g = geometry.index ? geometry : geometry; // keep index when present
+    var pos = g.getAttribute("position"), nor = g.getAttribute("normal");
+    if (!nor) { g.computeVertexNormals(); nor = g.getAttribute("normal"); }
+    var n = pos.count, P = new Float32Array(n * 3), N = new Float32Array(n * 3);
+    var v = new THREE.Vector3(), nm = matrix ? new THREE.Matrix3().getNormalMatrix(matrix) : null;
+    for (var i = 0; i < n; i++) {
+      v.fromBufferAttribute(pos, i); if (matrix) v.applyMatrix4(matrix);
+      P[i * 3] = v.x; P[i * 3 + 1] = v.y; P[i * 3 + 2] = v.z;
+      v.fromBufferAttribute(nor, i); if (nm) v.applyMatrix3(nm).normalize();
+      N[i * 3] = v.x; N[i * 3 + 1] = v.y; N[i * 3 + 2] = v.z;
+    }
+    var I;
+    if (g.index) { I = new Uint32Array(g.index.count); for (var k = 0; k < I.length; k++) I[k] = g.index.getX(k); }
+    else { I = new Uint32Array(n); for (var j = 0; j < n; j++) I[j] = j; }
+    var det = matrix ? matrix.determinant() : 1;
+    if (det < 0) for (var t = 0; t < I.length; t += 3) { var tmp = I[t + 1]; I[t + 1] = I[t + 2]; I[t + 2] = tmp; }
+    return { P: P, N: N, I: I };
+  }
+
+  /* -------- STL (binary), millimetres */
+  function stl(items, header) {
+    var tris = [];
+    items.forEach(function (it) {
+      var f = flatten(it.geometry, it.matrix);
+      for (var t = 0; t < f.I.length; t += 3) tris.push([f.I[t], f.I[t + 1], f.I[t + 2], f.P]);
+    });
+    var buf = new ArrayBuffer(84 + tris.length * 50), dv = new DataView(buf);
+    var h = (header || "F450 camera mount").slice(0, 79);
+    for (var i = 0; i < h.length; i++) dv.setUint8(i, h.charCodeAt(i) & 127);
+    dv.setUint32(80, tris.length, true);
+    var o = 84, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), nn = new THREE.Vector3();
+    tris.forEach(function (tr) {
+      var P = tr[3];
+      a.set(P[tr[0] * 3], P[tr[0] * 3 + 1], P[tr[0] * 3 + 2]);
+      b.set(P[tr[1] * 3], P[tr[1] * 3 + 1], P[tr[1] * 3 + 2]);
+      c.set(P[tr[2] * 3], P[tr[2] * 3 + 1], P[tr[2] * 3 + 2]);
+      nn.subVectors(c, b).cross(new THREE.Vector3().subVectors(a, b)).normalize();
+      [nn, a, b, c].forEach(function (v) { dv.setFloat32(o, v.x, true); dv.setFloat32(o + 4, v.y, true); dv.setFloat32(o + 8, v.z, true); o += 12; });
+      dv.setUint16(o, 0, true); o += 2;
+    });
+    return buf;
+  }
+
+  /* -------- closed-mesh check for one shell */
+  function checkClosed(geometry, matrix) {
+    var f = flatten(geometry, matrix), key = {}, ids = [], idx = 0;
+    var vid = new Uint32Array(f.P.length / 3);
+    for (var i = 0; i < vid.length; i++) {
+      var k = Math.round(f.P[i * 3] * 1e4) + "," + Math.round(f.P[i * 3 + 1] * 1e4) + "," + Math.round(f.P[i * 3 + 2] * 1e4);
+      if (key[k] === undefined) key[k] = idx++;
+      vid[i] = key[k];
+    }
+    var edges = {}, vol = 0, degenerate = 0;
+    for (var t = 0; t < f.I.length; t += 3) {
+      var A = vid[f.I[t]], B = vid[f.I[t + 1]], C = vid[f.I[t + 2]];
+      if (A === B || B === C || A === C) { degenerate++; continue; }
+      [[A, B], [B, C], [C, A]].forEach(function (e) { var s = e[0] + ">" + e[1]; edges[s] = (edges[s] || 0) + 1; });
+      var p = f.P, ia = f.I[t] * 3, ib = f.I[t + 1] * 3, ic = f.I[t + 2] * 3;
+      vol += (p[ia] * (p[ib + 1] * p[ic + 2] - p[ib + 2] * p[ic + 1]) - p[ia + 1] * (p[ib] * p[ic + 2] - p[ib + 2] * p[ic]) + p[ia + 2] * (p[ib] * p[ic + 1] - p[ib + 1] * p[ic])) / 6;
+    }
+    var bad = 0, dup = 0;
+    Object.keys(edges).forEach(function (s) {
+      var parts = s.split(">"), rev = parts[1] + ">" + parts[0];
+      if (edges[s] > 1) dup++;
+      if (!edges[rev]) bad++;
+    });
+    return { triangles: f.I.length / 3, openEdges: bad, repeatedEdges: dup, degenerate: degenerate, volume: vol };
+  }
+
+  /* -------- GLB (glTF 2.0). items: {name, geometry, matrix?, color (hex sRGB), opacity?, metalness?, roughness?, doubleSided?}
+     opts.scale (default 0.001: mm -> m), opts.frontToPlusZ (default true: the model's -z front faces glTF's +Z) */
+  function glb(items, opts) {
+    opts = opts || {};
+    var scale = opts.scale != null ? opts.scale : 0.001;
+    var json = { asset: { version: "2.0", generator: opts.generator || "JPL F450 exporter" }, scene: 0, scenes: [{ name: opts.sceneName || "F450", nodes: [0] }], nodes: [], meshes: [], materials: [], accessors: [], bufferViews: [], buffers: [] };
+    var chunks = [], byteLen = 0;
+    function addView(typed, target) {
+      var pad = (4 - (byteLen % 4)) % 4;
+      if (pad) { chunks.push(new Uint8Array(pad)); byteLen += pad; }
+      var view = { buffer: 0, byteOffset: byteLen, byteLength: typed.byteLength };
+      if (target) view.target = target;
+      json.bufferViews.push(view);
+      chunks.push(new Uint8Array(typed.buffer, typed.byteOffset, typed.byteLength));
+      byteLen += typed.byteLength;
+      return json.bufferViews.length - 1;
+    }
+    var matKey = {};
+    function material(it) {
+      var col = new THREE.Color(it.color != null ? it.color : 0xcccccc);
+      var op = it.opacity != null ? it.opacity : 1, met = it.metalness || 0, rou = it.roughness != null ? it.roughness : 0.6;
+      var k = [col.getHexString(), op, met, rou, !!it.doubleSided].join("|");
+      if (matKey[k] !== undefined) return matKey[k];
+      var m = { name: it.materialName || ("#" + col.getHexString()), pbrMetallicRoughness: { baseColorFactor: [srgbToLinear(col.r), srgbToLinear(col.g), srgbToLinear(col.b), op], metallicFactor: met, roughnessFactor: rou } };
+      if (op < 1) m.alphaMode = "BLEND";
+      if (it.doubleSided) m.doubleSided = true;
+      json.materials.push(m);
+      matKey[k] = json.materials.length - 1;
+      return matKey[k];
+    }
+    // group by name, then by material
+    var byName = {}, order = [];
+    items.forEach(function (it) {
+      var nm = it.name || "part";
+      if (!byName[nm]) { byName[nm] = {}; order.push(nm); }
+      var mi = material(it);
+      (byName[nm][mi] = byName[nm][mi] || []).push(it);
+    });
+    var root = { name: opts.rootName || "F450", children: [] };
+    if (scale !== 1) root.scale = [scale, scale, scale];
+    if (opts.frontToPlusZ !== false) root.rotation = [0, 1, 0, 0];
+    json.nodes.push(root);
+    order.forEach(function (nm) {
+      var prims = [];
+      Object.keys(byName[nm]).forEach(function (mi) {
+        var list = byName[nm][mi], Ps = [], Ns = [], Is = [], nv = 0, ni = 0;
+        list.forEach(function (it) { var f = flatten(it.geometry, it.matrix); Ps.push(f.P); Ns.push(f.N); Is.push([f.I, nv]); nv += f.P.length / 3; ni += f.I.length; });
+        var P = new Float32Array(nv * 3), N = new Float32Array(nv * 3), I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+        var o = 0; Ps.forEach(function (a, i) { P.set(a, o); N.set(Ns[i], o); o += a.length; });
+        var oi = 0; Is.forEach(function (pair) { var arr = pair[0], base = pair[1]; for (var j = 0; j < arr.length; j++) I[oi++] = arr[j] + base; });
+        var mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+        for (var q = 0; q < nv; q++) for (var d = 0; d < 3; d++) { var val = P[q * 3 + d]; if (val < mn[d]) mn[d] = val; if (val > mx[d]) mx[d] = val; }
+        json.accessors.push({ bufferView: addView(P, 34962), componentType: 5126, count: nv, type: "VEC3", min: mn, max: mx });
+        var pa = json.accessors.length - 1;
+        json.accessors.push({ bufferView: addView(N, 34962), componentType: 5126, count: nv, type: "VEC3" });
+        var na = json.accessors.length - 1;
+        json.accessors.push({ bufferView: addView(I, 34963), componentType: I instanceof Uint32Array ? 5125 : 5123, count: ni, type: "SCALAR" });
+        prims.push({ attributes: { POSITION: pa, NORMAL: na }, indices: json.accessors.length - 1, material: +mi, mode: 4 });
+      });
+      json.meshes.push({ name: nm, primitives: prims });
+      json.nodes.push({ name: nm, mesh: json.meshes.length - 1 });
+      root.children.push(json.nodes.length - 1);
+    });
+    var pad = (4 - (byteLen % 4)) % 4; if (pad) { chunks.push(new Uint8Array(pad)); byteLen += pad; }
+    json.buffers.push({ byteLength: byteLen });
+    var jsonText = JSON.stringify(json);
+    var jsonBytes = typeof TextEncoder !== "undefined" ? new TextEncoder().encode(jsonText) : Buffer.from(jsonText, "utf8");
+    var jpad = (4 - (jsonBytes.length % 4)) % 4;
+    var total = 12 + 8 + jsonBytes.length + jpad + 8 + byteLen;
+    var out = new ArrayBuffer(total), dv = new DataView(out), u8 = new Uint8Array(out), off = 0;
+    dv.setUint32(0, 0x46546C67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true); off = 12;
+    dv.setUint32(off, jsonBytes.length + jpad, true); dv.setUint32(off + 4, 0x4E4F534A, true); off += 8;
+    u8.set(jsonBytes, off); off += jsonBytes.length; for (var s = 0; s < jpad; s++) u8[off++] = 0x20;
+    dv.setUint32(off, byteLen, true); dv.setUint32(off + 4, 0x004E4942, true); off += 8;
+    chunks.forEach(function (c) { u8.set(c, off); off += c.byteLength; });
+    return out;
+  }
+
+  /* -------- ZIP (stored, no compression) */
+  var CRC = null;
+  function crc32(u8) {
+    if (!CRC) { CRC = new Uint32Array(256); for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; CRC[n] = c >>> 0; } }
+    var crc = 0xFFFFFFFF; for (var i = 0; i < u8.length; i++) crc = CRC[(crc ^ u8[i]) & 255] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function zip(files) {   // files: [{name, data: Uint8Array|ArrayBuffer|string}]
+    var enc = function (s) { return typeof TextEncoder !== "undefined" ? new TextEncoder().encode(s) : new Uint8Array(Buffer.from(s, "utf8")); };
+    var parts = [], central = [], offset = 0;
+    files.forEach(function (f) {
+      var data = typeof f.data === "string" ? enc(f.data) : new Uint8Array(f.data.buffer ? f.data.buffer : f.data, f.data.byteOffset || 0, f.data.byteLength);
+      var name = enc(f.name), crc = crc32(data);
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+      lh.setUint16(10, 0, true); lh.setUint16(12, 0x5A21, true); lh.setUint32(14, crc, true); lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true);
+      lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+      parts.push(new Uint8Array(lh.buffer), name, data);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+      ch.setUint16(12, 0, true); ch.setUint16(14, 0x5A21, true); ch.setUint32(16, crc, true); ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint16(30, 0, true); ch.setUint16(32, 0, true); ch.setUint16(34, 0, true); ch.setUint16(36, 0, true);
+      ch.setUint32(38, 0, true); ch.setUint32(42, offset, true);
+      central.push(new Uint8Array(ch.buffer), name);
+      offset += 30 + name.length + data.length;
+    });
+    var cdSize = central.reduce(function (s, a) { return s + a.length; }, 0);
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+    var all = parts.concat(central, [new Uint8Array(end.buffer)]);
+    var total = all.reduce(function (s, a) { return s + a.length; }, 0), out = new Uint8Array(total), o = 0;
+    all.forEach(function (a) { out.set(a, o); o += a.length; });
+    return out;
+  }
+
+  return { stl: stl, glb: glb, zip: zip, checkClosed: checkClosed, flatten: flatten };
+});
+</script>
 <script>
 (function(){
 "use strict";
 var GUIDE = "/work/drone/build-guide/";
 
 /* ------------------------------------------------------------------ content */
+var MOUNT_URL = "/work/drone/camera-mount/";
 var PARTS = [
  {id:"fc", short:"Flight controller", n:1, name:"Flight controller", zone:"top", spec:"MicoAir743 V2 · INAV 9.1 · 36 × 36 mm, 30.5 mm mount",
-  body:"On rubber soft mounts on the top plate, directly behind the IO board, arrow pointing forward and its USB-C port facing the rear toward the Pi.",
-  list:["Battery power arrives only through the 8-pin cable from the IO board.","Its 5 V BEC feeds the receiver through UART6. Its 12 V BEC stays unused.","Its 5 V never goes to the Pi. The only link to the Pi is the USB cable."], stages:["07","08"]},
+  body:"On rubber soft mounts on the top plate, directly behind the IO board, arrow pointing forward and its USB-C port facing the rear.",
+  list:["Battery power arrives only through the 8-pin cable from the IO board.","Its 5 V BEC feeds the receiver through UART6 and the buzzer through the LED/Buzzer port. Its 12 V BEC stays unused.","Its 5 V never goes to the Pi. The only link to the Pi is the USB cable."], stages:["07","08"]},
  {id:"io", short:"IO board", n:2, name:"IO board", zone:"top", spec:"MicoAir IO board · power hub at the centre of the top plate",
   body:"The power hub for the motors and the FC. The 12 AWG feed from bottom-plate pair IO lands on its battery pads.",
   list:["ESC 1–4 power leads are soldered to it.","ESC signal leads plug into headers 1–4.","The 8-pin CR4321VG cable carries M1–M4, VBAT, GND, Curr and RX7 to the FC."], stages:["04","06","07"]},
  {id:"rx", short:"Receiver", n:3, name:"Receiver", zone:"top", spec:"Microzone MC7RE V2 · SBUS on UART6 · bound to the MC6C",
-  body:"Foam tape at the front right of the top plate: the cleanest spot, farthest from the Pi, the 4G stick and the battery current.", list:[], stages:["06","07"]},
+  body:"Foam tape at the front right of the top plate: the cleanest spot, away from the 4G stick and the battery current.", list:[], stages:["06","07"]},
  {id:"ant", short:"Antennas", n:4, name:"Receiver antennas", zone:"top", spec:"Two antennas, 90° apart",
   body:"Antenna A lies flat in a tube along the top of the front-right arm, never pointing up into the prop disc. Antenna B stands vertical in a tube tied to a nylon standoff. Keep the last 3 cm of each clear of metal and power wires.", list:[], stages:["02","07"]},
- {id:"buz", short:"Buzzer", n:5, name:"Buzzer", zone:"top", spec:"Active 3–5 V piezo on the FC's buzzer pads",
-  body:"INAV's low-battery and lost-model beeps. There's no OSD on this build, so this is how you hear the 3.5 V per cell warning.", list:[], stages:["06"]},
+ {id:"buz", short:"Buzzer", n:5, name:"Buzzer", zone:"top", spec:"12 mm active 5 V buzzer · FC LED/Buzzer port: + to 5V, − to Buzz−",
+  body:"INAV's low-battery and lost-model beeps. There's no OSD on this build, so this is how you hear the 3.5 V per cell warning. It must be the active type, which beeps by itself on 5 V.",
+  list:["The long leg is +.","Before soldering, touch it to 5 V from a USB supply: a steady beep means it's the right type."], stages:["06"]},
  {id:"gps", short:"GPS (later)", n:6, name:"GPS + compass (later)", zone:"top", later:true, spec:"Upgrade · M10 GPS with compass on a 10–15 cm mast",
   body:"Front left, at least 15 cm from the Pi case, the modem and the battery leads. Shown faint because it isn't fitted yet.", list:[], stages:["12"]},
  {id:"top", short:"Top plate", n:7, name:"Top plate", zone:"top", spec:"F450 upper plate · flight-critical parts only",
   body:"FC, IO board, receiver and buzzer. The FC's IMU stays within 5 cm of the centre of rotation, on the centre line.", list:[], stages:["02","07"]},
  {id:"pdb", short:"Bottom plate", n:8, name:"Bottom plate (PDB)", zone:"power", spec:"PCB plate · all + pads are one rail, all − pads the other",
   body:"Three pad pairs are used. Follow the printed + or − mark next to each pad: the orientation changes from pair to pair.",
-  list:["<b>Pair B</b> (left side): battery in, from the switch.","<b>Pair IO</b> (front right): 12 AWG to the IO board. It carries all motor current, ≈ 15 A in a hover and ≈ 52 A at full throttle.","<b>Pair U</b> (rear right): 20 AWG to the BEC, ≈ 1 A.","Two pairs stay spare. Never drill the plate."], stages:["02","04"]},
- {id:"arms", short:"Arm + ESC", n:9, name:"Arms and ESCs", zone:"arms", spec:"Red arms at the front · BLHeli_S 30 A ESC under each arm · DShot300",
+  list:["<b>Pair B</b> (left side): battery in, from the switch.","<b>Pair IO</b> (front right): 12 AWG to the IO board. It carries all motor current, ≈ 14 A in a hover and ≈ 52 A at full throttle.","<b>Pair U</b> (rear right): 22 AWG to the BEC, ≈ 1 A.","The two slots in the front tab take the camera mount's M3 bolts. Never drill the plate."], stages:["02","04"]},
+ {id:"sw", short:"XT60 + switch", n:9, name:"XT60 and on/off switch", zone:"power", spec:"12 AWG lead · switch in the + wire · rated ≥ 60 A",
+  body:"The drone's XT60 lies beside the battery's left side. The switch sits under the plate on the left, behind the Pi case, with its toggle facing out to the side. It carries all the motor current.",
+  list:["Switch OFF before plugging in the battery, then ON.","To power down, shut the Pi down first (<code>sudo poweroff</code>), wait for its green LED to stop, then switch OFF.","The smoke stopper plugs in between the battery and this XT60 for first power-ups only."], stages:["04","13"]},
+ {id:"bec", short:"Matek BEC", n:10, name:"Matek BEC12S-PRO", zone:"power", spec:"9–55 V in · 5.2 V out (both voltage pads open) · 5 A, 9 A peak · 35 × 24 mm, 5 g · in a printed sleeve",
+  body:"In its printed sleeve, taped low on the right end of the Pi case with its pads toward the rear, so the microSD slot above it stays reachable. Pads IN, G, G, OUT, 3.81 mm apart: heat-shrink every joint. It has no reverse-polarity protection, so check + and − before the first power-up.",
+  list:["IN and G: the 22 AWG pair from bottom-plate pair U.","OUT and G: the USB-C cable to the Pi, cut to 10–15 cm.","Leave both voltage pads (8V, 12V) open for 5 V. Nothing goes on the EN pad.","Measure 5.10–5.30 V before the Pi is connected.","The sleeve (bec-sleeve.stl, in the 3D download) slides on far end first, so the soldered wires can stay. A small piece of foam tape on the big inductor stops it rattling."], stages:["04","05"]},
+ {id:"arms", short:"Arm + ESC", n:11, name:"Arms and ESCs", zone:"arms", spec:"Red arms at the front · BLHeli_S 30 A ESC under each arm · DShot300",
   body:"ESC n drives motor n. Each ESC's power leads run to the IO board, its signal lead to IO header n, and its three phase wires to the motor. Swapping any two phase wires reverses the motor.", list:[], stages:["03","04","06"]},
- {id:"mot", short:"Motors", n:10, name:"Motors and props", zone:"arms", spec:"A2212 1000KV · 1045 props, 254 mm across",
+ {id:"mot", short:"Motors", n:12, name:"Motors and props", zone:"arms", spec:"A2212 1000KV · 1045 props, 254 mm across",
   body:"INAV numbers the motors M1 rear right, M2 front right, M3 rear left, M4 front left.",
   list:["<b>M1 and M4</b> spin clockwise with 1045R props.","<b>M2 and M3</b> spin counter-clockwise with 1045 props.","Props-in, the INAV default. Props stay off until the pre-flight stage."], stages:["03","08","13"]},
- {id:"bat", short:"Battery", n:11, name:"Battery", zone:"under", spec:"3S 2200 mAh LiPo · XT60 · 12.6 V full",
-  body:"Under the centre of the bottom plate on hook-and-loop plus a strap. Slide it about 2 cm forward or back until the quad balances at the centre. The lead leaves at the rear.", list:[], stages:["07","11"]},
- {id:"sw", short:"XT60 + switch", n:12, name:"XT60 and on/off switch", zone:"power", spec:"12 AWG lead · switch in the + wire · rated ≥ 60 A",
-  body:"The switch carries all the motor current, so it needs a rating of at least 60 A continuous, or a purpose-made anti-spark switch.",
-  list:["Switch OFF before plugging in the battery, then ON.","To power down, shut the Pi down first (<code>sudo poweroff</code>), wait for its green LED to stop, then switch OFF.","The smoke stopper plugs in between the battery and this XT60 for first power-ups only."], stages:["04","13"]},
- {id:"bec", short:"Matek BEC", n:13, name:"Matek BEC12S-PRO", zone:"power", spec:"9–55 V in · 5 V out · 5 A continuous, 9 A peak · 35 × 24 mm, 5 g",
-  body:"Taped to the side of the Pi case. Pads IN, G, G, OUT, 3.81 mm apart, so heat-shrink every joint.",
-  list:["IN and G: 20 AWG pair from bottom-plate pair U.","OUT and G: the USB-C cable to the Pi, cut to 10–15 cm.","Leave both voltage pads (8V, 12V) open for 5 V. Nothing goes on the EN pad.","Measure 5.10–5.30 V before the Pi is connected."], stages:["05"]},
- {id:"pi", short:"Pi 4", n:14, name:"Raspberry Pi 4", zone:"under", spec:"4 GB · in its case under the rear · fan facing down",
-  body:"Powered through USB-C from the BEC. Runs MediaMTX, Tailscale and drone_telemetry.",
-  list:["The FC's USB cable goes into a blue USB 3 port.","The C920-C and MF833 use the black USB 2.0 ports only, because USB 3 radiates 2.4 GHz noise.","Keep at least 10 mm of air under the fan."], stages:["05","07","09","10"]},
- {id:"cam", short:"C920-C", n:15, name:"Logitech C920-C", zone:"under", spec:"USB webcam · 170 g · MJPEG to the Pi",
-  body:"Under the front on a soft-mounted L-bracket, tilted 10–15° down. The props sit about 7 cm above the lens and stay out of the picture. The cable coils flat in a figure eight under the battery and plugs into a black USB 2.0 port through a 90° adapter.", list:[], stages:["07","09"]},
- {id:"lte", short:"MF833 4G", n:16, name:"ZTE MF833 4G stick", zone:"under", spec:"USB LTE modem · 15 cm extension",
-  body:"Hangs at the rear left, tied to the rear-left landing leg: diagonally opposite and below the receiver.", list:[], stages:["07","09"]},
- {id:"gear", short:"Landing gear", n:17, name:"Landing gear", zone:"under", spec:"Tall F450 legs",
-  body:"Leave at least 60 mm between the lowest payload and the ground.", list:[], stages:["01","07"]},
- {id:"cg", short:"CG", n:18, name:"Centre of gravity", zone:"under", spec:"Balance point under the plate centre",
-  body:"The C920-C at the front (170 g) and the Pi with its modem at the rear (about 166 g) balance each other. Slide the battery to put the CG at the centre, and check it with two fingertips under the arms.", list:[], stages:["07"]}
+ {id:"bat", short:"Battery", n:13, name:"Battery", zone:"under", spec:"3S 2200 mAh 40C LiPo · XT60 · 12.6 V full · ≈ 180 g",
+  body:"Under the rear half of the bottom plate on hook-and-loop, with a strap through the rear slot. Its front end sits just behind the Pi case and its leads come out at the back.",
+  list:["The Pi at the front and the battery at the rear balance each other: see the CG marker.","The LiPo alarm rides on its balance plug."], stages:["07","11"]},
+ {id:"pi", short:"Pi 4", n:14, name:"Raspberry Pi 4", zone:"under", spec:"4 GB · black ABS case with the fan in the lid · lid down, HDMI and USB-C side to the rear",
+  body:"Powered through USB-C from the BEC. Runs MediaMTX (the camera), Tailscale, drone_telemetry and the dashboard.",
+  list:["The camera ribbon comes up through the lid's camera slot (the one between the fan and the HDMI side) into the CAMERA connector next to the micro-HDMI ports.","The FC's USB cable and the 4G stick use the two black USB 2.0 ports on the left end. The blue USB 3.0 ports stay empty, so no USB 3.0 noise reaches the receiver.","Its flat base sits on 5 mm of hook-and-loop so it clears the landing-gear brackets. Keep at least 10 mm of air under the fan.","Case, fan and heatsinks weigh about 50 g; the fan's leads go to GPIO pins 4 (5 V) and 6 (GND)."], stages:["05","07","09","10"]},
+ {id:"cam", short:"Camera", n:15, name:"Camera Module 3 + tilt mount", zone:"under", spec:"Raspberry Pi Camera Module 3 (imx708) · 1280 × 720 at 60 fps · printed mount, 0–45° down",
+  body:"The camera sits in a 3D-printed case on a hinge under the front tab of the bottom plate. To change the angle, loosen the two lock screws, line the screw up with a tick, and tighten. The Camera tilt slider shows the range.",
+  list:["Two M3 bolts through the bottom plate's front slots hold the mount.","The ribbon runs back under the Pi case to its CAMERA connector, blue side toward the Pi's USB ports.",'Print files, hardware and assembly: <a href="' + MOUNT_URL + '" target="_blank" rel="noopener">camera mount page ↗</a>'], stages:["07","09"]},
+ {id:"lte", short:"MF833 4G", n:16, name:"ZTE MF833 4G stick", zone:"under", spec:"94 × 29 × 14 mm · 30 g · Viettel SIM, APN v-internet",
+  body:"Tied along the outside of the rear-left landing leg, USB end up, on a 20 cm USB extension: diagonally opposite and below the receiver.",
+  list:["On the Pi it appears as <code>usb0</code> with a 192.168.0.x address; its own setup page is at 192.168.0.1."], stages:["07","09"]},
+ {id:"alarm", short:"LiPo alarm", n:17, name:"LiPo voltage alarm", zone:"under", spec:"BX100-type 1–8S checker · 40 × 27 × 13 mm, 12 g · alarm at 3.5 V",
+  body:"Plugged onto the battery's balance lead and held on the battery's right side with hook-and-loop, display facing out. It beeps loudly when any cell drops below the set voltage, even if the FC's buzzer can't be heard.",
+  list:["The balance plug's black wire goes to the pin marked −.","Unplug it after every flight: it slowly drains the pack."], stages:["06","13"]},
+ {id:"gear", short:"Landing gear", n:18, name:"Landing gear", zone:"under", spec:"High F450 legs · 150 mm · white · ≈ 90 g the set",
+  body:"One arched leg under each arm next to the plate, two M2.5 screws each. They leave about 10 cm between the lowest payload and the ground.", list:[], stages:["01","07"]},
+ {id:"cg", short:"CG", n:19, name:"Centre of gravity", zone:"under", spec:"worked out from the part weights",
+  body:"", list:[], stages:["07","11"]}
 ];
 var WIRES = [
- {id:"w-bat", name:"Battery lead", zone:"power", sw:"var(--w-vbat)", spec:"12 AWG pair · battery → XT60 → switch → pair B", body:"Ties to the rear-left landing leg so the plug can't swing.", stages:["04"]},
- {id:"w-io", name:"IO feed", zone:"power", sw:"var(--w-vbat)", spec:"12 AWG twisted pair · pair IO → IO board · ≈ 15 A hover, ≈ 52 A peak", body:"The heaviest run on the quad. Keep it short (10–12 cm) and route it up between the plates.", stages:["04"]},
- {id:"w-bec", name:"BEC feed", zone:"power", sw:"var(--w-vbat)", spec:"20 AWG twisted pair · pair U → BEC IN / G · ≈ 1 A", body:"Thin is right here: 12 AWG wouldn't fit the BEC's 3.81 mm pads.", stages:["04","05"]},
- {id:"w-usbc", name:"USB-C power cable", zone:"power", sw:"var(--w-gnd)", spec:"2-wire USB-C male cable, cut to 10–15 cm · BEC OUT / G → Pi", body:"Red to OUT, black to G. At 28 AWG it drops about 0.1–0.2 V at 10–15 cm, which is fine. Check +5.2 V with the multimeter before the plug meets the Pi.", stages:["05"]},
+ {id:"w-bat", name:"Battery lead", zone:"power", sw:"var(--w-vbat)", spec:"12 AWG pair · battery → XT60 → switch → pair B", body:"The battery's own lead comes out at the rear and plugs into the drone's XT60 beside the battery's left side. Tie both connectors down so they can't swing.", stages:["04"]},
+ {id:"w-io", name:"IO feed", zone:"power", sw:"var(--w-vbat)", spec:"12 AWG twisted pair · pair IO → IO board · ≈ 14 A hover, ≈ 52 A peak", body:"The heaviest run on the quad. Keep it short (10–12 cm) and route it up between the plates.", stages:["04"]},
+ {id:"w-bec", name:"BEC feed", zone:"power", sw:"var(--w-vbat)", spec:"22 AWG twisted pair · pair U → BEC IN / G · ≈ 1 A", body:"From the rear-right pad pair, over the plate's right edge and down to the BEC's pads. Thin is right here: 12 AWG wouldn't fit the BEC's 3.81 mm pads.", stages:["04","05"]},
+ {id:"w-usbc", name:"USB-C power cable", zone:"power", sw:"var(--w-gnd)", spec:"2-wire USB-C male cable, 10–15 cm · BEC OUT / G → Pi", body:"Red to OUT, black to G. It plugs into the Pi's USB-C port on the rear face of the case, beside the BEC. Prove the polarity with a USB-C tester or the multimeter before the plug meets the Pi.", stages:["05"]},
  {id:"w-escp", name:"ESC power leads", zone:"arms", sw:"var(--w-vbat)", spec:"16–18 AWG · ESC → IO board · ≤ 13 A each", body:"Already soldered to the IO board.", stages:["04"]},
  {id:"w-escs", name:"ESC signal leads", zone:"arms", sw:"var(--w-sig)", spec:"Servo leads · ESC n → IO header n", body:"The red wire is pulled out of any 3-wire ESC plug.", stages:["06"]},
  {id:"w-phase", name:"Motor phase wires", zone:"arms", sw:"var(--w-usb)", spec:"3 wires per motor · 3.5 mm bullets", body:"Any order. Swap two to reverse a motor.", stages:["03","08"]},
  {id:"w-8p", name:"8-pin FC cable", zone:"top", sw:"var(--w-uart)", spec:"CR4321VG · IO board → FC", body:"M1–M4 signals, VBAT, GND, Curr and RX7.", stages:["04","06"]},
  {id:"w-sbus", name:"SBUS cable", zone:"top", sw:"var(--w-sbus)", spec:"FC UART6 → receiver M.BUS row · SBUS + 5 V + GND", body:"The order on the receiver is S · + · − from the number side.", stages:["06"]},
- {id:"w-usb", name:"FC → Pi USB", zone:"top", sw:"var(--w-usb)", spec:"USB-C to USB-A data cable · 15–25 cm · MSP", body:"Through the rear slot of the top plate, tied to a standoff with a loose loop so a tug can't reach the USB-C plug.", stages:["06","09","10"]},
- {id:"w-cam", name:"Camera cable", zone:"under", sw:"var(--w-usb)", spec:"C920-C USB · coiled flat in a figure eight", body:"Velcro-wrapped and tied under the battery area at two points. It must not hang.", stages:["07"]},
- {id:"w-lte", name:"Modem extension", zone:"under", sw:"var(--w-net)", spec:"USB-A 2.0 extension · 15 cm", body:"Two ties to the rear-left landing leg.", stages:["07"]},
+ {id:"w-usb", name:"FC → Pi USB", zone:"top", sw:"var(--w-usb)", spec:"USB-C to USB-A data cable · 25 cm · MSP", body:"From the FC's USB-C, down through the top plate's rear slot, between the plates and out at the left edge, then down to a black USB 2.0 port on the Pi's left end. Tie it to a standoff so a tug can't reach the USB-C plug.", stages:["06","09","10"]},
+ {id:"w-cam", name:"Camera ribbon", zone:"under", sw:"#d9d6cc", spec:"15-pin, 1 mm pitch, 16 mm wide · the 200 mm cable that comes with the camera", body:"From the notch in the bottom of the camera case, back under the Pi case and up through its camera slot. About 9 cm of it is used, a little less as the camera tilts down. Fold the rest flat under the Pi case and tape it, or fit a 15 cm camera cable instead.", stages:["07","09"]},
+ {id:"w-lte", name:"Modem extension", zone:"under", sw:"var(--w-net)", spec:"USB-A 2.0 extension · 20 cm", body:"From the Pi's other black USB 2.0 port, back along the left side under the switch, to the 4G stick on the rear-left leg.", stages:["07"]},
+ {id:"w-bal", name:"Balance lead", zone:"under", sw:"#e0b43a", spec:"3S balance plug, 4 wires → LiPo alarm", body:"Black wire to the alarm's − pin. Unplug it after the flight.", stages:["13"]},
  {id:"w-ant", name:"Antenna coax", zone:"top", sw:"var(--w-sbus)", spec:"In tubes · A along the arm, B vertical", body:"Two ties hold antenna A's tube flat on the arm.", stages:["07"]},
- {id:"w-buz", name:"Buzzer wires", zone:"top", sw:"var(--w-sig)", spec:"Buzzer → FC buzzer pads", body:"", stages:["06"]}
+ {id:"w-buz", name:"Buzzer wires", zone:"top", sw:"var(--w-sig)", spec:"Buzzer + → 5V, − → Buzz− on the FC's LED/Buzzer port", body:"", stages:["06"]}
 ];
 var ALSO = {io:["power"], bat:["power"], pi:["power"], "w-escp":["power"], fc:["power"], "w-8p":["power"]};
 var byId = {};
@@ -268,13 +913,14 @@ function stageLinks(st){
 function overview(){
   card.innerHTML =
     '<p class="kicker">How it\'s organised</p><h3>Three layers, one power path</h3>' +
-    '<p>Flight-critical parts sit on the top plate, the power wiring runs between the plates, and the heavy payload hangs underneath, balanced front to rear.</p>' +
+    '<p>Flight-critical parts sit on the top plate, the power wiring runs between the plates, and the payload hangs underneath: the camera and the Pi at the front, the battery at the rear.</p>' +
     '<ul class="flow">' +
     '<li><i style="background:var(--w-vbat)"></i><span>Battery → XT60 → on/off switch → bottom-plate pair B</span></li>' +
     '<li><i style="background:var(--w-vbat)"></i><span>Pair IO → 12 AWG → IO board → ESC 1–4 and, through the 8-pin cable, the FC</span></li>' +
-    '<li><i style="background:var(--w-vbat)"></i><span>Pair U → 20 AWG → Matek BEC → USB-C → Pi 4</span></li>' +
+    '<li><i style="background:var(--w-vbat)"></i><span>Pair U → 22 AWG → Matek BEC → USB-C → Pi 4</span></li>' +
     '<li><i style="background:var(--w-sbus)"></i><span>FC → receiver (SBUS, 5 V from the FC)</span></li>' +
     '<li><i style="background:var(--w-usb)"></i><span>FC → Pi over USB (MSP telemetry)</span></li>' +
+    '<li><i style="background:#d9d6cc"></i><span>Camera Module 3 → ribbon → Pi (720p60 video)</span></li>' +
     '</ul>' +
     '<p class="warn">The FC\'s 5 V never connects to the Pi.</p>' +
     '<div class="guide">' + stageLinks(["02","04","05"]) + '</div>';
@@ -321,6 +967,8 @@ if (typeof THREE === "undefined" || !THREE.OrbitControls || !hasGL) {
   document.getElementById("fallback").hidden = false;
   document.getElementById("hint").hidden = true;
   document.getElementById("views").parentNode.hidden = true;
+  document.getElementById("dlbtn").disabled = true; document.getElementById("tilt").disabled = true;
+  document.getElementById("dlnote").textContent = "The 3D files are built from the 3D view, which this browser can't show.";
   document.querySelectorAll(".plist button").forEach(function(b){ b.addEventListener("click", function(){ selected = b.dataset.id; showInfo(selected); markLists(); }); });
   return;
 }
@@ -351,7 +999,7 @@ scene.add(sun);
 var fill = new THREE.DirectionalLight(0xffffff, 0.28); fill.position.set(-420, 160, -340); scene.add(fill);
 var rim = new THREE.DirectionalLight(0xdfeee8, 0.32); rim.position.set(-200, -260, 520); scene.add(rim);
 
-var GROUND = -220;
+var GROUND = -148.5;
 var ground = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600), new THREE.ShadowMaterial({opacity: 0.17}));
 ground.rotation.x = -Math.PI / 2; ground.position.y = GROUND; ground.receiveShadow = true; scene.add(ground);
 var grid = null;
@@ -531,13 +1179,13 @@ MOTORS.forEach(function(mo){
   var arcR = 104, a0 = Math.atan2(mo.sz, mo.sx) - 1.0, arcLen = 2.0;
   var arc = new THREE.Mesh(new THREE.TorusGeometry(arcR, 1.6, 6, 40, arcLen), M(COL.green, {r:0.5, e:COL.green}));
   arc.rotation.x = Math.PI / 2; arc.rotation.z = a0;
-  arc.position.set(mp.x, 76, mp.z); arc.userData.part = "mot"; G.p.add(arc); partMeshes.mot.push(arc);
+  arc.position.set(mp.x, 76, mp.z); arc.userData.part = "mot"; arc.userData.noExport = true; G.p.add(arc); partMeshes.mot.push(arc);
   /* torus angle θ runs clockwise seen from above after the rotations, so the head sits at the end for CW, at the start for CCW */
   var th = mo.cw ? a0 + arcLen : a0;
   var pt = new V3(mp.x + arcR * Math.cos(th), 76, mp.z + arcR * Math.sin(th));
   var tan = new V3(-Math.sin(th), 0, Math.cos(th)).multiplyScalar(mo.cw ? 1 : -1);
   var head = new THREE.Mesh(new THREE.ConeGeometry(5, 13, 14), M(COL.green, {r:0.5, e:COL.green}));
-  head.position.copy(pt); head.quaternion.setFromUnitVectors(new V3(0, 1, 0), tan.normalize()); head.userData.part = "mot";
+  head.position.copy(pt); head.quaternion.setFromUnitVectors(new V3(0, 1, 0), tan.normalize()); head.userData.part = "mot"; head.userData.noExport = true;
   G.p.add(head); partMeshes.mot.push(head);
   propSpinners.push({hub: hub, cw: mo.cw});
   mo.esc = ep; mo.dir = dir;
@@ -572,82 +1220,165 @@ var gpsMat = M(0x9aa8a1, {op:0.35});
 add("gps", "t", new THREE.Mesh(cyl(2.2, 120, 10), gpsMat), [-38, TY + 60, -38], false);
 add("gps", "t", new THREE.Mesh(cyl(14, 8, 24), gpsMat), [-38, TY + 124, -38], false);
 
-/* --- landing gear */
+/* --- landing gear: high F450 legs, 150 mm, white; one arched leg under each arm next to the plate */
 var LEGS = [[1,1],[1,-1],[-1,1],[-1,-1]];
-var legTop = function(sx, sz){ return new V3(sx * 36, -1, sz * 36); };
-var legFoot = function(sx, sz){ return new V3(sx * 92, GROUND + 6, sz * 92); };
+var LEG_R0 = 80, LEG_W = 14, LEG_T = 6;
+/* the leg's centre line in its own (radius, height) plane */
+var LEG_C = new THREE.CubicBezierCurve(new THREE.Vector2(82, -1.4), new THREE.Vector2(112, -24), new THREE.Vector2(124, -84), new THREE.Vector2(118, GROUND + 5));
+function legDir(sx, sz){ return new V3(sx, 0, sz).normalize(); }
+function legPoint(sx, sz, t, out){
+  var p = LEG_C.getPoint(t), d = legDir(sx, sz);
+  if (out) { var tg = LEG_C.getTangent(t); p = p.clone().add(new THREE.Vector2(-tg.y, tg.x).multiplyScalar(out)); }
+  return new V3(d.x * p.x, p.y, d.z * p.x);
+}
+var legFoot = function(sx, sz){ return legPoint(sx, sz, 1); };
+var LEG_GEO = (function(){
+  var n = 32, a = [], b = [];
+  for (var i = 0; i <= n; i++) {
+    var t = i / n, p = LEG_C.getPoint(t), tg = LEG_C.getTangent(t), nx = -tg.y, ny = tg.x;
+    a.push(new THREE.Vector2(p.x + nx * LEG_T / 2, p.y + ny * LEG_T / 2)); b.push(new THREE.Vector2(p.x - nx * LEG_T / 2, p.y - ny * LEG_T / 2));
+  }
+  var g = new THREE.ExtrudeGeometry(new THREE.Shape(a.concat(b.reverse())), {depth: LEG_W, bevelEnabled: false});
+  g.translate(0, 0, -LEG_W / 2);
+  return g;
+})();
+var LEG_MAT = M(0xf1f1ec, {r:0.55});
 LEGS.forEach(function(l){
-  var a = legTop(l[0], l[1]), b = legFoot(l[0], l[1]);
-  var len = a.distanceTo(b), mid = a.clone().add(b).multiplyScalar(0.5);
-  var leg = add("gear", "x", new THREE.Mesh(cyl(4.2, len, 12), M(0x1b1e1d, {r:0.5})), [mid.x, mid.y, mid.z]);
-  leg.quaternion.setFromUnitVectors(new V3(0, 1, 0), b.clone().sub(a).normalize());
-  add("gear", "x", new THREE.Mesh(new THREE.SphereGeometry(6.5, 16, 12), M(0x1b1e1d, {r:0.5})), [b.x, b.y, b.z]);
+  var d = legDir(l[0], l[1]), rot = Math.atan2(-d.z, d.x);
+  var leg = add("gear", "x", new THREE.Mesh(LEG_GEO, LEG_MAT)); leg.rotation.y = rot;
+  var br = add("gear", "x", new THREE.Mesh(box(20, 3, 18), LEG_MAT), [d.x * LEG_R0, 0.1, d.z * LEG_R0]); br.rotation.y = rot;
+  var fp = legFoot(l[0], l[1]);
+  var ft = add("gear", "x", new THREE.Mesh(box(30, 5, 16), LEG_MAT), [fp.x, GROUND + 2.5, fp.z]); ft.rotation.y = rot;
 });
 
 /* --- under the frame (payload group "u") */
-add("bat", "u", new THREE.Mesh(box(34, 25, 105), M(0x18191b, {r:0.55})), [0, -13.5, -19]);
-add("bat", "u", new THREE.Mesh(box(34.6, 25.4, 30), M(0xb8312b, {r:0.6})), [0, -13.5, -38]);
-add("bat", "u", new THREE.Mesh(box(36.4, 26, 18), M(0x232624, {r:0.9})), [0, -13.2, -12]);        /* strap */
-/* XT60 pair and switch */
-add("sw", "u", new THREE.Mesh(box(16, 8, 15.5), M(COL.yellow, {r:0.5})), [-34, -12, 26]);
-add("sw", "u", new THREE.Mesh(box(16, 8, 15.5), M(COL.yellow, {r:0.5})), [-34, -12, 10.5]);
-add("sw", "u", new THREE.Mesh(box(30, 11, 14), M(0x1d1f22, {r:0.5})), [-40, -6.5, -14]);
-add("sw", "u", new THREE.Mesh(box(8, 5, 4), M(0xc8302b, {r:0.45})), [-45, -6.5, -21.5]);
-/* Pi 4 in its case: 97 × 30 × 68, USB ports on the left end */
-var PI = {x:0, y:-17, z:80, w:97, h:30, d:68};
-add("pi", "u", new THREE.Mesh(box(PI.w, PI.h, PI.d), M(COL.case, {r:0.5, m:0.35})), [PI.x, PI.y, PI.z]);
-add("pi", "u", new THREE.Mesh(cyl(15, 0.8, 32), M(0x101211, {r:0.8})), [8, PI.y - PI.h / 2 - 0.4, PI.z]);
+/* battery: 3S 2200 under the rear half, leads out at the back */
+var BAT = {x:0, y:-13.5, z:45.5, w:34, h:25, d:105};
+add("bat", "u", new THREE.Mesh(box(BAT.w, BAT.h, BAT.d), M(0x18191b, {r:0.55})), [BAT.x, BAT.y, BAT.z]);
+add("bat", "u", new THREE.Mesh(box(BAT.w + 0.6, BAT.h + 0.4, 34), M(0xb8312b, {r:0.6})), [BAT.x, BAT.y, BAT.z - 12]);
+add("bat", "u", new THREE.Mesh(box(BAT.w + 2.4, BAT.h + 1, 18), M(0x232624, {r:0.9})), [BAT.x, BAT.y + 0.3, 47]);      /* strap through the rear slot */
+/* XT60 pair beside the battery's left side; switch under the plate on the left, toggle facing out */
+add("sw", "u", new THREE.Mesh(box(16, 8, 15.5), M(COL.yellow, {r:0.5})), [-27, -12, 80]);
+add("sw", "u", new THREE.Mesh(box(16, 8, 15.5), M(COL.yellow, {r:0.5})), [-27, -12, 64.5]);
+add("sw", "u", new THREE.Mesh(box(30, 11, 14), M(0x1d1f22, {r:0.5})), [-40, -6.5, 6]);
+add("sw", "u", new THREE.Mesh(box(4, 5, 8), M(0xc8302b, {r:0.45})), [-56.8, -6.5, 6]);
+/* Pi 4 in its black ABS case (fan and camera slot in the lid) under the front: about 97 × 30 × 68 mm, lid facing down,
+   HDMI and USB-C side to the rear, USB/Ethernet end on the left, on 5 mm of hook-and-loop */
+var PI = {x:0, y:-21, z:-44, w:97, h:30, d:68};
+var PIFRONT = PI.z - PI.d / 2, PIREAR = PI.z + PI.d / 2, PIBOT = PI.y - PI.h / 2;
+var PI_CASE = (function(){
+  var b = 2.5, hw = PI.w / 2 - b, hd = PI.d / 2 - b, rr = 7, s = new THREE.Shape();
+  s.moveTo(-hw + rr, -hd); s.lineTo(hw - rr, -hd); s.quadraticCurveTo(hw, -hd, hw, -hd + rr); s.lineTo(hw, hd - rr); s.quadraticCurveTo(hw, hd, hw - rr, hd);
+  s.lineTo(-hw + rr, hd); s.quadraticCurveTo(-hw, hd, -hw, hd - rr); s.lineTo(-hw, -hd + rr); s.quadraticCurveTo(-hw, -hd, -hw + rr, -hd);
+  var g = new THREE.ExtrudeGeometry(s, {depth: PI.h - 2 * b, bevelEnabled: true, bevelThickness: b, bevelSize: b, bevelSegments: 3, curveSegments: 6});
+  g.rotateX(Math.PI / 2); g.translate(0, (PI.h - 2 * b) / 2, 0);
+  return g;
+})();
+var ABS = 0x1d1f1f;
+add("pi", "u", new THREE.Mesh(PI_CASE, M(ABS, {r:0.55})), [PI.x, PI.y, PI.z]);
+add("pi", "u", new THREE.Mesh(box(PI.w - 14, 5, PI.d - 14), M(0x2c2f2e, {r:0.95})), [PI.x, -3.5, PI.z]);
+/* the lid's fan grill, underneath */
+add("pi", "u", new THREE.Mesh(cyl(15, 0.6, 32), M(0x0b0c0c, {r:0.85})), [17, PIBOT - 0.2, -48]);
+[13, 9.5].forEach(function(rr){ var t = add("pi", "u", new THREE.Mesh(new THREE.TorusGeometry(rr, 0.9, 6, 40), M(ABS, {r:0.55})), [17, PIBOT - 0.5, -48]); t.rotation.x = Math.PI / 2; });
+add("pi", "u", new THREE.Mesh(cyl(5.5, 1.2, 24), M(ABS, {r:0.55})), [17, PIBOT - 0.7, -48]);
 var portX = PI.x - PI.w / 2 - 0.4;
-var PORTS = {usb2up:[portX, -9, 58], usb2lo:[portX, -24, 58], usb3up:[portX, -9, 76], usb3lo:[portX, -24, 76]};
-Object.keys(PORTS).forEach(function(k){
-  var p = PORTS[k];
-  add("pi", "u", new THREE.Mesh(box(1, 6, 13), M(k.indexOf("usb3") === 0 ? 0x2563eb : 0x0b0c0c, {r:0.6})), p);
-});
-add("pi", "u", new THREE.Mesh(box(1, 13, 16), M(0x9aa09e, {r:0.4, m:0.6})), [portX, -17, 97]);   /* Ethernet */
-add("pi", "u", new THREE.Mesh(box(9, 3.5, 1), M(0x0b0c0c, {r:0.6})), [30, -20, PI.z + PI.d / 2 + 0.4]);   /* USB-C power */
-/* Matek BEC12S-PRO on the Pi's right end: board in the YZ plane, pads on the front edge */
-var BEC = {x:PI.w / 2 + 2.3, y:-17, z:78};
-add("bec", "u", new THREE.Mesh(box(1.6, 24, 35), M(COL.bec, {r:0.45})), [BEC.x, BEC.y, BEC.z]);
-add("bec", "u", new THREE.Mesh(box(4.5, 9, 9), M(0x8e9392, {r:0.35, m:0.7})), [BEC.x + 3, BEC.y - 2, BEC.z + 6]);
-var becPads = {IN:-8, G1:-11.8, G2:-15.6, OUT:-19.4};
-var becPadPos = {};
-Object.keys(becPads).forEach(function(k){
-  var p = new V3(BEC.x + 0.9, becPads[k], BEC.z - 15.5);
-  becPadPos[k] = p;
-  add("bec", "u", new THREE.Mesh(box(0.4, 2.4, 3), M(COL.pad, {r:0.35, m:0.6})), [p.x, p.y, p.z]);
-});
-/* C920-C on its bracket, tilted 12° down */
-var camG = new THREE.Group(); camG.position.set(0, -28, -110); camG.rotation.x = -12 * Math.PI / 180; G.u.add(camG);
-function camAdd(geo, mat, pos){ var m = new THREE.Mesh(geo, mat); m.position.set(pos[0], pos[1], pos[2]); m.userData.part = "cam"; m.castShadow = true; camG.add(m); pickables.push(m); (partMeshes.cam = partMeshes.cam || []).push(m); return m; }
-camAdd(box(94, 29, 24), M(0x141617, {r:0.4}), [0, 0, 0]);
-var lens = camAdd(cyl(9.5, 3, 28), M(COL.lens, {r:0.15, m:0.4}), [0, 0, -12.6]); lens.rotation.x = Math.PI / 2;
-var ring = camAdd(new THREE.TorusGeometry(10, 1.1, 8, 28), M(0x6b7270, {r:0.3, m:0.8}), [0, 0, -14]);
-camAdd(box(8, 3, 1), M(0xe8e9e8, {r:0.6}), [-32, 6, -12.3]);
-add("cam", "u", new THREE.Mesh(box(30, 14, 3), M(0x2d3230, {r:0.5, m:0.4})), [0, -6.6, -84]);
-add("cam", "u", new THREE.Mesh(box(30, 3, 26), M(0x2d3230, {r:0.5, m:0.4})), [0, -12.5, -96]);
-/* plugs: FC USB-A into the blue port, USB-C power, webcam via a 90° adapter, modem extension */
-add("w-usb", "u", new THREE.Mesh(box(12, 7.5, 13), M(0x2a2e2c, {r:0.5})), [portX - 6, -9, 76]);
-add("w-usbc", "u", new THREE.Mesh(box(9, 4, 13), M(0x161817, {r:0.5})), [30, -20, 121]);
-add("w-cam", "u", new THREE.Mesh(box(14, 9, 14), M(0x161817, {r:0.5})), [portX - 7, -24, 58]);
-add("w-lte", "u", new THREE.Mesh(box(12, 7.5, 13), M(0x161817, {r:0.5})), [portX - 6, -9, 58]);
-/* camera view cone */
-var coneLen = 330, coneG = new THREE.ConeGeometry(Math.tan(35 * Math.PI / 180) * coneLen, coneLen, 4, 1, true);
-coneG.rotateY(Math.PI / 4); coneG.translate(0, -coneLen / 2, 0); coneG.rotateX(Math.PI / 2);
+var USB_Y = [-15, -23.5], USB2_Z = -25, USB3_Z = -43, ETH_Z = -61.75, REAR_Y = -13, USBC_X = 31.3;
+[USB2_Z, USB3_Z].forEach(function(z, i){ USB_Y.forEach(function(y){ add("pi", "u", new THREE.Mesh(box(1, 6, 13), M(i ? 0x2563eb : 0x0b0c0c, {r:0.6})), [portX, y, z]); }); });
+add("pi", "u", new THREE.Mesh(box(1, 13, 16), M(0x9aa09e, {r:0.4, m:0.6})), [portX, -18, ETH_Z]);
+add("pi", "u", new THREE.Mesh(box(9, 3.5, 1), M(0x0b0c0c, {r:0.6})), [USBC_X, REAR_Y, PIREAR + 0.4]);
+[16.5, 3].forEach(function(x){ add("pi", "u", new THREE.Mesh(box(7, 3, 1), M(0x0b0c0c, {r:0.6})), [x, REAR_Y, PIREAR + 0.4]); });
+var CSI = new V3(-2.5, PIBOT, -27.5);
+add("pi", "u", new THREE.Mesh(box(22, 0.6, 3.5), M(0x0b0c0c, {r:0.6})), [CSI.x, CSI.y - 0.25, CSI.z]);
+/* Matek BEC12S-PRO in its printed sleeve, taped low on the Pi's right end: parts facing out, pads toward the rear, IN on top */
+var BS = buildBecSleeve(THREE), BSM = BS.toDrone();
+var becG = new THREE.Group(); becG.matrixAutoUpdate = false; becG.matrix.copy(BSM); G.u.add(becG);
+function becMesh(o){
+  var m = new THREE.Mesh(o.g, o.mat || M(o.c, {r:o.r, m:o.m}));
+  m.name = o.name || ""; m.userData.part = "bec"; m.castShadow = true;
+  becG.add(m); pickables.push(m); (partMeshes.bec = partMeshes.bec || []).push(m);
+  return m;
+}
+BS.bec().forEach(becMesh);
+var sleeveMat = M(0xd5dbd8, {r:0.4, op:0.5});
+BS.shells().forEach(function(g){ becMesh({g:g, mat:sleeveMat, name:"BEC sleeve (printed)"}); });
+var BEC = new V3((BS.P.x0 + BS.P.x1) / 2, 0, (BS.P.zOut0 + BS.P.zOut1) / 2).applyMatrix4(BSM);
+var becPadPos = {IN: BS.padPoint(0, 0.8).applyMatrix4(BSM), G1: BS.padPoint(1, 0.8).applyMatrix4(BSM), G2: BS.padPoint(2, 0.8).applyMatrix4(BSM), OUT: BS.padPoint(3, 0.8).applyMatrix4(BSM)};
+/* Camera Module 3 in its printed tilt mount: hinge 17 mm under the plate, 94 mm ahead of the centre */
+var DEG = Math.PI / 180;
+var CM = buildCamMount(THREE, window.GLYPHS), CMP = CM.P;
+var camTilt = 15;
+var camMount = new THREE.Group(); camMount.position.fromArray(CMP.pivotDrone); G.u.add(camMount);
+var camHead = new THREE.Group(); camHead.matrixAutoUpdate = false; camMount.add(camHead);
+var camLock = new THREE.Group(); camMount.add(camLock);
+function camMesh(o, parent){
+  var m = new THREE.Mesh(o.g, o.mat || M(o.c, {r:o.r, m:o.m}));
+  m.name = o.name || ""; m.userData.part = "cam"; m.castShadow = true;
+  parent.add(m); pickables.push(m); (partMeshes.cam = partMeshes.cam || []).push(m);
+  return m;
+}
+var camCaseMat = M(0x2a2e2d, {r:0.62}), camMountMat = M(0x3b4140, {r:0.6});
+CM.caseShells().forEach(function(g){ camMesh({g:g, mat:camCaseMat, name:"Camera case (printed)"}, camHead); });
+CM.mountShells().forEach(function(g){ camMesh({g:g, mat:camMountMat, name:"Tilt mount (printed)"}, camMount); });
+CM.board().forEach(function(o){ camMesh(o, camHead); });
+CM.caseHardware().forEach(function(o){ camMesh(o, camHead); });
+CM.mountHardware(0).forEach(function(o){ camMesh(o, o.grp === "lockL" || o.grp === "lockR" ? camLock : camMount); });
+/* what the camera sees: Camera Module 3 standard lens, 66° × 41° */
+var coneLen = 330, coneHW = Math.tan(33 * DEG) * coneLen, coneHH = Math.tan(20.5 * DEG) * coneLen;
+var coneG = new THREE.BufferGeometry();
+(function(){
+  var o = [0, CMP.win.cy, -CMP.lensFront], pos = [];
+  var c = [[-coneHW, -coneHH], [coneHW, -coneHH], [coneHW, coneHH], [-coneHW, coneHH]].map(function(q){ return [q[0], CMP.win.cy + q[1], -CMP.lensFront - coneLen]; });
+  for (var i = 0; i < 4; i++) { var a = c[i], b = c[(i + 1) % 4]; pos.push(o[0], o[1], o[2], a[0], a[1], a[2], b[0], b[1], b[2]); }
+  coneG.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); coneG.computeVertexNormals();
+})();
 var cone = new THREE.Mesh(coneG, new THREE.MeshBasicMaterial({color: 0x2563eb, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false}));
-cone.position.set(0, 0, -14); cone.scale.set(1, 0.62, 1); camG.add(cone); cone.visible = false;
-/* MF833 on the rear-left leg */
-var lt = legTop(-1, 1), lf = legFoot(-1, 1), legDir = lf.clone().sub(lt).normalize();
-var modemC = lt.clone().addScaledVector(lf.clone().sub(lt), 0.52).add(new V3(-9, 0, 9));
-var modem = add("lte", "x", new THREE.Mesh(box(28, 85, 11), M(0xf1f0ec, {r:0.5})), [modemC.x, modemC.y, modemC.z]);
-modem.quaternion.setFromUnitVectors(new V3(0, 1, 0), legDir.clone().negate());
-var modemTop = modemC.clone().addScaledVector(legDir, -44);
-add("lte", "x", new THREE.Mesh(box(20, 0.4, 3), M(0x3069c4, {r:0.6})), [modemC.x, modemC.y, modemC.z]).quaternion.copy(modem.quaternion);
-/* CG marker */
+cone.userData.noExport = true; camHead.add(cone); cone.visible = false;
+function applyCamTilt(){
+  camHead.matrix.copy(CM.headToMount(camTilt)); camHead.matrixWorldNeedsUpdate = true;
+  camLock.rotation.x = -camTilt * DEG;
+}
+applyCamTilt();
+/* plugs at the Pi: the FC's cable and the modem extension in the black USB 2.0 ports, the BEC's USB-C cable at the rear */
+add("w-usb", "u", new THREE.Mesh(box(12, 7, 13), M(0x2a2e2c, {r:0.5})), [portX - 6, USB_Y[0], USB2_Z]);
+add("w-lte", "u", new THREE.Mesh(box(12, 7, 13), M(0x161817, {r:0.5})), [portX - 6, USB_Y[1], USB2_Z]);
+add("w-usbc", "u", new THREE.Mesh(box(9, 4, 13), M(0x161817, {r:0.5})), [USBC_X, REAR_Y, PIREAR + 6.5]);
+/* MF833 tied along the outside of the rear-left leg, USB end up, into the extension's socket */
+var mlt = LEG_C.getTangent(0.5), mlp = LEG_C.getPoint(0.5).add(new THREE.Vector2(-mlt.y, mlt.x).multiplyScalar(LEG_T / 2 + 13.5 / 2 + 0.6));
+var mdl = legDir(-1, 1);
+var modemC = new V3(mdl.x * mlp.x, mlp.y, mdl.z * mlp.x);
+var mY = new V3(-mdl.x * mlt.x, -mlt.y, -mdl.z * mlt.x).normalize();          /* up the leg, toward the USB plug */
+var mX = new V3(-mdl.z, 0, mdl.x), mZ = new V3().crossVectors(mX, mY).normalize();  /* across the leg, and its inward normal */
+var mQ = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(mX, mY, mZ));
+var modem = add("lte", "x", new THREE.Mesh(box(28.6, 93.8, 13.5), M(0xf1f0ec, {r:0.5})), [modemC.x, modemC.y, modemC.z]); modem.quaternion.copy(mQ);
+var mLogo = modemC.clone().addScaledVector(mZ, -6.95).addScaledVector(mY, 18);
+add("lte", "x", new THREE.Mesh(box(18, 4, 0.4), M(0x3069c4, {r:0.6})), [mLogo.x, mLogo.y, mLogo.z]).quaternion.copy(mQ);
+var modemTop = modemC.clone().addScaledVector(mY, 46.9);
+var sockC = modemTop.clone().addScaledVector(mY, 6);
+add("w-lte", "x", new THREE.Mesh(box(16, 24, 9), M(0x161817, {r:0.5})), [sockC.x, sockC.y, sockC.z]).quaternion.copy(mQ);
+var lteEnd = modemTop.clone().addScaledVector(mY, 18);
+/* LiPo alarm on the battery's right side: board against the battery, display out, header and plug at the bottom edge */
+var ALM = {x:BAT.w / 2 + 1.6, y:-14.5, z:72};
+add("alarm", "u", new THREE.Mesh(box(1.6, 27, 40), M(0x1d4fa0, {r:0.5})), [ALM.x + 0.8, ALM.y, ALM.z]);
+add("alarm", "u", new THREE.Mesh(box(7.5, 10, 25), M(0x151616, {r:0.4})), [ALM.x + 5.35, ALM.y + 6, ALM.z - 5]);
+add("alarm", "u", new THREE.Mesh(box(0.4, 6, 20), M(0xe2382c, {r:0.3, e:0xe2382c})), [ALM.x + 9.3, ALM.y + 6, ALM.z - 5]);
+var almBz = add("alarm", "u", new THREE.Mesh(cyl(6, 9.5, 20), M(0x111312, {r:0.5})), [ALM.x + 6.35, ALM.y - 6.5, ALM.z + 10]); almBz.rotation.z = Math.PI / 2;
+add("alarm", "u", new THREE.Mesh(box(4, 5, 5), M(0x2a2a2a, {r:0.6})), [ALM.x + 3.6, ALM.y - 7, ALM.z - 11]);
+add("alarm", "u", new THREE.Mesh(box(5.8, 7, 12.5), M(0xf0ede2, {r:0.6})), [ALM.x + 3.2, ALM.y - 17, ALM.z + 12]);
+/* centre of gravity from the part weights in grams (the symmetric frame, motors, ESCs, props and legs count at the centre) */
+var AUW = 1190;
+var MASS = [
+  {m:96, p:[PI.x, PI.z]}, {m:9, p:[BEC.x, BEC.z]}, {m:28, p:[0, -100]}, {m:180, p:[BAT.x, BAT.z]}, {m:12, p:[ALM.x + 5, ALM.z]},
+  {m:30, p:[modemC.x, modemC.z]}, {m:18, p:[-27, 72]}, {m:12, p:[-40, 6]}, {m:25, p:[-35, -20]},
+  {m:12, p:[0, 33]}, {m:10, p:[0, -8]}, {m:8, p:[33, -40]}, {m:2, p:[-36, 34]}
+];
+var cgV = new V3(0, -29, 0);
+MASS.forEach(function(q){ cgV.x += q.m * q.p[0] / AUW; cgV.z += q.m * q.p[1] / AUW; });
+byId.cg.body = "Worked out from the part weights in guide stage 11, it lands about " + Math.abs(cgV.z).toFixed(0) + " mm " + (cgV.z > 0 ? "behind" : "ahead of") + " the centre and " + Math.abs(cgV.x).toFixed(0) + " mm to the " + (cgV.x > 0 ? "right" : "left") + ". That's close enough: INAV evens it out by running the rear motors about 3 % harder. Check the real quad with two fingertips under the arm roots. If it tips back clearly, slide the battery forward until it touches the Pi case.";
 var cgMat = M(COL.green, {r:0.5, e:COL.green});
-var cgA = add("cg", "u", new THREE.Mesh(new THREE.TorusGeometry(9, 1.4, 8, 32), cgMat), [0, -29, 0], false);
+var cgA = add("cg", "u", new THREE.Mesh(new THREE.TorusGeometry(9, 1.4, 8, 32), cgMat), [cgV.x, cgV.y, cgV.z], false);
 cgA.rotation.x = Math.PI / 2;
-add("cg", "u", new THREE.Mesh(box(26, 1.4, 1.4), cgMat), [0, -29, 0], false);
-add("cg", "u", new THREE.Mesh(box(1.4, 1.4, 26), cgMat), [0, -29, 0], false);
+add("cg", "u", new THREE.Mesh(box(26, 1.4, 1.4), cgMat), [cgV.x, cgV.y, cgV.z], false);
+add("cg", "u", new THREE.Mesh(box(1.4, 1.4, 26), cgMat), [cgV.x, cgV.y, cgV.z], false);
 
 /* ------------------------------------------------------------------ wires */
 /* waypoints carry their layer key so they follow the explode slider */
@@ -658,16 +1389,15 @@ var wireDefs = [];
 function wire(id, kind, ptsFn, r, colors){ wireDefs.push({id: id, kind: kind, fn: ptsFn, r: r, colors: colors, meshes: []}); }
 var C = {red:0xd7261e, blk:0x1f2321, sig:0x2563eb, sbus:0x8642d6, uart:0x0a879f, usb:0x2f3432, net:0xbf3d78, ph:[0x1b1d1c, 0xc23b2b, 0xd7a51e], coax:0x2b2b2b};
 var pB = padPos.B, pIO = padPos.IO, pU = padPos.U;
-/* battery → XT60 → switch → pair B */
-wire("w-bat", "pair", function(){ return W([P(-8,-8,33.5,"u"), P(-18,-10,41,"u"), P(-32,-12,41,"u"), P(-34,-12,34,"u")]); }, 1.7, [C.red, C.blk]);
-wire("w-bat", "pair", function(){ return W([P(-34,-12,2.6,"u"), P(-32,-10,-5,"u"), P(-27,-7,-11,"u"), P(-24.6,-6.5,-14,"u")]); }, 1.7, [C.red, C.blk]);
-wire("w-bat", "pair", function(){ return W([P(-55.4,-6.5,-14,"u"), P(-59,-4,-12,"u"), P(-50,-1,-8,"f"), P(-48,1.5,-5,"f"), P(-43,2.8,-2,"f"), P(pB.mid.x - 2, 2.8, 0, "f")]); }, 1.7, [C.red, C.blk]);
-/* pair IO → IO board battery pads */
+/* battery (leads out at the rear) → XT60 beside the battery → switch → pair B */
+wire("w-bat", "pair", function(){ return W([P(-8, -8, BAT.z + BAT.d / 2 + 0.5, "u"), P(-12, -9, 106, "u"), P(-24, -11, 101, "u"), P(-27, -12, 88.5, "u")]); }, 1.7, [C.red, C.blk]);
+wire("w-bat", "pair", function(){ return W([P(-27, -12, 56.5, "u"), P(-30, -11, 44, "u"), P(-38, -8, 24, "u"), P(-40, -6.5, 13.4, "u")]); }, 1.7, [C.red, C.blk]);
+wire("w-bat", "pair", function(){ return W([P(-40, -6.5, -1.4, "u"), P(-48, -5.2, -6, "u"), P(-59, -1, -4, "f"), P(-58.5, 2.6, -2.5, "f"), P(-50, 3.4, -1.2, "f"), P(pB.mid.x - 2, 2.8, 0, "f")]); }, 1.7, [C.red, C.blk]);
 wire("w-io", "pair", function(){ return W([P(pIO.mid.x, 2.8, pIO.mid.z, "f"), P(25, 16, -24, "f"), P(22, 34, -22, "f"), P(22, 44, -22, "t"), P(19, 50.5, -14, "t"), P(16, 50.6, -9, "t")]); }, 1.75, [C.red, C.blk]);
-/* pair U → BEC IN / G */
-wire("w-bec", "pair", function(){ var a = becPadPos.IN, b = becPadPos.G1; return W([P(pU.mid.x, 2.6, pU.mid.z, "f"), P(36, 3.5, 32, "f"), P(54, 2, 44, "f"), P(57, -2, 52, "u"), P(BEC.x + 2, (a.y + b.y) / 2 + 1, BEC.z - 19, "u"), P(BEC.x + 1.2, (a.y + b.y) / 2, BEC.z - 15.8, "u")]); }, 0.85, [C.red, C.blk]);
-/* BEC OUT / G → USB-C cable → Pi */
-wire("w-usbc", "tube", function(){ var a = becPadPos.OUT, b = becPadPos.G2; return W([P(BEC.x + 1.2, (a.y + b.y) / 2, BEC.z - 15.8, "u"), P(BEC.x + 7, -24, BEC.z - 20, "u"), P(BEC.x + 8, -31, 92, "u"), P(46, -30, 126, "u"), P(30, -20, 128, "u")]); }, 1.8, [C.blk]);
+/* pair U → over the plate's right edge → BEC IN / G (the BEC sits low on the Pi's right end, pads toward the rear) */
+wire("w-bec", "pair", function(){ var a = becPadPos.IN, b = becPadPos.G1, y = (a.y + b.y) / 2; return W([P(pU.mid.x, 2.6, pU.mid.z, "f"), P(36, 3.4, 25, "f"), P(51, 3.4, 21, "f"), P(58.5, -0.5, 15, "u"), P(58.5, -10, 3, "u"), P(57.5, y + 4, -3.5, "u"), P(a.x + 1.6, y + 0.6, a.z + 1.2, "u"), P(a.x, y, a.z, "u")]); }, 0.85, [C.red, C.blk]);
+/* BEC OUT / G → USB-C cable → the Pi's USB-C port on the rear face of the case */
+wire("w-usbc", "tube", function(){ var a = becPadPos.OUT, b = becPadPos.G2, y = (a.y + b.y) / 2; return W([P(a.x, y, a.z, "u"), P(a.x + 1.8, y - 0.4, a.z + 2.5, "u"), P(55, y + 1, 0, "u"), P(47, -21, PIREAR + 15, "u"), P(38.5, -14.5, PIREAR + 16, "u"), P(USBC_X, REAR_Y, PIREAR + 13.2, "u")]); }, 1.8, [C.blk]);
 /* ESC power, signal and phase wires */
 MOTORS.forEach(function(mo){
   var d = mo.dir, s = new V3(-d.z, 0, d.x);
@@ -687,24 +1417,34 @@ wire("w-buz", "tube", function(){ return W([P(-32, TY + 6, 31, "t"), P(-24, TY +
 /* antennas: A along the front-right arm, B up the tube */
 wire("w-ant", "tube", function(){ var d = new V3(1, 0, -1).normalize(); return W([P(48, TY + 4, -40, "t"), P(58, 41, -54, "f"), P(d.x * 88, 39.4, d.z * 88, "f"), P(d.x * 150, 38.6, d.z * 150, "f")]); }, 1.6, [C.coax]);
 wire("w-ant", "tube", function(){ return W([P(42, TY + 4, -33, "t"), P(46, TY + 12, -22, "t"), P(46, TY + 70, -18, "t")]); }, 0.7, [C.coax]);
-/* FC USB-C → over the rear edge, down beside the tab → blue USB 3 port */
-wire("w-usb", "tube", function(){ return W([P(6, TY + 9.4, FCZ + 21, "t"), P(4, TY + 6, 54, "t"), P(2, 36, 55, "f"), P(-20, 20, 60, "f"), P(-44, 5, 64, "f"), P(-56, -5, 71, "u"), P(-60, -9, 76, "u"), P(portX - 10, -9, 76, "u")]); }, 2.0, [C.usb]);
-/* camera cable, coiled flat under the battery, to a black USB 2 port */
-wire("w-cam", "tube", function(){
-  var pts = [P(-40, -26, -104, "u"), P(-36, -30, -84, "u"), P(-18, -32, -70, "u")];
-  for (var i = 0; i <= 28; i++) { var t = i / 28 * Math.PI * 2; pts.push(P(-22 * Math.sin(t), -30.5, -40 + 26 * Math.sin(t) * Math.cos(t) - 12 * Math.cos(t), "u")); }
-  pts.push(P(-24, -31, -2, "u"), P(-56, -30, 30, "u"), P(-62, -27, 50, "u"), P(portX - 14, -24, 58, "u"));
-  return W(pts);
-}, 1.9, [C.usb]);
-/* modem extension: black USB 2 port → down the rear-left leg */
-wire("w-lte", "tube", function(){ var mt = modemTop; return W([P(portX - 12, -9, 58, "u"), P(portX - 18, -10, 58, "u"), P(-66, -24, 56, "x"), P(mt.x + 4, mt.y + 18, mt.z - 4, "x"), P(mt.x, mt.y + 2, mt.z, "x")]); }, 2.3, [C.net]);
+/* FC USB-C → down through the top plate's rear slot, between the plates, out at the left edge → black USB 2.0 port */
+wire("w-usb", "tube", function(){ return W([P(6, TY + 9.4, FCZ + 21, "t"), P(4, TY + 6, 54, "t"), P(2, 36, 54.5, "f"), P(-14, 26, 36, "f"), P(-34, 13, 8, "f"), P(-48, 6.5, -12, "f"), P(-58, 1, -22, "f"), P(-66, -6, -25, "u"), P(-69, -12, -25, "u"), P(-65, USB_Y[0], USB2_Z, "u"), P(portX - 12, USB_Y[0], USB2_Z, "u")]); }, 2.0, [C.usb]);
+/* camera ribbon: from the camera case's bottom notch, back under the Pi case, up into its camera slot (follows the tilt) */
+function ribbonPts(){
+  var h = CM.mountToDrone().multiply(CM.headToMount(camTilt));
+  var a = CM.ribbonExit.clone().applyMatrix4(h), a2 = new V3(0, CM.ribbonExit.y - 3.5, CM.ribbonExit.z).applyMatrix4(h);
+  var low = Math.min(a2.y, CSI.y - 3.2);
+  return W([P(a.x, a.y, a.z, "u"), P(a2.x, a2.y, a2.z, "u"), P(0, low, a2.z + 9, "u"), P(-1.5, low, CSI.z - 13, "u"), P(CSI.x, CSI.y - 1.8, CSI.z - 3, "u"), P(CSI.x, CSI.y + 0.5, CSI.z, "u")]);
+}
+wire("w-cam", "ribbon", ribbonPts, 16, [0xe9e7df]);
+/* modem extension: the Pi's other black USB 2.0 port → back along the left side → the socket on the rear-left leg */
+wire("w-lte", "tube", function(){ var e = lteEnd, u = mY, n = new V3(-mdl.x, 0, -mdl.z); return W([P(portX - 12, USB_Y[1], USB2_Z, "u"), P(-67, -25, -18, "u"), P(-67, -25, 4, "u"), P(-66, -21, 30, "x"), P(-62, -9, 54, "x"), P(e.x + n.x * 13 + u.x * 2, e.y + u.y * 2 - 3, e.z + n.z * 13 + u.z * 2, "x"), P(e.x + u.x * 3, e.y + u.y * 3, e.z + u.z * 3, "x"), P(e.x, e.y, e.z, "x")]); }, 2.3, [C.net]);
+/* balance lead → the LiPo alarm's plug at its bottom edge */
+wire("w-bal", "tube", function(){ return W([P(8, -12, BAT.z + BAT.d / 2 + 0.5, "u"), P(13, -14, 104, "u"), P(19, -26, 100, "u"), P(ALM.x + 3, -37, 92, "u"), P(ALM.x + 3.2, -38.5, ALM.z + 14, "u"), P(ALM.x + 3.2, ALM.y - 20.7, ALM.z + 12, "u")]); }, 1.4, [0xe0b43a]);
 
 var wireGroup = new THREE.Group(); drone.add(wireGroup);
 var wireMats = {};
-function wireMat(id, color){
+function wireMat(id, color, ds){
   var k = id + ":" + color;
-  if (!wireMats[k]) { wireMats[k] = M(color, {r:0.55}); (partMeshes[id] = partMeshes[id] || []).push({material: wireMats[k], isMatOnly: true}); }
+  if (!wireMats[k]) { wireMats[k] = M(color, {r:ds ? 0.7 : 0.55, ds:!!ds}); (partMeshes[id] = partMeshes[id] || []).push({material: wireMats[k], isMatOnly: true}); }
   return wireMats[k];
+}
+/* a flat ribbon: a strip whose width runs along x, bending only about x like a real flex cable */
+function ribbonGeo(pts, w){
+  var c = new THREE.CatmullRomCurve3(pts, false, "centripetal"), q = c.getSpacedPoints(72), pos = [], idx = [];
+  q.forEach(function(p, i){ pos.push(p.x - w / 2, p.y, p.z, p.x + w / 2, p.y, p.z); if (i) { var k = i * 2; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); } });
+  var g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+  return g;
 }
 function tubeGeo(pts, r){
   var c = new THREE.CatmullRomCurve3(pts, false, "centripetal");
@@ -725,11 +1465,11 @@ function pairGeos(pts, r){
 function buildWires(){
   wireDefs.forEach(function(w){
     var pts = w.fn();
-    var geos = w.kind === "pair" ? pairGeos(pts, w.r) : [tubeGeo(pts, w.r)];
+    var geos = w.kind === "pair" ? pairGeos(pts, w.r) : w.kind === "ribbon" ? [ribbonGeo(pts, w.r)] : [tubeGeo(pts, w.r)];
     geos.forEach(function(g, i){
       var m = w.meshes[i];
       if (!m) {
-        m = new THREE.Mesh(g, wireMat(w.id, w.colors[i] != null ? w.colors[i] : w.colors[0]));
+        m = new THREE.Mesh(g, wireMat(w.id, w.colors[i] != null ? w.colors[i] : w.colors[0], w.kind === "ribbon"));
         m.userData.part = w.id; m.castShadow = true; w.meshes[i] = m; wireGroup.add(m); pickables.push(m);
       } else { m.geometry.dispose(); m.geometry = g; }
     });
@@ -739,11 +1479,12 @@ buildWires();
 
 /* ------------------------------------------------------------------ labels */
 var labelsEl = document.getElementById("labels");
+var gf = legFoot(1, 1), lteLab = modemC.clone().addScaledVector(mZ, -14);
 var ANCH = {
   fc:["t", 0, TY + 12, FCZ], io:["t", 0, TY + 14, -8], rx:["t", 33, TY + 14, -40], ant:["t", 46, TY + 74, -18], buz:["t", -36, TY + 12, 34],
-  gps:["t", -38, TY + 132, -38], top:["t", -40, TY + 2, 12], pdb:["f", -30, 2, -70], arms:["f", 150 / Math.SQRT2, 2, -150 / Math.SQRT2 + 0],
-  mot:["p", -D - 26, 50, -D + 26], bat:["u", 0, -27, -55], sw:["u", -44, -17, -14], bec:["u", BEC.x + 6, -12, BEC.z], pi:["u", 10, -33, 92],
-  cam:["u", 0, -48, -116], lte:["x", modemC.x - 14, modemC.y, modemC.z + 10], gear:["x", 92, GROUND + 40, 92], cg:["u", 0, -31, 0]
+  gps:["t", -38, TY + 132, -38], top:["t", -40, TY + 2, 12], pdb:["f", -30, 2, -70], arms:["f", 150 / Math.SQRT2, 2, -150 / Math.SQRT2],
+  mot:["p", -D - 26, 50, -D + 26], bat:["u", 0, -27, 64], sw:["u", -46, -14, 6], bec:["u", BEC.x + 8, BEC.y + 8, BEC.z], pi:["u", 16, PIBOT - 2, -52],
+  cam:["u", 0, -44, -108], lte:["x", lteLab.x, lteLab.y, lteLab.z], alarm:["u", ALM.x + 13, ALM.y + 9, ALM.z], gear:["x", gf.x, GROUND + 40, gf.z], cg:["u", cgV.x, -31, cgV.z]
 };
 var labels = [];
 PARTS.forEach(function(p){
@@ -771,7 +1512,7 @@ function measureLabels(){
 }
 measureLabels();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ measureLabels(); });
-var PRIO = ["M","fc","io","pdb","bec","pi","bat","sw","cam","rx","lte","arms","ant","mot","gear","top","buz","gps","cg"];
+var PRIO = ["M","fc","io","pdb","bec","pi","bat","sw","cam","rx","lte","alarm","arms","ant","mot","gear","top","buz","gps","cg"];
 function prioOf(l){ if (l.id === selected && !l.motor) return -1; var i = PRIO.indexOf(l.motor ? "M" : l.id); return (i < 0 ? 99 : i) + (l.occluded ? 100 : 0); }
 
 /* ------------------------------------------------------------------ state */
@@ -860,7 +1601,7 @@ function fitPoints(){
   var e = state.explode, pts = [];
   MOTORS.forEach(function(mo){ var m = motorPos[mo.n]; for (var k = 0; k < 12; k++) { var a = k / 12 * Math.PI * 2; pts.push(new V3(m.x + 127 * Math.cos(a), 71 + 120 * e, m.z + 127 * Math.sin(a))); } });
   LEGS.forEach(function(l){ pts.push(legFoot(l[0], l[1]).add(new V3(0, -6, 0))); });
-  pts.push(new V3(46, TY + 72 + 75 * e, -18), new V3(0, -44 - 85 * e, -124), new V3(0, -34 - 85 * e, 116));
+  pts.push(new V3(46, TY + 72 + 75 * e, -18), new V3(0, -44 - 85 * e, -124), new V3(0, -30 - 85 * e, 106));
   if (state.later) pts.push(new V3(-38, TY + 128 + 75 * e, -38));
   return pts;
 }
@@ -957,6 +1698,105 @@ resize();
 goView("iso", true);
 setVis();
 paint();
+
+/* ------------------------------------------------------------------ camera tilt */
+var tiltIn = document.getElementById("tilt"), tiltOut = document.getElementById("tilt-out"), tiltNote = document.getElementById("tilt-note"), tiltPending = false;
+var TAN_V = Math.tan(20.5 * DEG);
+function horizonText(a){
+  var t = Math.tan(a * DEG);
+  if (a === 0) return "Horizon across the middle of the picture (standard lens).";
+  if (t >= TAN_V) return "Horizon above the picture: the camera looks down at the ground (standard lens).";
+  return "Horizon " + Math.round((TAN_V - t) / (2 * TAN_V) * 100) + "% down from the top of the picture (standard lens).";
+}
+function setTilt(a){
+  camTilt = a; tiltIn.value = a; tiltOut.textContent = a + "°"; tiltNote.textContent = horizonText(a);
+  applyCamTilt(); buildWires(); req();
+}
+tiltIn.addEventListener("input", function(){
+  camTilt = +tiltIn.value; tiltOut.textContent = camTilt + "°"; tiltNote.textContent = horizonText(camTilt);
+  if (!tiltPending) { tiltPending = true; requestAnimationFrame(function(){ tiltPending = false; applyCamTilt(); buildWires(); req(); }); }
+});
+
+/* ------------------------------------------------------------------ files: the quad as a GLB + the mount's STLs, in one zip */
+var EXP = F450Export(THREE);
+function droneGLB(){
+  var keep = {explode: state.explode, props: state.props, wires: state.wires}, out;
+  try {
+    state.props = true; state.wires = true; G.p.visible = true; wireGroup.visible = true;
+    if (keep.explode) { state.explode = 0; applyExplode(); }
+    drone.updateMatrixWorld(true);
+    var inv = drone.matrixWorld.clone().invert(), items = [];
+    drone.traverse(function(o){
+      if (!o.isMesh || o.userData.noExport) return;
+      var id = o.userData.part; if (!id || id === "gps" || id === "cg") return;
+      for (var p = o; p && p !== drone; p = p.parent) if (!p.visible) return;
+      var m = o.material; if (!m || Array.isArray(m)) return;
+      var op = m.userData.baseOpacity != null ? m.userData.baseOpacity : 1;
+      if (op < 0.2) return;
+      if (op > 0.9) op = 1;
+      items.push({name: o.name || (byId[id] && byId[id].name) || id, geometry: o.geometry, matrix: inv.clone().multiply(o.matrixWorld),
+        color: m.color.getHex(), opacity: op, metalness: m.metalness, roughness: m.roughness, doubleSided: m.side === THREE.DoubleSide});
+    });
+    out = EXP.glb(items, {sceneName: "F450 4G quad", rootName: "F450 4G quad (JPL Innovation)", generator: "JPL F450 3D layout"});
+  } finally {
+    state.props = keep.props; state.wires = keep.wires;
+    if (keep.explode) { state.explode = keep.explode; applyExplode(); }
+    setVis();
+  }
+  return out;
+}
+function readme(){
+  return ["JPL Innovation - F450 4G quad - 3D files", "",
+    "f450-drone.glb   The whole quad (glTF binary) with the camera tilted " + camTilt + " degrees down.",
+    "                 Real size in metres, Y up, the front of the quad facing +Z.",
+    "                 Opens in Blender (File > Import > glTF 2.0), Windows 3D Viewer, or any glTF viewer.",
+    "cam3-case.stl    Camera Module 3 case, in print orientation (millimetres): front face on the bed.",
+    "cam3-mount.stl   Tilt mount, in print orientation (millimetres): top of the base on the bed, arms up, 5 mm brim.",
+    "bec-sleeve.stl   Sleeve for the Matek BEC12S-PRO (millimetres): stands on its closed end, open end up.", "",
+    "Print: PETG, 0.4 mm nozzle, 0.2 mm layers, 4 walls, 40 % gyroid infill, no supports.",
+    "The STL files are overlapping closed solids; slicers join them.",
+    "Hardware: 1 x M3x45 bolt (hinge), 3 x M3 nyloc nut, 2 x M3x8 screw (angle lock),",
+    "          2 x M3x12 bolt (base to plate), 4 x M3 washer, 4 x M2x6 self-tapping screw (board).", "",
+    "Camera mount page: " + new URL(MOUNT_URL, location.href).href, "Build guide: " + new URL(GUIDE, location.href).href, ""].join("\r\n");
+}
+function buildZip(){
+  var caseItems = CM.caseShells().map(function(g){ return {geometry: g, matrix: CM.printCase()}; });
+  var mountItems = CM.mountShells().map(function(g){ return {geometry: g, matrix: CM.printMount()}; });
+  return EXP.zip([
+    {name: "f450-drone.glb", data: new Uint8Array(droneGLB())},
+    {name: "cam3-case.stl", data: new Uint8Array(EXP.stl(caseItems, "JPL F450 - Camera Module 3 case - mm"))},
+    {name: "cam3-mount.stl", data: new Uint8Array(EXP.stl(mountItems, "JPL F450 - Camera Module 3 tilt mount - mm"))},
+    {name: "bec-sleeve.stl", data: new Uint8Array(EXP.stl(BS.shells().map(function(g){ return {geometry: g, matrix: BS.printSleeve()}; }), "JPL F450 - Matek BEC12S-PRO sleeve - mm"))},
+    {name: "README.txt", data: readme()}
+  ]);
+}
+var dlBtn = document.getElementById("dlbtn"), dlNote = document.getElementById("dlnote"), downloads = null;
+var dlDefault = dlNote.textContent, NO_DL = "Downloads aren't available in this view. Ask Claude in the chat for the files.";
+if (window.claude && typeof window.claude.use === "function") {
+  dlBtn.disabled = true; dlNote.textContent = "Checking whether downloads work here…";
+  window.claude.use("downloads").then(function(d){
+    downloads = d;
+    if (d) { dlBtn.disabled = false; dlNote.textContent = dlDefault; } else dlNote.textContent = NO_DL;
+  }, function(){ dlNote.textContent = NO_DL; });
+} else { dlBtn.disabled = true; dlNote.textContent = "Downloads work when this page is opened in Claude. Ask Claude in the chat for the files."; }
+dlBtn.addEventListener("click", function(){
+  if (!downloads) return;
+  dlBtn.disabled = true; dlNote.textContent = "Building the files…";
+  setTimeout(function(){
+    var data;
+    try { data = buildZip(); } catch (e) { dlBtn.disabled = false; dlNote.textContent = "Couldn't build the files here. Ask Claude in the chat for them."; return; }
+    downloads.save({filename: "f450-3d-files.zip", data: new Blob([data], {type: "application/zip"})}).then(function(){
+      dlBtn.disabled = false; dlNote.textContent = "Saved f450-3d-files.zip (" + (data.length / 1048576).toFixed(1) + " MB): the quad as f450-drone.glb, plus the STL files to print.";
+    }, function(err){
+      dlBtn.disabled = false;
+      var c = err && err.code;
+      dlNote.textContent = c === "declined" ? "Download cancelled." : c === "rate_limited" ? "Another download prompt is open. Try again in a moment." : "The download didn't go through here. Ask Claude in the chat for the files.";
+    });
+  }, 30);
+});
+window.__f450 = {look: function(p, t){ fly = null; camera.position.set(p[0], p[1], p[2]); controls.target.set(t[0], t[1], t[2]); controls.update(); req(); }, camMeshes: function(){ return partMeshes.cam.filter(function(m){ return m.isMesh; }); }, camMountGroup: camMount, droneGLB: droneGLB, buildZip: buildZip, setTilt: setTilt, goView: goView, select: select, state: state, setVis: setVis, applyExplode: applyExplode, cg: cgV,
+  ribbonLength: function(){ var p = ribbonPts(); return new THREE.CatmullRomCurve3(p, false, "centripetal").getLength(); },
+  boxes: function(){ drone.updateMatrixWorld(true); var r = {}; drone.traverse(function(o){ if (!o.isMesh || o.userData.noExport) return; var id = o.userData.part || "?"; var b = new THREE.Box3().setFromObject(o); (r[id] = r[id] || new THREE.Box3()).union(b); }); var out = {}; Object.keys(r).forEach(function(k){ out[k] = [r[k].min.toArray().map(function(v){ return +v.toFixed(1); }), r[k].max.toArray().map(function(v){ return +v.toFixed(1); })]; }); return out; }};
 
 /* ------------------------------------------------------------------ loop */
 var tmp = new V3(), lastT = performance.now();
