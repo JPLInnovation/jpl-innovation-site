@@ -42,22 +42,24 @@ export const dronePage = {
 	/** Before the date in the last section: "Earlier work, <date>". */
 	earlierLabel: 'Earlier work,',
 	/**
-	 * Buttons under the facts: the step-by-step build guide, the interactive 3D layout and the printed camera mount.
-	 * Each is one self-contained file in public/work/drone/ (build-guide, 3d-layout, camera-mount); scripts/import-drone-pages.mjs
-	 * brings in a new version of them from the artifacts.
+	 * Buttons under the facts: the step-by-step build guide, the interactive 3D layout and Camera POV (the drone's ground
+	 * station). Each is one self-contained file in public/work/drone/: build-guide and 3d-layout come from the artifacts
+	 * through scripts/import-drone-pages.mjs, camera-pov from the drone repo's dashboard through
+	 * scripts/import-camera-pov.mjs. The camera mount page (public/work/drone/camera-mount/) stays on the site, linked
+	 * from the build guide, but has no button here.
 	 */
 	buildGuide: {
 		label: 'Open the build guide',
-		note: 'Every stage from parts list to first hover, with wiring diagrams and checklists. The 3D layout shows every part and wire, and the camera mount has the print files.',
+		note: 'Every stage from parts list to first hover, with wiring diagrams and checklists. The 3D layout shows every part and wire, and Camera POV is the drone’s ground station: what its camera sees, with the flight data over it.',
 		href: '/work/drone/build-guide/',
 	},
 	layout3d: {
 		label: 'Open the 3D layout',
 		href: '/work/drone/3d-layout/',
 	},
-	cameraMount: {
-		label: 'Camera mount',
-		href: '/work/drone/camera-mount/',
+	cameraPov: {
+		label: 'Camera POV',
+		href: '/work/drone/camera-pov/',
 	},
 };
 
