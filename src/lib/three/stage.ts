@@ -1,18 +1,32 @@
 /**
  * Shared Three.js stage for the site's 3D models (src/lib/three/models/*).
  *
- * One stage per <canvas>. It owns the renderer, camera, lights, resizing, theme colours and cleanup, so a
+ * One stage per <canvas>. It owns the renderer, camera, lights, resizing, theme colours, quality and cleanup, so a
  * model only builds meshes and (optionally) animates them. Loaded lazily by src/components/model-viewer.tsx and
  * src/components/showcase.tsx (through src/lib/three/showcase.ts).
  *
+ * Look: physically based. ACES filmic tone mapping (it keeps the CAD's reds and yellows saturated, where AgX
+ * washed them out), a studio environment (RoomEnvironment, generated, nothing downloaded),
+ * and a key, fill and rim light that travel with the camera like a photographer's lights, so every angle is lit.
+ *
+ * Quality tiers (see SHOWCASE.md), picked from the device and then from the frame time it actually achieves:
+ *   high    4x MSAA, ambient occlusion (GTAO), soft contact shadows, up to 2x device pixels, the full finishes
+ *   medium  the canvas's own MSAA, soft contact shadows, up to 1.5x device pixels, the full finishes
+ *   low     the plain renderer: round blob shadows, 1.25x device pixels at most, standard materials
+ * The first second of animation is timed; while frames stay above 22 ms it drops a tier (never climbs back).
+ * ?quality=high|medium|low pins a tier (for testing). window.__stage lists every stage's tier and frame time.
+ *
  * Behaviour:
- * - Renders only while the canvas is on screen and the tab is visible.
+ * - Renders only while the canvas is on screen and the tab is visible, and only while something changes: a model can
+ *   say it has come to rest (update() returns false) and the stage sleeps until ctx.wake().
  * - prefers-reduced-motion: no animation loop; one still frame, redrawn only when something changes.
  * - Drag to orbit on mouse/trackpad (unless the view sets `orbit: false`). On touch screens there are no controls,
  *   so the page scrolls normally.
- * - Re-colours when the site switches between light and dark.
+ * - Re-colours and re-lights when the site switches between light and dark.
  */
 import {
+	ACESFilmicToneMapping,
+	Box3,
 	type BufferGeometry,
 	CanvasTexture,
 	Color,
@@ -36,6 +50,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { setDetail, simplify } from "./finish";
 
 /** Site colours (from the CSS custom properties in global.css), as Three.js colours. */
 export interface Palette {
@@ -57,12 +72,12 @@ export function readPalette(): Palette {
 	const color = (name: string, fallback: string) => new Color(style.getPropertyValue(name).trim() || fallback);
 	return {
 		dark: document.documentElement.classList.contains("dark"),
-		background: color("--background", "#eef1f4"),
-		foreground: color("--foreground", "#0e1b2c"),
-		card: color("--card", "#ffffff"),
-		muted: color("--muted-foreground", "#4f5b6c"),
-		border: color("--border", "#cdd4dc"),
-		accent: color("--accent", "#ffc20e"),
+		background: color("--background", "#f2f1ed"),
+		foreground: color("--foreground", "#121416"),
+		card: color("--card", "#fbfaf8"),
+		muted: color("--muted-foreground", "#575b60"),
+		border: color("--border", "#d6d3cb"),
+		accent: color("--accent", "#1fb5d9"),
 		red: color("--alliance-red", "#c8283a"),
 		blue: color("--alliance-blue", "#1f5fd1"),
 		chart: [
@@ -73,6 +88,8 @@ export function readPalette(): Palette {
 		],
 	};
 }
+
+export type Tier = "high" | "medium" | "low";
 
 export interface StageView {
 	camera: [number, number, number];
@@ -87,7 +104,7 @@ export interface StageView {
 	fitWidth?: number;
 	/** false: no drag-to-orbit; the model moves the camera itself (the scroll showcase). */
 	orbit?: boolean;
-	/** Highest device pixel ratio to render at (default 2). Large canvases use less to hold 60 fps. */
+	/** Highest device pixel ratio to render at, on any tier (the tiers have their own caps). */
 	pixelRatio?: number;
 }
 
@@ -100,17 +117,27 @@ export interface StageContext {
 	container: HTMLElement;
 	palette: Palette;
 	reducedMotion: boolean;
+	/** The quality tier this stage started on (it may drop later). */
+	tier: Tier;
 	/** A floating HTML label that follows a point on the model. */
 	label(text: string, at: Object3D | Vector3, className?: string): HTMLElement;
-	/** Ask for a redraw (only needed for still frames under reduced motion). */
+	/** Ask for a redraw (only needed for still frames under reduced motion, or while the stage sleeps). */
 	invalidate(): void;
+	/** Start the animation loop again after the model said it had come to rest. */
+	wake(): void;
+	/** The model changed shape (the drone's exploded view): draw the contact shadows again. */
+	refreshShadows(): void;
 	/** Draw right now, so the canvas can be read back in the same task (canvas.toDataURL). */
 	render(): void;
 }
 
 export interface Model {
-	/** Called every frame with elapsed and delta seconds. Not called under reduced motion (except once with t = 0). */
-	update?(t: number, dt: number): void;
+	/**
+	 * Called every frame with elapsed and delta seconds. Not called under reduced motion (except once with t = 0).
+	 * Return false when nothing is moving any more: the stage stops drawing until ctx.wake() (or a drag, resize or
+	 * theme change).
+	 */
+	update?(t: number, dt: number): void | boolean;
 	/** Re-colour after a light/dark switch. */
 	applyPalette?(p: Palette): void;
 	dispose?(): void;
@@ -125,8 +152,12 @@ export type ModelFactory = (ctx: StageContext) => Model | Promise<Model>;
 export const standard = (color: number | Color, params: MeshStandardMaterialParameters = {}) =>
 	new MeshStandardMaterial({ color, roughness: 0.55, metalness: 0.1, ...params });
 
-/** Soft round shadow under a model, so it sits on the page instead of floating. */
-export function contactShadow(radius: number, opacity = 0.35) {
+/**
+ * Soft shadow under a model, so it sits on the page instead of floating. On the low tier it's a round blob; on the
+ * others the stage replaces the blob with the model's real footprint, blurred (quality.ts). `height`: how far above
+ * the floor a part still casts (default: most of the radius).
+ */
+export function contactShadow(radius: number, opacity = 0.35, height = radius * 0.8) {
 	const size = 128;
 	const canvas = document.createElement("canvas");
 	canvas.width = canvas.height = size;
@@ -138,10 +169,11 @@ export function contactShadow(radius: number, opacity = 0.35) {
 	ctx.fillRect(0, 0, size, size);
 	const mesh = new Mesh(
 		new PlaneGeometry(radius * 2, radius * 2),
-		new MeshBasicMaterial({ map: new CanvasTexture(canvas), transparent: true, opacity, depthWrite: false }),
+		new MeshBasicMaterial({ map: new CanvasTexture(canvas), transparent: true, opacity, depthWrite: false, toneMapped: false }),
 	);
 	mesh.rotation.x = -Math.PI / 2;
 	mesh.renderOrder = -1;
+	mesh.userData.contactShadow = { radius, height };
 	return mesh;
 }
 
@@ -168,6 +200,51 @@ export function textTexture(text: string, opts: { width?: number; height?: numbe
 }
 
 /* ------------------------------------------------------------------ */
+/* Quality                                                             */
+/* ------------------------------------------------------------------ */
+
+const TIERS: Tier[] = ["high", "medium", "low"];
+const PIXEL_RATIO: Record<Tier, number> = { high: 2, medium: 1.5, low: 1.25 };
+const MAX_PIXELS = 4.6e6; // high tier: at most this many canvas pixels (a full-window stage on a 2x laptop screen)
+const SLOW = 22; // ms: frames slower than this, on average, drop a tier
+const WARMUP = 12; // frames skipped before timing (shaders compiling, textures uploading)
+const SAMPLE = 50; // frames timed for the first verdict (about a second at 50 to 60 fps)
+
+/** What the device suggests, before any frame is timed. */
+function startingTier(renderer: WebGLRenderer): Tier {
+	const forced = new URLSearchParams(location.search).get("quality");
+	if (forced === "high" || forced === "medium" || forced === "low") return forced;
+	const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
+	if (nav.connection?.saveData) return "low";
+	if ((nav.deviceMemory ?? 8) <= 2 || (navigator.hardwareConcurrency ?? 8) <= 2) return "low";
+	const gl = renderer.getContext();
+	const info = gl.getExtension("WEBGL_debug_renderer_info");
+	const gpu = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+	if (/swiftshader|llvmpipe|software|basic render/i.test(gpu)) return "low";
+	const coarse = matchMedia("(pointer: coarse)").matches;
+	if (coarse && Math.max(screen.width, screen.height) < 1000) return "low"; // phones
+	if (coarse) return "medium"; // tablets
+	return "high";
+}
+
+interface StageStats {
+	tier: Tier;
+	started: Tier;
+	/** Average frame time of the last timed window, ms. */
+	frameMs: number;
+	drops: Array<{ from: Tier; to: Tier; frameMs: number }>;
+	pixelRatio: number;
+}
+const registry: StageStats[] = [];
+(window as unknown as { __stage?: StageStats[] }).__stage = registry;
+
+/** Light rig per theme: on a dark page the rim does more of the work, on a light one the key and fill. */
+const LIGHTING = {
+	light: { exposure: 0.95, environment: 0.9, key: 2.4, fill: 0.7, rim: 1.6, sky: 0.35 },
+	dark: { exposure: 1.0, environment: 0.75, key: 2.2, fill: 0.45, rim: 2.6, sky: 0.25 },
+};
+
+/* ------------------------------------------------------------------ */
 /* Stage                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -181,9 +258,16 @@ export async function mountStage(
 	const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 	const finePointer = matchMedia("(pointer: fine)").matches;
 
-	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, view.pixelRatio ?? 2));
+	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
 	renderer.setClearColor(0x000000, 0);
+	renderer.toneMapping = ACESFilmicToneMapping;
+	renderer.outputColorSpace = SRGBColorSpace;
+
+	let tier = startingTier(renderer);
+	const pinned = new URLSearchParams(location.search).has("quality");
+	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1 };
+	registry.push(stats);
+	setDetail(tier !== "low");
 
 	const scene = new Scene();
 	const pmrem = new PMREMGenerator(renderer);
@@ -191,16 +275,30 @@ export async function mountStage(
 	scene.environment = environment;
 	pmrem.dispose();
 
-	scene.add(new HemisphereLight(0xffffff, 0x3a4658, 0.7));
-	const sun = new DirectionalLight(0xffffff, 1.5);
-	sun.position.set(4, 7, 5);
-	scene.add(sun);
-
-	const camera = new PerspectiveCamera(view.fov ?? 35, 1, 0.01, 100);
+	const camera = new PerspectiveCamera(view.fov ?? 35, 1, 0.01, 40);
 	camera.position.set(...view.camera);
 	const target = new Vector3(...(view.target ?? [0, 0, 0]));
 	camera.lookAt(target);
 	const baseDistance = camera.position.distanceTo(target);
+	scene.add(camera);
+
+	// Key, fill and rim, carried by the camera (positions in the camera's space: x right, y up, -z ahead). They all aim
+	// at the model, wherever the camera goes.
+	const aim = new Group();
+	aim.position.copy(target);
+	scene.add(aim);
+	const sky = new HemisphereLight(0xffffff, 0x2a2e31, 0.35);
+	scene.add(sky);
+	const light = (color: number, x: number, y: number, z: number) => {
+		const l = new DirectionalLight(color, 1);
+		l.position.set(x, y, z);
+		l.target = aim;
+		camera.add(l);
+		return l;
+	};
+	const key = light(0xfff4e8, -3, 4, 1.5); // warm, high, camera left
+	const fill = light(0xe4efff, 4, 0.5, 2); // cool, low, camera right
+	const rim = light(0xffffff, 1.5, 3, -6); // behind the model, outlining it against the page
 
 	const root = new Group();
 	scene.add(root);
@@ -216,10 +314,17 @@ export async function mountStage(
 	let palette = readPalette();
 	let needsRender = true;
 	let running = false;
+	let sleeping = false;
 	let onScreen = false;
+	let shadowsDirty = false;
 	const invalidate = () => {
 		needsRender = true;
-		if (reducedMotion || !running) requestStill();
+		if (reducedMotion || !running || sleeping) requestStill();
+	};
+	const wake = () => {
+		if (!sleeping) return;
+		sleeping = false;
+		sync();
 	};
 
 	const ctx: StageContext = {
@@ -230,13 +335,19 @@ export async function mountStage(
 		container,
 		palette,
 		reducedMotion,
+		tier,
 		invalidate,
+		wake,
+		refreshShadows: () => {
+			shadowsDirty = true;
+			invalidate();
+		},
 		render: () => render(),
 		label(text, at, className = "") {
 			const el = document.createElement("span");
 			el.textContent = text;
 			el.className =
-				"absolute left-0 top-0 whitespace-nowrap rounded-full border bg-card/90 px-2.5 py-1 text-[12px] font-semibold text-foreground shadow-sm max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[9.5px] " +
+				"stage-label absolute left-0 top-0 whitespace-nowrap rounded-sm border bg-card/92 px-2 py-1 font-mono text-[11.5px] font-medium tracking-[-0.01em] text-foreground shadow-sm max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[9.5px] " +
 				className;
 			overlay.appendChild(el);
 			labels.push({ el, at });
@@ -245,7 +356,74 @@ export async function mountStage(
 	};
 
 	const model = await factory(ctx);
+	// Interface colours (screens, LEDs, the 4G rings) are shown as they are, not tone mapped like lit surfaces.
+	scene.traverse((o) => {
+		const mesh = o as Mesh;
+		if (mesh.isMesh) for (const m of ([] as Material[]).concat(mesh.material)) if (m instanceof MeshBasicMaterial) m.toneMapped = false;
+	});
 
+	// The model's size, for how far the ambient occlusion reaches.
+	const bounds = new Box3().setFromObject(root);
+	const modelSize = bounds.isEmpty() ? 1 : bounds.getSize(new Vector3()).length();
+
+	/* ---------- Tiers ---------- */
+	type Quality = typeof import("./quality");
+	let quality: Quality | undefined;
+	let shadows: ReturnType<Quality["createContactShadows"]> | undefined;
+	let pipeline: ReturnType<Quality["createPipeline"]> | undefined;
+	if (tier !== "low") {
+		try {
+			quality = await import("./quality");
+			shadows = quality.createContactShadows(renderer, scene);
+			shadows.update();
+			if (tier === "high") pipeline = quality.createPipeline(renderer, scene, camera, modelSize * 0.05);
+		} catch (error) {
+			console.warn("3D: higher quality unavailable, using the plain renderer.", error);
+			tier = stats.tier = "low";
+		}
+	}
+	const pixelRatio = () => {
+		let ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
+		const area = Math.max(1, container.clientWidth * container.clientHeight);
+		if (tier === "high") ratio = Math.min(ratio, Math.sqrt(MAX_PIXELS / area));
+		return Math.max(1, ratio);
+	};
+	const dropTier = (frameMs: number) => {
+		const next = TIERS[TIERS.indexOf(tier) + 1];
+		if (!next || pinned) return;
+		stats.drops.push({ from: tier, to: next, frameMs });
+		tier = stats.tier = next;
+		if (tier !== "high") {
+			pipeline?.dispose();
+			pipeline = undefined;
+		}
+		if (tier === "low") {
+			// Back to the blob shadows and cheaper shading.
+			shadows?.dispose();
+			shadows = undefined;
+			const materials = new Set<Material>();
+			scene.traverse((o) => {
+				const mesh = o as Mesh;
+				if (!mesh.isMesh) return;
+				for (const m of ([] as Material[]).concat(mesh.material)) materials.add(m);
+				if (mesh.userData.contactShadow) {
+					const material = mesh.material as MeshBasicMaterial;
+					material.map = mesh.userData.blob;
+					material.needsUpdate = true;
+					const uv = mesh.geometry.getAttribute("uv");
+					for (let i = 0; i < uv.count; i++) uv.setY(i, 1 - uv.getY(i));
+					uv.needsUpdate = true;
+				}
+			});
+			simplify(materials);
+		}
+		resize();
+	};
+	scene.traverse((o) => {
+		if (o.userData.contactShadow) o.userData.blob = ((o as Mesh).material as MeshBasicMaterial).map;
+	});
+
+	/* ---------- Controls ---------- */
 	let controls: OrbitControls | undefined;
 	let idleAt = 0; // spin pauses while dragging and for a moment after
 	if (finePointer && view.orbit !== false) {
@@ -261,6 +439,7 @@ export async function mountStage(
 		controls.addEventListener("start", () => {
 			idleAt = Number.POSITIVE_INFINITY;
 			canvas.style.cursor = "grabbing";
+			wake();
 		});
 		controls.addEventListener("end", () => {
 			idleAt = performance.now() + 2500;
@@ -287,7 +466,13 @@ export async function mountStage(
 	};
 
 	const render = () => {
-		renderer.render(scene, camera);
+		aim.position.copy(controls?.target ?? target);
+		if (shadowsDirty) {
+			shadows?.update();
+			shadowsDirty = false;
+		}
+		if (pipeline) pipeline.render();
+		else renderer.render(scene, camera);
 		positionLabels();
 		needsRender = false;
 	};
@@ -296,7 +481,11 @@ export async function mountStage(
 	const resize = () => {
 		const w = Math.max(1, container.clientWidth);
 		const h = Math.max(1, container.clientHeight);
+		const ratio = pixelRatio();
+		stats.pixelRatio = ratio;
+		renderer.setPixelRatio(ratio);
 		renderer.setSize(w, h, false);
+		pipeline?.setSize(w, h, ratio);
 		camera.aspect = w / h;
 		if (view.fitWidth) {
 			const from = controls?.target ?? target;
@@ -310,21 +499,48 @@ export async function mountStage(
 	const resizeObserver = new ResizeObserver(resize);
 	resizeObserver.observe(container);
 
-	// Animation loop, only while visible.
+	/* ---------- Animation loop, only while visible and something moves ---------- */
 	let last = performance.now();
 	let elapsed = 0;
+	let frames = 0;
+	let windowMs = 0;
+	let windowFrames = 0;
+	let slowStreak = 0;
+	const time = (ms: number) => {
+		frames++;
+		if (frames <= WARMUP || ms > 250) return; // compiling, or the tab was in the background
+		windowMs += ms;
+		windowFrames++;
+		if (windowFrames < SAMPLE) return;
+		const average = windowMs / windowFrames;
+		stats.frameMs = Math.round(average * 10) / 10;
+		windowMs = windowFrames = 0;
+		// The first window decides straight away; after that a tier only goes after two slow windows in a row.
+		slowStreak = average > SLOW ? slowStreak + 1 : 0;
+		if (slowStreak >= (frames <= WARMUP + SAMPLE ? 1 : 2)) {
+			slowStreak = 0;
+			frames = WARMUP; // time the new tier from scratch, without another warm-up
+			dropTier(average);
+		}
+	};
 	const frame = () => {
 		const now = performance.now();
-		const dt = Math.min((now - last) / 1000, 0.05);
+		const ms = now - last;
+		const dt = Math.min(ms / 1000, 0.05);
 		last = now;
 		elapsed += dt;
 		if (view.spin && now > idleAt) root.rotation.y += view.spin * dt;
-		controls?.update();
-		model.update?.(elapsed, dt);
+		const moving = controls?.update() ?? false;
+		const more = model.update?.(elapsed, dt);
 		render();
+		time(ms);
+		if (more === false && !moving && !view.spin) {
+			sleeping = true;
+			stop();
+		}
 	};
 	const start = () => {
-		if (running || reducedMotion) return;
+		if (running || reducedMotion || sleeping) return;
 		running = true;
 		last = performance.now();
 		renderer.setAnimationLoop(frame);
@@ -356,18 +572,31 @@ export async function mountStage(
 		// One pose, redrawn on demand (drag, resize, theme).
 		model.update?.(0, 0);
 		controls?.addEventListener("change", requestStill);
+	} else {
+		controls?.addEventListener("change", wake);
 	}
 
-	// Follow the site's light/dark switch.
+	/* ---------- Theme ---------- */
+	const applyLighting = () => {
+		const l = palette.dark ? LIGHTING.dark : LIGHTING.light;
+		renderer.toneMappingExposure = l.exposure;
+		scene.environmentIntensity = l.environment;
+		key.intensity = l.key;
+		fill.intensity = l.fill;
+		rim.intensity = l.rim;
+		sky.intensity = l.sky;
+	};
 	const themeObserver = new MutationObserver(() => {
 		const next = readPalette();
 		if (next.dark === palette.dark) return;
 		palette = next;
 		ctx.palette = next;
+		applyLighting();
 		model.applyPalette?.(next);
 		invalidate();
 	});
 	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+	applyLighting();
 	model.applyPalette?.(palette);
 
 	resize();
@@ -375,12 +604,15 @@ export async function mountStage(
 
 	return () => {
 		stop();
+		registry.splice(registry.indexOf(stats), 1);
 		intersection.disconnect();
 		resizeObserver.disconnect();
 		themeObserver.disconnect();
 		document.removeEventListener("visibilitychange", sync);
 		controls?.dispose();
 		model.dispose?.();
+		shadows?.dispose();
+		pipeline?.dispose();
 		overlay.remove();
 		const textures = new Set<Texture>();
 		scene.traverse((object) => {
@@ -391,6 +623,7 @@ export async function mountStage(
 				for (const value of Object.values(material)) if ((value as Texture)?.isTexture) textures.add(value as Texture);
 				material.dispose();
 			}
+			if (object.userData.blob) textures.add(object.userData.blob);
 		});
 		textures.forEach((t) => t.dispose());
 		environment.dispose();

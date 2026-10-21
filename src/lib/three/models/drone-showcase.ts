@@ -124,7 +124,7 @@ const EXTRAS: Record<string, string> = { CircleGeometry: "motors", TorusGeometry
  * so it renders at no more than 1.5x the CSS pixels to hold 60 fps on a laptop. */
 export const view: StageView = { camera: FRAMING.overview.from, target: [0, 0, 0], fov: 36, orbit: false, pixelRatio: 1.5 };
 
-const DISC_OPACITY = 0.6; // the spinning props' blur discs, as a share of the hero's: a hint of motion, not a shape
+const DISC_OPACITY = 0.4; // the spinning props' blur discs, as a share of the hero's: a hint of motion, not a shape
 
 type Box = { lo: number[]; hi: number[] };
 const size = ({ lo, hi }: Box) => (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2]);
@@ -217,7 +217,7 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	tagFeatures(rig.model, boxes, extras);
 	ctx.root.add(rig.model);
 
-	const shadow = contactShadow(0.24, 0.3);
+	const shadow = contactShadow(0.42, 0.3, 0.25);
 	shadow.position.y = rig.floor - 0.002;
 	ctx.root.add(shadow);
 
