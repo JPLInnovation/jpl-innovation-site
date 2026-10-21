@@ -48,6 +48,7 @@ const sectionHeading = "font-wide text-3xl font-[850] md:text-4xl";
 						const project = projects.get(a.project);
 						return (
 							<li
+								data-tilt
 								class={cn(
 									"relative flex flex-col overflow-hidden rounded-xl border surface md:flex-row lg:flex-col",
 									project && "press group transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]",

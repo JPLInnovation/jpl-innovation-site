@@ -8,8 +8,12 @@
  *   which gives depth without anything jumping around. Twinkle is gentle, and there is a rare, faint shooting star.
  * - The glow follows the mouse with easing, so it glides rather than sticks. Mouse and trackpad only.
  * - Lightweight: one 2D canvas, no libraries. Touch devices get fewer stars, a 30 fps cap and a 1x pixel ratio.
+ * - Constellations: near the cursor, the nearer stars join up with faint lines, like a star chart (mouse only).
+ * - Warp: clicking through to another page of the site streaks the stars outward from the middle for a moment, as if
+ *   jumping to the next page; they settle back once it has arrived (the canvas is persisted across navigations).
  * - Pauses whenever the tab is hidden.
- * - prefers-reduced-motion: one still frame of stars, no glow, no shooting stars (and it reacts if the setting changes).
+ * - prefers-reduced-motion: one still frame of stars, no glow, no shooting stars, no constellations, no warp (and it
+ *   reacts if the setting changes).
  * - Colours come from --bg-star / --bg-star-alt / --bg-shoot, so it follows light/dark mode (kept faint for WCAG AA).
  */
 type Star = { x: number; y: number; z: number; r: number; phase: number; alt: boolean };
@@ -17,6 +21,9 @@ type Shooter = { x: number; y: number; vx: number; vy: number; life: number };
 
 const DRIFT = 0.012; // px per ms for the nearest stars (~12 px/s); far stars move a quarter of that
 const PARALLAX = 18; // px the nearest stars shift when the cursor is at the edge of the screen
+const LINK_REACH = 190; // px around the cursor in which stars join up
+const LINK_MAX = 120; // px: the longest line between two stars
+const WARP_SPEED = 2.4; // px per ms outward for the nearest stars at full warp
 
 function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	const ctx = canvas.getContext("2d");
@@ -33,6 +40,9 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	let raf = 0;
 	let last = 0;
 	let colors = readColors();
+	// Warp: `warpTarget` is 1 while a page change is on its way, `warp` follows it (fast in, slower out).
+	let warp = 0;
+	let warpTarget = 0;
 
 	// Cursor, eased: `target` jumps with the mouse, `eased` glides toward it every frame.
 	const target = { x: 0.5, y: 0.35, on: false };
@@ -79,10 +89,29 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	}
 
 	function step(dt: number, now: number) {
-		// Drift up and to the left, as if flying slowly forward through the field.
+		warp += (warpTarget - warp) * (1 - Math.exp(-dt / (warpTarget > warp ? 90 : 380)));
+		if (warp < 0.002) warp = 0;
+		// Drift up and to the left, as if flying slowly forward through the field; at warp, rush out from the middle.
+		const cx = width / 2;
+		const cy = height / 2;
 		for (const s of stars) {
 			s.x -= DRIFT * s.z * dt;
 			s.y -= DRIFT * 0.35 * s.z * dt;
+			if (warp) {
+				const dx = s.x - cx;
+				const dy = s.y - cy;
+				const d = Math.hypot(dx, dy) || 1;
+				const v = WARP_SPEED * warp * s.z * (0.25 + d / Math.max(width, height)) * dt;
+				s.x += (dx / d) * v;
+				s.y += (dy / d) * v;
+				// A star that leaves the screen comes back near the middle, so the field never empties.
+				if (s.x < -30 || s.x > width + 30 || s.y < -30 || s.y > height + 30) {
+					const a = Math.random() * Math.PI * 2;
+					const r = Math.random() * Math.min(width, height) * 0.15;
+					s.x = cx + Math.cos(a) * r;
+					s.y = cy + Math.sin(a) * r;
+				}
+			}
 			if (s.x < -30) s.x = width + 30;
 			if (s.y < -30) s.y = height + 30;
 		}
@@ -118,10 +147,54 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 		// Cursor parallax: near stars shift more than far ones (centre of the screen = no shift).
 		const px = still ? 0 : (eased.x - 0.5) * -2 * PARALLAX;
 		const py = still ? 0 : (eased.y - 0.5) * -2 * PARALLAX;
+		// Constellations: lines between the nearer stars around the cursor, brightest close to it.
+		if (!still && eased.alpha > 0.02 && !warp) {
+			const mx = eased.x * width;
+			const my = eased.y * height;
+			const near: Array<[number, number]> = [];
+			for (const s of stars) {
+				if (s.z < 0.6) continue;
+				const x = s.x + px * s.z;
+				const y = s.y + py * s.z;
+				if (Math.hypot(x - mx, y - my) < LINK_REACH) near.push([x, y]);
+			}
+			c.strokeStyle = colors.star;
+			c.lineWidth = 0.8;
+			for (let i = 0; i < near.length; i++) {
+				for (let j = i + 1; j < near.length; j++) {
+					const [ax, ay] = near[i];
+					const [bx, by] = near[j];
+					const d = Math.hypot(ax - bx, ay - by);
+					if (d > LINK_MAX) continue;
+					const fromCursor = Math.hypot((ax + bx) / 2 - mx, (ay + by) / 2 - my) / LINK_REACH;
+					c.globalAlpha = eased.alpha * (1 - d / LINK_MAX) * Math.max(0, 1 - fromCursor) * 0.9;
+					c.beginPath();
+					c.moveTo(ax, ay);
+					c.lineTo(bx, by);
+					c.stroke();
+				}
+			}
+		}
 		for (const s of stars) {
 			const twinkle = still ? 0.85 : 0.7 + 0.3 * Math.sin(now * 0.0012 * (0.6 + s.z) + s.phase);
 			const x = s.x + px * s.z;
 			const y = s.y + py * s.z;
+			if (warp > 0.02) {
+				// At warp each star is a streak pointing back toward the middle.
+				const dx = s.x - width / 2;
+				const dy = s.y - height / 2;
+				const d = Math.hypot(dx, dy) || 1;
+				const len = warp * s.z * (8 + d * 0.22);
+				c.globalAlpha = Math.min(1, (0.45 + s.z * 0.55) * (0.6 + warp));
+				c.strokeStyle = s.alt ? colors.alt : colors.star;
+				c.lineWidth = s.r * (1 + warp);
+				c.lineCap = "round";
+				c.beginPath();
+				c.moveTo(x, y);
+				c.lineTo(x - (dx / d) * len, y - (dy / d) * len);
+				c.stroke();
+				continue;
+			}
 			c.globalAlpha = twinkle * (0.45 + s.z * 0.55);
 			c.fillStyle = s.alt ? colors.alt : colors.star;
 			c.beginPath();
@@ -215,6 +288,25 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 		colors = readColors();
 		if (!raf) draw(performance.now());
 	}).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
+	// Page changes inside the site (Astro's client router): warp out as the next page loads, settle once it's in.
+	// Pages are prefetched, so a swap can land in a few milliseconds: the jump always lasts at least WARP_HOLD.
+	const WARP_HOLD = 420;
+	let warpAt = 0;
+	let settleTimer = 0;
+	const settle = () => {
+		clearTimeout(settleTimer);
+		settleTimer = window.setTimeout(() => (warpTarget = 0), Math.max(0, warpAt + WARP_HOLD - performance.now()));
+	};
+	document.addEventListener("astro:before-preparation", () => {
+		if (reduced.matches) return;
+		clearTimeout(settleTimer);
+		warpAt = performance.now();
+		warpTarget = 1;
+		play();
+	});
+	document.addEventListener("astro:after-swap", settle);
+	document.addEventListener("astro:page-load", settle);
 
 	resize();
 	play();
