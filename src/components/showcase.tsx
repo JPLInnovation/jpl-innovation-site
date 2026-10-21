@@ -6,8 +6,8 @@ import type { StageContext, StageView } from "@/lib/three/stage";
 /**
  * Scroll showcase: a model turns to each feature as its text scrolls past (use `client:visible`).
  *
- * From 768 px up, when motion is allowed: the 3D stage stays pinned (beside the text from 1024 px, above it below
- * that) while the features scroll in normal flow; the page scrolls natively and the stage reads where it is each frame
+ * From 768 px up, when motion is allowed: the 3D stage stays pinned just under the site header, which is always on
+ * screen (beside the text from 1024 px, above it below that) while the features scroll in normal flow; the page scrolls natively and the stage reads where it is each frame
  * (src/lib/three/showcase.ts). Beside the text, the 3D runs on to the edge of the window, and every edge of it fades
  * out, so close-ups dissolve instead of being cut off by a straight line. Phones and reduced motion: a plain stack of
  * cards, each with its still (public/showcase/<model>/<id>.webp) when there is one. No WebGL: the same cards, under
@@ -42,7 +42,10 @@ export interface ShowcaseText {
 interface Props {
 	model: keyof typeof models;
 	text: ShowcaseText;
-	/** Feature id → still picture URL, for the features that have one. */
+	/**
+	 * Feature id → the still's path without its extension (/showcase/drone/overview), for the features that have one.
+	 * scripts/showcase-stills.py writes <path>.webp/.avif at 1600 px and <path>-800.webp/.avif at 800 px.
+	 */
 	stills?: Record<string, string>;
 	children?: ReactNode;
 	/** Extra classes for the section (spacing above it). */
@@ -63,7 +66,7 @@ const css = `
 @media (min-width:48rem) and (prefers-reduced-motion:no-preference){
 .showcase:not([data-static]) .showcase-track{position:relative}
 .showcase:not([data-static]) .showcase-probe{display:block;position:absolute;top:0;width:0;height:100vh;height:100svh;visibility:hidden}
-.showcase:not([data-static]) .showcase-stage{display:block;position:sticky;top:0;z-index:1;height:55svh;background:var(--background)}
+.showcase:not([data-static]) .showcase-stage{display:block;position:sticky;top:4.5rem;z-index:1;height:55svh;background:var(--background)}
 .showcase:not([data-static]) .showcase-features{display:block}
 .showcase:not([data-static]) .showcase-feature{display:flex;flex-direction:column;justify-content:center;min-height:45svh;scroll-margin-top:calc(55svh - 5.5rem);padding:2rem 0;border:0;border-radius:0;background:none;box-shadow:none;transition:opacity .3s}
 .showcase:not([data-static]) .showcase-still{display:none}
@@ -73,7 +76,7 @@ const css = `
 }
 @media (min-width:64rem) and (prefers-reduced-motion:no-preference){
 .showcase:not([data-static]) .showcase-track{--gap:clamp(2rem,4vw,3.5rem);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);column-gap:var(--gap)}
-.showcase:not([data-static]) .showcase-stage{grid-area:1/2;height:100svh;background:none}
+.showcase:not([data-static]) .showcase-stage{grid-area:1/2;height:calc(100svh - 4.5rem);background:none}
 .showcase:not([data-static]) .showcase-view{left:calc(-1 * var(--gap));right:calc(-1 * ((100vw - min(100vw, 76rem)) / 2 + clamp(1rem, 4vw, 2.5rem)))}
 .showcase:not([data-static]) .showcase-features{grid-area:1/1}
 .showcase:not([data-static]) .showcase-feature{min-height:100svh;scroll-margin-top:0}
@@ -224,15 +227,28 @@ export default function Showcase({ model, text, stills = {}, children, className
 						{text.features.map((f) => (
 							<article key={f.id} id={f.id} className="showcase-feature flex flex-col gap-5 rounded-xl border surface p-5 sm:p-6">
 								{stills[f.id] && (
-									<img
-										src={stills[f.id]}
-										alt=""
-										width={1200}
-										height={900}
-										loading="lazy"
-										decoding="async"
-										className="showcase-still aspect-[4/3] w-full object-contain"
-									/>
+									// One column below 768 px, two from there (the stacked cards); the browser picks 800 or 1600 px.
+									<picture className="showcase-still">
+										<source
+											type="image/avif"
+											srcSet={`${stills[f.id]}-800.avif 800w, ${stills[f.id]}.avif 1600w`}
+											sizes="(min-width: 48rem) 50vw, 100vw"
+										/>
+										<source
+											type="image/webp"
+											srcSet={`${stills[f.id]}-800.webp 800w, ${stills[f.id]}.webp 1600w`}
+											sizes="(min-width: 48rem) 50vw, 100vw"
+										/>
+										<img
+											src={`${stills[f.id]}-800.webp`}
+											alt=""
+											width={1600}
+											height={1200}
+											loading="lazy"
+											decoding="async"
+											className="aspect-[4/3] w-full object-contain"
+										/>
+									</picture>
 								)}
 								<div className="showcase-copy flex max-w-[44ch] flex-col gap-4 border-transparent transition-colors duration-300">
 									<h3 className="font-wide text-2xl font-[850] md:text-3xl">{f.title}</h3>
