@@ -10,7 +10,7 @@
  * piece of a mesh goes to the smallest part box that holds all of it. Pieces are connected through shared vertices,
  * so no vertex is ever claimed by two features.
  */
-import { BufferAttribute, type Mesh, type MeshBasicMaterial, MeshStandardMaterial, type Object3D } from "three";
+import { BufferAttribute, type Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D } from "three";
 import type { ShowcaseModel, ShowcaseStop } from "../showcase";
 import { contactShadow, type StageContext, type StageView } from "../stage";
 import { loadDrone } from "./drone";
@@ -102,12 +102,12 @@ const PARTS: Record<string, { look: string[]; also?: string[] }> = {
 
 /**
  * How each stop frames its `look` box. `at` (where the camera aims) and `label` are points in the box: -1..1 across
- * it on each axis, with ±1 for the label meaning just outside that face. `from` is where the camera sits, in metres
- * from `at` (y up, the drone's front, with the red arms and the camera, toward +z). Framed for a square stage;
- * narrower stages back off to keep the same width (src/lib/three/showcase.ts).
+ * it on each axis, with ±1 for the label meaning just outside that face. `from` is the direction the camera looks from,
+ * as an offset from `at` (y up, the drone's front, with the red arms and the camera, toward +z); how far back it sits
+ * is worked out for the stage, so the whole drone always fits and no part is cut off (src/lib/three/showcase.ts).
  */
 const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
-	overview: { from: [-0.76, 0.6, 0.69], label: [0.7, 0.15, 0.45] }, // the hero's three-quarter view, a little further back
+	overview: { from: [-0.73, 0.57, 0.66], label: [0.7, 0.15, 0.45] }, // the hero's three-quarter view
 	"flight-controller": { from: [-0.2, 0.55, 0.27], label: [1.4, 0.8, 0] }, // high, looking down at the top plate
 	motors: { at: [-0.56, -0.35, 0.4], from: [-0.36, 0.09, -0.1], label: [-0.6, 1.5, 0.52] }, // low, beside the front-left (red) arm
 	power: { at: [0, -1, 0], from: [-0.5, -0.09, -0.27], label: [-1.5, -1.2, 0] }, // from below the belly
@@ -120,8 +120,11 @@ const LABEL_GAP = 0.015; // metres outside a face, for label coordinates of ±1
 /** Extras drone.ts adds outside the CAD export, by geometry: the prop discs (motors) and the 4G stick's rings. */
 const EXTRAS: Record<string, string> = { CircleGeometry: "motors", TorusGeometry: "video-link" };
 
-/** Only the camera before the model has loaded; the showcase moves it straight to the right stop. */
-export const view: StageView = { camera: FRAMING.overview.from, target: [0, 0, 0], fov: 36, orbit: false };
+/** Only the camera before the model has loaded; the showcase moves it straight to the right stop. The stage is large,
+ * so it renders at no more than 1.5x the CSS pixels to hold 60 fps on a laptop. */
+export const view: StageView = { camera: FRAMING.overview.from, target: [0, 0, 0], fov: 36, orbit: false, pixelRatio: 1.5 };
+
+const DISC_OPACITY = 0.6; // the spinning props' blur discs, as a share of the hero's: a hint of motion, not a shape
 
 type Box = { lo: number[]; hi: number[] };
 const size = ({ lo, hi }: Box) => (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2]);
@@ -218,10 +221,35 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	shadow.position.y = rig.floor - 0.002;
 	ctx.root.add(shadow);
 
+	// The 4G stick's signal rings belong to the video link: they show on its stop only (and fade in and out with it).
+	const rings: MeshBasicMaterial[] = [];
+	let discs: MeshBasicMaterial | undefined;
+	rig.model.traverse((object) => {
+		const mesh = object as Mesh;
+		if (!mesh.isMesh || !(mesh.material instanceof MeshBasicMaterial)) return;
+		if (mesh.geometry.type === "TorusGeometry") rings.push(mesh.material);
+		if (mesh.geometry.type === "CircleGeometry") discs = mesh.material;
+	});
+	const videoLink = ids.indexOf("video-link");
+	let signal = 0;
+	const update = (t: number, dt: number) => {
+		rig.animate(t, dt);
+		for (const ring of rings) ring.opacity *= signal;
+		if (discs) discs.opacity *= DISC_OPACITY;
+	};
+
 	return {
 		stops,
 		floor: rig.floor,
-		update: (t, dt) => rig.animate(t, dt),
+		focus(weights) {
+			signal = videoLink < 0 ? 0 : weights[videoLink];
+			for (const ring of rings) ring.visible = signal > 0.01;
+		},
+		update,
+		pose() {
+			update(0.35, 1e-3); // the rings part way out, for the 4G video link's still
+			if (discs) discs.opacity = 0; // and no blur discs: nothing spins in a still
+		},
 		applyPalette(p) {
 			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.55 : 0.28;
 		},
