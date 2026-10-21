@@ -6,15 +6,14 @@
 //   - a proper <head>: title, description, canonical address, favicon
 //   - a bar on top: back to the F450 page, "Demo", what the demo is, and a link to the live drone when it's online
 //   - scripts/camera-pov-demo.js, inlined ahead of the page's own script: a simulated flight in the dashboard's own
-//     message format, a simulated camera feed, and the live check (set LIVE_URL in that file once the drone has a
+//     message format, a simulated camera view (a small 3D scene), and the live check (set LIVE_URL in that file once the drone has a
 //     public address)
 //   - the video code asks the demo layer for the feed instead of connecting to the Pi's camera server
-// The camera feed picture is the drone intro's (src/assets/intro/drone-footage.webp), copied next to the page.
 // Every edit must match exactly the expected number of times, so a dashboard that has changed shape fails loudly
 // instead of half-applying.
 //
 // Run:  node scripts/import-camera-pov.mjs <path to drone-f450-jpl->/dashboard/src/index.html
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const [src] = process.argv.slice(2);
 if (!src) {
@@ -90,5 +89,4 @@ html = edit(html, [
 
 mkdirSync(OUT, { recursive: true });
 writeFileSync(`${OUT}index.html`, html);
-copyFileSync("src/assets/intro/drone-footage.webp", `${OUT}feed.webp`);
-console.log(`wrote ${OUT}index.html (${html.length} bytes) and ${OUT}feed.webp`);
+console.log(`wrote ${OUT}index.html (${html.length} bytes)`);
