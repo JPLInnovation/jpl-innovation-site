@@ -10,7 +10,7 @@
  * piece of a mesh goes to the smallest part box that holds all of it. Pieces are connected through shared vertices,
  * so no vertex is ever claimed by two features.
  */
-import { BufferAttribute, type Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D } from "three";
+import { BufferAttribute, type Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D, Vector3 } from "three";
 import type { ShowcaseModel, ShowcaseStop } from "../showcase";
 import { contactShadow, type StageContext, type StageView } from "../stage";
 import { loadDrone } from "./drone";
@@ -117,6 +117,16 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
 
 const LABEL_GAP = 0.015; // metres outside a face, for label coordinates of ±1
 
+/**
+ * Exploded view: how far apart the drone is on each stop (0 = assembled, 1 = fully apart). The stack is easiest to
+ * read pulled apart on the flight controller (the FC on its damping plates over the top plate) and the power stop
+ * (the battery, its case and the PDB under the frame). The opening beat also starts fully apart and settles together.
+ */
+const EXPLODE: Record<string, number> = { "flight-controller": 0.45, power: 0.5 };
+/** Per axis: how far each part moves from the middle of the drone, as a share of how far its centre already is.
+ *  Mostly up and down, so the layers of the stack separate; a little outward, so the arms clear the plates. */
+const SPREAD: V3 = [0.45, 2.1, 0.45];
+
 /** Extras drone.ts adds outside the CAD export, by geometry: the prop discs (motors) and the 4G stick's rings. */
 const EXTRAS: Record<string, string> = { CircleGeometry: "motors", TorusGeometry: "video-link" };
 
@@ -129,8 +139,12 @@ const DISC_OPACITY = 0.4; // the spinning props' blur discs, as a share of the h
 type Box = { lo: number[]; hi: number[] };
 const size = ({ lo, hi }: Box) => (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - lo[2]);
 
-/** Adds a `feature` attribute (0 = frame, n = the nth feature's parts) to every CAD mesh of the drone. */
-function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, extras: Record<string, number>) {
+/**
+ * Adds a `feature` attribute (0 = frame, n = the nth feature's parts) and an `explode` attribute (where each part
+ * goes in the exploded view, as an offset) to every CAD mesh of the drone. `centre`: the middle of the drone; parts
+ * whose box spans most of the drone (all four arms, all four motors) move by each piece's own centre instead.
+ */
+function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, extras: Record<string, number>, centre: V3, span: V3) {
 	const E = 2e-4; // the boxes are rounded to 0.1 mm
 	const holds = (b: Box, lo: number[], hi: number[]) => [0, 1, 2].every((d) => lo[d] >= b.lo[d] - E && hi[d] <= b.hi[d] + E);
 	const motors = extras.CircleGeometry ?? 0; // the spinning props sit on their own hubs, away from their part box
@@ -144,6 +158,7 @@ function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, e
 		const position = mesh.geometry.getAttribute("position");
 		const index = mesh.geometry.getIndex();
 		const feature = new Float32Array(position.count);
+		const explode = new Float32Array(position.count * 3);
 		if (extra !== undefined) feature.fill(extra);
 		else if (mesh.parent !== model) feature.fill(motors);
 		else if (index) {
@@ -169,10 +184,30 @@ function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, e
 			}
 			// ...and the smallest part box that holds each piece whole.
 			const pieceFeature = new Map<number, number>();
-			for (const [r, { lo, hi }] of bounds) pieceFeature.set(r, boxes.find((b) => holds(b, lo, hi))?.feature ?? 0);
-			for (let v = 0; v < position.count; v++) feature[v] = pieceFeature.get(find(v))!;
+			const pieceShift = new Map<number, V3>();
+			for (const [r, { lo, hi }] of bounds) {
+				const box = boxes.find((b) => holds(b, lo, hi));
+				pieceFeature.set(r, box?.feature ?? 0);
+				const part = box ?? { lo, hi };
+				// A part with one of each in every corner (arms, motors, legs, their wires) moves as four: each corner's
+				// pieces go together, toward that corner.
+				const anchor = [0, 1, 2].map((d) => {
+					const mid = (part.lo[d] + part.hi[d]) / 2;
+					const extent = part.hi[d] - part.lo[d];
+					if (d === 1 || extent < 0.55 * span[d]) return mid; // up and down, every part moves as one
+					const side = (lo[d] + hi[d]) / 2 - mid;
+					return Math.abs(side) < 0.08 * extent ? mid : mid + Math.sign(side) * extent * 0.3;
+				});
+				pieceShift.set(r, [0, 1, 2].map((d) => (anchor[d] - centre[d]) * SPREAD[d]) as V3);
+			}
+			for (let v = 0; v < position.count; v++) {
+				const r = find(v);
+				feature[v] = pieceFeature.get(r)!;
+				explode.set(pieceShift.get(r)!, v * 3);
+			}
 		}
 		mesh.geometry.setAttribute("feature", new BufferAttribute(feature, 1));
+		mesh.geometry.setAttribute("explode", new BufferAttribute(explode, 3));
 	});
 }
 
@@ -195,6 +230,9 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	};
 	const point = ({ lo, hi }: Box, rel: V3, gap = 0) =>
 		rel.map((r, d) => (lo[d] + hi[d]) / 2 + r * ((hi[d] - lo[d]) / 2 + gap)) as V3;
+	const centre = point(all, [0, 0, 0]);
+	const span = [0, 1, 2].map((d) => all.hi[d] - all.lo[d]) as V3;
+	const shiftOf = (box: Box) => point(box, [0, 0, 0]).map((v, d) => (v - centre[d]) * SPREAD[d]) as V3;
 
 	// A feature added to the text without a stop here gets the overview's camera and no parts of its own.
 	const partsOf = (id: string) => PARTS[id] ?? { look: [] };
@@ -206,6 +244,7 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 			target,
 			camera: target.map((v, d) => v + framing.from[d]) as V3,
 			label: point(box, framing.label, LABEL_GAP),
+			labelShift: box === all ? undefined : shiftOf(box),
 		};
 	});
 
@@ -214,12 +253,50 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	ids.forEach((id, n) => [...partsOf(id).look, ...(partsOf(id).also ?? [])].forEach((name) => featureOf.set(name, n)));
 	const boxes = parts.map((p) => ({ ...p, feature: featureOf.get(p.name) ?? 0 })).sort((a, b) => size(a) - size(b));
 	const extras = Object.fromEntries(Object.entries(EXTRAS).map(([type, id]) => [type, Math.max(0, ids.indexOf(id))]));
-	tagFeatures(rig.model, boxes, extras);
+	tagFeatures(rig.model, boxes, extras, centre, span);
 	ctx.root.add(rig.model);
 
 	const shadow = contactShadow(0.42, 0.3, 0.25);
 	shadow.position.y = rig.floor - 0.002;
 	ctx.root.add(shadow);
+	let shadowOpacity = 0.3;
+
+	// What the exploded view moves by hand: the props' hubs and blur discs (they spin, so they can't carry a fixed
+	// offset in their vertices) go with the motors; the FC's little LED hides.
+	const motorsBox = around(PARTS.motors.look);
+	const movers: Array<{ object: Object3D; home: Vector3; shift: Vector3 }> = [];
+	let led: Object3D | undefined;
+	rig.model.children.forEach((object) => {
+		const mesh = object as Mesh;
+		const hub = !mesh.isMesh && object.children.length > 0;
+		const disc = mesh.isMesh && mesh.geometry.type === "CircleGeometry";
+		if (mesh.isMesh && mesh.geometry.type === "BoxGeometry") led = mesh;
+		if (!hub && !disc) return;
+		const p = object.position;
+		const y = (motorsBox.lo[1] + motorsBox.hi[1]) / 2;
+		movers.push({
+			object,
+			home: p.clone(),
+			shift: new Vector3((p.x - centre[0]) * SPREAD[0], (y - centre[1]) * SPREAD[1], (p.z - centre[2]) * SPREAD[2]),
+		});
+	});
+	let pulled = 0;
+	let drawn = -1;
+	const pullApart = (amount: number) => {
+		pulled = amount;
+		if (Math.abs(amount - drawn) < 1e-4) return;
+		drawn = amount;
+		for (const m of movers) m.object.position.copy(m.home).addScaledVector(m.shift, amount);
+		if (led) led.visible = amount < 0.02;
+		// The floor shadow is the assembled drone's: it lightens as the parts lift away from it.
+		(shadow.material as MeshBasicMaterial).opacity = shadowOpacity * (1 - 0.6 * smooth(amount));
+	};
+	const smooth = (x: number) => x * x * (3 - 2 * x);
+	const explode = ids.map((id) => EXPLODE[id] ?? 0);
+
+	// The opening beat: a light sweeps across the drone while its parts settle together.
+	const key = ctx.lights.key;
+	const keyHome = key.position.clone();
 
 	// The 4G stick's signal rings belong to the video link: they show on its stop only (and fade in and out with it).
 	const rings: MeshBasicMaterial[] = [];
@@ -241,9 +318,16 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	return {
 		stops,
 		floor: rig.floor,
-		focus(weights) {
+		explode,
+		opening(progress) {
+			const k = smooth(Math.min(1, Math.max(0, progress)));
+			key.position.set(keyHome.x + (1 - k) * 9, keyHome.y - (1 - k) * 2.5, keyHome.z);
+			return 1 - k;
+		},
+		focus(weights, amount) {
 			signal = videoLink < 0 ? 0 : weights[videoLink];
 			for (const ring of rings) ring.visible = signal > 0.01;
+			pullApart(amount);
 		},
 		update,
 		pose() {
@@ -251,7 +335,9 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 			if (discs) discs.opacity = 0; // and no blur discs: nothing spins in a still
 		},
 		applyPalette(p) {
-			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.55 : 0.28;
+			shadowOpacity = p.dark ? 0.55 : 0.28;
+			drawn = -1;
+			pullApart(pulled);
 		},
 	};
 }
