@@ -87,6 +87,8 @@ export interface StageView {
 	fitWidth?: number;
 	/** false: no drag-to-orbit; the model moves the camera itself (the scroll showcase). */
 	orbit?: boolean;
+	/** Highest device pixel ratio to render at (default 2). Large canvases use less to hold 60 fps. */
+	pixelRatio?: number;
 }
 
 export interface StageContext {
@@ -180,7 +182,7 @@ export async function mountStage(
 	const finePointer = matchMedia("(pointer: fine)").matches;
 
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
-	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+	renderer.setPixelRatio(Math.min(window.devicePixelRatio, view.pixelRatio ?? 2));
 	renderer.setClearColor(0x000000, 0);
 
 	const scene = new Scene();
