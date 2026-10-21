@@ -1,19 +1,24 @@
 """
-Renders the stills for the drone page's "Part by part" showcase: public/showcase/drone/<feature-id>.webp.
+Renders the stills for a page's scroll showcase: public/showcase/<page>/<feature-id>.webp.
 Phones, reduced motion and browsers without WebGL show them in place of the 3D (src/components/showcase.tsx);
 a feature without its file just shows its text.
 
     npm run build
-    npx astro preview                       (in another terminal; serves http://localhost:4321)
-    python scripts/showcase-stills.py       (then build again: the page picks the pictures up by itself)
+    npx astro preview                                   (in another terminal; serves http://localhost:4321)
+    python scripts/showcase-stills.py                   the drone page's "Part by part"
+    python scripts/showcase-stills.py --page robot      the FRC page's "The 2026 robot in 3D"
+    (then build again: the pages pick the pictures up by themselves)
 
-Options: --url (default http://localhost:4321/work/drone/), --out (default public/showcase/drone).
-Needs Python Playwright (pip install playwright) and Google Chrome, which it drives (channel="chrome").
+Options: --page (drone or robot), --url (default: that page on http://localhost:4321), --out (default
+public/showcase/<page>), --executable (a Chrome or Chromium to drive, if neither below is found).
+Needs Python Playwright (pip install playwright). It drives Google Chrome (channel="chrome") when it's installed,
+and otherwise Playwright's own Chromium (python -m playwright install chromium).
 WebP: with Pillow (pip install pillow) if it's installed, otherwise through sharp, which ships with Astro.
 
-How: ?showcase=capture makes the 3D stage fill the window, window.__showcase.go(n) shows stop n, and
-window.__showcase.capture() returns the 3D alone (no labels or dots) as a PNG with a transparent background, so the
-same picture works on the light and the dark theme.
+How: ?showcase=capture makes the 3D stage fill the window, window.__showcase.go(n) shows stop n (with any animation
+posed for it), and window.__showcase.capture() returns the 3D alone (no labels or dots) as a PNG with a transparent
+background, so the same picture works on the light and the dark theme. Its edges are faded out here, the same way
+the page fades the live 3D, so close-ups dissolve instead of ending in a straight line.
 """
 
 import argparse
@@ -23,10 +28,39 @@ import pathlib
 import subprocess
 import tempfile
 
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SIZE = {"width": 1200, "height": 900}  # the cards show the pictures at 4:3
+PAGES = {"drone": "/work/drone/", "robot": "/work/frc/"}
+# WebGL without a GPU, for Playwright's own Chromium (Chrome finds its own way).
+GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
+
+# The capture with its edges faded out, as in the page's CSS mask: clamp(1.5rem, 7%, 4rem) on each side.
+FADE = """(url) => new Promise((done) => {
+    const img = new Image();
+    img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = img.width;
+        c.height = img.height;
+        const g = c.getContext("2d");
+        g.drawImage(img, 0, 0);
+        g.globalCompositeOperation = "destination-in";
+        for (const [w, h, size] of [[c.width, 0, c.width], [0, c.height, c.height]]) {
+            const f = Math.min(64, Math.max(24, 0.07 * size)) / size;
+            const ramp = g.createLinearGradient(0, 0, w, h);
+            ramp.addColorStop(0, "rgba(0,0,0,0)");
+            ramp.addColorStop(f, "#000");
+            ramp.addColorStop(1 - f, "#000");
+            ramp.addColorStop(1, "rgba(0,0,0,0)");
+            g.fillStyle = ramp;
+            g.fillRect(0, 0, c.width, c.height);
+        }
+        done(c.toDataURL("image/png"));
+    };
+    img.src = url;
+})"""
 
 
 def write_webp(png: bytes, path: pathlib.Path) -> None:
@@ -42,23 +76,37 @@ def write_webp(png: bytes, path: pathlib.Path) -> None:
     Image.open(io.BytesIO(png)).save(path, "WEBP", quality=82, method=6)
 
 
+def launch(p, executable: str | None):
+    if executable:
+        return p.chromium.launch(executable_path=executable, args=GL_ARGS)
+    try:
+        return p.chromium.launch(channel="chrome")
+    except PlaywrightError:
+        print("Google Chrome not found, using Playwright's Chromium.")
+        return p.chromium.launch(args=GL_ARGS)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--url", default="http://localhost:4321/work/drone/")
-    parser.add_argument("--out", default=str(ROOT / "public" / "showcase" / "drone"))
+    parser.add_argument("--page", choices=sorted(PAGES), default="drone")
+    parser.add_argument("--url")
+    parser.add_argument("--out")
+    parser.add_argument("--executable")
     args = parser.parse_args()
-    out = pathlib.Path(args.out)
+    url = args.url or f"http://localhost:4321{PAGES[args.page]}"
+    out = pathlib.Path(args.out or ROOT / "public" / "showcase" / args.page)
     out.mkdir(parents=True, exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(channel="chrome")
+        browser = launch(p, args.executable)
         page = browser.new_page(viewport=SIZE, device_scale_factor=1, reduced_motion="no-preference")
-        page.goto(args.url.split("?")[0] + "?showcase=capture")
+        page.goto(url.split("?")[0] + "?showcase=capture")
+        page.keyboard.press("Escape")  # skips the page's logo intro, if it has one
         page.locator(".showcase").scroll_into_view_if_needed()  # the showcase loads when it comes into view
-        page.wait_for_function("() => window.__showcase", timeout=60_000)  # after the page's intro
+        page.wait_for_function("() => window.__showcase", timeout=120_000)
         ids = page.eval_on_selector_all(".showcase-feature", "els => els.map((el) => el.id)")
         for n, feature in enumerate(ids):
-            data_url = page.evaluate("(n) => { window.__showcase.go(n); return window.__showcase.capture(); }", n)
+            data_url = page.evaluate(f"(n) => {{ window.__showcase.go(n); return ({FADE})(window.__showcase.capture()); }}", n)
             path = out / f"{feature}.webp"
             write_webp(base64.b64decode(data_url.split(",", 1)[1]), path)
             print(f"{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path}")
