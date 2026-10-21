@@ -22,6 +22,7 @@
  */
 import { DirectionalLight, Group, HemisphereLight, type Material, type Mesh, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from "three";
 import { markSeen } from "@/lib/splash";
+import { setDetail } from "@/lib/three/finish";
 import { type DroneRig, loadDrone } from "@/lib/three/models/drone";
 import { E, flip, onScreen, runSplash, type SplashContext } from "./splash-core";
 
@@ -132,6 +133,9 @@ function prepareFlight(canvas: HTMLCanvasElement, sky: HTMLElement | null) {
 	scene.add(drone);
 	let rig: DroneRig | undefined;
 	let freed = false;
+	// The intro's drone keeps the plain materials it was designed with: the richer finishes take much longer to compile,
+	// and a compile here would stall the intro's own clock (the page's 3D sets its own detail when it starts).
+	setDetail(false);
 	loadDrone().then(
 		(loaded) => {
 			if (freed) return;
