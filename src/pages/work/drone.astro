@@ -1,4 +1,6 @@
 ---
+// @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
+import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
@@ -8,10 +10,13 @@ import DroneIllustration from "@/components/DroneIllustration.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import ModelViewer from "@/components/model-viewer";
 import PartsTable from "@/components/parts-table";
+import Showcase from "@/components/showcase";
 import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md)
+// All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md),
+// and the "Part by part" showcase: src/text/showcase/drone.ts
 import { drone, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
+import { droneShowcase } from "@/text/showcase/drone";
 import { formatVnd } from "@/lib/format";
 import { DataIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -28,6 +33,13 @@ const groups = partGroups.map((g) => ({
 }));
 const total = groups.reduce((sum, g) => sum + g.subtotal, 0);
 const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
+
+// The showcase's pictures for phones (scripts/showcase-stills.py). A feature without one shows its text only.
+const stills = Object.fromEntries(
+	droneShowcase.features
+		.filter((f) => existsSync(`public/showcase/drone/${f.id}.webp`))
+		.map((f) => [f.id, `/showcase/drone/${f.id}.webp`]),
+);
 ---
 
 <BaseLayout title={`${drone.name} | JPL Innovation`} description={entry.data.description}>
@@ -127,6 +139,11 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 			}
 		</ol>
 	</section>
+
+	<!-- Part by part: the 3D drone turns to each part as its text scrolls past (src/components/showcase.tsx) -->
+	<Showcase client:visible={{ rootMargin: "200px" }} model="drone" text={droneShowcase} stills={stills}>
+		<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
+	</Showcase>
 
 	<!-- How it works -->
 	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
