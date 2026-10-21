@@ -347,3 +347,50 @@
 		display: none;
 	}
 }
+
+/*
+ * Pointer effects (src/scripts/hover-fx.ts). Mouse and trackpad only, never under reduced motion.
+ *   .glint        a blue-to-violet light (cyan-to-violet on dark) that follows the pointer across a big heading;
+ *                 outside it the letters are the normal text colour. Both stops keep 3:1+ for large text.
+ *   [data-tilt]   cards that tilt toward the pointer (the script sets `rotate`), with a soft highlight under it.
+ */
+:root {
+	--glint-a: #1d4ed8;
+	--glint-b: #7c3aed;
+}
+.dark {
+	--glint-a: #22d3ee;
+	--glint-b: #8b5cf6;
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+	.glint {
+		background-image:
+			radial-gradient(240px circle at var(--gx, -9999px) var(--gy, -9999px), var(--glint-a), var(--glint-b) 45%, transparent 72%),
+			linear-gradient(var(--foreground), var(--foreground));
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+	:has(> [data-tilt]) {
+		perspective: 1100px;
+	}
+	[data-tilt] {
+		transition:
+			rotate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1),
+			box-shadow 0.3s;
+		will-change: rotate;
+	}
+	[data-tilt][data-tilting] {
+		transition:
+			rotate 0.12s ease-out,
+			box-shadow 0.3s;
+		background-image: radial-gradient(420px circle at var(--tx, 50%) var(--ty, 50%), rgb(255 255 255 / 0.09), transparent 60%);
+		box-shadow: var(--shadow-lift);
+	}
+}
+@media (forced-colors: active) {
+	.glint {
+		background: none;
+		color: CanvasText;
+	}
+}

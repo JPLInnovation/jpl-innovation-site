@@ -29,7 +29,7 @@ const leaders = await getLeaders();
 			leaders.map((m) => {
 				const roles = leadershipRoles(m, lead);
 				return (
-					<li class="press group relative flex items-center gap-5 rounded-xl border surface p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] md:p-6">
+					<li data-tilt class="press group relative flex items-center gap-5 rounded-xl border surface p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)] md:p-6">
 						<img
 							src={m.data.img}
 							srcset={srcset(m.data.img)}

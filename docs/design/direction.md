@@ -52,6 +52,14 @@ bytes.
 
 - **The sky**: drifting blue and violet washes, a starfield with shooting stars and a cursor glow (src/scripts/
   background.ts). It is the site's signature; it pauses in hidden tabs and goes still under reduced motion.
+- **Constellations**: near the cursor, the nearer stars join up with faint lines, like a star chart. It makes the sky
+  answer you without getting in the way of reading.
+- **Warp jump**: clicking to another page streaks the stars out from the middle for about half a second, so moving
+  around the site feels like travelling, not a page reload.
+- **Heading light**: a blue-to-violet light (cyan-to-violet on dark) follows the cursor across the big headings
+  (src/scripts/hover-fx.ts); away from it they're their normal colour, and the colours keep 3:1+ for large text.
+- **Card tilt**: project, member, leadership and service cards tilt toward the cursor (up to 5°) with a soft highlight,
+  so they feel like objects you can pick up. Mouse and trackpad only; never under reduced motion.
 - **Reveal on entry**: rise and fade, once, to mark where a section starts.
 - **3D camera**: curved paths around the model (great-circle turns that swing out and up on wide moves), a quintic
   ease into each stop, a hold while you read.

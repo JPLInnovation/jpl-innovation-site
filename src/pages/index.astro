@@ -51,7 +51,7 @@ const organization = {
 					const Icon = serviceIcons[s.icon];
 					const external = s.proof?.href.startsWith("http");
 					return (
-						<li class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
+						<li data-tilt class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
 							<Icon className="size-8 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
 							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
 							<p class="text-muted-foreground">{s.desc}</p>

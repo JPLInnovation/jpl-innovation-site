@@ -15,7 +15,7 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 	{
 		members.map((m) => (
 			<li class="press group relative flex flex-col gap-4">
-				<div class="overflow-hidden rounded-xl bg-muted">
+				<div data-tilt class="overflow-hidden rounded-xl bg-muted">
 					<img
 						src={m.data.img}
 						srcset={srcset(m.data.img)}
