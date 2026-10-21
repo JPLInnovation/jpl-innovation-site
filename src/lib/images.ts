@@ -7,6 +7,7 @@ const copies: Record<string, number[]> = {
 	"/assets/FRCnew.jpg": [640, 1280, 1920],
 	"/assets/10951.jpg": [160, 400, 764],
 	"/assets/Jayden_pfp.jpg": [160, 480, 900],
+	"/assets/kitbot-back.jpg": [480, 1000],
 };
 
 /** Path of an image's WebP copy at `width`, e.g. /assets/FRC.JPG, 640 → /assets/FRC-640.webp. */
