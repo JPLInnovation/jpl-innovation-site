@@ -11,6 +11,7 @@ const jobs = {
 	"FRCnew.jpg": [640, 1280, 1920],
 	"10951.jpg": [160, 400, 764],
 	"Jayden_pfp.jpg": [160, 480, 900],
+	"kitbot-back.jpg": [480, 1000],
 	"jpl-logo-dark.png": [480],
 	"jpl-logo-light.png": [480],
 };

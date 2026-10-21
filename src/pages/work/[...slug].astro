@@ -1,4 +1,5 @@
 ---
+import { srcset } from "@/lib/images";
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
@@ -32,7 +33,7 @@ const { data } = entry;
 	</PageIntro>
 
 	<div class="wrapper" data-reveal data-reveal-delay="200">
-		<img transition:name={`project-${entry.id}`} src={data.img} alt={data.img_alt ?? ""} class="aspect-[21/9] w-full rounded-xl bg-muted object-cover" />
+		<img transition:name={`project-${entry.id}`} src={data.img} srcset={srcset(data.img)} sizes="(min-width: 1216px) 1136px, 100vw" alt={data.img_alt ?? ""} class="aspect-[21/9] w-full rounded-xl bg-muted object-cover" />
 	</div>
 
 	<article class="wrapper py-16 md:py-24">

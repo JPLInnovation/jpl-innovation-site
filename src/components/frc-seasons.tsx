@@ -218,11 +218,15 @@ const Season2026 = memo(function Season2026() {
 							className="group block overflow-hidden rounded-xl border surface"
 							aria-label={t26.fieldOpenLabel}
 						>
+							{/* The field picture is 630 x 420: never shown wider than that, so it's never stretched. */}
 							<img
 								src={game.fieldImage}
 								alt={t26.fieldAlt}
+								width={630}
+								height={420}
 								loading="lazy"
-								className="w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+								decoding="async"
+								className="mx-auto w-full max-w-[630px] transition-transform duration-500 ease-out group-hover:scale-[1.03]"
 							/>
 						</a>
 						<figcaption className="flex items-center gap-3 text-sm text-muted-foreground">
