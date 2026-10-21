@@ -58,7 +58,7 @@ const stills = Object.fromEntries(
 								<DataIcon name={f.icon} className="size-4" />
 								{f.label}
 							</dt>
-							<dd class="spec font-medium">{f.value}</dd>
+							<dd class="font-semibold">{f.value}</dd>
 						</div>
 					))
 				}
@@ -129,7 +129,7 @@ const stills = Object.fromEntries(
 								</span>
 							)}
 							{step.state === "current" && (
-								<span class="spec rounded-sm bg-marker px-1.5 py-0.5 text-xs font-semibold text-marker-foreground">{text.nowTag}</span>
+								<span class="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{text.nowTag}</span>
 							)}
 						</p>
 						<h3 class="font-semiwide text-lg font-[760]">{step.title}</h3>

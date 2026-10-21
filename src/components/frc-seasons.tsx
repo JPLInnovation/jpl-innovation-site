@@ -482,12 +482,12 @@ const Season2026 = memo(function Season2026() {
 function LiveTag({ children }: { children: ReactNode }) {
 	return (
 		<span className="inline-flex w-fit items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
-			<span className="size-1.5 rounded-full bg-marker" aria-hidden="true" />
+			<span className="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true" />
 			{children}
 		</span>
 	);
 }
 
 function NowTag() {
-	return <span className="spec rounded-sm bg-marker px-1.5 py-0.5 text-xs font-semibold text-marker-foreground">{t27.nowTag}</span>;
+	return <span className="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{t27.nowTag}</span>;
 }

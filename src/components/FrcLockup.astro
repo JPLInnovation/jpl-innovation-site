@@ -4,7 +4,7 @@
  * Used twice so the two are identical: in the page header (src/pages/work/frc.astro) and as the final frame of
  * the FRC intro (FrcSplash), which then flies exactly onto the header's copy.
  *
- *   splash  The intro's copy. Always in the dark-background colours (the intro plays on dark graphite in both
+ *   splash  The intro's copy. Always in the dark-background colours (the intro plays on dark navy in both
  *           themes). FrcSplash stacks its animated artwork over the two logos through the "badge-layers" and
  *           "first-layers" slots. Its FIRST logo is FRC_logo-white.png: the same official white artwork with the
  *           black made transparent, because a blend mode can't reach the background from inside the intro's
@@ -30,7 +30,7 @@ const { splash = false } = Astro.props;
 				alt={splash ? "" : frcPage.logoAlt}
 				width="764"
 				height="764"
-				class:list={["size-14 rounded-full object-cover shadow-sm ring-1 md:size-16", splash ? "frc-real ring-[#2a2e31]" : "ring-border"]}
+				class:list={["size-14 rounded-full object-cover shadow-sm ring-1 md:size-16", splash ? "frc-real ring-[#1a2a50]" : "ring-border"]}
 			/>
 			{
 				splash && (
@@ -40,7 +40,7 @@ const { splash = false } = Astro.props;
 				)
 			}
 		</span>
-		<span class:list={["h-10 w-px", splash ? "frc-divider bg-[#2a2e31]" : "bg-border"]} aria-hidden="true"></span>
+		<span class:list={["h-10 w-px", splash ? "frc-divider bg-[#1a2a50]" : "bg-border"]} aria-hidden="true"></span>
 		<span class="relative inline-flex" data-frc-first>
 			<!-- Page: the FIRST logo file is white on black, so screen-blend drops the black in dark mode; in light
 			     mode it's inverted to black on white and multiply-blended. -->
@@ -60,5 +60,5 @@ const { splash = false } = Astro.props;
 			}
 		</span>
 	</div>
-	<p class:list={["text-[15px] font-medium", splash ? "frc-caption text-[#a0a4a8]" : "text-muted-foreground"]}>{frcPage.logoCaption}</p>
+	<p class:list={["text-[15px] font-medium", splash ? "frc-caption text-[#94a3b8]" : "text-muted-foreground"]}>{frcPage.logoCaption}</p>
 </div>

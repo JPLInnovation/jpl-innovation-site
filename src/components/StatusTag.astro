@@ -1,5 +1,5 @@
 ---
-/** A project's current status, like a tag on a part: mono text and an orange dot for something live or next up. */
+/** A project's current status. The yellow dot marks something that's live or next up. */
 interface Props {
 	class?: string;
 }
@@ -8,10 +8,10 @@ const { class: className } = Astro.props;
 
 <span
 	class:list={[
-		"spec inline-flex w-fit items-center gap-2 rounded-sm border border-foreground/15 bg-card px-2 py-0.5 text-[12px] font-medium",
+		"inline-flex w-fit items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium",
 		className,
 	]}
 >
-	<span class="size-1.5 rounded-full bg-marker" aria-hidden="true"></span>
+	<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>
 	<slot />
 </span>

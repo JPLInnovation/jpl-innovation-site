@@ -18,12 +18,8 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // The main call to action: solid ink (paper on the dark theme), the arrow nudges on hover.
         signal:
-          "bg-primary font-semibold text-primary-foreground shadow-[var(--shadow-soft)] hover:-translate-y-px hover:shadow-[var(--shadow-lift)] [&_svg]:transition-transform hover:[&_svg]:translate-x-0.5",
-        // Cyan fill with ink text, for a call to action on the graphite field.
-        accent:
-          "bg-accent font-semibold text-accent-foreground hover:bg-[color-mix(in_oklab,var(--accent)_88%,white)] [&_svg]:transition-transform hover:[&_svg]:translate-x-0.5",
+          "bg-[linear-gradient(135deg,var(--primary),color-mix(in_oklab,var(--primary)_70%,var(--highlight)))] font-semibold text-primary-foreground shadow-[var(--shadow-soft)] hover:-translate-y-px hover:shadow-[var(--shadow-lift)]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
