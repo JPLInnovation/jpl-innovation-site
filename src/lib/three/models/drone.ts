@@ -168,8 +168,8 @@ export async function loadDrone(): Promise<DroneRig> {
 		rx: above("Receiver", 0.022),
 		cam: [cam.mid[0], cam.lo[1] - 0.012, cam.hi[2] + 0.025],
 		lipo: below("Battery", 0.02),
-		pi: below("Raspberry Pi 4", 0.02),
-		bec: [bec.lo[0] - 0.03, bec.mid[1], bec.mid[2]],
+		pi: below("Pi 4 case (ABS)", 0.02),
+		bec: [bec.hi[0] + 0.03, bec.mid[1], bec.mid[2]], // outboard: the BEC rides on the left side of the Pi case
 		modem: [modem.hi[0] + 0.03, modem.mid[1], modem.mid[2]],
 	};
 	const lens = new Object3D();
