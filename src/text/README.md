@@ -26,6 +26,7 @@
 | FRC: 2026 tab (game, timeline, robot specs, results, photos) | `projects/frc.ts` → `season2026` (headings: `seasonsText`) |
 | FRC: "Hardware we use" (motors, CAN devices, Limelight) | `projects/frc.ts` → `hardwareText`, `motors`, `controlStack`, `vision` |
 | FRC: the big intro sentence under "Team 10951" | `projects/frc.md` → `description` |
+| FRC: "The 2026 robot in 3D" part by part (the 3D robot that turns to each part as you scroll) | `showcase/robot.ts` (its heading and intro: `projects/frc.ts` → `model3d`) |
 | **Drone page** (`/work/drone/`): everything | `projects/drone.ts` |
 | Drone: parts, prices, budget | `projects/drone.ts` → `partGroups` |
 | Drone: "Part by part" (the 3D drone that turns to each part as you scroll) | `showcase/drone.ts` |
