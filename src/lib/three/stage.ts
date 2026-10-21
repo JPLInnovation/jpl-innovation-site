@@ -72,12 +72,12 @@ export function readPalette(): Palette {
 	const color = (name: string, fallback: string) => new Color(style.getPropertyValue(name).trim() || fallback);
 	return {
 		dark: document.documentElement.classList.contains("dark"),
-		background: color("--background", "#f2f1ed"),
-		foreground: color("--foreground", "#121416"),
-		card: color("--card", "#fbfaf8"),
-		muted: color("--muted-foreground", "#575b60"),
-		border: color("--border", "#d6d3cb"),
-		accent: color("--accent", "#1fb5d9"),
+		background: color("--background", "#eef1f4"),
+		foreground: color("--foreground", "#0e1b2c"),
+		card: color("--card", "#ffffff"),
+		muted: color("--muted-foreground", "#4f5b6c"),
+		border: color("--border", "#cdd4dc"),
+		accent: color("--accent", "#ffc20e"),
 		red: color("--alliance-red", "#c8283a"),
 		blue: color("--alliance-blue", "#1f5fd1"),
 		chart: [
@@ -291,7 +291,7 @@ export async function mountStage(
 	const aim = new Group();
 	aim.position.copy(target);
 	scene.add(aim);
-	const sky = new HemisphereLight(0xffffff, 0x2a2e31, 0.35);
+	const sky = new HemisphereLight(0xffffff, 0x3a4658, 0.35);
 	scene.add(sky);
 	const light = (color: number, x: number, y: number, z: number) => {
 		const l = new DirectionalLight(color, 1);
@@ -353,7 +353,7 @@ export async function mountStage(
 			const el = document.createElement("span");
 			el.textContent = text;
 			el.className =
-				"stage-label absolute left-0 top-0 whitespace-nowrap rounded-sm border bg-card/92 px-2 py-1 font-mono text-[11.5px] font-medium tracking-[-0.01em] text-foreground shadow-sm max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[9.5px] " +
+				"stage-label absolute left-0 top-0 whitespace-nowrap rounded-full border bg-card/90 px-2.5 py-1 text-[12px] font-semibold text-foreground shadow-sm max-sm:px-1.5 max-sm:py-0.5 max-sm:text-[9.5px] " +
 				className;
 			overlay.appendChild(el);
 			labels.push({ el, at });
