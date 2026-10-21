@@ -28,6 +28,7 @@
 | FRC: the big intro sentence under "Team 10951" | `projects/frc.md` → `description` |
 | **Drone page** (`/work/drone/`): everything | `projects/drone.ts` |
 | Drone: parts, prices, budget | `projects/drone.ts` → `partGroups` |
+| Drone: "Part by part" (the 3D drone that turns to each part as you scroll) | `showcase/drone.ts` |
 | **Cybersecurity page** (`/work/cybersecurity/`): title, intro, the long write-up | `projects/cybersecurity.md` |
 | Cybersecurity: labels, "CCNA in motion", subnetting box | `projects/cybersecurity.ts` |
 | Cybersecurity: the commands typed in the Cisco console | `projects/cybersecurity-terminal.ts` |
