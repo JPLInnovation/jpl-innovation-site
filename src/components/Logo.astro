@@ -3,16 +3,92 @@
  * The JPL Innovation logo. The light theme uses a copy with navy "JPL" letters (scripts/make-logo-assets.mjs);
  * both are 480 px WebP copies (scripts/resize-images.mjs), 3x the largest size shown.
  * `loading="lazy"` means only the theme's visible logo downloads: the hidden one is display:none.
+ *
+ * `animated` (the header): the logo is two layers of the same picture, the wordmark (the left 63.5%) and the round
+ * badge (the rest). When the header carries `data-compact` (scrolled down) the wordmark slides left and fades out
+ * while the badge rolls a full turn left into its place like a wheel, and the logo narrows to the badge; at the top it rolls back
+ * out. The first image is the whole logo at its full size, which is what the logo intros land on (they keep the
+ * header uncompacted while they play).
  */
 import { site } from "@/text/site";
 
 interface Props {
 	class?: string;
+	animated?: boolean;
 }
-const { class: className } = Astro.props;
+const { class: className, animated = false } = Astro.props;
 ---
 
-<span class:list={["inline-flex", className]} data-site-logo>
-	<img src="/assets/jpl-logo-light-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
-	<img src="/assets/jpl-logo-dark-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
-</span>
+{
+	animated ? (
+		<span class:list={["logo-anim relative inline-flex", className]} data-site-logo>
+			<span class="logo-layer logo-word">
+				<img src="/assets/jpl-logo-light-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
+				<img src="/assets/jpl-logo-dark-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
+			</span>
+			<span class="logo-layer logo-badge" aria-hidden="true">
+				<img src="/assets/jpl-logo-light-480.webp" alt="" width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
+				<img src="/assets/jpl-logo-dark-480.webp" alt="" width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
+			</span>
+		</span>
+	) : (
+		<span class:list={["inline-flex", className]} data-site-logo>
+			<img src="/assets/jpl-logo-light-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="h-full w-auto dark:hidden" />
+			<img src="/assets/jpl-logo-dark-480.webp" alt={site.name} width="480" height="173" loading="lazy" decoding="async" class="hidden h-full w-auto dark:block" />
+		</span>
+	)
+}
+
+<style is:global>
+	/* The picture is 480 x 173; the badge starts 305 px in (63.5%) and is 175 px wide. */
+	.logo-anim {
+		--logo-w: calc(var(--logo-h) * 480 / 173);
+		height: var(--logo-h);
+		width: var(--logo-w);
+		transition: width 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	.logo-anim .logo-layer {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: var(--logo-w);
+		display: block;
+		transition:
+			transform 0.7s cubic-bezier(0.65, 0, 0.35, 1),
+			opacity 0.45s ease,
+			filter 0.45s ease;
+	}
+	.logo-anim .logo-layer img {
+		width: 100%;
+	}
+	.logo-anim .logo-word {
+		clip-path: inset(0 36.5% 0 0);
+	}
+	.logo-anim .logo-badge {
+		clip-path: inset(0 0 0 63.4%);
+		/* The badge's centre: 63.5% + half its 36.5%. */
+		transform-origin: 81.75% 50%;
+	}
+	/* Scrolled: the badge rolls one full turn to the left across 63.5% of the logo, so it lands upright; the wordmark
+	   slides out ahead of it and fades. Not while a logo intro is landing on it. */
+	html:not(.splash) [data-compact] .logo-anim {
+		width: calc(var(--logo-h) * 175 / 173);
+	}
+	html:not(.splash) [data-compact] .logo-anim .logo-badge {
+		transform: translateX(-63.5%) rotate(-360deg);
+	}
+	html:not(.splash) [data-compact] .logo-anim .logo-word {
+		transform: translateX(-18%);
+		opacity: 0;
+		filter: blur(2px);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.logo-anim,
+		.logo-anim .logo-layer {
+			transition: none;
+		}
+		/* No roll: the badge just appears in place. */
+		html:not(.splash) [data-compact] .logo-anim .logo-badge {
+			transform: translateX(-63.5%);
+		}
+	}
+</style>
