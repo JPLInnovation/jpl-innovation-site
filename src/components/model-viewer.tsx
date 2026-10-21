@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { afterIntro } from "@/lib/splash";
 import type { Model, StageContext, StageView } from "@/lib/three/stage";
 import { cn } from "@/lib/utils";
 
@@ -24,25 +25,6 @@ const models = {
 };
 
 export type ModelName = keyof typeof models;
-
-/**
- * Resolves once no logo intro covers the page (src/lib/splash.ts), so a model doesn't build and render underneath it
- * while the intro needs the GPU (the drone page's intro flies a 3D drone itself). Gives up waiting after 8 s.
- */
-function afterIntro() {
-	const root = document.documentElement;
-	if (!root.classList.contains("splash")) return Promise.resolve();
-	return new Promise<void>((resolve) => {
-		const done = () => {
-			observer.disconnect();
-			clearTimeout(timer);
-			resolve();
-		};
-		const observer = new MutationObserver(() => !root.classList.contains("splash") && done());
-		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-		const timer = setTimeout(done, 8000);
-	});
-}
 
 interface Props {
 	model: ModelName;

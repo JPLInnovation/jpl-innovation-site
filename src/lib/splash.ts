@@ -47,6 +47,26 @@ export function markSeen(kind: SplashKind) {
 }
 
 /**
+ * Resolves once no logo intro covers the page, so a 3D model (src/components/model-viewer.tsx, showcase.tsx) doesn't
+ * build and render underneath it while the intro needs the GPU (the drone page's intro flies a 3D drone itself).
+ * Gives up waiting after 8 s.
+ */
+export function afterIntro() {
+	const root = document.documentElement;
+	if (!root.classList.contains("splash")) return Promise.resolve();
+	return new Promise<void>((resolve) => {
+		const done = () => {
+			observer.disconnect();
+			clearTimeout(timer);
+			resolve();
+		};
+		const observer = new MutationObserver(() => !root.classList.contains("splash") && done());
+		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+		const timer = setTimeout(done, 8000);
+	});
+}
+
+/**
  * How this page load was opened. Runs inlined in the browser before first paint: keep it self-contained, apart
  * from arrivalMode, which SplashShell inlines next to it.
  */
