@@ -69,7 +69,7 @@ export default function ContactDialog({
 						className={cn(
 							look === "ink" && "bg-primary text-primary-foreground hover:bg-primary/90",
 							look === "inverse" &&
-								"bg-accent font-semibold text-accent-foreground hover:-translate-y-px hover:bg-[color-mix(in_oklab,var(--accent)_88%,white)] focus-visible:ring-white/60",
+								"bg-white font-semibold text-[#1d4ed8] shadow-[var(--shadow-soft)] hover:-translate-y-px hover:bg-white/95 focus-visible:ring-white/60",
 							className,
 						)}
 					>
@@ -77,7 +77,7 @@ export default function ContactDialog({
 					</Button>
 				)}
 			</DialogTrigger>
-			<DialogContent className="gap-6 rounded-lg p-6 sm:max-w-md sm:p-8">
+			<DialogContent className="gap-6 rounded-2xl p-6 sm:max-w-md sm:p-8">
 				<DialogHeader className="gap-2 text-left">
 					<DialogTitle className="font-wide text-2xl font-[850]">{text.title}</DialogTitle>
 					<DialogDescription className="text-[15px]">
@@ -85,8 +85,8 @@ export default function ContactDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="flex items-center justify-between gap-3 rounded-md border bg-muted/60 py-2 pl-4 pr-2">
-					<span className="spec truncate text-[14px] font-medium select-all">{EMAIL}</span>
+				<div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/60 py-2 pl-4 pr-2">
+					<span className="truncate font-medium select-all">{EMAIL}</span>
 					<Button variant="secondary" size="sm" onClick={copy} className="shrink-0" aria-live="polite">
 						{copied === "done" ? (
 							<>

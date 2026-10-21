@@ -45,10 +45,10 @@ const CARD_H = 0.9;
 const SPACING = 0.86;
 const TEX_W = 600;
 const TEX_H = 900;
-const NAVY = "#121416"; // ink
-const BLUE = "#1a1d20"; // the bottom band: graphite
-const CYAN = "#1fb5d9"; // --accent (the logo cyan)
-const SLOT = "#2a2e31";
+const NAVY = "#0a1a33";
+const BLUE = "#1d4ed8"; // --primary
+const CYAN = "#22d3ee"; // --accent
+const SLOT = "#1b2c4d";
 const FONT = '"Archivo Variable", "Arial Black", sans-serif';
 
 export const view = (options: Options): StageView => {

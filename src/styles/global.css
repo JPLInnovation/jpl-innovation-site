@@ -6,62 +6,50 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Geist Mono (OFL, public/fonts/GeistMono-OFL.txt): measurements, specs, part labels, step numbers and captions.
- * Latin only, variable 400 to 600, 23 KB; preloaded in BaseLayout.
- */
-@font-face {
-	font-family: "Geist Mono";
-	src: url("/fonts/geist-mono-latin.woff2") format("woff2");
-	font-weight: 400 600;
-	font-style: normal;
-	font-display: swap;
-	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-
-/*
- * JPL Innovation theme: the build bench (docs/design/direction.md). Paper and graphite neutrals, near-black ink, the
- * logo's cyan as the one signal colour, and a safety orange only for live / current things.
- * Every colour is a variable here, so the theme can be changed in one place. Contrast ratios are in the direction doc.
- *   --primary      the main button: ink on paper, paper on graphite
- *   --accent       cyan fills (ink text on it); --accent-ink: cyan text and links on the page
- *   --marker       orange fills for live / current (ink text on it); --marker-ink: orange text
- *   --rule         lines that carry meaning (timeline, inputs): 3:1 on the page; --border is decorative
- *   --hero-field   graphite behind photo overlays, the console and the contact band (white text on it)
- *   --grid         the drafting grid behind the top of each page
+ * JPL Innovation theme — blue primary, cyan accent, violet highlight, cool neutral surfaces.
+ * Every colour is a variable here, so the theme can be changed in one place.
+ *   --primary    blue: buttons, links, indicators (white text on it passes WCAG AA in both modes)
+ *   --accent     cyan: highlights and "live" markers; always paired with --accent-foreground
+ *   --highlight  violet: only in gradients (buttons, contact band, background glow)
+ *   --hero-field deep blue behind photo overlays, the terminal and the 3D badges
+ *   --glow-*, --bg-star*, --bg-shoot, --cursor-glow  the animated background (src/scripts/background.ts); kept faint
+ *                so text stays AA even with a dot or glow directly behind it
  * The two FRC alliance colours and the chart hues stay as they were (data colours, validated).
  */
 :root {
-	--radius: 0.5rem;
+	--radius: 0.75rem;
 
-	--background: #f2f1ed;
-	--foreground: #121416;
-	--card: #fbfaf8;
-	--card-foreground: #121416;
-	--popover: #fbfaf8;
-	--popover-foreground: #121416;
-	--primary: #121416;
+	--background: #eef3fd;
+	--foreground: #0a1a33;
+	--card: #ffffff;
+	--card-foreground: #0a1a33;
+	--popover: #ffffff;
+	--popover-foreground: #0a1a33;
+	--primary: #1d4ed8;
 	--primary-foreground: #ffffff;
-	--secondary: #e8e6e0;
-	--secondary-foreground: #121416;
-	--muted: #e8e6e0;
-	--muted-foreground: #575b60;
-	--accent: #1fb5d9;
-	--accent-foreground: #121416;
-	--accent-ink: #00718a;
-	--marker: #ff5a1f;
-	--marker-foreground: #121416;
-	--marker-ink: #b33d0b;
-	--highlight: #1fb5d9;
+	--secondary: #e2eafb;
+	--secondary-foreground: #0a1a33;
+	--muted: #e5ecfa;
+	--muted-foreground: #475569;
+	--accent: #22d3ee;
+	--accent-foreground: #04202b;
+	--highlight: #7c3aed;
 	--destructive: #c8283a;
-	--border: #d6d3cb;
-	--rule: #7d8085;
-	--input: #b9b6ae;
-	--ring: #00718a;
+	--border: #cfdaef;
+	--input: #cfdaef;
+	--ring: #1d4ed8;
 
-	--hero-field: #101214;
-	--grid: rgb(18 20 22 / 0.07);
-	--shadow-soft: 0 1px 1px rgb(18 20 22 / 0.04), 0 8px 24px -14px rgb(18 20 22 / 0.22);
-	--shadow-lift: 0 2px 4px rgb(18 20 22 / 0.06), 0 22px 44px -22px rgb(18 20 22 / 0.35);
+	--hero-field: #071433;
+	--shadow-soft: 0 1px 2px rgb(16 42 90 / 0.06), 0 12px 32px -16px rgb(16 42 90 / 0.28);
+	--shadow-lift: 0 2px 6px rgb(16 42 90 / 0.08), 0 24px 48px -20px rgb(16 42 90 / 0.4);
+
+	--glow-1: rgb(37 99 235 / 0.16);
+	--glow-2: rgb(124 58 237 / 0.13);
+	--glow-3: rgb(56 140 255 / 0.1);
+	--bg-star: rgb(29 78 216 / 0.42);
+	--bg-star-alt: rgb(124 58 237 / 0.4);
+	--bg-shoot: rgb(124 58 237 / 0.55);
+	--cursor-glow: rgb(124 58 237 / 0.15);
 
 	--alliance-red: #c8283a;
 	--alliance-blue: #1f5fd1;
@@ -76,35 +64,37 @@
 }
 
 .dark {
-	--background: #0c0d0e;
-	--foreground: #ecebe7;
-	--card: #151719;
-	--card-foreground: #ecebe7;
-	--popover: #151719;
-	--popover-foreground: #ecebe7;
-	--primary: #ecebe7;
-	--primary-foreground: #0c0d0e;
-	--secondary: #1c1f21;
-	--secondary-foreground: #ecebe7;
-	--muted: #1c1f21;
-	--muted-foreground: #a0a4a8;
-	--accent: #3cc6e8;
-	--accent-foreground: #0c0d0e;
-	--accent-ink: #3cc6e8;
-	--marker: #ff6b30;
-	--marker-foreground: #0c0d0e;
-	--marker-ink: #ff6b30;
-	--highlight: #3cc6e8;
+	--background: #050a1f;
+	--foreground: #e6edf8;
+	--card: #0b1531;
+	--card-foreground: #e6edf8;
+	--popover: #0b1531;
+	--popover-foreground: #e6edf8;
+	--primary: #2563eb;
+	--primary-foreground: #ffffff;
+	--secondary: #111e3e;
+	--secondary-foreground: #e6edf8;
+	--muted: #0e1a39;
+	--muted-foreground: #94a3b8;
+	--accent: #22d3ee;
+	--accent-foreground: #04202b;
+	--highlight: #8b5cf6;
 	--destructive: #f0596b;
-	--border: #2a2e31;
-	--rule: #5d6266;
-	--input: #3a3f43;
-	--ring: #3cc6e8;
+	--border: #1a2a50;
+	--input: #233661;
+	--ring: #38bdf8;
 
-	--hero-field: #101214;
-	--grid: rgb(236 235 231 / 0.05);
-	--shadow-soft: 0 1px 1px rgb(0 0 0 / 0.3), 0 10px 28px -16px rgb(0 0 0 / 0.7);
-	--shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 24px 48px -22px rgb(0 0 0 / 0.8);
+	--hero-field: #050c28;
+	--shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 34px -18px rgb(0 0 0 / 0.7);
+	--shadow-lift: 0 2px 6px rgb(0 0 0 / 0.4), 0 26px 50px -22px rgb(0 0 0 / 0.8);
+
+	--glow-1: rgb(37 99 235 / 0.22);
+	--glow-2: rgb(139 92 246 / 0.18);
+	--glow-3: rgb(56 140 255 / 0.1);
+	--bg-star: rgb(214 228 255 / 0.85);
+	--bg-star-alt: rgb(196 172 255 / 0.8);
+	--bg-shoot: rgb(221 214 255 / 0.9);
+	--cursor-glow: rgb(139 92 246 / 0.2);
 
 	--alliance-red: #f0596b;
 	--alliance-blue: #6d9bf2;
@@ -120,7 +110,6 @@
 
 @theme inline {
 	--font-sans: "Archivo Variable", "Archivo", ui-sans-serif, system-ui, sans-serif;
-	--font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -136,11 +125,6 @@
 	--color-muted-foreground: var(--muted-foreground);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
-	--color-accent-ink: var(--accent-ink);
-	--color-marker: var(--marker);
-	--color-marker-foreground: var(--marker-foreground);
-	--color-marker-ink: var(--marker-ink);
-	--color-rule: var(--rule);
 	--color-highlight: var(--highlight);
 	--color-hero-field: var(--hero-field);
 	--color-destructive: var(--destructive);
@@ -157,8 +141,8 @@
 	--radius-sm: calc(var(--radius) - 4px);
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 2px);
-	--radius-2xl: calc(var(--radius) + 6px);
+	--radius-xl: calc(var(--radius) + 6px);
+	--radius-2xl: calc(var(--radius) + 14px);
 }
 
 /* Archivo's width axis carries the hierarchy: wide for display, normal for reading. */
@@ -169,17 +153,10 @@
 	font-stretch: 112%;
 }
 
-/* Card surface: a solid sheet on the bench, with a hairline and the faintest lift. */
+/* Card surface: slightly see-through over the animated background, with a soft blue-tinted shadow. */
 @utility surface {
-	background-color: var(--card);
+	background-color: color-mix(in oklab, var(--card) 88%, transparent);
 	box-shadow: var(--shadow-soft);
-}
-
-/* Datasheet type: mono, tabular figures, for measurements, specs, step numbers, captions and tags. */
-@utility spec {
-	font-family: var(--font-mono);
-	font-variant-numeric: tabular-nums;
-	letter-spacing: -0.01em;
 }
 
 /* Page gutter + max width, used by every section. */
@@ -213,10 +190,10 @@
 	h2,
 	h3,
 	h4 {
-		line-height: 1.04;
-		letter-spacing: -0.022em;
+		line-height: 1.08;
+		letter-spacing: -0.015em;
 		text-wrap: balance;
-		font-weight: 760;
+		font-weight: 750;
 	}
 
 	p {
@@ -226,10 +203,6 @@
 	::selection {
 		background: var(--accent);
 		color: var(--accent-foreground);
-	}
-
-	a {
-		text-underline-offset: 0.22em;
 	}
 
 	:focus-visible {
@@ -271,7 +244,7 @@
 	font-weight: 760;
 }
 .prose-site :where(a) {
-	text-decoration-color: var(--accent);
+	text-decoration-color: var(--primary);
 	text-decoration-thickness: 2px;
 	text-underline-offset: 4px;
 }
@@ -310,53 +283,67 @@
 }
 
 /*
- * Site background (BaseLayout): a still drafting grid, 24 px squares with a stronger line every fourth, fading out
- * down the first screen so it frames the top of each page and leaves reading areas plain. Nothing moves.
+ * Animated site background (BaseLayout + src/scripts/background.ts): a fixed layer behind everything.
+ *   .site-bg__mesh  three soft blue/violet washes drifting very slowly (transform-only, so it stays on the GPU)
+ *   .site-bg__net   a canvas starfield, drawn by the script
+ *   .site-bg__glow  a soft purple light that trails the mouse (positioned by the script; mouse/trackpad only)
+ * Reduced motion: the washes stop, the script draws one still frame and the glow stays hidden.
  */
-.site-grid {
-	position: absolute;
-	inset: 0 0 auto;
-	height: 120svh;
+.site-bg {
+	position: fixed;
+	inset: 0;
 	z-index: -1;
+	overflow: hidden;
 	pointer-events: none;
-	background-image:
-		linear-gradient(var(--grid) 1px, transparent 1px),
-		linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-		linear-gradient(var(--grid) 1px, transparent 1px),
-		linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-	background-size:
-		96px 96px,
-		96px 96px,
-		24px 24px,
-		24px 24px;
-	background-position: center top;
-	-webkit-mask-image: linear-gradient(#000 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
-	mask-image: linear-gradient(#000 0%, rgb(0 0 0 / 0.55) 45%, transparent 100%);
-	opacity: 0.9;
 }
-@media (forced-colors: active) {
-	.site-grid {
+.site-bg__mesh {
+	position: absolute;
+	inset: -25%;
+	background:
+		radial-gradient(38% 34% at 22% 24%, var(--glow-1), transparent 70%),
+		radial-gradient(32% 30% at 80% 18%, var(--glow-2), transparent 70%),
+		radial-gradient(42% 38% at 62% 82%, var(--glow-3), transparent 70%);
+	animation: site-mesh-drift 42s ease-in-out infinite alternate;
+	will-change: transform;
+}
+.site-bg__net {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+.site-bg__glow {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 34rem;
+	height: 34rem;
+	border-radius: 50%;
+	background: radial-gradient(closest-side, var(--cursor-glow), transparent);
+	opacity: 0;
+	will-change: transform, opacity;
+}
+@keyframes site-mesh-drift {
+	0% {
+		transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+	}
+	50% {
+		transform: translate3d(3%, -2%, 0) rotate(7deg) scale(1.05);
+	}
+	100% {
+		transform: translate3d(-3%, 2.5%, 0) rotate(-5deg) scale(1.02);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.site-bg__mesh {
+		animation: none;
+	}
+	.site-bg__glow {
 		display: none;
 	}
 }
-
-/* Floating labels on the 3D models (src/lib/three/stage.ts): a small tag with a tick toward the part. */
-.stage-label {
-	border-color: var(--border);
-}
-
-/* Home services rows: a cyan rule runs along the top of the row under the pointer, so you can see which one you're on. */
-.service-row::before {
-	content: "";
-	position: absolute;
-	inset: -1px 0 auto;
-	height: 2px;
-	background: var(--accent);
-	transform: scaleX(0);
-	transform-origin: left;
-	transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.service-row:hover::before,
-.service-row:focus-within::before {
-	transform: scaleX(1);
+@media (forced-colors: active) {
+	.site-bg {
+		display: none;
+	}
 }

@@ -15,7 +15,7 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 	{
 		members.map((m) => (
 			<li class="press group relative flex flex-col gap-4">
-				<div class="overflow-hidden rounded-md bg-muted ring-1 ring-border">
+				<div class="overflow-hidden rounded-xl bg-muted">
 					<img
 						src={m.data.img}
 						srcset={srcset(m.data.img)}
@@ -29,14 +29,14 @@ const { members, headingLevel: Heading = "h3" } = Astro.props;
 				<div class="flex flex-col gap-1.5">
 					<Heading class="font-semiwide text-xl font-[760]">
 						{/* The whole card is clickable through this link's ::after. */}
-						<a href={`/members/${m.id}/`} class="after:absolute after:inset-0 group-hover:underline decoration-accent decoration-[3px] underline-offset-[5px]">
+						<a href={`/members/${m.id}/`} class="after:absolute after:inset-0 group-hover:underline decoration-primary dark:decoration-accent decoration-[3px] underline-offset-[5px]">
 							{m.data.title}
 						</a>
 					</Heading>
 					{m.data.leadership && (
 						<p class="text-sm font-semibold">{roleLine(m)}</p>
 					)}
-					<p class="spec text-[13px] text-muted-foreground">{m.data.tags.join(", ")}</p>
+					<p class="text-sm text-muted-foreground">{m.data.tags.join(", ")}</p>
 				</div>
 			</li>
 		))
