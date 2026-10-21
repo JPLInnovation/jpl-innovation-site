@@ -1,4 +1,6 @@
 ---
+// @ts-ignore: the project has no Node type definitions; this only runs at build
+import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
@@ -8,11 +10,13 @@ import FrcSeasons from "@/components/frc-seasons";
 import HardwareStack from "@/components/HardwareStack.astro";
 import Leadership from "@/components/Leadership.astro";
 import ContactSection from "@/components/ContactSection.astro";
-import ModelViewer from "@/components/model-viewer";
+import Showcase from "@/components/showcase";
 import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md)
+// All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
+// and the 3D robot's part by part text: src/text/showcase/robot.ts
 import { frcPage, team } from "@/text/projects/frc";
+import { robotShowcase } from "@/text/showcase/robot";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
 
@@ -25,6 +29,13 @@ const facts = [
 	{ label: f.homeLabel, value: f.home },
 	{ label: f.nextSeasonLabel, value: f.nextSeason },
 ];
+
+// The showcase's pictures for phones (scripts/showcase-stills.py --page robot). A feature without one shows its text only.
+const stills = Object.fromEntries(
+	robotShowcase.features
+		.filter((f) => existsSync(`public/showcase/robot/${f.id}.webp`))
+		.map((f) => [f.id, `/showcase/robot/${f.id}.webp`]),
+);
 ---
 
 <BaseLayout title={frcPage.seoTitle} description={entry.data.description}>
@@ -55,32 +66,18 @@ const facts = [
 
 	<FrcRobotReveal client:load src={entry.data.img} alt={entry.data.img_alt ?? ""} />
 
-	<section class="wrapper pt-20 md:pt-28" aria-labelledby="robot-3d-heading">
-		<div class="grid items-center gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
-			<div class="flex flex-col gap-4" data-reveal>
-				<h2 id="robot-3d-heading" class="font-wide text-3xl font-[850] md:text-5xl">{frcPage.model3d.heading}</h2>
-				<p class="text-lg text-muted-foreground">{frcPage.model3d.text}</p>
-				<p class="text-sm text-muted-foreground">{frcPage.model3d.note}</p>
-			</div>
-			<div class="overflow-hidden rounded-xl border surface" data-reveal data-reveal-delay="150">
-				<ModelViewer
-					client:visible
-					model="frc-robot"
-					label={frcPage.model3d.description}
-					className="aspect-[4/3] w-full"
-				>
-					<img
-						src="/assets/FRCnew.jpg"
-						srcset={srcset("/assets/FRCnew.jpg")}
-						sizes="(min-width: 1024px) 60vw, 100vw"
-						alt={frcPage.model3d.fallbackAlt}
-						class="size-full object-cover object-[32%_68%]"
-						loading="lazy"
-					/>
-				</ModelViewer>
-			</div>
-		</div>
-	</section>
+	<!-- The 2026 robot in 3D, part by part: the robot turns to each part as its text scrolls past (src/components/showcase.tsx).
+	     The photo is the stage's picture until the 3D loads, without JavaScript, and when WebGL is unavailable. -->
+	<Showcase client:visible={{ rootMargin: "200px" }} model="robot" text={robotShowcase} stills={stills} className="pt-20 md:pt-28">
+		<img
+			src="/assets/FRCnew.jpg"
+			srcset={srcset("/assets/FRCnew.jpg")}
+			sizes="(min-width: 1024px) 55vw, 100vw"
+			alt={frcPage.model3d.fallbackAlt}
+			class="size-full rounded-xl object-cover object-[32%_68%]"
+			loading="lazy"
+		/>
+	</Showcase>
 
 	<div class="wrapper py-24 md:py-32">
 		<!-- Hydrates once the page is idle: it's below the fold, and #2026 deep links still work. -->

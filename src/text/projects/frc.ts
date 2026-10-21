@@ -29,6 +29,8 @@ export const frcPage = {
 		text: 'Our 2026 rookie robot: 140 lb, 12 ft/s, and tuned until its autonomous routine worked 95% of the time.',
 		highlights: ['Six-wheel traction drivebase', 'Dual-flywheel shooter, 25°–65° hood', 'Pneumatic climb', 'Java, WPILib and OpenCV vision'],
 	},
+	/** Heading, sentence, note and screen reader description of the 3D robot that turns to each part as you scroll
+	 *  (its part by part text: src/text/showcase/robot.ts). `fallbackAlt` describes the photo shown without 3D. */
 	model3d: {
 		heading: 'The 2026 robot in 3D',
 		text: 'Our 2026 KitBot, built from our Onshape CAD. Follow a ball of FUEL: the intake rollers pull it off the floor into the hopper, the feeder pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',

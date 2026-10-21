@@ -20,6 +20,7 @@ import type { StageContext, StageView } from "@/lib/three/stage";
  */
 const models = {
 	drone: () => import("@/lib/three/models/drone-showcase"),
+	robot: () => import("@/lib/three/models/frc-robot-showcase"),
 };
 
 /** What a showcase model module exports. `ids`: the features, in page order (a stop per feature). */
