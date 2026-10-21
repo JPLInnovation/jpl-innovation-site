@@ -130,9 +130,9 @@ const SPREAD: V3 = [0.45, 2.1, 0.45];
 /** Extras drone.ts adds outside the CAD export, by geometry: the prop discs (motors) and the 4G stick's rings. */
 const EXTRAS: Record<string, string> = { CircleGeometry: "motors", TorusGeometry: "video-link" };
 
-/** Only the camera before the model has loaded; the showcase moves it straight to the right stop. The stage is large,
- * so it renders at no more than 1.5x the CSS pixels to hold 60 fps on a laptop. */
-export const view: StageView = { camera: FRAMING.overview.from, target: [0, 0, 0], fov: 36, orbit: false, pixelRatio: 1.5 };
+/** Only the camera before the model has loaded; the showcase moves it straight to the right stop. How many pixels it
+ * renders comes from the stage's quality tier (stage.ts). */
+export const view: StageView = { camera: FRAMING.overview.from, target: [0, 0, 0], fov: 36, orbit: false };
 
 const DISC_OPACITY = 0.4; // the spinning props' blur discs, as a share of the hero's: a hint of motion, not a shape
 

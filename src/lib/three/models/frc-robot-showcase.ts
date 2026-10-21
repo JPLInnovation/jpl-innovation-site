@@ -48,7 +48,7 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
 const LABEL_GAP = 0.02; // metres outside a face, for label coordinates of ±1
 
 /** Only the camera before the model has loaded; the showcase moves it straight to the right stop. */
-export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0], fov: 34, orbit: false, pixelRatio: 1.5 };
+export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0], fov: 34, orbit: false };
 
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
 const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, shooter: 2.65 };
