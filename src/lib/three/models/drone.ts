@@ -25,6 +25,7 @@ import {
 	TorusGeometry,
 	Vector3,
 } from "three";
+import { circularGrain, type Finish, hardware } from "../finish";
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
 import cadUrl from "./f450-cad.bin?url";
 
@@ -55,6 +56,47 @@ interface CadHeader {
 }
 
 const pad4 = (n: number) => (n + 3) & ~3;
+
+/**
+ * What each CAD material is made of, by its colour and roughness in the export (the parts it's used on in the
+ * comments). Materials not listed keep a plain finish. If the export changes a colour, its part just looks plainer.
+ */
+const FINISH: Record<string, Finish> = {
+	"#2a312f/0.5": "plate", // top plate
+	"#1d2925/0.5": "plate", // bottom plate (the PDB)
+	"#3b4552/0.45": "pcb", // IO board
+	"#232a3d/0.45": "pcb", // flight controller
+	"#2a2c2e/0.45": "pcb", // receiver
+	"#1d58b8/0.45": "pcb", // Matek BEC
+	"#1f6b45/0.5": "pcb", // Camera Module 3 board
+	"#c9a54b/0.35": "metal", // gold pads
+	"#d9dcd8/0.35": "metal", // solder pads
+	"#56605c/0.6": "printed", // Pi case holder, FC deck
+	"#2a2e2d/0.62": "printed", // camera case
+	"#3b4140/0.6": "printed", // tilt mount
+	"#d5dbd8/0.4": "clear", // BEC sleeve (printed, see-through)
+	"#e9e7e0/0.7": "plastic", // arms
+	"#c8302b/0.7": "plastic", // front arms
+	"#272b2a/0.45": "plastic", // props
+	"#f1f1ec/0.55": "plastic", // landing gear
+	"#1d1f1f/0.55": "plastic", // Pi 4 case (ABS)
+	"#3b4040/0.32": "brushed", // motor bells
+	"#2c3030/0.4": "metal", // motor bases
+	"#b87333/0.4": "metal", // copper windings
+	"#b7bcbc/0.25": "metal", // shafts and prop nuts
+	"#b7bcbc/0.3": "metal",
+	"#9da3a6/0.3": "metal", // screws
+	"#9da3a6/0.35": "metal",
+	"#2b2f31/0.3": "metal", // black screws
+	"#2b2f31/0.35": "metal",
+	"#8e9392/0.35": "metal",
+	"#9aa09e/0.4": "metal",
+	"#b8312b/0.6": "wrap", // the LiPo
+	"#18191b/0.55": "wrap",
+	"#31a9d8/0.8": "rubber", // damping grommets
+	"#2b2f2d/0.9": "rubber", // battery strap
+	"#2a4a7a/0.08": "glass", // camera lens
+};
 
 let cad: Promise<{ header: CadHeader; buffer: ArrayBuffer; body: number }> | undefined;
 /** Fetch and unzip the model once; the intro and the page's 3D share it. */
@@ -102,14 +144,18 @@ export async function loadDrone(): Promise<DroneRig> {
 	const model = new Group();
 
 	const materials = header.materials.map(({ c, r, m, o, ds }) =>
-		standard(new Color(c), {
-			roughness: r,
-			metalness: m,
-			transparent: o !== undefined,
-			opacity: o ?? 1,
-			depthWrite: o === undefined, // the BEC's see-through sleeve must not hide what's inside it
-			side: ds ? DoubleSide : FrontSide,
-		}),
+		hardware(
+			{
+				color: new Color(c),
+				roughness: r,
+				metalness: m,
+				transparent: o !== undefined,
+				opacity: o ?? 1,
+				depthWrite: o === undefined, // the BEC's see-through sleeve must not hide what's inside it
+				side: ds ? DoubleSide : FrontSide,
+			},
+			FINISH[`${c}/${r}`],
+		),
 	);
 
 	/* ---------- Meshes: the frame's, then each prop's around its own motor ---------- */
@@ -138,6 +184,7 @@ export async function loadDrone(): Promise<DroneRig> {
 		geometry.setAttribute("normal", new BufferAttribute(normal, 3, true));
 		geometry.setIndex(new BufferAttribute(index, 1));
 		const mesh = new Mesh(geometry, materials[g.m]);
+		if (materials[g.m].userData.finish === "brushed") circularGrain(mesh, header.hubs);
 		if (header.materials[g.m].o !== undefined) mesh.renderOrder = 1;
 		(g.h >= 0 ? hubs[g.h] : model).add(mesh);
 	}
@@ -229,7 +276,7 @@ export default async function createDrone(ctx: StageContext): Promise<Model> {
 	const rig = await loadDrone();
 	drone.add(rig.model);
 
-	const shadow = contactShadow(0.24, 0.3);
+	const shadow = contactShadow(0.42, 0.3, 0.25);
 	shadow.position.y = rig.floor - 0.002;
 	ctx.root.add(shadow);
 

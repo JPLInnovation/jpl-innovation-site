@@ -40,7 +40,8 @@ import {
 	Vector3,
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { contactShadow, type Model, type StageContext, type StageView, standard, textTexture } from "../stage";
+import { type Finish, hardware } from "../finish";
+import { contactShadow, type Model, type StageContext, type StageView, textTexture } from "../stage";
 import cadJson from "./frc-robot-cad.json";
 
 export const view: StageView = {
@@ -72,6 +73,22 @@ const cad = cadJson as unknown as CadData;
 export const robotAnchors = cad.anchors as Record<string, [number, number, number]>;
 
 const BALL_R = 0.075; // FUEL: a 150 mm foam ball
+
+/**
+ * How a CAD colour is lit. The CAD names no materials, so this only reads the colour: the bumper blue is cloth,
+ * near-black is rubber and plastic, plain mid greys are bare aluminium, everything else (white panels, coloured
+ * parts) is plastic. The colour itself is always the CAD's.
+ */
+function finishOf(hex: string): Finish {
+	if (hex === "#1651b0") return "fabric";
+	const c = new Color(hex);
+	const max = Math.max(c.r, c.g, c.b);
+	const min = Math.min(c.r, c.g, c.b);
+	const value = c.getHSL({ h: 0, s: 0, l: 0 }).l;
+	if (max - min < 0.04 && value > 0.12 && value < 0.55) return "anodised"; // linear values: about #646464 to #c4c4c4
+	if (value <= 0.12) return "rubber";
+	return "plastic";
+}
 
 type V3 = [number, number, number];
 
@@ -158,8 +175,8 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	});
 	const materials = cad.materials.map((c, i) =>
 		cad.clear.includes(i)
-			? new MeshStandardMaterial({ color: c, transparent: true, opacity: 0.28, roughness: 0.12, metalness: 0, depthWrite: false, side: DoubleSide })
-			: standard(new Color(c), { roughness: 0.55, metalness: 0.15 }),
+			? hardware({ color: c, transparent: true, opacity: 0.28, roughness: 0.12, metalness: 0, depthWrite: false, side: DoubleSide }, "clear")
+			: hardware({ color: new Color(c), roughness: 0.55, metalness: 0.15 }, finishOf(c)),
 	);
 
 	// The roller shafts spin, with everything mounted on them.
@@ -248,10 +265,11 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		ball.position.set(0, exit.y + exitDir.y * 0.9 * s - 0.7 * s * s, exit.z + exitDir.z * 0.9 * s);
 
 	const ballGeometry = new SphereGeometry(BALL_R, 24, 16);
-	const ballMaterial = standard(0xffc20e, { roughness: 0.85 });
+	const ballMaterial = hardware({ color: 0xffc20e, roughness: 0.85 }, "foam");
 	const PERIOD = 5;
 	const balls = [0, 0.5].map((offset) => {
 		const ball = new Mesh(ballGeometry, ballMaterial);
+		ball.userData.shadow = false; // it moves: the floor shadow is drawn once
 		robot.add(ball);
 		return { ball, offset };
 	});
@@ -279,7 +297,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	};
 
 	/* ---------- Floor ---------- */
-	const shadow = contactShadow(0.7);
+	const shadow = contactShadow(0.75, 0.35, 0.5);
 	shadow.position.y = 0.002;
 	robot.add(shadow);
 
