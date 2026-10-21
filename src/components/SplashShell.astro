@@ -126,18 +126,18 @@ const boot = `(() => {
 	}
 	/* Only colours change, never the scrollbar's width, so nothing shifts. Back to normal as the overlay fades. */
 	html.splash:not(.splash-leaving) {
-		scrollbar-color: #1e3f78 #0a1a3a;
+		scrollbar-color: #2a2e31 #0c0d0e;
 	}
 
 	/* ---------- Background: a faint drifting grid and a few circuit traces ---------- */
 	.splash-bg {
 		position: absolute;
 		inset: 0;
-		background: radial-gradient(120% 90% at 50% 45%, #1e5bb8 0%, #123a7d 38%, #0a1a3a 78%);
+		background: radial-gradient(120% 90% at 50% 45%, #22272b 0%, #15181b 40%, #0a0b0c 80%);
 	}
-	/* The FRC intro sits on the site's dark navy, like the page header it lands in. */
+	/* The FRC intro sits on the site's graphite, like the page header it lands in. */
 	[data-splash="frc"] .splash-bg {
-		background: radial-gradient(120% 90% at 50% 42%, #0f2150 0%, #081333 45%, #050a1f 80%);
+		background: radial-gradient(120% 90% at 50% 42%, #1a1d20 0%, #111315 45%, #0a0b0c 80%);
 	}
 	.splash-grid {
 		position: absolute;
@@ -226,10 +226,9 @@ const boot = `(() => {
 		padding: 0 1rem;
 		border: 1px solid rgb(255 255 255 / 0.22);
 		border-radius: 999px;
-		background: rgb(10 26 58 / 0.35);
+		background: rgb(12 13 14 / 0.45);
 		color: rgb(255 255 255 / 0.85);
-		font: 600 14px/1 "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
-		letter-spacing: 0.02em;
+		font: 500 13px/1 "Geist Mono", ui-monospace, monospace;
 		backdrop-filter: blur(8px);
 		cursor: pointer;
 		transition:

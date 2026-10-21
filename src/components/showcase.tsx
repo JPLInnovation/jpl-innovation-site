@@ -183,7 +183,7 @@ export default function Showcase({ model, text, stills = {}, children, className
 			<style>{css}</style>
 			<div className="wrapper flex flex-col gap-10 pb-24">
 				<div className="flex max-w-2xl flex-col gap-3">
-					<h2 id="showcase-heading" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
+					<h2 id="showcase-heading" className="font-wide text-[clamp(2.25rem,5vw,4rem)] font-[850] leading-[0.98]">
 						{text.heading}
 					</h2>
 					<p className="text-lg text-muted-foreground">{text.intro}</p>
@@ -212,7 +212,7 @@ export default function Showcase({ model, text, stills = {}, children, className
 											<span className="sr-only">{f.title}</span>
 											<span
 												aria-hidden="true"
-												className="size-2 rounded-full bg-foreground/30 transition-[background-color,transform] duration-300 group-hover/dot:bg-foreground/60 group-aria-[current=step]/dot:scale-125 group-aria-[current=step]/dot:bg-accent"
+												className="h-2 w-2 rounded-full bg-foreground/30 transition-[background-color,width] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/dot:bg-foreground/60 group-aria-[current=step]/dot:w-5 group-aria-[current=step]/dot:bg-marker"
 											/>
 										</a>
 									</li>
@@ -222,7 +222,7 @@ export default function Showcase({ model, text, stills = {}, children, className
 					</div>
 					<div className="showcase-features grid gap-4 md:grid-cols-2">
 						{text.features.map((f) => (
-							<article key={f.id} id={f.id} className="showcase-feature flex flex-col gap-5 rounded-xl border surface p-5 sm:p-6">
+							<article key={f.id} id={f.id} className="showcase-feature flex flex-col gap-5 rounded-md border surface p-5 sm:p-6">
 								{stills[f.id] && (
 									<img
 										src={stills[f.id]}
@@ -237,11 +237,11 @@ export default function Showcase({ model, text, stills = {}, children, className
 								<div className="showcase-copy flex max-w-[44ch] flex-col gap-4 border-transparent transition-colors duration-300">
 									<h3 className="font-wide text-2xl font-[850] md:text-3xl">{f.title}</h3>
 									<p className="text-lg">{f.text}</p>
-									<dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t pt-5">
+									<dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-rule/60 pt-5">
 										{f.facts.map((fact) => (
 											<div key={fact.label} className="flex flex-col gap-1">
 												<dt className="text-sm text-muted-foreground">{fact.label}</dt>
-												<dd className="font-semibold">{fact.value}</dd>
+												<dd className="spec font-medium">{fact.value}</dd>
 											</div>
 										))}
 									</dl>

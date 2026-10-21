@@ -11,18 +11,18 @@ const first = terminalScenes[0];
 const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 const lineHtml = (line: TerminalLine) =>
 	line.out !== undefined
-		? `<span class="text-[#93a4bd]">${esc(line.out)}</span>`
-		: `<span class="text-[#7cb4ff]">${esc(line.prompt ?? "")}</span> ${esc(line.cmd ?? "")}`;
+		? `<span class="text-[#a0a4a8]">${esc(line.out)}</span>`
+		: `<span class="text-[#3cc6e8]">${esc(line.prompt ?? "")}</span> ${esc(line.cmd ?? "")}`;
 ---
 
-<div data-ios-terminal class="overflow-hidden rounded-xl border border-[#1b2c4d] bg-hero-field text-[#e6edf8] shadow-[var(--shadow-lift)]">
-	<div class="flex items-center gap-2 border-b border-[#1b2c4d] px-4 py-3">
+<div data-ios-terminal class="overflow-hidden rounded-xl border border-[#2a2e31] bg-hero-field text-[#ecebe7] shadow-[var(--shadow-lift)]">
+	<div class="flex items-center gap-2 border-b border-[#2a2e31] px-4 py-3">
 		<span class="size-3 rounded-full bg-[#f0596b]" aria-hidden="true"></span>
 		<span class="size-3 rounded-full bg-[#ffc20e]" aria-hidden="true"></span>
 		<span class="size-3 rounded-full bg-[#34d399]" aria-hidden="true"></span>
-		<span class="ml-2 text-xs font-medium text-[#93a4bd]">{cyberPage.ccna.consoleTitle}</span>
+		<span class="ml-2 text-xs font-medium text-[#a0a4a8]">{cyberPage.ccna.consoleTitle}</span>
 	</div>
-	<div role="tablist" aria-label="Configuration" class="flex flex-wrap gap-1 border-b border-[#1b2c4d] px-2 py-2">
+	<div role="tablist" aria-label="Configuration" class="flex flex-wrap gap-1 border-b border-[#2a2e31] px-2 py-2">
 		{
 			terminalScenes.map((scene, i) => (
 				<button
@@ -30,7 +30,7 @@ const lineHtml = (line: TerminalLine) =>
 					role="tab"
 					data-scene={i}
 					aria-selected={i === 0 ? "true" : "false"}
-					class="min-h-9 rounded-md px-3 text-[13px] font-semibold text-[#93a4bd] transition-colors duration-200 hover:bg-[#0f2150] hover:text-[#e6edf8] aria-selected:bg-[#12275a] aria-selected:text-[#22d3ee]"
+					class="min-h-9 rounded-md px-3 text-[13px] font-semibold text-[#a0a4a8] transition-colors duration-200 hover:bg-[#1c1f21] hover:text-[#ecebe7] aria-selected:bg-[#24282b] aria-selected:text-[#3cc6e8]"
 				>
 					{scene.label}
 				</button>
@@ -42,7 +42,7 @@ const lineHtml = (line: TerminalLine) =>
 		class="h-[23rem] overflow-y-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-[12.5px] leading-[1.7] md:text-[13.5px]"
 		set:html={first.lines.map(lineHtml).join("\n")}
 	></pre>
-	<p data-note class="min-h-[3.25rem] border-t border-[#1b2c4d] px-4 py-3 text-sm text-[#93a4bd]">{first.note}</p>
+	<p data-note class="min-h-[3.25rem] border-t border-[#2a2e31] px-4 py-3 text-sm text-[#a0a4a8]">{first.note}</p>
 	<script is:inline type="application/json" data-scenes set:html={JSON.stringify(terminalScenes)}></script>
 </div>
 
@@ -50,9 +50,9 @@ const lineHtml = (line: TerminalLine) =>
 	import type { TerminalLine, TerminalScene } from "@/text/projects/cybersecurity-terminal";
 
 	const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-	const promptHtml = (p = "") => `<span class="text-[#7cb4ff]">${esc(p)}</span> `;
-	const outHtml = (o: string) => `<span class="text-[#93a4bd]">${esc(o)}</span>`;
-	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#22d3ee] motion-safe:animate-pulse" aria-hidden="true"></span>`;
+	const promptHtml = (p = "") => `<span class="text-[#3cc6e8]">${esc(p)}</span> `;
+	const outHtml = (o: string) => `<span class="text-[#a0a4a8]">${esc(o)}</span>`;
+	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#3cc6e8] motion-safe:animate-pulse" aria-hidden="true"></span>`;
 	const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	let stopAll: Array<() => void> = [];

@@ -30,7 +30,7 @@ const current = links
 								<a
 									href={l.href}
 									aria-current={l.href === current ? "page" : undefined}
-									class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-primary dark:after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100"
+									class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[2px] after:origin-left after:scale-x-0 after:bg-foreground after:transition-transform after:duration-300 after:ease-[cubic-bezier(0.16,1,0.3,1)] hover:after:scale-x-100 aria-[current=page]:after:scale-x-100 aria-[current=page]:after:bg-marker"
 								>
 									{l.label}
 								</a>
@@ -72,7 +72,7 @@ const current = links
 							class="flex min-h-14 items-center justify-between text-lg font-semibold text-muted-foreground aria-[current=page]:text-foreground"
 						>
 							{l.label}
-							{l.href === current && <span class="size-2 rounded-full bg-accent" aria-hidden="true" />}
+							{l.href === current && <span class="size-2 rounded-full bg-marker" aria-hidden="true" />}
 						</a>
 					</li>
 				))
@@ -81,7 +81,7 @@ const current = links
 	</nav>
 
 	<!-- Pull-tab that hangs below the header while it is hidden. Hover it (or tap it on touch) to bring the header back. -->
-	<div data-header-tab class="header-tab absolute top-full left-1/2 flex h-6 w-16 -translate-x-1/2 items-center justify-center rounded-b-xl border border-t-0 border-foreground/15 bg-background/90 shadow-[var(--shadow-soft)] backdrop-blur-xl" aria-hidden="true">
+	<div data-header-tab class="header-tab absolute top-full left-1/2 flex h-6 w-16 -translate-x-1/2 items-center justify-center rounded-b-md border border-t-0 border-foreground/15 bg-background/90 shadow-[var(--shadow-soft)] backdrop-blur-xl" aria-hidden="true">
 		<span class="h-1 w-7 rounded-full bg-foreground/55"></span>
 	</div>
 </header>

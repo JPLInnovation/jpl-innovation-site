@@ -24,11 +24,11 @@ const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 ho
 		<div>
 			<h2 class="mb-1 text-sm font-semibold">{footer.contactHeading}</h2>
 			<ul class="flex flex-col text-sm text-muted-foreground">
-				<li><a class={linkClass} href={`mailto:${site.email}`}>{site.email}</a></li>
+				<li><a class:list={[linkClass, "spec"]} href={`mailto:${site.email}`}>{site.email}</a></li>
 			</ul>
 		</div>
 	</div>
-	<div class="wrapper border-t py-5 text-sm text-muted-foreground">
+	<div class="wrapper spec border-t py-5 text-[13px] text-muted-foreground">
 		&copy; {year} {footer.copyright}
 	</div>
 </footer>

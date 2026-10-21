@@ -40,8 +40,8 @@ const splash = splashFor(Astro.url.pathname);
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content={description} />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="theme-color" content="#eef3fd" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#050a1f" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#f2f1ed" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#0c0d0e" media="(prefers-color-scheme: dark)" />
 		{hasCanonical && <link rel="canonical" href={canonical} />}
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content={site.name} />
@@ -53,6 +53,8 @@ const splash = splashFor(Astro.url.pathname);
 		<title>{title}</title>
 		<slot name="head" />
 		<link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
+		<!-- Specs, labels and step numbers (global.css @font-face). -->
+		<link rel="preload" href="/fonts/geist-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<script is:inline>
@@ -96,12 +98,8 @@ const splash = splashFor(Astro.url.pathname);
 		<ClientRouter />
 	</head>
 	<body>
-		<!-- Animated background (global.css + src/scripts/background.ts). Persisted so it doesn't restart on navigation. -->
-		<div class="site-bg" aria-hidden="true" transition:persist="site-bg">
-			<div class="site-bg__mesh"></div>
-			<canvas class="site-bg__net" data-site-bg></canvas>
-			<div class="site-bg__glow" data-site-glow></div>
-		</div>
+		<!-- A still drafting grid behind the top of the page (global.css). -->
+		<div class="site-grid" aria-hidden="true"></div>
 		<a
 			href="#main"
 			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-accent focus:px-4 focus:py-2 focus:text-accent-foreground"
@@ -114,7 +112,6 @@ const splash = splashFor(Astro.url.pathname);
 		</main>
 		<SiteFooter />
 		<script>
-			import "@/scripts/background";
 			import "@/scripts/motion";
 		</script>
 	</body>
