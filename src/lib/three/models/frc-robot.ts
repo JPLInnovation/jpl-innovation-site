@@ -14,8 +14,12 @@
  * How FUEL moves: the intake rollers pull a ball off the floor and up the intake ramp into the hopper, whose floor
  * slopes back down to the feeder roller. To shoot, the feeder pushes it up between the rollers into the launcher
  * wheel, which flings it up the curved hood and out of the top.
+ *
+ * buildRobot() is the robot on its own, for the FRC page's scroll showcase (./frc-robot-showcase.ts); the default
+ * export adds the idle tour of labels for the plain 3D viewer.
  */
 import {
+	BufferAttribute,
 	type BufferGeometry,
 	CatmullRomCurve3,
 	Color,
@@ -64,11 +68,52 @@ interface CadData {
 }
 const cad = cadJson as unknown as CadData;
 
+/** Named points in the CAD (intake, launcher, hood, hopper, cim, battery), metres. */
+export const robotAnchors = cad.anchors as Record<string, [number, number, number]>;
+
 const BALL_R = 0.075; // FUEL: a 150 mm foam ball
 
-export default async function createRobot(ctx: StageContext): Promise<Model> {
+type V3 = [number, number, number];
+
+/** One CAD part, as buildRobot's `tag` sees it. */
+export interface RobotPart {
+	/** CAD colour, "#rrggbb". */
+	color: string;
+	/** Drawn see-through (the hopper). */
+	clear: boolean;
+	/** The roller shaft it turns with (index into `rotors` in the CAD file: intake, second intake, launcher, feeder), or -1. */
+	rotor: number;
+	/** Bounds in the robot's space, metres. */
+	lo: V3;
+	hi: V3;
+}
+
+export interface RobotRig {
+	/** The whole robot, in metres, with its floor shadow. */
+	model: Group;
+	/** Named points in the CAD (intake, launcher, hood, hopper, cim, battery). */
+	anchors: Record<string, V3>;
+	/** An object at a point in the robot's own space, which moves with it. */
+	anchor(at: V3): Object3D;
+	/** The two FUEL balls (they share one material). */
+	balls: Mesh[];
+	/** The materials drawn in a CAD colour ("#rrggbb"), and the team numbers on the bumpers as "numbers". */
+	materials(color: string): MeshStandardMaterial[];
+	/** Spins the rollers and moves the FUEL. dt = 0 for a still frame. */
+	animate(t: number, dt: number): void;
+	/** Puts the FUEL where it is at `t` seconds into its loop, without moving anything else. */
+	pose(t: number): void;
+	applyPalette(p: { dark: boolean }): void;
+}
+
+/**
+ * Builds the robot into `parent`. With `tag`, every vertex of every CAD part gets a `feature` attribute (the number
+ * `tag` returns for its part, in CAD order), and the bumper numbers get 0, for the scroll showcase's fading
+ * (src/lib/three/showcase.ts).
+ */
+export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) => number[]): Promise<RobotRig> {
 	const robot = new Group();
-	ctx.root.add(robot);
+	parent.add(robot);
 
 	/* ---------- CAD parts ---------- */
 	const pairs = (flat: number[]) => {
@@ -126,16 +171,32 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 	});
 	const buckets = new Map<string, { geometries: BufferGeometry[]; material: number; rotor: number }>();
 	const m4 = new Matrix4();
-	for (const part of cad.parts) {
+	const placed = cad.parts.map((part) => {
 		const m = part.m;
 		m4.fromArray([m[0], m[1], m[2], 0, m[3], m[4], m[5], 0, m[6], m[7], m[8], 0, m[9], m[10], m[11], 1]);
+		return shapes[part.s].clone().applyMatrix4(m4);
+	});
+	const features = tag?.(
+		placed.map((geometry, i) => {
+			geometry.computeBoundingBox();
+			const { min, max } = geometry.boundingBox!;
+			const c = cad.parts[i].c;
+			return { color: cad.materials[c], clear: cad.clear.includes(c), rotor: cad.parts[i].g ?? -1, lo: min.toArray(), hi: max.toArray() };
+		}),
+	);
+	cad.parts.forEach((part, i) => {
+		const geometry = placed[i];
 		const rotor = part.g ?? -1;
-		if (rotor >= 0) m4.premultiply(new Matrix4().makeTranslation(0, -cad.rotors[rotor][0], -cad.rotors[rotor][1]));
+		if (rotor >= 0) geometry.translate(0, -cad.rotors[rotor][0], -cad.rotors[rotor][1]);
+		if (features) {
+			const count = geometry.getAttribute("position").count;
+			geometry.setAttribute("feature", new BufferAttribute(new Float32Array(count).fill(features[i] ?? 0), 1));
+		}
 		const key = `${rotor}:${part.c}`;
 		const bucket = buckets.get(key) ?? { geometries: [], material: part.c, rotor };
-		bucket.geometries.push(shapes[part.s].clone().applyMatrix4(m4));
+		bucket.geometries.push(geometry);
 		buckets.set(key, bucket);
-	}
+	});
 	for (const { geometries, material, rotor } of buckets.values()) {
 		(rotor >= 0 ? rotors[rotor] : robot).add(new Mesh(mergeGeometries(geometries, false), materials[material]));
 		geometries.forEach((g) => g.dispose());
@@ -146,12 +207,14 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 	await document.fonts.load('700 96px "Archivo Variable"').catch(() => undefined);
 	const TEAM = "10951";
 	/** `canvasWidth` sets the aspect: 560 px wide gives ~66 mm tall digits on a 0.31 m plane. */
+	const numbers: MeshStandardMaterial[] = [];
 	const lettering = (width: number, canvasWidth: number) => {
 		const texture = textTexture(TEAM, { width: canvasWidth, height: 120, font: '700 96px "Archivo Variable", "Arial", sans-serif', color: "#e8edf4" });
-		return new Mesh(
-			new PlaneGeometry(width, (width * 120) / canvasWidth),
-			new MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 }),
-		);
+		const geometry = new PlaneGeometry(width, (width * 120) / canvasWidth);
+		if (tag) geometry.setAttribute("feature", new BufferAttribute(new Float32Array(geometry.getAttribute("position").count), 1));
+		const material = new MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 });
+		numbers.push(material);
+		return new Mesh(geometry, material);
 	};
 	const decals: Array<[number, number, [number, number, number], number]> = [
 		[0.31, 560, [0.4208, 0.137, 0.027], Math.PI / 2], // right side
@@ -215,41 +278,29 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 		}
 	};
 
-	/* ---------- Floor and labels ---------- */
+	/* ---------- Floor ---------- */
 	const shadow = contactShadow(0.7);
 	shadow.position.y = 0.002;
 	robot.add(shadow);
 
-	const anchor = ([x, y, z]: [number, number, number]) => {
+	const anchor = ([x, y, z]: V3) => {
 		const point = new Object3D();
 		point.position.set(x, y, z);
 		robot.add(point);
 		return point;
 	};
-	const a = cad.anchors;
-	// One part is called out at a time, so labels never pile up.
-	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
-	const tour = [
-		ctx.label("Intake rollers", anchor([-0.12, a.intake[1] + 0.04, a.intake[2] + 0.06]), tourClass),
-		ctx.label("Hopper", anchor([0, a.hopper[1] + 0.02, a.hopper[2]]), tourClass),
-		ctx.label("Launcher wheel", anchor([0, a.launcher[1] + 0.07, a.launcher[2]]), tourClass),
-		ctx.label("Hood", anchor([0, a.hood[1] + 0.12, a.hood[2]]), tourClass),
-		ctx.label("CIM motors", anchor([a.cim[0] + 0.1, a.cim[1], a.cim[2]]), tourClass),
-		ctx.label("Battery", anchor([a.battery[0], a.battery[1] + 0.06, a.battery[2]]), tourClass),
-	];
-	let shown = -1;
 
 	// Still pose (reduced motion): one ball waiting in the hopper, one just launched.
 	balls[0].ball.position.copy(intakePath.getPointAt(1));
 	flight(balls[1].ball, 0.25);
 
 	return {
-		update(t, dt) {
-			const current = dt === 0 ? -2 : Math.floor(t / 2.5) % tour.length;
-			if (current !== shown) {
-				shown = current;
-				tour.forEach((el, i) => el.toggleAttribute("data-on", current === -2 || i === current));
-			}
+		model: robot,
+		anchors: robotAnchors,
+		anchor,
+		balls: balls.map((b) => b.ball),
+		materials: (color) => (color === "numbers" ? numbers : materials.filter((_, i) => cad.materials[i] === color)),
+		animate(t, dt) {
 			if (dt === 0) return;
 			// Positive rotation about x: a roller's underside moves back, its front face down.
 			rotors[0].rotation.x += dt * 9; // intake rollers pull the ball in underneath
@@ -258,8 +309,39 @@ export default async function createRobot(ctx: StageContext): Promise<Model> {
 			rotors[3].rotation.x -= dt * 8; // feeder pushes the ball forward into the launcher
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
 		},
+		pose(t) {
+			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
+		},
 		applyPalette(p) {
 			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.6 : 0.32;
 		},
+	};
+}
+
+export default async function createRobot(ctx: StageContext): Promise<Model> {
+	const rig = await buildRobot(ctx.root);
+	const a = rig.anchors;
+	// One part is called out at a time, so labels never pile up.
+	const tourClass = "opacity-0 transition-opacity duration-500 data-[on]:opacity-100";
+	const tour = [
+		ctx.label("Intake rollers", rig.anchor([-0.12, a.intake[1] + 0.04, a.intake[2] + 0.06]), tourClass),
+		ctx.label("Hopper", rig.anchor([0, a.hopper[1] + 0.02, a.hopper[2]]), tourClass),
+		ctx.label("Launcher wheel", rig.anchor([0, a.launcher[1] + 0.07, a.launcher[2]]), tourClass),
+		ctx.label("Hood", rig.anchor([0, a.hood[1] + 0.12, a.hood[2]]), tourClass),
+		ctx.label("CIM motors", rig.anchor([a.cim[0] + 0.1, a.cim[1], a.cim[2]]), tourClass),
+		ctx.label("Battery", rig.anchor([a.battery[0], a.battery[1] + 0.06, a.battery[2]]), tourClass),
+	];
+	let shown = -1;
+
+	return {
+		update(t, dt) {
+			const current = dt === 0 ? -2 : Math.floor(t / 2.5) % tour.length;
+			if (current !== shown) {
+				shown = current;
+				tour.forEach((el, i) => el.toggleAttribute("data-on", current === -2 || i === current));
+			}
+			rig.animate(t, dt);
+		},
+		applyPalette: (p) => rig.applyPalette(p),
 	};
 }
