@@ -37,8 +37,8 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 // The showcase's pictures for phones (scripts/showcase-stills.py). A feature without one shows its text only.
 const stills = Object.fromEntries(
 	droneShowcase.features
-		.filter((f) => existsSync(`public/showcase/drone/${f.id}.webp`))
-		.map((f) => [f.id, `/showcase/drone/${f.id}.webp`]),
+		.filter((f) => existsSync(`public/showcase/drone/${f.id}-800.webp`))
+		.map((f) => [f.id, `/showcase/drone/${f.id}`]),
 );
 ---
 

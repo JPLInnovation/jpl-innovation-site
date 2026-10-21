@@ -33,8 +33,8 @@ const facts = [
 // The showcase's pictures for phones (scripts/showcase-stills.py --page robot). A feature without one shows its text only.
 const stills = Object.fromEntries(
 	robotShowcase.features
-		.filter((f) => existsSync(`public/showcase/robot/${f.id}.webp`))
-		.map((f) => [f.id, `/showcase/robot/${f.id}.webp`]),
+		.filter((f) => existsSync(`public/showcase/robot/${f.id}-800.webp`))
+		.map((f) => [f.id, `/showcase/robot/${f.id}`]),
 );
 ---
 

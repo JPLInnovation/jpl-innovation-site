@@ -1,5 +1,8 @@
 """
-Renders the stills for a page's scroll showcase: public/showcase/<page>/<feature-id>.webp.
+Renders the stills for a page's scroll showcase, for each feature: public/showcase/<page>/<feature-id>.webp and
+.avif at 1600 x 1200 (2x) and <feature-id>-800.webp / -800.avif at 800 x 600 (1x). The cards pick the size and
+format they need (src/components/showcase.tsx). They're drawn by the site's own 3D stage on its high quality tier
+(?quality=high: ambient occlusion, soft contact shadows, the full material finishes).
 Phones, reduced motion and browsers without WebGL show them in place of the 3D (src/components/showcase.tsx);
 a feature without its file just shows its text.
 
@@ -13,7 +16,7 @@ Options: --page (drone or robot), --url (default: that page on http://localhost:
 public/showcase/<page>), --executable (a Chrome or Chromium to drive, if neither below is found).
 Needs Python Playwright (pip install playwright). It drives Google Chrome (channel="chrome") when it's installed,
 and otherwise Playwright's own Chromium (python -m playwright install chromium).
-WebP: with Pillow (pip install pillow) if it's installed, otherwise through sharp, which ships with Astro.
+The WebP and AVIF files are made by sharp, which ships with Astro (node_modules/sharp).
 
 How: ?showcase=capture makes the 3D stage fill the window, window.__showcase.go(n) shows stop n (with any animation
 posed for it), and window.__showcase.capture() returns the 3D alone (no labels or dots) as a PNG with a transparent
@@ -23,7 +26,6 @@ the page fades the live 3D, so close-ups dissolve instead of ending in a straigh
 
 import argparse
 import base64
-import io
 import pathlib
 import subprocess
 import tempfile
@@ -32,7 +34,8 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SIZE = {"width": 1200, "height": 900}  # the cards show the pictures at 4:3
+SIZE = {"width": 1600, "height": 1200}  # the cards show the pictures at 4:3; this is the 2x size
+SMALL = 800  # the 1x width
 PAGES = {"drone": "/work/drone/", "robot": "/work/frc/"}
 # WebGL without a GPU, for Playwright's own Chromium (Chrome finds its own way).
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
@@ -63,17 +66,25 @@ FADE = """(url) => new Promise((done) => {
 })"""
 
 
-def write_webp(png: bytes, path: pathlib.Path) -> None:
-    try:
-        from PIL import Image
-    except ImportError:
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-            tmp.write(png)
-        script = "require('sharp')(process.argv[1]).webp({ quality: 82, alphaQuality: 90 }).toFile(process.argv[2])"
-        subprocess.run(["node", "-e", script, tmp.name, str(path)], cwd=ROOT, check=True)
-        pathlib.Path(tmp.name).unlink()
-        return
-    Image.open(io.BytesIO(png)).save(path, "WEBP", quality=82, method=6)
+# Four files from one PNG: 2x and 1x, WebP and AVIF (both keep the transparent background).
+SHARP = """
+const sharp = require('sharp');
+const [png, base, small] = process.argv.slice(1);
+(async () => {
+  for (const [suffix, width] of [['', null], ['-' + small, Number(small)]]) {
+    const img = () => (width ? sharp(png).resize({ width }) : sharp(png));
+    await img().webp({ quality: 78, alphaQuality: 85, effort: 6 }).toFile(base + suffix + '.webp');
+    await img().avif({ quality: 55, effort: 6 }).toFile(base + suffix + '.avif');
+  }
+})().catch((e) => { console.error(e); process.exit(1); });
+"""
+
+
+def write_pictures(png: bytes, base: pathlib.Path) -> None:
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        tmp.write(png)
+    subprocess.run(["node", "-e", SHARP, tmp.name, str(base), str(SMALL)], cwd=ROOT, check=True)
+    pathlib.Path(tmp.name).unlink()
 
 
 def launch(p, executable: str | None):
@@ -100,16 +111,17 @@ def main() -> None:
     with sync_playwright() as p:
         browser = launch(p, args.executable)
         page = browser.new_page(viewport=SIZE, device_scale_factor=1, reduced_motion="no-preference")
-        page.goto(url.split("?")[0] + "?showcase=capture")
+        page.goto(url.split("?")[0] + "?showcase=capture&quality=high")
         page.keyboard.press("Escape")  # skips the page's logo intro, if it has one
         page.locator(".showcase").scroll_into_view_if_needed()  # the showcase loads when it comes into view
         page.wait_for_function("() => window.__showcase", timeout=120_000)
         ids = page.eval_on_selector_all(".showcase-feature", "els => els.map((el) => el.id)")
         for n, feature in enumerate(ids):
             data_url = page.evaluate(f"(n) => {{ window.__showcase.go(n); return ({FADE})(window.__showcase.capture()); }}", n)
-            path = out / f"{feature}.webp"
-            write_webp(base64.b64decode(data_url.split(",", 1)[1]), path)
-            print(f"{path.relative_to(ROOT) if path.is_relative_to(ROOT) else path}")
+            base = out / feature
+            write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base)
+            sizes = ", ".join(f"{(base.parent / (base.name + s)).stat().st_size // 1024} KB {s.lstrip('-')}" for s in [".webp", ".avif", f"-{SMALL}.webp", f"-{SMALL}.avif"])
+            print(f"{base.relative_to(ROOT) if base.is_relative_to(ROOT) else base}: {sizes}")
         browser.close()
 
 
