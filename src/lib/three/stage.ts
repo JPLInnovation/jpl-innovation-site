@@ -2,12 +2,14 @@
  * Shared Three.js stage for the site's 3D models (src/lib/three/models/*).
  *
  * One stage per <canvas>. It owns the renderer, camera, lights, resizing, theme colours and cleanup, so a
- * model only builds meshes and (optionally) animates them. Loaded lazily by src/components/model-viewer.tsx.
+ * model only builds meshes and (optionally) animates them. Loaded lazily by src/components/model-viewer.tsx and
+ * src/components/showcase.tsx (through src/lib/three/showcase.ts).
  *
  * Behaviour:
  * - Renders only while the canvas is on screen and the tab is visible.
  * - prefers-reduced-motion: no animation loop; one still frame, redrawn only when something changes.
- * - Drag to orbit on mouse/trackpad. On touch screens there are no controls, so the page scrolls normally.
+ * - Drag to orbit on mouse/trackpad (unless the view sets `orbit: false`). On touch screens there are no controls,
+ *   so the page scrolls normally.
  * - Re-colours when the site switches between light and dark.
  */
 import {
@@ -83,6 +85,8 @@ export interface StageView {
 	maxPolar?: number;
 	/** Pull the camera back on narrow screens so this much width (in scene units) always fits. */
 	fitWidth?: number;
+	/** false: no drag-to-orbit; the model moves the camera itself (the scroll showcase). */
+	orbit?: boolean;
 }
 
 export interface StageContext {
@@ -98,6 +102,8 @@ export interface StageContext {
 	label(text: string, at: Object3D | Vector3, className?: string): HTMLElement;
 	/** Ask for a redraw (only needed for still frames under reduced motion). */
 	invalidate(): void;
+	/** Draw right now, so the canvas can be read back in the same task (canvas.toDataURL). */
+	render(): void;
 }
 
 export interface Model {
@@ -223,6 +229,7 @@ export async function mountStage(
 		palette,
 		reducedMotion,
 		invalidate,
+		render: () => render(),
 		label(text, at, className = "") {
 			const el = document.createElement("span");
 			el.textContent = text;
@@ -239,7 +246,7 @@ export async function mountStage(
 
 	let controls: OrbitControls | undefined;
 	let idleAt = 0; // spin pauses while dragging and for a moment after
-	if (finePointer) {
+	if (finePointer && view.orbit !== false) {
 		controls = new OrbitControls(camera, canvas);
 		controls.target.copy(target);
 		controls.enableZoom = false; // never hijack the page's scroll wheel

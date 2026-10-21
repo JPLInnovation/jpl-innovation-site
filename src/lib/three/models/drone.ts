@@ -93,6 +93,8 @@ export interface DroneRig {
 	lens: Object3D;
 	/** The lowest point of the landing legs. */
 	floor: number;
+	/** Bounding box per CAD part name (min x y z, max x y z), for finding which part a triangle belongs to. */
+	parts: Record<string, number[]>;
 }
 
 export async function loadDrone(): Promise<DroneRig> {
@@ -200,6 +202,7 @@ export async function loadDrone(): Promise<DroneRig> {
 		lens,
 		spots,
 		floor: part("Landing gear").lo[1],
+		parts: header.parts,
 		animate(t, dt) {
 			if (dt > 0) for (const { hub, clockwise } of props) hub.rotation.y += (clockwise ? -1 : 1) * dt * 30;
 			discMaterial.opacity = dt > 0 ? 0.06 : 0;
