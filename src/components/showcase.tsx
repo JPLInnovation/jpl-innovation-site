@@ -103,11 +103,20 @@ export default function Showcase({ model, text, stills = {}, children, className
 		// the space under it. Measured when anything on the page changes size; each frame then only reads scrollY, which
 		// never makes the browser lay the page out again.
 		let marks: number[] = [];
+		let screenHeight = 1;
 		const measure = () => {
 			const height = probe.offsetHeight; // 100svh: the mobile address bar doesn't move it
+			screenHeight = height || 1;
 			const line = wide.matches ? height / 2 : (stage.offsetHeight + height) / 2;
 			const top = track.getBoundingClientRect().top + scrollY;
 			marks = articles.map((a) => top + a.offsetTop + a.offsetHeight / 2 - line);
+		};
+		// The opening beat runs over the last 85% of a screen of scroll before the first stop: while the stage slides
+		// into place.
+		const opening = () => {
+			if (!marks.length) return 1;
+			const span = screenHeight * 0.85;
+			return Math.min(1, Math.max(0, 1 - (marks[0] - scrollY) / span));
 		};
 		const position = () => {
 			const y = scrollY;
@@ -141,7 +150,7 @@ export default function Showcase({ model, text, stills = {}, children, className
 					dispose = await stageModule.mountStage(
 						view,
 						canvas,
-						async (ctx) => showcase.drive(ctx, await mod.default(ctx, ids), { titles, position, onStop }),
+						async (ctx) => showcase.drive(ctx, await mod.default(ctx, ids), { titles, position, opening, onStop }),
 						mod.view,
 					);
 					if (cancelled) dispose();

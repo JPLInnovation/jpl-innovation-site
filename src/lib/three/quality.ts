@@ -160,7 +160,8 @@ export function createContactShadows(renderer: WebGLRenderer, scene: Scene) {
 /* ------------------------------------------------------------------ */
 
 export interface Pipeline {
-	render(): void;
+	/** `occlusion`: 0..1, how strongly the ambient occlusion is blended in. */
+	render(occlusion?: number): void;
 	setSize(width: number, height: number, pixelRatio: number): void;
 	dispose(): void;
 }
@@ -205,7 +206,10 @@ export function createPipeline(renderer: WebGLRenderer, scene: Scene, camera: Ca
 
 	const size = new Vector2();
 	return {
-		render: () => composer.render(),
+		render(occlusion = 1) {
+			gtao.blendIntensity = 0.85 * occlusion;
+			composer.render();
+		},
 		setSize(width, height, pixelRatio) {
 			renderer.getSize(size);
 			composer.setPixelRatio(pixelRatio);

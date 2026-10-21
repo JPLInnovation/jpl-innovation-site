@@ -120,13 +120,24 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	// FUEL belongs to the intake, the hopper and the shooter: it leaves the picture for the drivetrain and electronics.
 	const fuelStops = ["overview", "intake", "hopper", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
 	let fuel = true;
+	// The opening beat: one ball of FUEL rides the whole way through as the section scrolls into place (off the floor,
+	// up the intake, into the hopper, through the feeder and launcher, up the hood and out), then the loop takes over.
+	let intro = 1;
 	const hideFuel = () => {
+		if (intro < 1) {
+			rig.pose(intro * 3.95);
+			rig.balls[1].visible = false;
+		}
 		if (!fuel) for (const ball of rig.balls) ball.visible = false; // after the loop has placed (and shown) them
 	};
 
 	return {
 		stops,
 		floor: 0,
+		opening(progress) {
+			intro = progress;
+			hideFuel();
+		},
 		focus(weights) {
 			for (const g of ghosts) {
 				const clear = weights[g.stop];
@@ -141,6 +152,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			hideFuel();
 		},
 		pose(stop) {
+			intro = 1;
 			const t = POSE[ids[stop]];
 			if (t !== undefined) rig.pose(t);
 			hideFuel();

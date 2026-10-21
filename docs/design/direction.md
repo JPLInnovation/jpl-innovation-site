@@ -28,7 +28,7 @@ active showcase stop), the way a tag marks a part on a bench. No violet, no blue
 | `--muted` | `#e8e6e0` | wells, image beds | |
 | `--muted-foreground` | `#575b60` | secondary text | 6.0 on bg, 5.5 on muted, 6.6 on card |
 | `--border` | `#d6d3cb` | hairlines (decorative) | |
-| `--rule` | `#7d8085` | lines that carry meaning (timeline, inputs) | 3.6 : 1 on bg |
+| `--rule` | `#7d8085` | lines that carry meaning (timeline, inputs) | 3.5 : 1 on bg |
 | `--accent` | `#1fb5d9` | signal fills (logo cyan) | ink on it 7.6 : 1 |
 | `--accent-ink` | `#00718a` | cyan text and links on paper | 5.0 on bg, 5.8 on card |
 | `--marker` | `#ff5a1f` | live / current fills | ink on it 5.9 : 1 |

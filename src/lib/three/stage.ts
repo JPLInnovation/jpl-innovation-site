@@ -129,6 +129,10 @@ export interface StageContext {
 	refreshShadows(): void;
 	/** Draw right now, so the canvas can be read back in the same task (canvas.toDataURL). */
 	render(): void;
+	/** The light rig (it rides on the camera; positions are in the camera's space). For a light sweep. */
+	lights: { key: DirectionalLight; fill: DirectionalLight; rim: DirectionalLight };
+	/** 0..1: how much ambient occlusion to blend in (high tier). Lowered while the model is pulled apart. */
+	occlusion: number;
 }
 
 export interface Model {
@@ -343,6 +347,8 @@ export async function mountStage(
 			invalidate();
 		},
 		render: () => render(),
+		lights: { key, fill, rim },
+		occlusion: 1,
 		label(text, at, className = "") {
 			const el = document.createElement("span");
 			el.textContent = text;
@@ -471,7 +477,7 @@ export async function mountStage(
 			shadows?.update();
 			shadowsDirty = false;
 		}
-		if (pipeline) pipeline.render();
+		if (pipeline && ctx.occlusion > 0.01) pipeline.render(ctx.occlusion);
 		else renderer.render(scene, camera);
 		positionLabels();
 		needsRender = false;
@@ -508,7 +514,7 @@ export async function mountStage(
 	let slowStreak = 0;
 	const time = (ms: number) => {
 		frames++;
-		if (frames <= WARMUP || ms > 250) return; // compiling, or the tab was in the background
+		if (frames <= WARMUP || ms > 1000) return; // compiling, or a pause (a dropped tab, a debugger)
 		windowMs += ms;
 		windowFrames++;
 		if (windowFrames < SAMPLE) return;
