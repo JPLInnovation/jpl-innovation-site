@@ -8,7 +8,8 @@
  *     point it looks at: the loop's last move is a turn on the spot, from the door back to the desk.
  *   - It follows the scroll through a critically damped spring (about 1 s to settle, never overshoots): the damping
  *     is the camera operator.
- *   - It holds still for the middle of each scene's scroll, where its text is read, and eases between scenes.
+ *   - It holds still for the middle of each scene's scroll, where its text is read, and eases between scenes (the hold
+ *     gives way when the page is moving fast, so a jump across the room is one continuous flight).
  * Nothing per frame goes through React or layout: the page's position is read from scrollY against offsets measured
  * on resize.
  */
@@ -23,7 +24,10 @@ const LAMP_TIME = 1.6; // seconds for the desk lamp to come on
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const smootherstep = (x: number) => x * x * x * (x * (6 * x - 15) + 10);
-const settle = (f: number) => smootherstep(clamp((f - HOLD) / (1 - 2 * HOLD), 0, 1));
+const settle = (f: number, hold: number) => smootherstep(clamp((f - hold) / (1 - 2 * hold), 0, 1));
+/** The hold shrinks to nothing when the page is moving fast (a jump across the room), so a long move is one flight, not a stop at every scene. */
+const FAST = [1.5, 4.5]; // scenes per second: the hold starts to give way here, and is gone here
+const holdFor = (speed: number) => HOLD * (1 - smootherstep(clamp((Math.abs(speed) - FAST[0]) / (FAST[1] - FAST[0]), 0, 1)));
 
 export interface StudioOptions {
 	shots: SceneShot[];
@@ -61,13 +65,14 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 	let lamp = ctx.reducedMotion ? 1 : 0;
 	let clock = 0;
 	const near: Record<string, number> = {};
-	const state: RoomState = { position: 0, lamp, time: 0, near };
+	const focus: Record<string, number> = {};
+	const state: RoomState = { position: 0, lamp, time: 0, near, focus };
 
 	const place = () => {
 		// Held near each scene, eased between: the curve's parameter moves only in the middle of each scene's scroll.
 		const i = Math.floor(s);
 		const f = s - i;
-		const e = settle(f);
+		const e = settle(f, holdFor(speed));
 		const u = (i + e) / n;
 		path.getPoint(((u % 1) + 1) % 1, at);
 		const a = views[((i % n) + n) % n];
@@ -76,6 +81,9 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 		turn -= Math.round(turn / (Math.PI * 2)) * Math.PI * 2;
 		const yaw = a.yaw + turn * e;
 		const pitch = a.pitch + (b.pitch - a.pitch) * e;
+		for (const shot of shots) focus[shot.id] = 0;
+		focus[shots[((i % n) + n) % n].id] = 1 - e;
+		focus[shots[(((i + 1) % n) + n) % n].id] = e;
 		camera.position.copy(at);
 		look.set(at.x + Math.sin(yaw) * Math.cos(pitch), at.y + Math.sin(pitch), at.z + Math.cos(yaw) * Math.cos(pitch));
 		camera.lookAt(look);

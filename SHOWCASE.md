@@ -121,6 +121,8 @@ and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `
 
 - **Camera:** a closed curve through the scenes' positions, a critically damped spring on the scroll, and a hold in the
   middle of each scene. It turns by heading and tilt (never by sliding a look-at point), so a 180° turn is clean.
+- **Lights:** the room carries 8 (two hemisphere, the camera's key, fill and rim, the desk lamp, and two point lights that slide between scenes: the glow of what the camera is on, and a ceiling light above it; `src/lib/studio/lights.ts`). A point light costs every lit pixel, so the room used to be 14. Count them, draw calls and triangles with `window.__stage` in the console (`?quality=high`).
+- **No hitches:** every shader is built before the first frame and again after the robot and drone CAD load (`ctx.precompile()`), the live screens redraw about 20 times a second, and while the page moves faster than about 1.5 scenes a second the camera's hold at each scene gives way, so a click on the ruler or a link to `/#contact` is one flight, not a stop at every scene on the way.
 - **Read mode** (under 768 px, reduced motion, Settings → Motion → Read mode, no WebGL): the same text as one page, with
   a picture of each scene: `public/studio/scenes/`, made by `python scripts/studio-stills.py` against a preview
   (`?studio=capture` hides the text; `window.__studio.go(n)` jumps the camera).

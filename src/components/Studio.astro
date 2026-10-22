@@ -100,6 +100,10 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio {
 		position: relative;
 	}
+	/* Under the sticky header, so the first scene is the very top of the page (and the logo is whole there). */
+	.studio:not([data-read]) {
+		margin-top: -4.5rem;
+	}
 	/* Under the sticky header, so the first scene is the very top of the page (and the header's logo is whole there). */
 	.studio:not([data-read]) {
 		margin-top: -4.5rem;

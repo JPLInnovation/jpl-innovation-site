@@ -27,13 +27,13 @@ import {
 	MeshStandardMaterial,
 	Object3D,
 	PlaneGeometry,
-	PointLight,
 	TubeGeometry,
 	Vector3,
 } from "three";
 import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
+import type { LightSpec } from "./lights";
 import type { RoomContent, RoomState } from "./room";
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -43,6 +43,8 @@ const ease = (x: number) => {
 };
 
 export interface Stations {
+	/** The glow of each scene's subject, for the pooled lights (lights.ts). */
+	accents: Record<string, LightSpec>;
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -70,6 +72,8 @@ function wrap(g: CanvasRenderingContext2D, text: string, width: number) {
 	return lines;
 }
 
+/** Live screens redraw at most this often (seconds): about 20 times a second. */
+export const SCREEN_STEP = 0.05;
 const FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
 const MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
@@ -141,7 +145,7 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		.then((rig) => {
 			robot = rig;
 			if (palette) rig.applyPalette(palette);
-			ctx.invalidate();
+			ctx.precompile();
 		})
 		.catch((error) => console.warn("Studio: the robot did not load.", error));
 
@@ -182,7 +186,7 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			drone = rig;
 			rig.model.position.y = -rig.floor;
 			droneHolder.add(rig.model);
-			ctx.invalidate();
+			ctx.precompile();
 		})
 		.catch((error) => console.warn("Studio: the drone did not load.", error));
 	// A battery charger and a spare pack beside it.
@@ -251,9 +255,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		]);
 		rack.add(new Mesh(new TubeGeometry(curve, 24, 0.0035, 6), hardware({ color: cableColors[c % cableColors.length], roughness: 0.5 }, "plastic")));
 	}
-	const rackGlow = new PointLight(0x5eead4, 0, 1.4, 2);
-	rackGlow.position.set(rackX, 1.4, rackFront + 0.3);
-	group.add(rackGlow);
 
 	/* ================================================================== */
 	/* Web: the laptop                                                     */
@@ -284,10 +285,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	const phoneScreen = new Mesh(new PlaneGeometry(0.068, 0.145), screenMaterial(web.texture));
 	phoneScreen.position.set(0, 0.08, 0.0045);
 	phone.add(phoneScreen);
-	const webGlow = new PointLight(0x9ccfff, 0, 1.4, 2);
-	webGlow.position.set(webX, benchTop + 0.25, laptopZ + 0.3);
-	group.add(webGlow);
 	let webDrawn = false;
+	let webAt = -1;
 
 	/* ================================================================== */
 	/* The wall: one panel per project, two rows on an arc                 */
@@ -370,10 +369,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		marker.position.set(boardX - 0.6 + i * 0.16, 0.92, z1 - 0.07);
 		group.add(marker);
 	}
-	// A light over the board, like a gallery light.
-	const boardLight = new PointLight(0xfff4e0, 0, 3.2, 1.6);
-	boardLight.position.set(boardX, 2.75, z1 - 0.7);
-	group.add(boardLight);
 	let boardDrawn = -1;
 	const drawBoard = (progress: number) => {
 		const { g } = board;
@@ -622,9 +617,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	signMesh.rotation.y = Math.PI;
 	group.add(signMesh);
 	boxAt(group, 1.02, 0.3, 0.04, dark, doorX, 2.5, z1 - 0.03, 0.01);
-	const doorLight = new PointLight(0x9fdcff, 0, 4, 1.6);
-	doorLight.position.set(doorX, 1.2, z1 - 0.5);
-	group.add(doorLight);
 
 	/* ================================================================== */
 	/* Per frame                                                           */
@@ -634,7 +626,16 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	const ledColor = new Color();
 	let ledTimer = 0;
 
+	// What lights each scene's subject (the pooled lights slide between these as the camera moves).
+	const accents: Record<string, LightSpec> = {
+		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0x5eead4, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
+		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
+		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
+		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0x9fdcff, dark: 3, light: 5, distance: 4, decay: 1.6 },
+	};
+
 	return {
+		accents,
 		update({ near, lamp }, dt) {
 			clock += dt;
 			const level = lamp * lamp * (3 - 2 * lamp);
@@ -654,7 +655,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			// Rack: the port lights blink (a few times a second, not every frame).
 			ledTimer += dt;
 			const net = near.networks ?? 0;
-			rackGlow.intensity = 0.8 * Math.max(net, 0.25) * level;
 			if (ledTimer > 0.08 && (net > 0.02 || ledTimer > 1)) {
 				ledTimer = 0;
 				leds.forEach((led, i) => {
@@ -666,8 +666,9 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 
 			// Laptop: the site scrolls while its scene is in view.
 			const w = near.web ?? 0;
-			webGlow.intensity = 0.9 * Math.max(w, 0.3) * level;
-			if (w > 0.02 || (!webDrawn && site)) {
+			// (Redrawn about 20 times a second: a full-size texture upload every frame is the costly part.)
+			if ((w > 0.02 && clock - webAt > SCREEN_STEP) || (!webDrawn && site)) {
+				webAt = clock;
 				drawPage(web.g, site, clock * 60 * Math.min(1, w * 1.5));
 				web.redraw();
 				webDrawn = !!site;
@@ -681,8 +682,7 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 				panel.holder.position.y = panel.y - (1 - turn) * 0.04;
 			});
 
-			// The whiteboard writes itself out, under its light.
-			boardLight.intensity = (palette?.dark ? 2.2 : 3) * (0.35 + 0.65 * (near.standards ?? 0)) * level;
+			// The whiteboard writes itself out.
 			const written = Math.round(Math.min(1, (near.standards ?? 0) * 1.2) * 60) / 60;
 			if (written !== boardDrawn) {
 				boardDrawn = written;
@@ -692,7 +692,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			// The door opens a little as its scene comes in; the light beyond it comes up.
 			const door = near.contact ?? 0;
 			doorPivot.rotation.y = -ease(door) * 0.55;
-			doorLight.intensity = (palette?.dark ? 3 : 5) * (0.3 + 0.7 * door) * level;
 			(signMesh.material as MeshBasicMaterial).color.setScalar(0.35 + 0.65 * level);
 		},
 		applyPalette(p) {

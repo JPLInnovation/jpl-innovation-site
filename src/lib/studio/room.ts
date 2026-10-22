@@ -26,7 +26,6 @@ import {
 	MeshBasicMaterial,
 	MeshStandardMaterial,
 	PlaneGeometry,
-	PointLight,
 	SphereGeometry,
 	SpotLight,
 	SRGBColorSpace,
@@ -36,7 +35,9 @@ import {
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
-import { buildStations } from "./stations";
+import { createLightPool, type LightSpec } from "./lights";
+import { SHOTS } from "./scenes";
+import { buildStations, SCREEN_STEP } from "./stations";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -245,8 +246,10 @@ export interface RoomState {
 	lamp: number;
 	/** Seconds since the room appeared (screens that play). */
 	time: number;
-	/** How much each scene is in view, 0 to 1, by scene id. */
+	/** How much each scene is in view, 0 to 1, by scene id (follows the scroll). */
 	near: Record<string, number>;
+	/** How much the camera is on each scene, by scene id, summing to 1 (follows the camera's own easing). */
+	focus: Record<string, number>;
 }
 
 /** What the room shows, from the site's own content (the page passes it in; src/components/Studio.astro). */
@@ -307,15 +310,9 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	const stripMat = new MeshBasicMaterial({ color: 0x9fdcff, toneMapped: false });
 	for (let x = -7; x <= 7; x += 3.5) boxAt(group, 2.4, 0.03, 0.08, stripMat, x, h - 0.02, 1.5);
 
-	/* ---------- Lights: dim room light; the desk lamp does the work in scene 0 ---------- */
+	/* ---------- Lights: a dim sky; the desk lamp does the work in scene 0, then the pooled lights (lights.ts) ---------- */
 	const sky = new HemisphereLight(0x8fb4ff, 0x0a1022, 0.4);
 	group.add(sky);
-	const roomLights = [-4.5, 0, 4.5].map((x) => {
-		const light = new PointLight(0xcfe3ff, 6, 9, 1.6);
-		light.position.set(x, h - 0.4, 1.5);
-		group.add(light);
-		return light;
-	});
 
 	/* ---------- The desk (scene 0 to 2) ---------- */
 	const deskX = -6;
@@ -359,9 +356,6 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	group.add(display);
 	boxAt(group, 0.06, 0.1, 0.06, steel, monitorX, deskTop + 0.05, deskZ - 0.26);
 	boxAt(group, 0.26, 0.012, 0.18, steel, monitorX, deskTop + 0.006, deskZ - 0.24, 0.004);
-	const screenGlow = new PointLight(0x9ccfff, 0, 1.6, 2);
-	screenGlow.position.set(monitorX, deskTop + 0.36, deskZ + 0.05);
-	group.add(screenGlow);
 	boxAt(group, 0.44, 0.02, 0.15, new MeshStandardMaterial({ color: 0x1b1f2a, roughness: 0.6 }), monitorX, deskTop + 0.01, deskZ + 0.12, 0.005);
 	const mug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), hardware({ color: 0xf2f4f8, roughness: 0.35 }, "wrap"));
 	mug.position.set(deskX - 0.95, deskTop + 0.05, deskZ - 0.15);
@@ -396,12 +390,18 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 
 	/* ---------- The stations, the project wall and the back wall ---------- */
 	const stations = buildStations(ctx, group, content);
+	// The pooled point lights: the glow of what the camera is on, and a ceiling light above the camera.
+	const accents: Record<string, LightSpec> = { ...stations.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
+	const overhead: Record<string, LightSpec> = {};
+	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
+	const pool = createLightPool(group, accents, overhead);
 
 	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
 	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
 
 	let palette: Palette | undefined;
 	let lastTime = 0;
+	let screenAt = -1;
 	return {
 		group,
 		update(state) {
@@ -413,7 +413,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 			lamp.intensity = 7 * level;
 			(bulb.material as MeshBasicMaterial).color.setRGB(0.2 + 0.8 * level, 0.18 + 0.76 * level, 0.15 + 0.66 * level);
 			sky.intensity = (palette?.dark ? 0.35 : 0.9) * (0.25 + 0.75 * level);
-			for (const light of roomLights) light.intensity = (palette?.dark ? 3.5 : 9) * level;
+			pool.update(state.focus, level, !!palette?.dark);
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
 
 			// The sketch draws itself as the sketch scene comes into view.
@@ -426,8 +426,8 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 
 			// The monitor plays while the research scene is in view (and holds still otherwise).
 			const research = near.research ?? 0;
-			screenGlow.intensity = 1.2 * Math.max(research, 0.3) * level;
-			if (research > 0.02 || screen.canvas.dataset.drawn !== "1") {
+			if ((research > 0.02 && time - screenAt > SCREEN_STEP) || screen.canvas.dataset.drawn !== "1") {
+				screenAt = time;
 				drawScreen(screen.g, guide, time * 45 * Math.min(1, research * 1.5));
 				screen.redraw();
 				screen.canvas.dataset.drawn = guide ? "1" : "";
