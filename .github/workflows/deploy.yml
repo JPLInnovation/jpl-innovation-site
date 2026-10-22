@@ -33,6 +33,10 @@ jobs:
 
   deploy:
     needs: build
+    # Only the organisation's own site repository (named *.github.io) publishes. Other copies of this code, such as the
+    # new-site repository, still build (which checks the code) but skip this step: Pages is off there and the step
+    # would only show a red cross on every push.
+    if: endsWith(github.repository, '.github.io')
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -1,7 +1,8 @@
 # JPL Innovation website
 
 Astro 6 + React islands + Tailwind CSS v4 + three.js. The home page is a 3D studio; every other page is ordinary HTML
-with a little 3D where it helps. Deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`.
+with a little 3D where it helps. Deployed to GitHub Pages by `.github/workflows/deploy.yml` on every push to `main`
+(only in the repository named `*.github.io`; copies of the code elsewhere just build).
 
 Use **npm** (not bun): `package-lock.json` holds the esbuild/rollup overrides.
 
