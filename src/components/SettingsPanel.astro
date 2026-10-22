@@ -1,7 +1,8 @@
 ---
 /**
  * Settings: the gear in the header opens a small glass panel (the browser's own popover: Escape and a click outside
- * close it, focus goes back to the gear).
+ * close it, focus goes back to the gear). Browsers without popovers (Safari before 17, Firefox before 125) get a small
+ * script that opens and closes the same panel by a `data-open` attribute.
  *
  *   Theme      Light / Dark (localStorage "theme", the same as before)
  *   Motion     Full / Reduced / Read mode (localStorage "motion"; src/lib/prefs.ts); the page reloads to apply it
@@ -70,8 +71,11 @@ const groups = [
 		display: none;
 		flex-direction: column;
 		gap: 1.1rem;
+		z-index: 60; /* (a real popover is in the top layer anyway) */
 	}
-	.settings-panel:popover-open {
+	/* [data-open] is the script's stand-in for browsers without the popover attribute. */
+	.settings-panel:popover-open,
+	.settings-panel[data-open] {
 		display: flex;
 	}
 	@media (prefers-reduced-motion: no-preference) {
@@ -177,6 +181,25 @@ const groups = [
 		},
 		true,
 	);
+	// Browsers without the popover attribute (Safari before 17, Firefox before 125) would leave the gear dead: a small
+	// fallback opens and closes the same panel, and Escape or a click outside closes it.
+	if (!("popover" in HTMLElement.prototype)) {
+		const panel = () => document.getElementById("site-settings");
+		document.addEventListener("click", (event) => {
+			const el = panel();
+			const target = event.target as Element;
+			const trigger = target.closest('[popovertarget="site-settings"]');
+			if (!el) return;
+			if (trigger) {
+				const hide = trigger.getAttribute("popovertargetaction") === "hide";
+				el.toggleAttribute("data-open", hide ? false : !el.hasAttribute("data-open"));
+				if (el.hasAttribute("data-open")) sync(el);
+			} else if (el.hasAttribute("data-open") && !el.contains(target)) el.removeAttribute("data-open");
+		});
+		document.addEventListener("keydown", (event) => {
+			if (event.key === "Escape") panel()?.removeAttribute("data-open");
+		});
+	}
 	document.addEventListener("change", (event) => {
 		const input = event.target as HTMLInputElement;
 		if (!input.closest?.("[data-settings]")) return;
