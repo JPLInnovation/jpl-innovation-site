@@ -3,7 +3,7 @@
  * The studio: a 3D room the camera moves through sideways as the page scrolls (src/lib/studio/*), with each scene's
  * text as real HTML over it.
  *
- * Usage: <Studio scenes={["title", "sketch", ...]} anchors={{ services: "robotics" }}> and one child per scene,
+ * Usage: <Studio scenes={["title", "sketch", ...]} content={...} anchors={{ services: "robotics" }}> and one child per scene,
  * `<section data-scene="title">…</section>`, in the same order. Every scene is one screen of native scroll (the
  * scrollbar is hidden, the wheel, trackpad, keyboard and back button work as always); after the last scene the camera
  * curves back to the first and the scroll resets to the top at a frame where both look the same: the loop.
@@ -15,17 +15,22 @@
  * Keyboard: arrows, Page Up/Down and Space move one scene; Home and End go to the first and the last. Keyboard users
  * get a normal end (no loop). Focusing a link inside a scene's text brings the camera to that scene.
  * `anchors` maps a page anchor (#services) to a scene, so links to it land on that scene.
+ * `content` is what the room itself shows (the projects on the wall, the portraits...): src/lib/studio/room.ts.
+ * In read mode, an element with the class `studio-still` inside a scene (a picture of that scene) is shown; in the
+ * full studio it is hidden and, being lazy, never downloaded.
  */
+import type { RoomContent } from "@/lib/studio/room";
 import { SHOTS } from "@/lib/studio/scenes";
 import { sceneNames, studio } from "@/text/studio";
 
 interface Props {
 	scenes: string[];
+	content: RoomContent;
 	anchors?: Record<string, string>;
 	/** false: no loop back to the start (the camera stops at the last scene). */
 	loop?: boolean;
 }
-const { scenes, anchors = {}, loop = true } = Astro.props;
+const { scenes, content, anchors = {}, loop = true } = Astro.props;
 const shots = scenes.map((id) => SHOTS[id]);
 const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]) => [scene, anchor]));
 ---
@@ -77,6 +82,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		<p class="studio-ruler-label" aria-hidden="true"><span data-ruler-index>01</span> <span data-ruler-name>{sceneNames[scenes[0]]}</span></p>
 	</nav>
 	<script type="application/json" data-studio-shots set:html={JSON.stringify(shots)} />
+	<script type="application/json" data-studio-content set:html={JSON.stringify(content)} />
 </div>
 
 <style is:global>
@@ -93,6 +99,10 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	}
 	.studio {
 		position: relative;
+	}
+	/* Under the sticky header, so the first scene is the very top of the page (and the header's logo is whole there). */
+	.studio:not([data-read]) {
+		margin-top: -4.5rem;
 	}
 	.studio:not([data-read]) .studio-stage {
 		position: fixed;
@@ -135,7 +145,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		z-index: 2;
 		left: clamp(1rem, 5vw, 4.5rem);
 		bottom: 6.5rem;
-		width: min(34rem, calc(100vw - 2rem));
+		width: min(30rem, calc(100vw - 2rem));
 		max-height: calc(100svh - 12rem);
 		overflow: auto;
 		opacity: var(--on, 0);
@@ -207,6 +217,14 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		color: var(--accent);
 	}
 
+	.studio[data-capture] .studio-panels,
+	.studio[data-capture] .studio-ruler {
+		display: none;
+	}
+	.studio:not([data-read]) .studio-still {
+		display: none;
+	}
+
 	/* ---------- Read mode: one ordinary page ---------- */
 	.studio[data-read] .studio-stage,
 	.studio[data-read] .studio-track {
@@ -222,6 +240,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 <script>
 	import { afterIntro } from "@/lib/splash";
+	import type { RoomContent } from "@/lib/studio/room";
 	import type { SceneShot } from "@/lib/studio/scenes";
 	import { sceneNames } from "@/text/studio";
 
@@ -235,9 +254,19 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			document.documentElement.classList.remove("studio-on");
 			return;
 		}
-		if (root.hasAttribute("data-read")) return;
+		if (root.hasAttribute("data-read")) {
+			// Read mode: "Back to the start" is just the top of the page.
+			const toTop = (event: MouseEvent) => {
+				if (!(event.target as Element).closest("[data-studio-restart]")) return;
+				scrollTo({ top: 0, behavior: document.documentElement.classList.contains("reduce-motion") ? "instant" : "smooth" });
+			};
+			root.addEventListener("click", toTop);
+			cleanup = () => root.removeEventListener("click", toTop);
+			return;
+		}
 
 		const shots = JSON.parse(root.querySelector("[data-studio-shots]")!.textContent!) as SceneShot[];
+		const content = JSON.parse(root.querySelector("[data-studio-content]")!.textContent!) as RoomContent;
 		const n = shots.length;
 		const probe = root.querySelector<HTMLElement>(".studio-probe")!;
 		const track = root.querySelector<HTMLElement>(".studio-track")!;
@@ -344,7 +373,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					stage,
 					canvas,
 					(ctx) => {
-						const model = engine.drive(ctx, { shots, position, onFrame });
+						const model = engine.drive(ctx, { shots, content, position, onFrame });
 						handle = model;
 						return model;
 					},
@@ -352,6 +381,17 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				);
 				if (cancelled) dispose();
 				else root.setAttribute("data-live", "");
+				// ?studio=capture: the room alone, for read mode's pictures (scripts/studio-stills.py).
+				if (!cancelled && new URLSearchParams(location.search).get("studio") === "capture") {
+					root.setAttribute("data-capture", "");
+					(window as unknown as { __studio?: object }).__studio = {
+						ids: shots.map((shot) => shot.id),
+						go(scene: number) {
+							goTo(scene, false);
+							handle?.snap(scene);
+						},
+					};
+				}
 			})
 			.catch((error) => {
 				// No WebGL: read mode, the same text as one ordinary page.
@@ -425,7 +465,14 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		flex-direction: column;
 		align-items: center;
 		gap: 1rem;
-		text-shadow: 0 2px 24px rgb(0 0 0 / 0.35);
+	}
+	/* Over the room, a soft glass backing keeps the title's words readable whatever is behind them (the chair). */
+	.studio:not([data-read]) .studio-title {
+		padding: 1.25rem 1.75rem;
+		border-radius: 1.25rem;
+		background: color-mix(in oklab, var(--background) 62%, transparent);
+		-webkit-backdrop-filter: blur(12px) saturate(1.2);
+		backdrop-filter: blur(12px) saturate(1.2);
 	}
 	.studio-scene .studio-wordmark {
 		font-stretch: 125%;
@@ -454,6 +501,140 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		font-weight: 600;
 		cursor: pointer;
 	}
+	/* Links and lists inside the cards. */
+	.studio-scene a:not(.studio-link) {
+		text-decoration: underline;
+		text-decoration-thickness: 1.5px;
+		text-underline-offset: 3px;
+	}
+	.studio-link {
+		display: inline-flex;
+		align-self: flex-start;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
+		font-weight: 650;
+		transition: gap 0.25s;
+	}
+	.studio-link:hover {
+		gap: 0.65rem;
+	}
+	.studio-list,
+	.studio-people,
+	.studio-checks {
+		display: flex;
+		flex-direction: column;
+	}
+	.studio-list li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.25rem 0.75rem;
+		min-height: 44px;
+		border-top: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		padding-block: 0.35rem;
+		font-weight: 650;
+	}
+	.studio-checks li {
+		position: relative;
+		padding: 0.35rem 0 0.35rem 1.6rem;
+	}
+	.studio-checks li::before {
+		content: "✓";
+		position: absolute;
+		left: 0.15rem;
+		font-weight: 800;
+		color: #15803d;
+	}
+	.dark .studio-checks li::before {
+		color: #4ade80;
+	}
+	.studio:not([data-read]) .studio-panels > [data-scene][data-wide] {
+		width: min(42rem, calc(100vw - 2rem));
+	}
+	.studio-years {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+		gap: 0.9rem 1.25rem;
+	}
+	.studio-years li {
+		border-top: 2px solid var(--foreground);
+		padding-top: 0.5rem;
+	}
+	.studio-years li[data-state="future"] {
+		border-top-style: dashed;
+		border-top-color: color-mix(in oklab, var(--foreground) 35%, transparent);
+	}
+	.studio-years h3 {
+		font-weight: 650;
+		font-size: 0.95rem;
+	}
+	.studio-years li > p:last-child {
+		font-size: 0.85rem;
+	}
+	.studio-year {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		font-stretch: 112%;
+		font-weight: 800;
+		font-size: 1.2rem;
+		color: var(--foreground) !important;
+	}
+	.studio-chip {
+		border-radius: 999px;
+		padding: 0.1rem 0.5rem;
+		font: 600 11px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		background: color-mix(in oklab, var(--foreground) 12%, transparent);
+		color: var(--foreground);
+	}
+	.studio-chip-now {
+		background: var(--accent);
+		color: var(--accent-foreground);
+	}
+	.studio-people li {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding-block: 0.4rem;
+	}
+	.studio-people img {
+		width: 48px;
+		height: 48px;
+		border-radius: 999px;
+		object-fit: cover;
+	}
+	.studio-people span {
+		display: flex;
+		flex-direction: column;
+	}
+	.studio-people a {
+		font-weight: 700;
+	}
+	.studio-role {
+		font-size: 0.85rem;
+		color: color-mix(in oklab, var(--foreground) 78%, transparent);
+	}
+	.studio-footer-links ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 1rem;
+		font-size: 0.9rem;
+	}
+	.studio-footer-links a {
+		display: inline-flex;
+		min-height: 36px;
+		align-items: center;
+	}
+	.studio-scene .studio-footer-links a {
+		text-decoration: none;
+	}
+	.studio-scene .studio-footer-links a:hover {
+		text-decoration: underline;
+	}
+
 	/* Read mode: ordinary sections down the page. */
 	.studio[data-read] .studio-panels {
 		display: flex;
@@ -464,8 +645,31 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		margin-inline: auto;
 		padding: 2rem clamp(1rem, 4vw, 2.5rem) 5rem;
 	}
+	.studio[data-read] .studio-hint {
+		display: none;
+	}
 	.studio[data-read] .studio-title {
-		padding-block: 3rem 1rem;
+		padding-block: 1.5rem 1rem;
 		text-align: center;
+	}
+	/* Read mode's picture of each scene, above its text. */
+	.studio[data-read] .studio-still {
+		order: -1;
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		border-radius: 0.75rem;
+		background: color-mix(in oklab, var(--foreground) 8%, transparent);
+	}
+	@media (min-width: 64rem) {
+		.studio[data-read] .studio-panels {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.studio[data-read] .studio-title,
+		.studio[data-read] [data-wide] {
+			grid-column: 1 / -1;
+		}
 	}
 </style>

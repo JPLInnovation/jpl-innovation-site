@@ -23,3 +23,9 @@ export function largestCopy(src: string): string {
 	const widths = copies[src];
 	return widths ? webpCopy(src, widths[widths.length - 1]) : src;
 }
+
+/** The largest WebP copy of an image no wider than `max` (for a 3D texture of a known size), or the image itself. */
+export function copyUpTo(src: string, max: number): string {
+	const fits = copies[src]?.filter((w) => w <= max);
+	return fits?.length ? webpCopy(src, fits[fits.length - 1]) : src;
+}

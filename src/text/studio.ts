@@ -18,6 +18,8 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
+	/** Over each work station's text: "What we do · 1 of 4". */
+	stationOf: "of",
 };
 
 /**
@@ -37,12 +39,4 @@ export const sceneNames: Record<string, string> = {
 	timeline: "Timeline",
 	crew: "The team",
 	contact: "Contact",
-	flight: "The studio",
-};
-
-/** The Phase 1 prototype page (/studio/), hidden from search engines until the studio becomes the home page. */
-export const prototype = {
-	title: "Studio prototype | JPL Innovation",
-	flightHeading: "The studio",
-	flightText: "One room for everything we build. The desk is where every project starts; the work stations, the project wall and the team fill the rest of the room next.",
 };

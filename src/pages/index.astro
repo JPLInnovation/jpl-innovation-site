@@ -1,21 +1,46 @@
 ---
-import { ArrowRight, ArrowUpRight, CircleCheck, Cog, CodeXml, Drone, NotebookPen, ShieldCheck } from "lucide-react";
-import HomePortal from "@/components/home-portal";
-import ContactSection from "@/components/ContactSection.astro";
-import MemberList from "@/components/MemberList.astro";
-import ProjectList from "@/components/ProjectList.astro";
+/**
+ * The home page: the studio (src/components/Studio.astro). One room, twelve camera stops, and the loop back to the
+ * desk. Phones, reduced motion and read mode get the same text as one ordinary page, with a picture of each scene.
+ *
+ * All the words: src/text/home.ts and src/text/site.ts (the studio's own: src/text/studio.ts). The projects on the
+ * wall come from src/text/projects/*.md, the people at the table from src/text/members/*.md.
+ */
+import { ArrowRight, ArrowUpRight } from "lucide-react";
+import ContactDialog from "@/components/contact-dialog";
+import StatusTag from "@/components/StatusTag.astro";
+import Studio from "@/components/Studio.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// All the words on this page: src/text/home.ts (the organization details for search engines: src/text/site.ts)
-import { journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
-import { getMembers, getProjects } from "@/lib/content";
-import { cn } from "@/lib/utils";
-import { site } from "@/text/site";
+import { getMembers, getProjects, toBadge } from "@/lib/content";
+import { copyUpTo, srcset } from "@/lib/images";
+import type { RoomContent } from "@/lib/studio/room";
+import { HOME } from "@/lib/studio/scenes";
+import { hero, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
+import { contact, footer, site, talk } from "@/text/site";
+import { studio } from "@/text/studio";
 
 const projects = await getProjects();
 const members = await getMembers();
+const [plan, build, handOver] = mission.process;
 
-const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml };
-const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
+// What the room itself shows.
+const content: RoomContent = {
+	projects: projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge })),
+	portraits: members.map((m) => ({ name: m.data.title, role: toBadge(m).title ?? "", img: copyUpTo(m.data.img, 900) })),
+	standards: { heading: mission.standardsHeading, items: mission.standards, steps: mission.process.map((s) => s.title) },
+	milestones: journey.milestones.map(({ year, state }) => ({ year, state })),
+	sign: talk.label,
+};
+
+// The work stations, one per service, text on alternate sides.
+const stations = ["robotics", "drones", "networks", "web"] as const;
+
+/** Read mode's picture of a scene (scripts/studio-stills.py), 800 and 1600 wide. */
+const still = (id: string) => ({
+	src: `/studio/scenes/${id}-800.webp`,
+	srcset: `/studio/scenes/${id}-800.webp 800w, /studio/scenes/${id}.webp 1600w`,
+	sizes: "(min-width: 64rem) 36rem, 100vw",
+});
 
 // Tells search engines who runs the site (schema.org Organization), from the same text as the footer.
 const organization = {
@@ -31,164 +56,151 @@ const organization = {
 
 <BaseLayout>
 	<script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(organization)} />
-	<h1 class="sr-only">{pageHeading}</h1>
+	<Studio scenes={HOME} content={content} anchors={{ services: "robotics", work: "wall", team: "crew", contact: "contact" }}>
+		<!-- 0 Title -->
+		<section data-scene="title" data-place="center" class="studio-scene studio-title">
+			<img class="studio-still" {...still("title")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-kicker">{hero.kicker}</p>
+			<h1 class="sr-only">{pageHeading}</h1>
+			<p class="studio-lede">{hero.support}</p>
+			<p class="studio-hint">{studio.scrollHint} <span aria-hidden="true">↓</span></p>
+		</section>
 
-	<!-- Pulled up under the sticky header so the opening frame fills the screen. -->
-	<div class="-mt-18">
-		<HomePortal client:load />
-	</div>
+		<!-- 1 Sketch: where every project starts -->
+		<section data-scene="sketch" class="studio-scene studio-card" aria-labelledby="scene-sketch">
+			<img class="studio-still" {...still("sketch")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{mission.stepLabel} 01 · {plan.title}</p>
+			<h2 id="scene-sketch">{servicesSection.heading}</h2>
+			<p class="studio-big">{servicesSection.intro}</p>
+			<p>{plan.desc}</p>
+		</section>
 
-	<!-- Services -->
-	<!-- TODO: confirm services — placeholder copy, edit in src/text/home.ts -->
-	<section id="services" class="wrapper py-20 md:py-28" aria-labelledby="services-heading">
-		<div class="mb-10 flex max-w-2xl flex-col gap-3 md:mb-12" data-reveal>
-			<h2 id="services-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{servicesSection.heading}</h2>
-			<p class="text-lg text-muted-foreground">{servicesSection.intro}</p>
-		</div>
-		<ul class="grid gap-5 md:grid-cols-2" data-reveal-group>
-			{
-				services.map((s) => {
-					const Icon = serviceIcons[s.icon];
-					const external = s.proof?.href.startsWith("http");
-					return (
-						<li data-tilt class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
-							<Icon className="size-8 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
-							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
-							<p class="text-muted-foreground">{s.desc}</p>
-							{s.proof && (
-								<a
-									href={s.proof.href}
-									class="press mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
-									{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-								>
-									{servicesSection.linkPrefix} {s.proof.label}
-									<ArrowUpRight className="size-4" aria-hidden="true" />
-								</a>
-							)}
-						</li>
-					);
-				})
-			}
-		</ul>
-	</section>
+		<!-- 2 Research: the build guide on the monitor -->
+		<section data-scene="research" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-research">
+			<img class="studio-still" {...still("research")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{mission.stepLabel} 02 · {build.title}</p>
+			<h2 id="scene-research">{mission.processHeading}</h2>
+			<p>{build.desc}</p>
+		</section>
 
-	<!-- Projects -->
-	<section class="border-t bg-card/70" aria-labelledby="work-heading">
-		<div class="wrapper py-20 md:py-28">
-			<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
-				<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{workSection.heading}</h2>
-				<p class="text-lg text-muted-foreground">{workSection.intro}</p>
-			</div>
-			<ProjectList projects={projects} />
-		</div>
-	</section>
+		<!-- 3 The four stations: one service each -->
+		{
+			services.map((s, i) => {
+				const id = stations[i];
+				const external = s.proof?.href.startsWith("http");
+				return (
+					<section data-scene={id} data-side={i % 2 ? "right" : undefined} class="studio-scene studio-card" aria-labelledby={`scene-${id}`}>
+						<img class="studio-still" {...still(id)} alt="" loading="lazy" width="1600" height="900" />
+						<p class="studio-tag">
+							{servicesSection.heading} · {i + 1} {studio.stationOf} {services.length}
+						</p>
+						<h2 id={`scene-${id}`}>{s.title}</h2>
+						<p>{s.desc}</p>
+						{s.proof && (
+							<a
+								href={s.proof.href}
+								class="studio-link"
+								{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+							>
+								{servicesSection.linkPrefix} {s.proof.label}
+								<ArrowUpRight className="size-4" aria-hidden="true" />
+							</a>
+						)}
+					</section>
+				);
+			})
+		}
 
-	<!-- Mission -->
-	<section class="border-y" aria-labelledby="mission-heading">
-		<div class="wrapper flex flex-col gap-6 pb-16 pt-24 md:pb-24 md:pt-36">
-			<h2 id="mission-heading" class="text-lg font-semibold text-muted-foreground" data-reveal>{mission.label}</h2>
-			<p data-words class="max-w-5xl font-wide text-[clamp(1.9rem,4.6vw,4.25rem)] font-[850] leading-[1.06] tracking-[-0.02em]">
-				{mission.statement}
-			</p>
-		</div>
-		<div class="wrapper grid gap-10 pb-16 md:grid-cols-[1fr_1.4fr] md:gap-16 md:pb-20">
-			<h3 class="text-lg font-semibold" data-reveal>{mission.standardsHeading}</h3>
-			<ul class="flex flex-col" data-reveal-group>
+		<!-- 4 The wall of projects -->
+		<section data-scene="wall" class="studio-scene studio-card" aria-labelledby="scene-wall">
+			<img class="studio-still" {...still("wall")} alt="" loading="lazy" width="1600" height="900" />
+			<h2 id="scene-wall">{workSection.heading}</h2>
+			<p>{workSection.intro}</p>
+			<ul class="studio-list">
 				{
-					mission.standards.map((s) => (
-						<li class="flex gap-3 border-t py-4">
-							<CircleCheck className="mt-0.5 size-5 shrink-0 text-primary dark:text-accent" aria-hidden="true" />
-							<span>{s}</span>
+					projects.map((p) => (
+						<li>
+							<a href={`/work/${p.id}/`}>{p.data.title}</a>
+							{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}
 						</li>
 					))
 				}
 			</ul>
-		</div>
-		<div class="wrapper pb-20 md:pb-28">
-			<h3 class="mb-2 text-lg font-semibold" data-reveal>{mission.processHeading}</h3>
-			<ol class="grid gap-10 border-t pt-10 md:grid-cols-3" data-reveal-group>
-				{
-					mission.process.map(({ icon, title, desc }, i) => {
-						const StepIcon = processIcons[icon];
-						return (
-						<li class="flex flex-col gap-3">
-							<span class="flex items-center gap-3">
-								<StepIcon className="size-7" strokeWidth={1.75} aria-hidden="true" />
-								<span class="text-sm font-semibold text-muted-foreground">{mission.stepLabel} {i + 1}</span>
-							</span>
-							<h4 class="font-semiwide text-xl font-[760]">{title}</h4>
-							<p class="text-muted-foreground">{desc}</p>
-						</li>
-						);
-					})
-				}
-			</ol>
-		</div>
-	</section>
+			<a href="/work/" class="studio-link">{workSection.allWorkLink} <ArrowRight className="size-4" aria-hidden="true" /></a>
+		</section>
 
-	<!-- Journey -->
-	<section class="wrapper py-20 md:py-28" aria-labelledby="journey-heading">
-		<h2 data-reveal id="journey-heading" class="mb-12 max-w-2xl font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">
-			{journey.heading}
-		</h2>
-		<div class="relative">
-			<!-- Progress so far: draws from 2023 to the "Now" dot (4th of 6 columns). -->
-			<span
-				aria-hidden="true"
-				data-draw
-				data-draw-duration="1.6"
-				class="absolute left-0 top-0 z-[1] hidden h-0.5 w-1/2 bg-accent lg:block"
-			></span>
-			<ol class="grid lg:grid-cols-6" data-reveal-group>
+		<!-- 5 Standards: the whiteboard -->
+		<section data-scene="standards" class="studio-scene studio-card" aria-labelledby="scene-standards">
+			<img class="studio-still" {...still("standards")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{mission.stepLabel} 03 · {handOver.title}</p>
+			<h2 id="scene-standards">{mission.standardsHeading}</h2>
+			<ul class="studio-checks">
+				{mission.standards.map((s) => <li>{s}</li>)}
+			</ul>
+			<p>{handOver.desc}</p>
+			<p class="studio-tag">{mission.label}</p>
+			<p class="studio-big">{mission.statement}</p>
+		</section>
+
+		<!-- 6 Timeline: the window -->
+		<section data-scene="timeline" data-side="right" data-wide class="studio-scene studio-card" aria-labelledby="scene-timeline">
+			<img class="studio-still" {...still("timeline")} alt="" loading="lazy" width="1600" height="900" />
+			<h2 id="scene-timeline">{journey.heading}</h2>
+			<ol class="studio-years">
 				{
 					journey.milestones.map((m) => (
-						<li
-							class={cn(
-								"relative border-l-2 pb-10 pl-7 lg:border-l-0 lg:border-t-2 lg:pb-0 lg:pl-0 lg:pr-6 lg:pt-8",
-								m.state === "future" ? "border-dashed border-foreground/25" : "border-foreground",
-							)}
-						>
-							<span
-								aria-hidden="true"
-								class={cn(
-									"absolute -left-[9px] top-1 z-[2] size-4 rounded-full border-2 lg:-top-[9px] lg:left-0",
-									m.state === "past" && "border-foreground bg-foreground",
-									m.state === "now" && "border-foreground bg-accent ring-4 ring-accent/35",
-									m.state === "future" && "border-foreground/40 bg-background",
-								)}
-							/>
-							<p class="flex items-center gap-2 font-semiwide text-2xl font-[800]">
+						<li data-state={m.state}>
+							<p class="studio-year">
 								{m.year}
-								{m.state === "now" && (
-									<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
-										{journey.nowTag}
-									</span>
-								)}
+								{m.state === "now" && <span class="studio-chip studio-chip-now">{journey.nowTag}</span>}
+								{m.before && <span class="studio-chip">{journey.beforeTag}</span>}
 							</p>
-							<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
-							<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+							<h3>{m.title}</h3>
+							<p>{m.desc}</p>
 						</li>
 					))
 				}
 			</ol>
-		</div>
-	</section>
+		</section>
 
-	<!-- Team -->
-	<section class="border-t bg-card/70" aria-labelledby="team-heading">
-		<div class="wrapper py-20 md:py-28">
-			<div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between" data-reveal>
-				<div class="flex max-w-2xl flex-col gap-3">
-					<h2 id="team-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{teamSection.heading}</h2>
-					<p class="text-lg text-muted-foreground">{teamSection.intro}</p>
-				</div>
-				<a href="/members/" class="press inline-flex min-h-11 items-center gap-2 font-semibold">
-					{teamSection.allMembersLink} <ArrowRight className="size-4" aria-hidden="true" />
-				</a>
+		<!-- 7 The crew: the table -->
+		<section data-scene="crew" class="studio-scene studio-card" aria-labelledby="scene-crew">
+			<img class="studio-still" {...still("crew")} alt="" loading="lazy" width="1600" height="900" />
+			<h2 id="scene-crew">{teamSection.heading}</h2>
+			<p>{teamSection.intro}</p>
+			<ul class="studio-people">
+				{
+					members.map((m) => (
+						<li>
+							<img src={copyUpTo(m.data.img, 160)} srcset={srcset(m.data.img)} sizes="48px" alt="" width="48" height="48" loading="lazy" />
+							<span>
+								<a href={`/members/${m.id}/`}>{m.data.title}</a>
+								<span class="studio-role">{toBadge(m).title}</span>
+							</span>
+						</li>
+					))
+				}
+			</ul>
+			<a href="/members/" class="studio-link">{teamSection.allMembersLink} <ArrowRight className="size-4" aria-hidden="true" /></a>
+		</section>
+
+		<!-- 8 Contact: the door -->
+		<section data-scene="contact" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-contact">
+			<img class="studio-still" {...still("contact")} alt="" loading="lazy" width="1600" height="900" />
+			<h2 id="scene-contact">{contact.heading}</h2>
+			<p>
+				{contact.before}
+				<a href={`mailto:${site.email}`} class="studio-inline-link">{site.email}</a>{contact.after}
+			</p>
+			<div class="flex flex-wrap items-center gap-3">
+				<ContactDialog client:idle label={contact.button} subject={contact.subject} />
+				<button type="button" class="studio-restart" data-studio-restart>{studio.backToStart} <span aria-hidden="true">↺</span></button>
 			</div>
-			<MemberList members={members} />
-		</div>
-	</section>
-
-	<ContactSection />
+			<nav aria-label={footer.pagesHeading} class="studio-footer-links">
+				<ul>
+					{footer.pages.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+				</ul>
+			</nav>
+		</section>
+	</Studio>
 </BaseLayout>
