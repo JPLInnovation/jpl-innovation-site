@@ -35,6 +35,7 @@ import {
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
+import { buildAmbience } from "./ambience";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
 import { buildStations, SCREEN_STEP } from "./stations";
@@ -395,6 +396,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	const overhead: Record<string, LightSpec> = {};
 	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
 	const pool = createLightPool(group, accents, overhead);
+	const ambience = buildAmbience(group);
 
 	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
 	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
@@ -407,6 +409,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 		update(state) {
 			const { lamp: on, time, near } = state;
 			stations.update(state, Math.max(0, time - lastTime));
+			ambience.update(state, Math.max(0, time - lastTime));
 			lastTime = time;
 			// The lamp, and the room coming up with it.
 			const level = on * on * (3 - 2 * on);
@@ -441,6 +444,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
 			stations.applyPalette(p);
+			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
 			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);

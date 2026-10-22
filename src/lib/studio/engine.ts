@@ -21,6 +21,8 @@ import type { SceneShot } from "./scenes";
 const FOLLOW = 4.2; // per second: the spring the camera follows the scroll through (critically damped, about 1 s)
 const HOLD = 0.22; // share of each scene's scroll, either side of it, where the camera stays put
 const LAMP_TIME = 1.6; // seconds for the desk lamp to come on
+const OPEN_TIME = 3.6; // seconds of the opening shot: the camera starts back from the desk and slowly pushes in
+const OPEN_BACK = 0.9; // metres it starts back
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const smootherstep = (x: number) => x * x * x * (x * (6 * x - 15) + 10);
@@ -64,6 +66,17 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 	let snapped = true;
 	let lamp = ctx.reducedMotion ? 1 : 0;
 	let clock = 0;
+	// Pointer parallax: the camera leans a few centimetres toward where the pointer is (mouse and pen only).
+	let pxT = 0;
+	let pyT = 0;
+	let px = 0;
+	let py = 0;
+	const onPointer = (event: PointerEvent) => {
+		if (event.pointerType === "touch") return;
+		pxT = (event.clientX / innerWidth) * 2 - 1;
+		pyT = (event.clientY / innerHeight) * 2 - 1;
+	};
+	if (!ctx.reducedMotion) addEventListener("pointermove", onPointer, { passive: true });
 	const near: Record<string, number> = {};
 	const focus: Record<string, number> = {};
 	const state: RoomState = { position: 0, lamp, time: 0, near, focus };
@@ -84,8 +97,17 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 		for (const shot of shots) focus[shot.id] = 0;
 		focus[shots[((i % n) + n) % n].id] = 1 - e;
 		focus[shots[(((i + 1) % n) + n) % n].id] = e;
-		camera.position.copy(at);
-		look.set(at.x + Math.sin(yaw) * Math.cos(pitch), at.y + Math.sin(pitch), at.z + Math.cos(yaw) * Math.cos(pitch));
+		// Motion on top of the move: the opening push-in, a slow breath, and the lean toward the pointer.
+		const calm = ctx.reducedMotion ? 0 : 1;
+		const open = calm * (1 - smootherstep(clamp(clock / OPEN_TIME, 0, 1))) * focus[shots[0].id];
+		const fx = Math.sin(yaw);
+		const fz = Math.cos(yaw);
+		const sway = calm * (Math.sin(clock * 0.37) * 0.01 + Math.sin(clock * 0.83) * 0.004) + px * 0.07 * calm;
+		const lift = calm * Math.sin(clock * 0.52 + 1) * 0.007 - py * 0.045 * calm;
+		const push = -OPEN_BACK * open;
+		camera.position.set(at.x + fz * sway + fx * push, at.y + lift, at.z - fx * sway + fz * push);
+		// Aim at a point a few metres ahead of where the camera would be without the extras, so they read as parallax.
+		look.set(at.x + Math.sin(yaw) * Math.cos(pitch) * 4, at.y + Math.sin(pitch) * 4, at.z + Math.cos(yaw) * Math.cos(pitch) * 4);
 		camera.lookAt(look);
 		for (let k = 0; k < n; k++) {
 			// How much scene k is in view: 1 on it, 0 a scene away (the loop's end counts as the first scene).
@@ -96,6 +118,9 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 
 	const step = (dt: number) => {
 		clock += dt;
+		const lean = 1 - Math.exp(-4 * dt);
+		px += (pxT - px) * lean;
+		py += (pyT - py) * lean;
 		const page = clamp(position(), 0, n);
 		if (snapped || dt <= 0) {
 			s = page;
@@ -123,6 +148,9 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 			step(dt);
 		},
 		applyPalette: (p) => room.applyPalette(p),
+		dispose() {
+			removeEventListener("pointermove", onPointer);
+		},
 		snap(scene) {
 			s = scene;
 			speed = 0;
