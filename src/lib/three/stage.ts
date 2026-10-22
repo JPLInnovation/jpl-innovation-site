@@ -9,7 +9,7 @@
  * washed them out), a studio environment (RoomEnvironment, generated, nothing downloaded),
  * and a key, fill and rim light that travel with the camera like a photographer's lights, so every angle is lit.
  *
- * Quality tiers (see SHOWCASE.md), picked from the device and then from the frame time it actually achieves:
+ * Quality tiers (see docs/SHOWCASE.md), picked from the device and then from the frame time it actually achieves:
  *   high    4x MSAA, ambient occlusion (GTAO), soft contact shadows, up to 2x device pixels, the full finishes
  *   medium  the canvas's own MSAA, soft contact shadows, up to 1.5x device pixels, the full finishes
  *   low     the plain renderer: round blob shadows, 1.25x device pixels at most, standard materials
