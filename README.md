@@ -35,8 +35,8 @@ src/
 public/         files served as they are: assets/ (photos, logos), studio/ (scene renders, screens), showcase/,
                 work/drone/ (the build guide, 3D layout and camera POV pages, each a single HTML file)
 scripts/        tools that make files (below); nothing here runs in the browser
-docs/           SHOWCASE.md (how the 3D works, tiers, safety nets, accessibility checks), design/direction.md,
-                audits/ (the September 2026 audit and its screenshots)
+docs/           SHOWCASE.md (how the 3D works, tiers, safety nets, accessibility checks), DEMO.md (a checklist for
+                presenting the site), design/direction.md, audits/ (the September 2026 audit and its screenshots)
 ```
 
 The Work page is the studio's project wall at full size (`WorkWall.astro` + `lib/three/models/work-wall.ts`); read mode
