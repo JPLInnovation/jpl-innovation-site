@@ -96,6 +96,13 @@ export const notFound = {
 	/** For search results and link previews. */
 	description: "This page doesn't exist.",
 	lede: "There's no page at this address. It may have moved when we rebuilt the site.",
-	homeButton: "Go to the home page",
+	homeButton: "Back to the studio",
 	workButton: "See our work",
+	/** The drone's camera view that fills the page (the style of the logo intro). */
+	signal: {
+		headline: "Signal lost",
+		kicker: "Error 404 · No link",
+		cam: "CAM 01",
+		status: "NO LINK",
+	},
 };
