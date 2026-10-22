@@ -1,18 +1,229 @@
 ---
+/**
+ * "Signal lost": the 404 as a drone camera that has lost its link. Static on a small canvas, scanlines, HUD corners
+ * and a glitching headline; still (no flicker, no glitch) under reduced motion. Words: src/text/site.ts (`notFound`).
+ */
 import ContactSection from "@/components/ContactSection.astro";
 import { buttonVariants } from "@/components/ui/button";
-import PageIntro from "@/components/PageIntro.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// Words: src/text/site.ts (`notFound`).
 import { notFound } from "@/text/site";
+const { signal } = notFound;
 ---
 
 <BaseLayout title={`${notFound.title} | JPL Innovation`} description={notFound.description} canonical={false}>
-	<PageIntro title={notFound.title} lede={notFound.lede}>
-		<div class="flex flex-wrap gap-3 pt-2 pb-20">
-			<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>{notFound.homeButton}</a>
-			<a href="/work/" class={buttonVariants({ variant: "outline", size: "lg" })}>{notFound.workButton}</a>
+	<section class="lost" aria-labelledby="lost-heading">
+		<canvas class="lost-static" width="200" height="112" aria-hidden="true"></canvas>
+		<div class="lost-scan" aria-hidden="true"></div>
+		<div class="lost-hud" aria-hidden="true">
+			<span class="lost-corner lost-tl"></span><span class="lost-corner lost-tr"></span>
+			<span class="lost-corner lost-bl"></span><span class="lost-corner lost-br"></span>
+			<span class="lost-rec"><i></i>REC</span>
+			<span class="lost-cam">{signal.cam}</span>
+			<span class="lost-status">{signal.status}</span>
+			<span class="lost-cross"></span>
 		</div>
-	</PageIntro>
+		<div class="lost-content">
+			<p class="lost-kicker">{signal.kicker}</p>
+			<h1 id="lost-heading" class="lost-title" data-text={signal.headline}>
+				{signal.headline}<span class="sr-only">. {notFound.title}.</span>
+			</h1>
+			<p class="lost-lede">{notFound.lede}</p>
+			<div class="flex flex-wrap justify-center gap-3 pt-2">
+				<a href="/" class={buttonVariants({ variant: "signal", size: "lg" })}>{notFound.homeButton}</a>
+				<a href="/work/" class={buttonVariants({ variant: "outline", size: "lg" }) + " lost-outline"}>{notFound.workButton}</a>
+			</div>
+		</div>
+	</section>
 	<ContactSection />
 </BaseLayout>
+
+<style is:global>
+	/* The camera view is always dark, in either theme. */
+	.lost {
+		position: relative;
+		isolation: isolate;
+		display: grid;
+		min-height: calc(100svh - 4.5rem);
+		place-items: center;
+		overflow: hidden;
+		background: #03050f;
+		color: #e8f1ff;
+	}
+	.lost-static {
+		position: absolute;
+		inset: 0;
+		z-index: -3;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		opacity: 0.55;
+	}
+	/* Scanlines and a vignette over the static. */
+	.lost-scan {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		background:
+			radial-gradient(ellipse at center, rgb(3 5 15 / 0.2) 0%, rgb(3 5 15 / 0.85) 85%),
+			repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.28) 0 1px, transparent 1px 3px);
+	}
+	.lost-hud {
+		position: absolute;
+		inset: clamp(0.75rem, 3vw, 2rem);
+		z-index: -1;
+		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		color: #67e8f9;
+		pointer-events: none;
+	}
+	.lost-corner {
+		position: absolute;
+		width: 1.75rem;
+		height: 1.75rem;
+		border: 0 solid #67e8f9;
+		opacity: 0.8;
+	}
+	.lost-tl { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+	.lost-tr { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+	.lost-bl { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+	.lost-br { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+	.lost-rec { position: absolute; top: 0.5rem; left: 2.5rem; display: flex; align-items: center; gap: 0.5rem; }
+	.lost-rec i { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #f87171; animation: lost-blink 1.1s steps(2, jump-none) infinite; }
+	.lost-cam { position: absolute; top: 0.5rem; right: 2.5rem; }
+	.lost-status { position: absolute; bottom: 0.5rem; left: 2.5rem; color: #f87171; animation: lost-blink 1.1s steps(2, jump-none) infinite; }
+	/* A small crosshair, off-centre as if the gimbal had drifted. */
+	.lost-cross { position: absolute; right: 14%; bottom: 22%; width: 1.5rem; height: 1.5rem; opacity: 0.5; background: linear-gradient(#67e8f9, #67e8f9) center / 100% 1px no-repeat, linear-gradient(#67e8f9, #67e8f9) center / 1px 100% no-repeat; }
+	.lost-content {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding: 4.5rem 1.25rem;
+		text-align: center;
+	}
+	.lost-kicker {
+		font: 500 13px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: #67e8f9;
+	}
+	.lost-title {
+		position: relative;
+		font-stretch: 125%;
+		font-weight: 900;
+		font-size: clamp(2.75rem, 11vw, 8rem);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		color: #fff;
+		text-shadow: 3px 0 0 rgb(244 63 94 / 0.7), -3px 0 0 rgb(34 211 238 / 0.7);
+	}
+	.lost-lede {
+		max-width: 34ch;
+		font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+		color: #d3e1f7;
+	}
+	.lost-outline {
+		border-color: rgb(255 255 255 / 0.45);
+		background: rgb(3 5 15 / 0.5);
+		color: #fff;
+	}
+	.lost-outline:hover {
+		background: rgb(255 255 255 / 0.14);
+		color: #fff;
+	}
+	@keyframes lost-blink {
+		50% { opacity: 0.15; }
+	}
+	/* Glitch: two slices of the headline slip sideways now and then. */
+	@media (prefers-reduced-motion: no-preference) {
+		html:not(.reduce-motion) .lost-title::before,
+		html:not(.reduce-motion) .lost-title::after {
+			content: attr(data-text);
+			position: absolute;
+			inset: 0;
+			overflow: hidden;
+			text-shadow: none;
+		}
+		html:not(.reduce-motion) .lost-title::before {
+			color: #22d3ee;
+			clip-path: inset(0 0 62% 0);
+			animation: lost-slip-a 3.4s steps(1, end) infinite;
+		}
+		html:not(.reduce-motion) .lost-title::after {
+			color: #f43f5e;
+			clip-path: inset(58% 0 0 0);
+			animation: lost-slip-b 2.7s steps(1, end) infinite;
+		}
+	}
+	@keyframes lost-slip-a {
+		0%, 88%, 100% { transform: none; opacity: 0; }
+		90% { transform: translateX(-0.06em); opacity: 1; }
+		94% { transform: translateX(0.05em); opacity: 1; }
+		97% { transform: translateX(-0.02em); opacity: 1; }
+		98% { transform: none; opacity: 0; }
+	}
+	@keyframes lost-slip-b {
+		0%, 80%, 100% { transform: none; opacity: 0; }
+		82% { transform: translateX(0.07em); opacity: 1; }
+		86% { transform: translateX(-0.04em); opacity: 1; }
+		89% { transform: none; opacity: 0; }
+	}
+</style>
+
+<script>
+	import { reducedMotion } from "@/lib/prefs";
+
+	let stop: (() => void) | undefined;
+
+	function init() {
+		stop?.();
+		stop = undefined;
+		const canvas = document.querySelector<HTMLCanvasElement>(".lost-static");
+		const g = canvas?.getContext("2d");
+		if (!canvas || !g) return;
+		const { width, height } = canvas;
+		const image = g.createImageData(width, height);
+		let band = 0;
+
+		/** One frame of static: grey noise, with a few horizontal tearing bands that drift down the picture. */
+		const draw = () => {
+			const data = image.data;
+			band = (band + 1.7) % height;
+			for (let y = 0; y < height; y++) {
+				const torn = Math.abs(y - band) < 4 || Math.abs(y - ((band * 2.3) % height)) < 2;
+				const bright = torn ? 1.9 : 1;
+				for (let x = 0; x < width; x++) {
+					const v = Math.min(255, Math.random() * 190 * bright);
+					const i = (y * width + x) * 4;
+					data[i] = v * 0.86;
+					data[i + 1] = v;
+					data[i + 2] = Math.min(255, v * 1.1);
+					data[i + 3] = 255;
+				}
+			}
+			g.putImageData(image, 0, 0);
+		};
+		draw();
+		if (reducedMotion()) return;
+
+		let raf = 0;
+		let last = 0;
+		let visible = true;
+		const tick = (now: number) => {
+			raf = requestAnimationFrame(tick);
+			if (!visible || now - last < 66) return; // about 15 frames a second, like analogue
+			last = now;
+			draw();
+		};
+		raf = requestAnimationFrame(tick);
+		const watch = new IntersectionObserver(([entry]) => (visible = entry.isIntersecting));
+		watch.observe(canvas);
+		stop = () => {
+			cancelAnimationFrame(raf);
+			watch.disconnect();
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => stop?.());
+</script>
