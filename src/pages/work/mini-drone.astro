@@ -3,6 +3,7 @@ import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight, ExternalLink } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
+import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import PartsTable from "@/components/parts-table";
@@ -26,6 +27,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 ---
 
 <BaseLayout title={`${miniDrone.name} | JPL Innovation`} description={entry.data.description}>
+	<ChapterBackdrop project="mini-drone" />
 	<!-- Hero -->
 	<header class="wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
 		<div class="flex flex-col gap-6">

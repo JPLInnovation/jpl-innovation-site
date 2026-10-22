@@ -9,6 +9,7 @@ import FrcLockup from "@/components/FrcLockup.astro";
 import FrcSeasons from "@/components/frc-seasons";
 import HardwareStack from "@/components/HardwareStack.astro";
 import Leadership from "@/components/Leadership.astro";
+import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import Showcase from "@/components/showcase";
@@ -40,6 +41,7 @@ const stills = Object.fromEntries(
 ---
 
 <BaseLayout title={frcPage.seoTitle} description={entry.data.description}>
+	<ChapterBackdrop project="frc" />
 	<div class="wrapper pt-6 md:pt-8">
 		<BackLink href="/work/">{backToWork}</BackLink>
 	</div>

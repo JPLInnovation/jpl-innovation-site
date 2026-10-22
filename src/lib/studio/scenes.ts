@@ -16,8 +16,8 @@ export interface SceneShot {
 }
 
 export const SHOTS: Record<string, SceneShot> = {
-	/** 0 Title: the desk from across the room, under the lamp, with the logo on the wall. */
-	title: { id: "title", camera: [-6.0, 1.45, 2.3], target: [-6.0, 1.45, -2.6] },
+	/** 0 Title: the desk from across the room, under the lamp, with the logo on the wall; turned a little left, so the desk sits right of centre and the words have the empty wall beside it. */
+	title: { id: "title", camera: [-6.0, 1.45, 2.3], target: [-6.9, 1.45, -2.6] },
 	/** 1 Sketch: above the desk, looking down into the open sketchbook. */
 	sketch: { id: "sketch", camera: [-6.3, 1.62, -1.45], target: [-6.32, 0.79, -2.32] },
 	/** 2 Research: slid right to the monitor. */

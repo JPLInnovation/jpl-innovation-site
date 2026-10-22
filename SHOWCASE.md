@@ -44,8 +44,8 @@ Every 3D view on the site (the showcases and the plain viewers) runs on the shar
 
 | Tier | Who starts on it | What it draws |
 | :-- | :-- | :-- |
-| high | laptops and desktops | 4x MSAA render target, ground-truth ambient occlusion (GTAO, full resolution), soft contact shadows, the full material finishes, up to 2x device pixels (at most 4.6 MP) |
-| medium | tablets, or after a drop from high | the canvas's own MSAA, soft contact shadows, the full finishes, up to 1.5x device pixels |
+| high | laptops and desktops with their own or Apple graphics | 4x MSAA render target, ground-truth ambient occlusion (GTAO, full resolution), soft contact shadows, the full material finishes, up to 2x device pixels (at most 4.6 MP) |
+| medium | tablets and laptops with integrated Intel graphics (Iris, UHD), or after a drop from high | the canvas's own MSAA, soft contact shadows, the full finishes, up to 1.5x device pixels |
 | low | phones, saveData, 2 GB of memory or 2 cores, software GL; or after a drop from medium | plain renderer, round blob shadows, standard materials, up to 1.25x device pixels |
 
 - **Look on every tier:** ACES filmic tone mapping (AgX washed the CAD's reds and yellows out), a generated studio environment (RoomEnvironment, nothing downloaded), and a key, fill and rim light that ride on the camera, so every angle is lit. Light and dark themes have their own exposure and light balance.
@@ -109,7 +109,7 @@ text panels, ruler, keyboard, loop), `src/lib/studio/engine.ts` (camera), `room.
 | 0 | Title | the desk from across the room; the lamp switches on |
 | 1 | Sketch | the sketchbook draws the F450 from its real numbers |
 | 2 | Research | the monitor scrolls the build guide (a screenshot of the real page) |
-| 3 | Robotics, Drones, Networks, Web | KitBot on a cart (its CAD), the F450 lifting off its mat (its CAD), a switch rack with blinking ports, a laptop and phone scrolling this site |
+| 3 | Robotics, Drones, Networks, Web | KitBot on a cart (its CAD), the F450 on its landing mat, powered up but not flying: it has not flown yet (its CAD), a switch rack with blinking ports, a laptop and phone scrolling this site |
 | 4 | Selected work | one panel per project on a curved wall; they turn to face you |
 | 5 | Standards | the whiteboard writes out the standards and the three steps |
 | 6 | Timeline | the long window, a year on each pane (2023 and 2024 tagged "Before JPL") |
@@ -138,3 +138,20 @@ scrolling and nothing is hijacked; the panel in front lifts and its project's ca
 card) to open the project: the camera pushes into it, then the page changes. Left and Right arrows and the ruler move
 along the wall. Under it is the plain list of the same projects as ordinary links (and read mode's whole page: under 768 px,
 reduced motion, no WebGL, or Settings). A new project is one file in `src/text/projects/` and the wall grows by itself.
+
+# Accessibility and how it is checked
+
+- **Contrast over pictures and the 3D scene is measured, not guessed.** axe cannot judge text over an image or a
+  canvas, so `scripts/measure-contrast.mjs` + `measure-contrast.py` hide the words, photograph what is behind each
+  text box and compute the WCAG ratio against the word's own colour. Every studio scene (both themes, 1440 and 768
+  wide), the Work wall, About and the four project pages pass 4.5:1 (3:1 for large text). Re-run it after changing the
+  glass, the scrims or the room's lighting. What makes it pass: the scene cards and rulers are glass with a strong
+  tint (88 to 90% on the light theme), About's and the chapters' footage sits under a scrim from the text's side, the
+  light theme's blue tags and ruler marks are darker blues.
+- **axe-core** (run from outside the repo, `npm i axe-core`) reports no violations on any page, theme or width.
+- **Every scene is in the accessibility tree and the tab order.** Inactive scenes are only transparent (and ignore the
+  pointer), not hidden: a screen reader reads all twelve in order, Tab moves through every link and the camera follows
+  the focus; the current scene is announced politely once the camera settles.
+- **No JavaScript?** The studio and the Work wall start as ordinary pages; the switch to 3D runs before the first paint.
+- **Chapter openers** (`src/components/ChapterBackdrop.astro`): each project page opens over slow footage of its own
+  station (the studio renders in `public/studio/scenes/`), behind a scrim.

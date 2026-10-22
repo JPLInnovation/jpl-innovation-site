@@ -4,7 +4,7 @@
  * Metres, y up; positions match the camera's shots in scenes.ts.
  *
  *   Robotics   the KitBot on a low rolling cart, a pegboard of tools behind it (the robot's own CAD, frc-robot.ts)
- *   Drones     the F450 on a landing mat; it lifts off and hovers while its scene is in view (drone.ts)
+ *   Drones     the F450 on a landing mat, powered up on the bench (its LED blinks; it has not flown, so it never lifts off) (drone.ts)
  *   Networks   a switch rack with blinking port lights and patch cables
  *   Web        a laptop on the bench, scrolling this site (public/studio/site.webp)
  *   The wall   one panel per project, on an arc; they turn to face the camera one after another
@@ -185,7 +185,6 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	// A battery charger and a spare pack beside it.
 	boxAt(group, 0.16, 0.06, 0.12, dark, droneX + 0.55, benchTop + 0.03, -2.75, 0.01);
 	boxAt(group, 0.14, 0.035, 0.05, hardware({ color: 0x24324f, roughness: 0.3 }, "wrap"), droneX + 0.55, benchTop + 0.018, -2.5, 0.008);
-	let lift = 0;
 
 	/* ================================================================== */
 	/* Networks: the switch rack                                           */
@@ -600,14 +599,9 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			// Robot: rollers turn while its scene is in view.
 			if (robot && (near.robotics ?? 0) > 0.05) robot.animate(clock, dt * (near.robotics ?? 0));
 
-			// Drone: lifts off its mat and hovers while in view; props spin up first.
-			const flying = near.drones ?? 0;
-			lift += ((flying > 0.6 ? 1 : 0) - lift) * Math.min(1, dt * 1.6);
-			if (drone) {
-				drone.animate(clock, flying > 0.05 ? dt : 0);
-				droneHolder.position.y = benchTop + ease(lift) * (0.22 + Math.sin(clock * 1.7) * 0.015);
-				droneHolder.rotation.z = Math.sin(clock * 1.1) * 0.025 * lift;
-			}
+			// Drone: stays on its mat. The build is not finished and it has not flown, so the room does not show it flying:
+			// powered up on the bench, props still, the flight controller's LED blinking.
+			drone?.animate(clock, 0);
 
 			// Rack: the port lights blink (a few times a second, not every frame).
 			ledTimer += dt;
