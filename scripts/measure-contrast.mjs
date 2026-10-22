@@ -72,7 +72,7 @@ for (const [i, scene] of scenes.entries()) {
       seen.add(el);
       let c = rgba(cs.color);
       // Gradient-filled headings (the pointer glint) are transparent text over a background clipped to the letters: outside the glow they are the foreground colour.
-      if (c[3] === 0 && (cs.backgroundClip.includes("text") || cs.webkitBackgroundClip.includes("text"))) c = rgba(getComputedStyle(document.documentElement).getPropertyValue("--foreground").trim());
+      if (c[3] === 0 && cs.backgroundClip.includes("text")) c = rgba(getComputedStyle(document.documentElement).getPropertyValue("--foreground").trim());
       out.push({ text: n.textContent.trim().slice(0, 40), x: r.left, y: r.top, w: r.width, h: r.height, color: [c[0], c[1], c[2]], alpha: c[3] * op, size: parseFloat(cs.fontSize), weight: Number(cs.fontWeight) || 400 });
     }
     }
