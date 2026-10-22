@@ -140,10 +140,13 @@ import { emailPopup as text, site } from "@/text/site";
 			return;
 		}
 		if (target.closest("[data-email-copy]")) {
-			navigator.clipboard.writeText(d.dataset.email!).then(
-				() => showCopy(d, "done"),
-				() => showCopy(d, "failed"),
-			);
+			// (navigator.clipboard doesn't exist on plain-http pages; that lands in "failed" too, and the address is on show)
+			Promise.resolve()
+				.then(() => navigator.clipboard.writeText(d.dataset.email!))
+				.then(
+					() => showCopy(d, "done"),
+					() => showCopy(d, "failed"),
+				);
 		}
 	});
 
