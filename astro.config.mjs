@@ -39,6 +39,8 @@ export default defineConfig({
 	// if its old scripts are gone too, the CSS failsafes in SplashShell and BaseLayout still reveal it.
 	build: { inlineStylesheets: 'always' },
 	integrations: [react()],
+	// The studio prototype (documentary Phase 1) became the home page.
+	redirects: { '/studio': '/' },
 	vite: {
 		plugins: [tailwindcss(), publicFolderIndex],
 		build: {

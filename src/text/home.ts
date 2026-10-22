@@ -79,6 +79,7 @@ export const services: Service[] = [
 export const workSection = {
 	heading: "Selected work",
 	intro: "Our own builds and the team we compete with: a drone that streams over 4G, a secured network lab, and an FRC robot.",
+	allWorkLink: "All work",
 };
 
 /** "Our mission", the standards list, and "How we work". */
@@ -119,18 +120,20 @@ export const mission = {
 /**
  * The timeline. `state`: "past" (solid dot), "now" (highlighted, with a "Now" tag), "future" (dashed).
  * Keep exactly one "now". The line across the top draws from the first year to the "Now" dot.
+ * `before: true` marks the years before JPL Innovation was founded (October 2025): they get the `beforeTag`.
  */
 export const journey = {
 	heading: "Where we've been, and where we're going",
 	nowTag: "Now",
+	beforeTag: "Before JPL",
 	milestones: [
-		{ year: "2023", title: "Foundation and exploration", desc: "Learned programming fundamentals, explored tools, and built our first projects.", state: "past" },
-		{ year: "2024", title: "Project development", desc: "More hands-on robotics and software builds, and a growing portfolio.", state: "past" },
+		{ year: "2023", title: "Foundation and exploration", desc: "Learned programming fundamentals, explored tools, and built our first projects.", state: "past", before: true },
+		{ year: "2024", title: "Project development", desc: "More hands-on robotics and software builds, and a growing portfolio.", state: "past", before: true },
 		{ year: "2025", title: "Innovation and growth", desc: "Stronger full-stack foundations, better quality, and this site.", state: "past" },
 		{ year: "2026", title: "Professional development", desc: "Bigger builds, open source, internships, and leading on FRC Team 10951’s rookie season.", state: "now" },
 		{ year: "2027–28", title: "Industry leadership", desc: "Lead projects with strong engineering habits and ship tools real people use.", state: "future" },
 		{ year: "2029+", title: "Creating the future", desc: "Larger-impact projects, mentoring others, and learning as technology moves.", state: "future" },
-	] as Array<{ year: string; title: string; desc: string; state: "past" | "now" | "future" }>,
+	] as Array<{ year: string; title: string; desc: string; state: "past" | "now" | "future"; before?: boolean }>,
 };
 
 /** "The team" section. The member cards come from src/text/members/*.md. */
