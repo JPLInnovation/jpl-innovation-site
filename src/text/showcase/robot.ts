@@ -1,5 +1,5 @@
 /**
- * FRC PAGE, "THE 2026 ROBOT IN 3D" (/work/frc/, right after the robot photo that opens to full screen).
+ * FRC PAGE, "THE KITBOT PLATFORM IN 3D" (/work/frc/, right after the robot photo that opens to full screen).
  * The 3D robot turns to each part as its text comes up. Phones show each part's text as a card instead.
  *
  * Edit the words between the quotes. Keep the quotes and the commas at the end of lines.
@@ -24,11 +24,11 @@ export const robotShowcase = {
 	features: [
 		{
 			id: 'overview',
-			title: 'The 2026 KitBot',
-			text: 'Our 2026 KitBot, modelled from the team’s Onshape CAD. It rolls on six wheels, with blue bumpers carrying our team number, 10951.',
+			title: 'The KitBot platform',
+			text: 'The standard KitBot platform our 2026 robot is built on. It rolls on six wheels, with blue bumpers carrying our team number, 10951.',
 			facts: [
-				{ label: 'Robot', value: '2026 KitBot' },
-				{ label: 'Model', value: 'From our Onshape CAD' },
+				{ label: 'Robot', value: 'KitBot platform' },
+				{ label: 'Model', value: 'The kit’s standard design' },
 				{ label: 'Wheels', value: 'Six' },
 				{ label: 'Bumpers', value: 'Blue, team 10951' },
 			],

@@ -32,12 +32,12 @@ export const frcPage = {
 	/** Heading, sentence, note and screen reader description of the 3D robot that turns to each part as you scroll
 	 *  (its part by part text: src/text/showcase/robot.ts). `fallbackAlt` describes the photo shown without 3D. */
 	model3d: {
-		heading: 'The 2026 robot in 3D',
-		text: 'Our 2026 KitBot, built from our Onshape CAD. Follow a ball of FUEL: the intake rollers pull it off the floor into the hopper, the feeder pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
-		note: 'Simplified from our CAD: every part in place, without the fasteners and small holes.',
+		heading: 'The KitBot platform in 3D',
+		text: 'The standard KitBot platform our 2026 robot is built on. Follow a ball of FUEL: the intake rollers pull it off the floor into the hopper, the feeder pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
+		note: 'The kit’s standard design, simplified: every part in place, without the fasteners and small holes. Our modified robot is not modelled yet.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of Team 10951's 2026 KitBot, from the team's CAD: an aluminium frame on six wheels with blue 10951 bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
+			"3D model of the standard KitBot platform our 2026 robot is built on: an aluminium frame on six wheels with blue 10951 bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */

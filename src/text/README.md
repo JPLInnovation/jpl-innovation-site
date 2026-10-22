@@ -6,19 +6,21 @@
 
 | On the website | Open this file |
 | :-- | :-- |
-| **Top menu** (Services, Work, Members, About, Contact) | `site.ts` → `menu` |
+| **Top menu** (Work, Members, About) and the "Let's talk" button | `site.ts` → `menu`, `talk` |
+| **Settings panel** (the gear in the header) | `site.ts` → `settings` |
 | **Footer** (bottom of every page) | `site.ts` → `footer` |
 | **Blue "Let's work together" box** (bottom of every page) | `site.ts` → `contact` |
 | **Contact email address** (everywhere) | `site.ts` → `email` |
 | **"Email us" pop-up** | `site.ts` → `emailPopup` |
-| **"Page not found" page** | `site.ts` → `notFound` |
-| **Home page**: the "JPL" opening screen and the text over the photo | `home.ts` → `hero` |
+| **"Page not found" page** ("Signal lost") | `site.ts` → `notFound` |
+| **Home page** is a 3D studio: the first scene's words | `home.ts` → `hero` |
+| Home: the studio's own words (screen reader description, ruler names, hints) | `studio.ts` |
 | Home: "What we do" (services) | `home.ts` → `servicesSection` and `services` |
 | Home: "Selected work" heading | `home.ts` → `workSection` |
 | Home: "Our mission", "What we hold ourselves to", "How we work" | `home.ts` → `mission` |
 | Home: the timeline (2023 → 2029+) | `home.ts` → `journey` |
 | Home: "The team" heading | `home.ts` → `teamSection` |
-| **Work page** (`/work/`) heading and intro | `work.ts` |
+| **Work page** (`/work/`) heading and intro, the wall's words, "Next chapter" | `work.ts` |
 | **Project cards** (title, description, "Build in progress" badge, picture, order) | `projects/drone.md`, `projects/cybersecurity.md`, `projects/frc.md` |
 | **FIRST Robotics page** (`/work/frc/`): headings, 3D robot text, scroll scene | `projects/frc.ts` → `frcPage` |
 | FRC: team info, "About Team 10951" | `projects/frc.ts` → `team` |
@@ -26,7 +28,7 @@
 | FRC: 2026 tab (game, timeline, robot specs, results, photos) | `projects/frc.ts` → `season2026` (headings: `seasonsText`) |
 | FRC: "Hardware we use" (motors, CAN devices, Limelight) | `projects/frc.ts` → `hardwareText`, `motors`, `controlStack`, `vision` |
 | FRC: the big intro sentence under "Team 10951" | `projects/frc.md` → `description` |
-| FRC: "The 2026 robot in 3D" part by part (the 3D robot that turns to each part as you scroll) | `showcase/robot.ts` (its heading and intro: `projects/frc.ts` → `model3d`) |
+| FRC: "The KitBot platform in 3D" part by part (the 3D robot that turns to each part as you scroll) | `showcase/robot.ts` (its heading and intro: `projects/frc.ts` → `model3d`) |
 | **Drone page** (`/work/drone/`): everything | `projects/drone.ts` |
 | Drone: parts, prices, budget | `projects/drone.ts` → `partGroups` |
 | Drone: "Part by part" (the 3D drone that turns to each part as you scroll) | `showcase/drone.ts` |

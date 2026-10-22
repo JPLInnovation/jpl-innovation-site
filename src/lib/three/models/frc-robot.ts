@@ -1,5 +1,5 @@
 /**
- * Team 10951's 2026 KitBot in 3D, built from the team's Onshape CAD.
+ * The standard KitBot platform (the base of Team 10951's 2026 robot) in 3D, from the kit's CAD. Our modified robot is not modelled.
  *
  * frc-robot-cad.json is the CAD reduced to simple shapes (scripts/kitbot-cad.py turns the 142 MB export in CAD/,
  * which stays out of the repo, into these 50 KB):
