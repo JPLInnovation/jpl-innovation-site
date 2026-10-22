@@ -1,0 +1,37 @@
+---
+/**
+ * A button that opens the email pop-up (EmailDialog.astro, once per page). No JavaScript of its own.
+ * `look`: "ink" (default), "signal" (gradient), "inverse" (white, for coloured bands), "glass" (the header's frosted pill)
+ * or "link" (plain text with an underline on hover).
+ */
+import { Mail } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { emailPopup } from "@/text/site";
+
+interface Props {
+	/** Pre-filled email subject. */
+	subject?: string;
+	/** Text on the button. */
+	label?: string;
+	look?: "ink" | "signal" | "link" | "inverse" | "glass";
+	class?: string;
+}
+const { subject = emailPopup.defaultSubject, label = emailPopup.defaultButton, look = "ink", class: className } = Astro.props;
+
+const classes = {
+	link: "press inline-flex min-h-11 cursor-pointer items-center text-left underline-offset-4 hover:text-foreground hover:underline",
+	glass:
+		"glass press inline-flex h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-[15px] font-semibold text-foreground transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_0_0_1px_var(--ring),0_8px_24px_-12px_var(--ring)]",
+	signal: buttonVariants({ variant: "signal", size: "lg" }),
+	ink: buttonVariants({ variant: "default", size: "lg" }) + " bg-primary text-primary-foreground hover:bg-primary/90",
+	inverse:
+		buttonVariants({ variant: "default", size: "lg" }) +
+		" bg-white font-semibold text-[#1d4ed8] shadow-[var(--shadow-soft)] hover:-translate-y-px hover:bg-white/95 focus-visible:ring-white/60",
+}[look];
+---
+
+<button type="button" data-email-open data-subject={subject} class={cn(classes, className)}>
+	{look !== "link" && <Mail className={look === "glass" ? "size-4" : undefined} aria-hidden="true" />}
+	{label}
+</button>

@@ -1,7 +1,7 @@
 ---
 import Logo from "./Logo.astro";
 import SettingsPanel from "./SettingsPanel.astro";
-import ContactDialog from "./contact-dialog";
+import EmailButton from "./EmailButton.astro";
 // Menu labels and links, and the "Let's talk" button: src/text/site.ts (`menu`, `talk`).
 import { menu as links, talk } from "@/text/site";
 
@@ -44,7 +44,7 @@ const current = links
 		</nav>
 		<div class="flex items-center justify-end gap-1 sm:gap-2">
 			<SettingsPanel />
-			<ContactDialog client:idle look="glass" label={talk.label} subject={talk.subject} className="hidden sm:inline-flex" />
+			<EmailButton look="glass" label={talk.label} subject={talk.subject} class="hidden sm:inline-flex" />
 			<!-- Phones and small tablets: menu button -->
 			<button
 				type="button"
@@ -83,7 +83,7 @@ const current = links
 				))
 			}
 			<li class="menu-item border-t py-4 sm:hidden" style={`--i: ${links.length}`}>
-				<ContactDialog client:idle look="glass" label={talk.label} subject={talk.subject} />
+				<EmailButton look="glass" label={talk.label} subject={talk.subject} />
 			</li>
 		</ul>
 	</nav>

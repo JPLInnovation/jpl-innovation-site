@@ -4,7 +4,7 @@
  * Words: src/text/site.ts (`contact`). The band uses fixed blues (not theme variables) so its
  * white text keeps AA contrast (≥ 6.7:1) in both light and dark mode.
  */
-import ContactDialog from "./contact-dialog";
+import EmailButton from "./EmailButton.astro";
 import { contact, site } from "@/text/site";
 ---
 
@@ -21,13 +21,7 @@ import { contact, site } from "@/text/site";
 				>{contact.after}
 			</p>
 		</div>
-		<ContactDialog
-			client:visible
-			label={contact.button}
-			look="inverse"
-			subject={contact.subject}
-			className="shrink-0"
-		/>
+		<EmailButton label={contact.button} look="inverse" subject={contact.subject} class="shrink-0" />
 	</div>
 </section>
 

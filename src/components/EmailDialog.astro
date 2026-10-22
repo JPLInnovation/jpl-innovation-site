@@ -1,0 +1,157 @@
+---
+/**
+ * The email pop-up, once per page, opened by any button marked `data-email-open` (EmailButton.astro; `data-subject`
+ * fills the subject). A plain mailto: link does nothing on computers without a mail app, so this offers the address
+ * to copy, Gmail in the browser, and the mail app. It is the browser's own <dialog>: Escape closes it, focus stays
+ * inside, the page behind is inert, and no JavaScript library is needed. Words: src/text/site.ts (`emailPopup`).
+ */
+import { Check, Copy, ExternalLink, X } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { emailPopup as text, site } from "@/text/site";
+---
+
+<dialog id="email-dialog" class="email-dialog" aria-labelledby="email-dialog-title" aria-describedby="email-dialog-desc" data-email={site.email}>
+	<button type="button" data-email-close class="email-close press" aria-label={text.close}>
+		<X className="size-4" aria-hidden="true" />
+	</button>
+	<div class="flex flex-col gap-2 pr-8">
+		<h2 id="email-dialog-title" class="font-wide text-2xl font-[850]">{text.title}</h2>
+		<p id="email-dialog-desc" class="text-[15px] text-muted-foreground">{text.description}</p>
+	</div>
+	<div class="flex items-center justify-between gap-3 rounded-xl border bg-muted/60 py-2 pl-4 pr-2">
+		<span class="truncate font-medium select-all">{site.email}</span>
+		<button type="button" data-email-copy class={buttonVariants({ variant: "secondary", size: "sm" }) + " shrink-0"} aria-live="polite">
+			<span class="inline-flex items-center gap-1.5" data-copy-idle><Copy className="size-4" aria-hidden="true" /> {text.copy}</span>
+			<span class="hidden items-center gap-1.5" data-copy-done><Check className="size-4" aria-hidden="true" /> {text.copied}</span>
+		</button>
+	</div>
+	<p class="-mt-3 hidden text-sm text-destructive" role="status" data-copy-failed>{text.copyFailed}</p>
+	<div class="flex flex-col gap-2 sm:flex-row">
+		<a data-email-gmail href="#" target="_blank" rel="noopener noreferrer" class={buttonVariants({ variant: "signal", size: "lg" }) + " flex-1"}>
+			{text.openGmail} <ExternalLink className="size-4" aria-hidden="true" />
+		</a>
+		<a data-email-mailto href="#" class={buttonVariants({ variant: "outline", size: "lg" }) + " flex-1"}>{text.openMailApp}</a>
+	</div>
+</dialog>
+
+<style is:global>
+	.email-dialog {
+		position: fixed;
+		inset: 0;
+		margin: auto;
+		width: min(28rem, calc(100vw - 2rem));
+		max-height: calc(100svh - 2rem);
+		overflow: auto;
+		padding: 1.5rem;
+		border: 1px solid var(--border);
+		border-radius: 1rem;
+		background: var(--card);
+		color: var(--foreground);
+		box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.6);
+		overscroll-behavior: contain;
+	}
+	@media (min-width: 40rem) {
+		.email-dialog {
+			padding: 2rem;
+		}
+	}
+	.email-dialog[open] {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		animation: email-in 0.3s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	.email-dialog::backdrop {
+		background: rgb(2 6 23 / 0.6);
+		-webkit-backdrop-filter: blur(4px);
+		backdrop-filter: blur(4px);
+		animation: email-fade 0.3s ease-out;
+	}
+	@keyframes email-in {
+		from {
+			opacity: 0;
+			transform: translateY(8px) scale(0.97);
+		}
+	}
+	@keyframes email-fade {
+		from {
+			opacity: 0;
+		}
+	}
+	html.reduce-motion .email-dialog[open],
+	html.reduce-motion .email-dialog::backdrop {
+		animation: none;
+	}
+	html:has(dialog[open]) {
+		overflow: hidden;
+	}
+	.email-close {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		display: inline-flex;
+		width: 2.5rem;
+		height: 2.5rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		color: var(--muted-foreground);
+		cursor: pointer;
+	}
+	.email-close:hover {
+		background: var(--secondary);
+		color: var(--foreground);
+	}
+	.email-dialog [data-copy-done].is-on {
+		display: inline-flex;
+	}
+	.email-dialog [data-copy-idle].is-off {
+		display: none;
+	}
+</style>
+
+<script>
+	// Delegated once, so it keeps working after client-side page swaps (the dialog is part of each page).
+	const dialog = () => document.getElementById("email-dialog") as HTMLDialogElement | null;
+	let reset: number | undefined;
+
+	document.addEventListener("click", (event) => {
+		const target = event.target as Element;
+		const opener = target.closest<HTMLElement>("[data-email-open]");
+		const d = dialog();
+		if (!d) return;
+		if (opener) {
+			const subject = encodeURIComponent(opener.dataset.subject || "Hello JPL Innovation");
+			const email = d.dataset.email!;
+			d.querySelector<HTMLAnchorElement>("[data-email-gmail]")!.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${email}&su=${subject}`;
+			d.querySelector<HTMLAnchorElement>("[data-email-mailto]")!.href = `mailto:${email}?subject=${subject}`;
+			showCopy(d, "idle");
+			d.showModal();
+			return;
+		}
+		if (!d.open) return;
+		if (target.closest("[data-email-close]") || target === d) {
+			// (a click on the dialog's own box, outside its padding box, is a click on the backdrop)
+			if (target === d) {
+				const r = d.getBoundingClientRect();
+				if (event.clientX >= r.left && event.clientX <= r.right && event.clientY >= r.top && event.clientY <= r.bottom) return;
+			}
+			d.close();
+			return;
+		}
+		if (target.closest("[data-email-copy]")) {
+			navigator.clipboard.writeText(d.dataset.email!).then(
+				() => showCopy(d, "done"),
+				() => showCopy(d, "failed"),
+			);
+		}
+	});
+
+	function showCopy(d: HTMLElement, state: "idle" | "done" | "failed") {
+		window.clearTimeout(reset);
+		d.querySelector("[data-copy-done]")!.classList.toggle("is-on", state === "done");
+		d.querySelector("[data-copy-idle]")!.classList.toggle("is-off", state === "done");
+		d.querySelector("[data-copy-failed]")!.classList.toggle("hidden", state !== "failed");
+		if (state !== "idle") reset = window.setTimeout(() => showCopy(d, "idle"), 2200);
+	}
+</script>

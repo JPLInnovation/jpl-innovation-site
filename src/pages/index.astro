@@ -7,7 +7,7 @@
  * wall come from src/text/projects/*.md, the people at the table from src/text/members/*.md.
  */
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import ContactDialog from "@/components/contact-dialog";
+import EmailButton from "@/components/EmailButton.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import Studio from "@/components/Studio.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -193,7 +193,7 @@ const organization = {
 				<a href={`mailto:${site.email}`} class="studio-inline-link">{site.email}</a>{contact.after}
 			</p>
 			<div class="flex flex-wrap items-center gap-3">
-				<ContactDialog client:idle label={contact.button} subject={contact.subject} />
+				<EmailButton label={contact.button} subject={contact.subject} />
 				<button type="button" class="studio-restart" data-studio-restart>{studio.backToStart} <span aria-hidden="true">↺</span></button>
 			</div>
 			<nav aria-label={footer.pagesHeading} class="studio-footer-links">
