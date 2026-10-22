@@ -49,8 +49,11 @@ const splash = splashFor(Astro.url.pathname);
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
 		{hasCanonical && <meta property="og:url" content={canonical} />}
-		<meta property="og:image" content={new URL("/assets/logo.jpg", Astro.site ?? Astro.url)} />
-		<meta name="twitter:card" content="summary" />
+		<meta property="og:image" content={new URL("/assets/og-studio.jpg", Astro.site ?? Astro.url)} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content="The JPL Innovation logo over the studio: a desk with a lamp and a monitor." />
+		<meta name="twitter:card" content="summary_large_image" />
 		<title>{title}</title>
 		<slot name="head" />
 		<link rel="preload" href={archivoLatin} as="font" type="font/woff2" crossorigin />
