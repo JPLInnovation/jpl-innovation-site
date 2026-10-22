@@ -123,7 +123,7 @@ and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `
   middle of each scene. It turns by heading and tilt (never by sliding a look-at point), so a 180° turn is clean.
 - **Lights:** the room carries 8 (two hemisphere, the camera's key, fill and rim, the desk lamp, and two point lights that slide between scenes: the glow of what the camera is on, and a ceiling light above it; `src/lib/studio/lights.ts`). A point light costs every lit pixel, so the room used to be 14. Count them, draw calls and triangles with `window.__stage` in the console (`?quality=high`).
 - **No hitches:** every shader is built before the first frame and again after the robot and drone CAD load (`ctx.precompile()`), the live screens redraw about 20 times a second, and while the page moves faster than about 1.5 scenes a second the camera's hold at each scene gives way, so a click on the ruler or a link to `/#contact` is one flight, not a stop at every scene on the way.
-- **Read mode** (under 768 px wide or 560 px tall, reduced motion, Settings → Motion → Read mode, no WebGL): the same text as one page, with
+- **Read mode** (under 768 px wide or 560 px tall, taller than wide, reduced motion, Settings → Motion → Read mode, no WebGL): the same text as one page, with
   a picture of each scene: `public/studio/scenes/`, made by `python scripts/studio-stills.py` against a preview
   (`?studio=capture` hides the text; `window.__studio.go(n)` jumps the camera).
 - **Screens:** `python scripts/studio-screens.py` refreshes the build guide and site screenshots on the monitor and laptop.
@@ -136,7 +136,7 @@ and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `
 panel faces, shared with the studio). The stage is pinned while the page scrolls past it, so the wall moves with native
 scrolling and nothing is hijacked; the panel in front lifts and its project's card shows. Click a panel (or press the
 card) to open the project: the camera pushes into it, then the page changes. Left and Right arrows and the ruler move
-along the wall. Under it is the plain list of the same projects as ordinary links (and read mode's whole page: under 768 px wide or 560 px tall,
+along the wall. Under it is the plain list of the same projects as ordinary links (and read mode's whole page: under 768 px wide or 560 px tall, taller than wide,
 reduced motion, no WebGL, or Settings). A new project is one file in `src/text/projects/` and the wall grows by itself.
 
 # Accessibility and how it is checked

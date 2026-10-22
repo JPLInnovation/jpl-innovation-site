@@ -8,7 +8,7 @@
  * scrollbar is hidden, the wheel, trackpad, keyboard and back button work as always); after the last scene the camera
  * curves back to the first and the scroll resets to the top at a frame where both look the same: the loop.
  *
- * Read mode (the same text as one ordinary vertical page, no 3D, no loop): screens under 768 px wide or 560 px tall, reduced motion, no
+ * Read mode (the same text as one ordinary vertical page, no 3D, no loop): screens under 768 px wide or 560 px tall, or taller than wide, reduced motion, no
  * WebGL, a device too slow for the room, or chosen by the visitor (localStorage "studio-mode" = "read"). Decided
  * before the first paint, so nothing jumps.
  *
@@ -38,7 +38,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 <div class="studio" data-studio data-read data-loop={loop ? "" : undefined} style={`--scenes: ${scenes.length}`}>
 	<script is:inline data-astro-rerun>
 		// The page starts in read mode (so without JavaScript it is an ordinary page); the full studio is switched on
-		// here, before the first paint, unless this is a phone or a very short window, reduced motion, or read mode chosen in Settings.
+		// here, before the first paint, unless this is a phone, a very short window or a portrait one, reduced motion, or read mode chosen in Settings.
 		(() => {
 			const el = document.currentScript.parentElement;
 			let mode = null;
@@ -49,7 +49,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				mode === "read" ||
 				document.documentElement.classList.contains("read-mode") ||
 				document.documentElement.classList.contains("reduce-motion") ||
-				matchMedia("(max-width: 767px), (max-height: 559px), (prefers-reduced-motion: reduce)").matches;
+				matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
 			if (!read) {
 				el.removeAttribute("data-read");
 				document.documentElement.classList.add("studio-on");
