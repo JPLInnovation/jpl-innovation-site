@@ -35,8 +35,8 @@ export const SHOTS: Record<string, SceneShot> = {
 	 * turned a little left so the panels sit to the right of the text.
 	 */
 	wall: { id: "wall", camera: [3.6, 1.45, 1.0], target: [8.6, 1.45, -0.2] },
-	/** 5 Standards: the whiteboard and the shelf of binders, on the back wall. */
-	standards: { id: "standards", camera: [5.7, 1.5, 3.2], target: [5.7, 1.45, 6.4] },
+	/** 5 Standards: the whiteboard and the shelf of binders, on the back wall (the board sits right of centre, clear of the card on the left). */
+	standards: { id: "standards", camera: [6.0, 1.5, 2.6], target: [6.0, 1.45, 6.4] },
 	/** 6 Timeline: the long window, a year on each pane. */
 	timeline: { id: "timeline", camera: [-0.3, 1.5, 0.9], target: [-0.3, 1.6, 6.4] },
 	/** 7 The crew: the chairs at the table, a portrait screen behind each. */

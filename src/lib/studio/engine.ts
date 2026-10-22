@@ -23,6 +23,11 @@ const HOLD = 0.22; // share of each scene's scroll, either side of it, where the
 const LAMP_TIME = 1.6; // seconds for the desk lamp to come on
 const OPEN_TIME = 3.6; // seconds of the opening shot: the camera starts back from the desk and slowly pushes in
 const OPEN_BACK = 0.9; // metres it starts back
+// Every scene is framed for a 16:10 window at 42° (a horizontal field of about 63.6°). On a narrower window the vertical
+// field widens (up to a limit) so the horizontal field stays the same: the composition holds instead of being cropped.
+const FOV = 42;
+const REF_ASPECT = 1.6;
+const MAX_FOV = 68;
 
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, x));
 const smootherstep = (x: number) => x * x * x * (x * (6 * x - 15) + 10);
@@ -116,7 +121,17 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 		}
 	};
 
+	const fit = () => {
+		const aspect = camera.aspect || REF_ASPECT;
+		const fov = aspect >= REF_ASPECT ? FOV : Math.min(MAX_FOV, (2 * Math.atan((Math.tan((FOV * Math.PI) / 360) * REF_ASPECT) / aspect) * 180) / Math.PI);
+		if (Math.abs(camera.fov - fov) > 0.01) {
+			camera.fov = fov;
+			camera.updateProjectionMatrix();
+		}
+	};
+
 	const step = (dt: number) => {
+		fit();
 		clock += dt;
 		const lean = 1 - Math.exp(-4 * dt);
 		px += (pxT - px) * lean;

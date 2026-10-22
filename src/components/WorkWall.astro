@@ -5,7 +5,7 @@
  * front lifts and its project's card shows beside it. Click a panel, or the card, to open the project; arrow keys and
  * the ruler move along the wall.
  *
- * Read mode (the ordinary heading and list, no 3D): screens under 768 px, reduced motion, no WebGL, or chosen in
+ * Read mode (the ordinary heading and list, no 3D): screens under 768 px wide or 560 px tall, reduced motion, no WebGL, or chosen in
  * Settings. The projects are always also in the plain list under the wall (work.astro), so every link is real HTML.
  */
 import type { CollectionEntry } from "astro:content";
@@ -25,14 +25,14 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 <section class="wall" data-wall data-read style={`--n: ${projects.length}`}>
 	<script is:inline data-astro-rerun>
 		// Starts in read mode (an ordinary heading and list, so it works without JavaScript); the full wall is switched
-		// on here, before the first paint, unless this is a phone, reduced motion, or read mode chosen in Settings.
+		// on here, before the first paint, unless this is a phone or a very short window, reduced motion, or read mode chosen in Settings.
 		(() => {
 			const el = document.currentScript.parentElement;
 			const root = document.documentElement;
 			const read =
 				root.classList.contains("read-mode") ||
 				root.classList.contains("reduce-motion") ||
-				matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
+				matchMedia("(max-width: 767px), (max-height: 559px), (prefers-reduced-motion: reduce)").matches;
 			if (!read) el.removeAttribute("data-read");
 		})();
 	</script>
