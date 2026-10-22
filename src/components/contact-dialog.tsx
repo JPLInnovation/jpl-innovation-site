@@ -19,8 +19,11 @@ type Props = {
 	subject?: string;
 	/** Text on the button that opens the dialog. */
 	label?: string;
-	/** How the opening button looks. "inverse" is a white button for coloured backgrounds. */
-	look?: "ink" | "signal" | "link" | "inverse";
+	/**
+	 * How the opening button looks. "inverse" is a white button for coloured backgrounds; "glass" is the frosted pill
+	 * at the right of the header.
+	 */
+	look?: "ink" | "signal" | "link" | "inverse" | "glass";
 	className?: string;
 };
 
@@ -61,6 +64,16 @@ export default function ContactDialog({
 						)}
 					>
 						{label}
+					</button>
+				) : look === "glass" ? (
+					<button
+						type="button"
+						className={cn(
+							"glass press inline-flex h-11 cursor-pointer items-center gap-2 rounded-full px-4 text-[15px] font-semibold text-foreground transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_0_0_1px_var(--ring),0_8px_24px_-12px_var(--ring)]",
+							className,
+						)}
+					>
+						<Mail className="size-4" aria-hidden="true" /> {label}
 					</button>
 				) : (
 					<Button

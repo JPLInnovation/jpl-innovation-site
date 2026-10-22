@@ -42,6 +42,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			const read =
 				mode === "read" ||
 				document.documentElement.classList.contains("read-mode") ||
+				document.documentElement.classList.contains("reduce-motion") ||
 				matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
 			if (read) el.setAttribute("data-read", "");
 			else document.documentElement.classList.add("studio-on");
