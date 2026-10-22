@@ -173,8 +173,5 @@ export default function createWall(ctx: StageContext, projects: PanelProject[], 
 			glowMaterial.needsUpdate = true;
 			layout();
 		},
-		dispose() {
-			group.removeFromParent();
-		},
 	};
 }
