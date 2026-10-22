@@ -128,3 +128,13 @@ and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `
   (`?studio=capture` hides the text; `window.__studio.go(n)` jumps the camera).
 - **Screens:** `python scripts/studio-screens.py` refreshes the build guide and site screenshots on the monitor and laptop.
 - `/studio/` (the Phase 1 prototype) redirects to `/`.
+
+# Work page: the project wall
+
+`/work/` is the home studio's project wall at full size: `src/components/WorkWall.astro` (page, scroll, keys, clicks),
+`src/lib/three/models/work-wall.ts` (the panels on an arc, one lit edge, no lights), `src/lib/studio/panels.ts` (the
+panel faces, shared with the studio). The stage is pinned while the page scrolls past it, so the wall moves with native
+scrolling and nothing is hijacked; the panel in front lifts and its project's card shows. Click a panel (or press the
+card) to open the project: the camera pushes into it, then the page changes. Left and Right arrows and the ruler move
+along the wall. Under it is the plain list of the same projects as ordinary links (and read mode's whole page: under 768 px,
+reduced motion, no WebGL, or Settings). A new project is one file in `src/text/projects/` and the wall grows by itself.

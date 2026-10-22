@@ -1,0 +1,379 @@
+---
+/**
+ * The Work page's project wall: the projects as panels on a curved wall (src/lib/three/models/work-wall.ts). The page's
+ * own scroll moves the wall sideways while the stage stays pinned (native scrolling, nothing hijacked); the panel in
+ * front lifts and its project's card shows beside it. Click a panel, or the card, to open the project; arrow keys and
+ * the ruler move along the wall.
+ *
+ * Read mode (the ordinary heading and list, no 3D): screens under 768 px, reduced motion, no WebGL, or chosen in
+ * Settings. The projects are always also in the plain list under the wall (work.astro), so every link is real HTML.
+ */
+import type { CollectionEntry } from "astro:content";
+import { ArrowRight } from "lucide-react";
+import PageIntro from "./PageIntro.astro";
+import StatusTag from "./StatusTag.astro";
+import { copyUpTo } from "@/lib/images";
+import { workPage, projectCard, workWall } from "@/text/work";
+
+interface Props {
+	projects: CollectionEntry<"work">[];
+}
+const { projects } = Astro.props;
+const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge, href: `/work/${p.id}/` }));
+---
+
+<section class="wall" data-wall style={`--n: ${projects.length}`}>
+	<script is:inline>
+		// Read mode or the full wall, decided before the first paint.
+		(() => {
+			const el = document.currentScript.parentElement;
+			const root = document.documentElement;
+			const read =
+				root.classList.contains("read-mode") ||
+				root.classList.contains("reduce-motion") ||
+				matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
+			if (read) el.setAttribute("data-read", "");
+		})();
+	</script>
+	<div class="wall-read">
+		<PageIntro title={workPage.title} lede={workPage.lede} />
+	</div>
+	<div class="wall-stage">
+		<canvas role="img" aria-label={workWall.canvasLabel}></canvas>
+		<div class="wall-head">
+			<h1 class="font-wide text-[clamp(2.4rem,5vw,4.25rem)] font-[880] leading-[0.98]">{workPage.title}</h1>
+			<p>{workPage.lede}</p>
+		</div>
+		<div class="wall-cards" aria-hidden="true">
+			{
+				projects.map((p, i) => (
+					<article class="wall-card glass" data-wall-card={i}>
+						{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}
+						<p class="wall-card-title">{p.data.title}</p>
+						<p class="wall-card-text">{p.data.description}</p>
+						<a href={`/work/${p.id}/`} tabindex="-1" class="wall-card-link">
+							{`${projectCard.readMore} ${p.data.title}`}
+							<ArrowRight className="size-4" aria-hidden="true" />
+						</a>
+					</article>
+				))
+			}
+		</div>
+		<p class="wall-hint" aria-hidden="true">{workWall.hint}</p>
+		<nav class="wall-ruler" aria-label={workWall.rulerLabel}>
+			<ol>
+				{
+					projects.map((p, i) => (
+						<li>
+							<button type="button" data-wall-goto={i} aria-label={p.data.title}>
+								<span class="tick" aria-hidden="true" />
+							</button>
+						</li>
+					))
+				}
+			</ol>
+			<p class="wall-ruler-label" aria-hidden="true"><span data-wall-index>01</span> <span data-wall-name>{projects[0]?.data.title}</span></p>
+		</nav>
+	</div>
+	<script type="application/json" data-wall-projects set:html={JSON.stringify(panels)} />
+</section>
+
+<style is:global>
+	.wall:not([data-read]) {
+		position: relative;
+		height: calc(100svh + (var(--n) - 1) * 70svh);
+		margin-top: -4.5rem;
+	}
+	.wall:not([data-read]) .wall-read {
+		display: none;
+	}
+	.wall[data-read] .wall-stage {
+		display: none;
+	}
+	.wall-stage {
+		position: sticky;
+		top: 0;
+		height: 100svh;
+		overflow: hidden;
+	}
+	.wall-stage canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		transition: opacity 1s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	.wall[data-live] canvas {
+		opacity: 1;
+	}
+	.wall[data-live] canvas[data-hover] {
+		cursor: pointer;
+	}
+	.wall-head {
+		position: absolute;
+		top: 6.25rem;
+		left: clamp(1rem, 5vw, 4.5rem);
+		display: flex;
+		max-width: 19rem;
+		flex-direction: column;
+		gap: 0.75rem;
+		pointer-events: none;
+	}
+	.wall-head p {
+		font-size: 1.05rem;
+		color: var(--muted-foreground);
+	}
+	.wall-cards {
+		position: absolute;
+		right: clamp(1rem, 5vw, 4.5rem);
+		bottom: 6.5rem;
+		width: min(21rem, calc(100vw - 2rem));
+	}
+	.wall-card {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		display: none;
+		width: 100%;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.6rem;
+		padding: 1.25rem 1.4rem;
+		border-radius: 1rem;
+	}
+	.wall-card[data-active] {
+		display: flex;
+		animation: wall-card-in 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	@keyframes wall-card-in {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+	}
+	html.reduce-motion .wall-card[data-active] {
+		animation: none;
+	}
+	.wall-card-title {
+		font-stretch: 125%;
+		font-weight: 800;
+		font-size: 1.35rem;
+		line-height: 1.1;
+	}
+	.wall-card-text {
+		font-size: 0.95rem;
+		color: color-mix(in oklab, var(--foreground) 82%, transparent);
+	}
+	.wall-card-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
+		font-weight: 650;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+	.wall-hint {
+		position: absolute;
+		left: clamp(1rem, 5vw, 4.5rem);
+		bottom: 2.1rem;
+		font: 500 12px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.03em;
+		color: #1d4ed8;
+	}
+	.dark .wall-hint {
+		color: #67e8f9;
+	}
+	.wall-ruler {
+		position: absolute;
+		left: 50%;
+		bottom: 1.25rem;
+		transform: translateX(-50%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+	}
+	.wall-ruler ol {
+		display: flex;
+		align-items: flex-end;
+	}
+	.wall-ruler button {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		width: 2.25rem;
+		height: 2rem;
+		cursor: pointer;
+	}
+	.wall-ruler .tick {
+		width: 2px;
+		height: 0.75rem;
+		border-radius: 1px;
+		background: color-mix(in oklab, var(--foreground) 45%, transparent);
+		transition:
+			height 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+			background-color 0.4s;
+	}
+	.wall-ruler button:hover .tick {
+		background: var(--foreground);
+	}
+	.wall-ruler button[aria-current] .tick {
+		height: 1.5rem;
+		background: var(--accent);
+	}
+	.wall-ruler-label {
+		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.04em;
+		color: var(--muted-foreground);
+	}
+	.wall-ruler-label [data-wall-index] {
+		color: var(--accent);
+	}
+	@media (max-width: 1100px) {
+		.wall-head {
+			max-width: 15rem;
+		}
+		.wall-cards {
+			width: min(18rem, calc(100vw - 2rem));
+		}
+	}
+</style>
+
+<script>
+	import { navigate } from "astro:transitions/client";
+	import { afterIntro } from "@/lib/splash";
+
+	let cleanup: (() => void) | undefined;
+
+	const clamp = (x: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
+	const smoother = (x: number) => x * x * x * (x * (6 * x - 15) + 10);
+	/** The wall lingers on each panel: it only moves in the middle of each stretch of scroll. */
+	const HOLD = 0.2;
+	const magnet = (pos: number) => {
+		const i = Math.floor(pos);
+		return i + smoother(clamp((pos - i - HOLD) / (1 - 2 * HOLD)));
+	};
+
+	function init() {
+		cleanup?.();
+		cleanup = undefined;
+		const root = document.querySelector<HTMLElement>("[data-wall]");
+		if (!root || root.hasAttribute("data-read")) return;
+
+		const projects = JSON.parse(root.querySelector("[data-wall-projects]")!.textContent!) as { title: string; img: string; badge?: string; href: string }[];
+		const n = projects.length;
+		if (n < 2) {
+			root.setAttribute("data-read", "");
+			return;
+		}
+		const stage = root.querySelector<HTMLElement>(".wall-stage")!;
+		const canvas = stage.querySelector("canvas")!;
+		const cards = [...root.querySelectorAll<HTMLElement>("[data-wall-card]")];
+		const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-wall-goto]")];
+		const rulerIndex = root.querySelector<HTMLElement>("[data-wall-index]")!;
+		const rulerName = root.querySelector<HTMLElement>("[data-wall-name]")!;
+
+		// Offsets, measured on resize only. The wall's position is the page's scroll through the pinned stretch.
+		let top = 0;
+		let range = 1;
+		const measure = () => {
+			top = root.getBoundingClientRect().top + scrollY;
+			range = Math.max(1, root.offsetHeight - stage.offsetHeight);
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(root);
+		resize.observe(document.documentElement);
+		const position = () => magnet(clamp((scrollY - top) / range) * (n - 1));
+		const goTo = (index: number) => scrollTo({ top: top + (clamp(index, 0, n - 1) / (n - 1)) * range, behavior: document.documentElement.classList.contains("reduce-motion") ? "instant" : "smooth" });
+
+		type Wall = import("@/lib/three/models/work-wall").WallModel;
+		let model: Wall | undefined;
+		let cancelled = false;
+		let dispose: (() => void) | undefined;
+		let leaving = false;
+
+		const onFront = (index: number) => {
+			cards.forEach((card, i) => (i === index ? card.setAttribute("data-active", "") : card.removeAttribute("data-active")));
+			buttons.forEach((b, i) => (i === index ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
+			rulerIndex.textContent = String(index + 1).padStart(2, "0");
+			rulerName.textContent = projects[index].title;
+		};
+		onFront(0);
+
+		const onScroll = () => model?.setTarget(position());
+		addEventListener("scroll", onScroll, { passive: true });
+
+		const onKey = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable], dialog, [popover]")) return;
+			if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+			const rect = stage.getBoundingClientRect();
+			if (rect.top > innerHeight * 0.5 || rect.bottom < innerHeight * 0.5) return;
+			event.preventDefault();
+			goTo((model?.front() ?? 0) + (event.key === "ArrowRight" ? 1 : -1));
+		};
+		addEventListener("keydown", onKey);
+
+		const onMove = (event: PointerEvent) => {
+			if (!model || event.pointerType === "touch") return;
+			const rect = canvas.getBoundingClientRect();
+			model.setPointer(((event.clientX - rect.left) / rect.width) * 2 - 1, ((event.clientY - rect.top) / rect.height) * 2 - 1);
+			canvas.toggleAttribute("data-hover", model.pick(event.clientX, event.clientY) >= 0);
+		};
+		const onLeave = () => {
+			model?.setPointer(null);
+			canvas.removeAttribute("data-hover");
+		};
+		canvas.addEventListener("pointermove", onMove);
+		canvas.addEventListener("pointerleave", onLeave);
+		const onClick = (event: MouseEvent) => {
+			const goto = (event.target as Element).closest<HTMLElement>("[data-wall-goto]");
+			if (goto) return goTo(Number(goto.dataset.wallGoto));
+			if (!model || leaving || event.target !== canvas) return;
+			const hit = model.pick(event.clientX, event.clientY);
+			if (hit < 0) return;
+			if (hit !== model.front()) return goTo(hit);
+			leaving = true;
+			model.leave().then(() => navigate(projects[hit].href)).finally(() => (leaving = false));
+		};
+		root.addEventListener("click", onClick);
+
+		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/work-wall"), afterIntro()])
+			.then(async ([stageModule, wall]) => {
+				if (cancelled) return;
+				dispose = await stageModule.mountStage(
+					stage,
+					canvas,
+					(ctx) => {
+						model = wall.default(ctx, projects, onFront);
+						model.setTarget(position());
+						return model;
+					},
+					wall.view,
+				);
+				if (cancelled) dispose();
+				else root.setAttribute("data-live", "");
+			})
+			.catch((error) => {
+				console.warn("Work wall has no 3D, showing the list.", error);
+				if (!cancelled) root.setAttribute("data-read", "");
+			});
+
+		cleanup = () => {
+			cancelled = true;
+			removeEventListener("scroll", onScroll);
+			removeEventListener("keydown", onKey);
+			resize.disconnect();
+			dispose?.();
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => {
+		cleanup?.();
+		cleanup = undefined;
+	});
+</script>
