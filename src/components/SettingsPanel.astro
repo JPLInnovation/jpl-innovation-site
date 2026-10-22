@@ -1,0 +1,195 @@
+---
+/**
+ * Settings: the gear in the header opens a small glass panel (the browser's own popover: Escape and a click outside
+ * close it, focus goes back to the gear).
+ *
+ *   Theme      Light / Dark (localStorage "theme", the same as before)
+ *   Motion     Full / Reduced / Read mode (localStorage "motion"; src/lib/prefs.ts); the page reloads to apply it
+ *   Sound      Off; "On" is there but disabled until the sounds exist
+ *   3D quality Auto / High / Low (localStorage "quality"; the 3D stage's starting tier); the page reloads
+ *
+ * Words: src/text/site.ts (`settings`).
+ */
+import { Settings } from "lucide-react";
+import { settings as text } from "@/text/site";
+
+const groups = [
+	{ name: "theme", label: text.theme.label, options: [["light", text.theme.light], ["dark", text.theme.dark]] },
+	{ name: "motion", label: text.motion.label, options: [["full", text.motion.full], ["reduced", text.motion.reduced], ["read", text.motion.read]], note: text.motion.note },
+	{ name: "sound", label: text.sound.label, options: [["off", text.sound.off], ["on", text.sound.on]], note: text.sound.note, disabled: ["on"] },
+	{ name: "quality", label: text.quality.label, options: [["auto", text.quality.auto], ["high", text.quality.high], ["low", text.quality.low]], note: text.quality.note },
+] as const;
+---
+
+<button
+	type="button"
+	popovertarget="site-settings"
+	class="press inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+>
+	<span class="sr-only">{text.button}</span>
+	<Settings className="size-5" strokeWidth={1.75} aria-hidden="true" />
+</button>
+
+<div id="site-settings" popover class="settings-panel glass" data-settings aria-labelledby="site-settings-heading">
+	<div class="flex items-center justify-between gap-4">
+		<h2 id="site-settings-heading" class="font-semiwide text-lg font-[760]">{text.heading}</h2>
+		<button type="button" popovertarget="site-settings" popovertargetaction="hide" class="press inline-flex size-9 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground">
+			<span class="sr-only">{text.close}</span>
+			<span aria-hidden="true">✕</span>
+		</button>
+	</div>
+	{
+		groups.map((g) => (
+			<fieldset class="flex flex-col gap-2">
+				<legend class="settings-label mb-2">{g.label}</legend>
+				<div class="settings-segments" style={`--count: ${g.options.length}`}>
+					{g.options.map(([value, label]) => (
+						<label>
+							<input type="radio" name={`setting-${g.name}`} value={value} disabled={"disabled" in g && (g.disabled as readonly string[]).includes(value)} />
+							<span>{label}</span>
+						</label>
+					))}
+				</div>
+				{"note" in g && <p class="text-[13px] leading-snug text-muted-foreground">{g.note}</p>}
+			</fieldset>
+		))
+	}
+</div>
+
+<style is:global>
+	.settings-panel {
+		position: fixed;
+		inset: 4.9rem clamp(1rem, 4vw, 2.5rem) auto auto;
+		margin: 0;
+		width: min(21rem, calc(100vw - 2rem));
+		max-height: calc(100svh - 6rem);
+		overflow: auto;
+		padding: 1.25rem;
+		border-radius: 1rem;
+		color: var(--foreground);
+		display: none;
+		flex-direction: column;
+		gap: 1.1rem;
+	}
+	.settings-panel:popover-open {
+		display: flex;
+	}
+	@media (prefers-reduced-motion: no-preference) {
+		html:not(.reduce-motion) .settings-panel:popover-open {
+			animation: settings-in 0.35s var(--move-ease);
+		}
+	}
+	@keyframes settings-in {
+		from {
+			opacity: 0;
+			transform: translateY(-6px) scale(0.98);
+		}
+	}
+	.settings-label {
+		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.06em;
+		color: var(--muted-foreground);
+	}
+	/* Segmented choices: radio buttons underneath, so arrow keys move between them. */
+	.settings-segments {
+		display: grid;
+		grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+		gap: 4px;
+		padding: 4px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--foreground) 8%, transparent);
+	}
+	.settings-segments label {
+		position: relative;
+	}
+	.settings-segments input {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+	.settings-segments input:disabled {
+		cursor: not-allowed;
+	}
+	.settings-segments span {
+		display: flex;
+		min-height: 36px;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--muted-foreground);
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+	}
+	.settings-segments input:checked + span {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+	.settings-segments input:disabled + span {
+		opacity: 0.45;
+	}
+	.settings-segments input:focus-visible + span {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+</style>
+
+<script>
+	import { MOTION_KEY, QUALITY_KEY } from "@/lib/prefs";
+
+	const read = (key: string) => {
+		try {
+			return localStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	};
+	const write = (key: string, value: string | null) => {
+		try {
+			if (value === null) localStorage.removeItem(key);
+			else localStorage.setItem(key, value);
+		} catch {}
+	};
+
+	/** Tick the choices that are in force now. */
+	function sync(panel: HTMLElement) {
+		const current: Record<string, string> = {
+			theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
+			motion: read(MOTION_KEY) ?? "full",
+			sound: "off",
+			quality: read(QUALITY_KEY) ?? "auto",
+		};
+		for (const [name, value] of Object.entries(current)) {
+			const input = panel.querySelector<HTMLInputElement>(`input[name="setting-${name}"][value="${value}"]`);
+			if (input) input.checked = true;
+		}
+	}
+
+	// Delegated, so it keeps working after client-side page swaps (the header is re-rendered each time).
+	document.addEventListener(
+		"toggle",
+		(event) => {
+			const panel = event.target as HTMLElement;
+			if (panel.matches?.("[data-settings]") && (event as ToggleEvent).newState === "open") sync(panel);
+		},
+		true,
+	);
+	document.addEventListener("change", (event) => {
+		const input = event.target as HTMLInputElement;
+		if (!input.closest?.("[data-settings]")) return;
+		const name = input.name.replace("setting-", "");
+		if (name === "theme") {
+			document.documentElement.classList.toggle("dark", input.value === "dark");
+			write("theme", input.value);
+		} else if (name === "motion") {
+			write(MOTION_KEY, input.value === "full" ? null : input.value);
+			location.reload(); // everything that animates reads it on load
+		} else if (name === "quality") {
+			write(QUALITY_KEY, input.value === "auto" ? null : input.value);
+			location.reload();
+		}
+	});
+</script>

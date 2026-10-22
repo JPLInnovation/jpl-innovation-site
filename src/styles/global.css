@@ -220,6 +220,15 @@
 			scroll-behavior: auto !important;
 		}
 	}
+	/* The same when the visitor picks Reduced or Read mode in Settings (html.reduce-motion, set in BaseLayout). */
+	html.reduce-motion *,
+	html.reduce-motion *::before,
+	html.reduce-motion *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
 }
 
 /* Markdown bodies (members, cybersecurity). Unlayered so it beats the typography plugin's defaults. */
@@ -393,4 +402,48 @@
 		background: none;
 		color: CanvasText;
 	}
+}
+
+/*
+ * Glass (documentary UI kit): background blur over whatever is behind, a thin light edge, a navy tint. Used sparingly
+ * (no more than about four on screen: the header, the "Let's talk" button, an open panel, a scene card), because blur
+ * over live 3D costs GPU time. Text on glass stays 4.5:1 or more on both themes: the tint is strong enough that the
+ * scene behind never decides the contrast.
+ */
+@utility glass {
+	background-color: rgb(238 243 253 / 0.72);
+	border: 1px solid rgb(10 26 51 / 0.1);
+	box-shadow:
+		inset 0 1px 0 rgb(255 255 255 / 0.5),
+		0 16px 40px -22px rgb(16 42 90 / 0.45);
+	-webkit-backdrop-filter: blur(14px) saturate(1.4);
+	backdrop-filter: blur(14px) saturate(1.4);
+	&:where(.dark *, .dark) {
+		background-color: rgb(8 16 42 / 0.62);
+		border-color: rgb(255 255 255 / 0.14);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.08),
+			0 18px 44px -22px rgb(0 0 0 / 0.75);
+	}
+}
+@media (forced-colors: active) {
+	.glass {
+		backdrop-filter: none;
+		background: Canvas;
+		border-color: CanvasText;
+	}
+}
+
+/*
+ * Page changes (Astro's view transitions): the content cross-fades on the site's one move: the same ease-in-out as the
+ * camera and the logo, shorter, since it's a cut rather than a camera move. The header and the star sky stay.
+ */
+:root {
+	--move-ease: cubic-bezier(0.65, 0, 0.35, 1);
+	--move-duration: 1.2s;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 0.55s;
+	animation-timing-function: var(--move-ease);
 }

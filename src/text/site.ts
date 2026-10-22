@@ -15,14 +15,39 @@ export const site = {
 		"JPL Innovation is a student-founded engineering startup in Ho Chi Minh City: robotics and mechanical design, embedded systems and drones, networking and cybersecurity, and web development.",
 } as const;
 
-/** Top menu. "Contact" jumps to the contact box at the bottom of the current page. */
+/**
+ * Top menu, in the middle of the header. Services and Contact moved: Services is a scene of the home studio (and in
+ * the footer), and Contact is the "Let's talk" button at the right of the header (`talk` below).
+ */
 export const menu = [
-	{ label: "Services", href: "/#services" },
 	{ label: "Work", href: "/work/" },
 	{ label: "Members", href: "/members/" },
 	{ label: "About", href: "/about/" },
-	{ label: "Contact", href: "#contact" },
 ];
+
+/** The glass button at the far right of the header: opens the email pop-up from any page. */
+export const talk = {
+	label: "Let’s talk",
+	subject: "Hello JPL Innovation",
+};
+
+/** The Settings panel (the gear in the header). */
+export const settings = {
+	button: "Settings",
+	heading: "Settings",
+	theme: { label: "Theme", light: "Light", dark: "Dark" },
+	motion: {
+		label: "Motion",
+		full: "Full",
+		reduced: "Reduced",
+		read: "Read mode",
+		/** Under the choices. */
+		note: "Read mode shows every page as one ordinary page: no 3D camera, no animation.",
+	},
+	sound: { label: "Sound", off: "Off", on: "On", note: "Sound comes later: room tone and the sounds of the bench, all recorded by us." },
+	quality: { label: "3D quality", auto: "Auto", high: "High", low: "Low", note: "Auto picks the best your device can draw smoothly." },
+	close: "Close settings",
+};
 
 export const footer = {
 	blurb:

@@ -1,8 +1,9 @@
 ---
 import Logo from "./Logo.astro";
-import ThemeToggle from "./ThemeToggle.astro";
-// Menu labels and links: src/text/site.ts (`menu`).
-import { menu as links } from "@/text/site";
+import SettingsPanel from "./SettingsPanel.astro";
+import ContactDialog from "./contact-dialog";
+// Menu labels and links, and the "Let's talk" button: src/text/site.ts (`menu`, `talk`).
+import { menu as links, talk } from "@/text/site";
 
 /** The most specific link that matches the current path (so /work/frc/ lights up "Work"). */
 const path = Astro.url.pathname.endsWith("/") ? Astro.url.pathname : `${Astro.url.pathname}/`;
@@ -11,35 +12,39 @@ const current = links
 	.sort((a, b) => b.href.length - a.href.length)[0]?.href;
 ---
 
-<!-- Always on screen. Once the page scrolls, the logo rolls into just its badge (Logo.astro) and back at the top. -->
+<!--
+	Always on screen. Logo at the left (once the page scrolls it rolls into just its badge, Logo.astro), the menu in the
+	middle, Settings and the glass "Let's talk" button at the right. Theme lives in Settings now.
+-->
 <header
 	data-site-header
 	class="site-header sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 data-[menu-open]:border-border/70 data-[menu-open]:bg-background/95 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/92"
 >
-	<div class="wrapper flex h-18 items-center justify-between gap-3">
-		<a href="/" class="press flex items-center rounded-md" aria-label="JPL Innovation home">
+	<div class="wrapper grid h-18 grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
+		<a href="/" class="press flex w-fit items-center rounded-md" aria-label="JPL Innovation home">
 			<Logo animated class="[--logo-h:2.75rem] sm:[--logo-h:3.5rem]" />
 		</a>
-		<div class="flex items-center gap-1 sm:gap-2">
-			<!-- Tablet and up: links inline -->
-			<nav aria-label="Main" class="hidden md:block">
-				<ul class="flex items-center">
-					{
-						links.map((l) => (
-							<li>
-								<a
-									href={l.href}
-									aria-current={l.href === current ? "page" : undefined}
-									class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-primary dark:after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100"
-								>
-									{l.label}
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</nav>
-			<ThemeToggle />
+		<!-- Tablet and up: links in the middle -->
+		<nav aria-label="Main" class="hidden md:block">
+			<ul class="flex items-center">
+				{
+					links.map((l) => (
+						<li>
+							<a
+								href={l.href}
+								aria-current={l.href === current ? "page" : undefined}
+								class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-primary dark:after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100"
+							>
+								{l.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		</nav>
+		<div class="flex items-center justify-end gap-1 sm:gap-2">
+			<SettingsPanel />
+			<ContactDialog client:idle look="glass" label={talk.label} subject={talk.subject} className="hidden sm:inline-flex" />
 			<!-- Phones and small tablets: menu button -->
 			<button
 				type="button"
@@ -77,6 +82,9 @@ const current = links
 					</li>
 				))
 			}
+			<li class="menu-item border-t py-4 sm:hidden" style={`--i: ${links.length}`}>
+				<ContactDialog client:idle look="glass" label={talk.label} subject={talk.subject} />
+			</li>
 		</ul>
 	</nav>
 </header>
