@@ -4,6 +4,7 @@ import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
 import IosTerminal from "@/components/IosTerminal.astro";
 import ContactSection from "@/components/ContactSection.astro";
+import NextChapter from "@/components/NextChapter.astro";
 import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
 import StatusTag from "@/components/StatusTag.astro";
@@ -81,5 +82,6 @@ const legend = [
 		</div>
 	</section>
 
+	<NextChapter current={"cybersecurity"} />
 	<ContactSection />
 </BaseLayout>

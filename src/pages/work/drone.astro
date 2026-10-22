@@ -8,6 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { backToWork } from "@/text/work";
 import DroneIllustration from "@/components/DroneIllustration.astro";
 import ContactSection from "@/components/ContactSection.astro";
+import NextChapter from "@/components/NextChapter.astro";
 import ModelViewer from "@/components/model-viewer";
 import PartsTable from "@/components/parts-table";
 import Showcase from "@/components/showcase";
@@ -286,5 +287,6 @@ const stills = Object.fromEntries(
 		</div>
 	</section>
 
+	<NextChapter current={"drone"} />
 	<ContactSection />
 </BaseLayout>

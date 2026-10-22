@@ -20,3 +20,11 @@ export const projectCard = {
 
 /** The "← All work" link at the top of each project page. */
 export const backToWork = "All work";
+
+/** The card at the end of each project page, leading to the next project (the last leads back to the first). */
+export const nextChapter = {
+	label: "Next chapter",
+	/** When the project is the last one and the card leads back to the first. */
+	loopLabel: "Back to the first chapter",
+	open: "Read about",
+};
