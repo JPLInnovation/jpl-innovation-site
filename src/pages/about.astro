@@ -17,7 +17,23 @@ const sectionHeading = "font-wide text-3xl font-[850] md:text-4xl";
 ---
 
 <BaseLayout title={aboutPage.seoTitle} description={aboutPage.seoDescription}>
-	<PageIntro title={aboutPage.title} lede={aboutPage.lede} />
+	<!-- The opening statement, over slow footage: the studio's desk under its lamp (the same render as the home page's read mode). -->
+	<div class="about-hero relative isolate overflow-hidden">
+		<img
+			class="about-footage"
+			src="/studio/scenes/sketch-800.webp"
+			srcset="/studio/scenes/sketch-800.webp 800w, /studio/scenes/sketch.webp 1600w"
+			sizes="100vw"
+			width="1600"
+			height="900"
+			alt=""
+			aria-hidden="true"
+			fetchpriority="low"
+		/>
+		<!-- A scrim from the text's side, so the words keep their contrast over the brightest part of the picture. -->
+		<div class="about-scrim" aria-hidden="true"></div>
+		<PageIntro title={aboutPage.title} lede={aboutPage.lede} />
+	</div>
 
 	<!-- Our story. Reading text, so no entrance motion; the heading stays beside it on wide screens. -->
 	<section class="border-t" aria-labelledby="story-heading">
@@ -110,3 +126,50 @@ const sectionHeading = "font-wide text-3xl font-[850] md:text-4xl";
 
 	<ContactSection />
 </BaseLayout>
+
+<style is:global>
+	/* The footage sits behind the heading and fades into the page; it drifts very slowly. */
+	.about-footage {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		opacity: 0.2;
+		-webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
+		mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
+		transform-origin: 30% 40%;
+		animation: about-drift 32s ease-in-out infinite alternate;
+	}
+	.dark .about-footage {
+		opacity: 0.42;
+	}
+	.about-scrim {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		background: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, transparent) 45%, transparent 100%);
+	}
+	@media (max-width: 767px) {
+		.about-scrim {
+			background: color-mix(in oklab, var(--background) 78%, transparent);
+		}
+	}
+	@keyframes about-drift {
+		from {
+			transform: scale(1.12) translate3d(-1.5%, 0, 0);
+		}
+		to {
+			transform: scale(1.02) translate3d(1.5%, -1%, 0);
+		}
+	}
+	html.reduce-motion .about-footage {
+		animation: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.about-footage {
+			animation: none;
+		}
+	}
+</style>

@@ -35,9 +35,10 @@ const shots = scenes.map((id) => SHOTS[id]);
 const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]) => [scene, anchor]));
 ---
 
-<div class="studio" data-studio data-loop={loop ? "" : undefined} style={`--scenes: ${scenes.length}`}>
-	<script is:inline>
-		// Read mode or the full studio, decided before the first paint.
+<div class="studio" data-studio data-read data-loop={loop ? "" : undefined} style={`--scenes: ${scenes.length}`}>
+	<script is:inline data-astro-rerun>
+		// The page starts in read mode (so without JavaScript it is an ordinary page); the full studio is switched on
+		// here, before the first paint, unless this is a phone, reduced motion, or read mode chosen in Settings.
 		(() => {
 			const el = document.currentScript.parentElement;
 			let mode = null;
@@ -49,8 +50,10 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				document.documentElement.classList.contains("read-mode") ||
 				document.documentElement.classList.contains("reduce-motion") ||
 				matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
-			if (read) el.setAttribute("data-read", "");
-			else document.documentElement.classList.add("studio-on");
+			if (!read) {
+				el.removeAttribute("data-read");
+				document.documentElement.classList.add("studio-on");
+			}
 		})();
 	</script>
 	<div class="studio-stage">
@@ -81,6 +84,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		</ol>
 		<p class="studio-ruler-label" aria-hidden="true"><span data-ruler-index>01</span> <span data-ruler-name>{sceneNames[scenes[0]]}</span></p>
 	</nav>
+	<p class="sr-only" aria-live="polite" data-studio-live></p>
 	<script type="application/json" data-studio-shots set:html={JSON.stringify(shots)} />
 	<script type="application/json" data-studio-content set:html={JSON.stringify(content)} />
 </div>
@@ -154,7 +158,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		overflow: auto;
 		opacity: var(--on, 0);
 		transform: translate3d(0, calc((1 - var(--on, 0)) * 18px), 0);
-		visibility: var(--seen, hidden);
+		/* Not hidden with visibility: every scene stays in the accessibility tree and the tab order (focusing a link in one
+		   brings the camera to that scene), and only the visible one takes clicks. */
+		pointer-events: var(--seen, none);
 	}
 	.studio:not([data-read]) .studio-panels > [data-scene][data-side="right"] {
 		left: auto;
@@ -163,7 +169,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	/* Before the room is up, the title's words show at once (the room fades in under them): no blank wait after a page change. */
 	.studio:not([data-read]):not([data-live]) .studio-panels > [data-scene]:first-child {
 		--on: 1;
-		--seen: visible;
+		--seen: auto;
 	}
 	/* The title scene: under the logo on the wall, centred low in the frame. */
 	.studio:not([data-read]) .studio-panels > [data-scene][data-place="center"] {
@@ -178,13 +184,22 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		position: fixed;
 		z-index: 3;
 		left: 50%;
-		bottom: 1.25rem;
+		bottom: 0.9rem;
 		transform: translateX(-50%);
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 0.25rem;
+		padding: 0.35rem 1rem 0.5rem;
+		border-radius: 1.25rem;
 		color: var(--foreground);
+		/* A small glass pill, so the ticks and the scene's name keep their contrast over whatever the room shows behind. */
+		background: color-mix(in oklab, var(--background) 80%, transparent);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
+	html:not(.dark) .studio-ruler {
+		background: color-mix(in oklab, var(--background) 90%, transparent);
 	}
 	.studio[data-read] .studio-ruler {
 		display: none;
@@ -213,8 +228,12 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio-ruler button:hover .tick {
 		background: var(--foreground);
 	}
+	/* The cyan accent is for the dark theme; on the light one the current tick and number are blue (3:1 and 4.5:1 or more). */
 	.studio-ruler button[aria-current] .tick {
 		height: 1.5rem;
+		background: #1d4ed8;
+	}
+	.dark .studio-ruler button[aria-current] .tick {
 		background: var(--accent);
 	}
 	.studio-ruler-label {
@@ -223,6 +242,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		color: var(--muted-foreground);
 	}
 	.studio-ruler-label [data-ruler-index] {
+		color: #1d4ed8;
+	}
+	.dark .studio-ruler-label [data-ruler-index] {
 		color: var(--accent);
 	}
 
@@ -285,6 +307,8 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-goto]")];
 		const rulerIndex = root.querySelector<HTMLElement>("[data-ruler-index]")!;
 		const rulerName = root.querySelector<HTMLElement>("[data-ruler-name]")!;
+		const announce = root.querySelector<HTMLElement>("[data-studio-live]")!;
+		let announceTimer: number | undefined;
 		const loop = root.hasAttribute("data-loop");
 
 		// Offsets, measured on resize only: each scene is one screen of scroll from the top of the track.
@@ -359,7 +383,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				if (on === levels[i]) return;
 				levels[i] = on;
 				panel.style.setProperty("--on", String(on));
-				panel.style.setProperty("--seen", on > 0 ? "visible" : "hidden");
+				panel.style.setProperty("--seen", on > 0.3 ? "auto" : "none");
 			});
 			const current = Math.round(at) % n;
 			if (current !== shown) {
@@ -367,6 +391,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				buttons.forEach((b, i) => (i === current ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
 				rulerIndex.textContent = String(current + 1).padStart(2, "0");
 				rulerName.textContent = sceneNames[shots[current].id] ?? shots[current].id;
+				// Told to screen readers once the camera has settled (not for every scene it passes in a long move).
+				window.clearTimeout(announceTimer);
+				announceTimer = window.setTimeout(() => (announce.textContent = `${current + 1} / ${n}: ${rulerName.textContent}`), 600);
 			}
 			// The loop: back at the first scene's frame, so the scroll resets to the top unseen.
 			if (loop && !keyboard && position() >= n - 0.002) {
@@ -414,6 +441,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 		cleanup = () => {
 			cancelled = true;
+			window.clearTimeout(announceTimer);
 			removeEventListener("keydown", onKey);
 			removeEventListener("wheel", onPointer);
 			removeEventListener("touchstart", onPointer);
@@ -454,13 +482,17 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		-webkit-backdrop-filter: blur(14px) saturate(1.3);
 		backdrop-filter: blur(14px) saturate(1.3);
 	}
+	/* On the light theme the glass is more opaque: dark text must stay 4.5:1 over the dark parts of the room too. */
+	html:not(.dark) .studio-card {
+		background: color-mix(in oklab, var(--background) 88%, transparent);
+	}
 	/* Small HUD-style labels: monospace, blue on the light theme and cyan on the dark one (both 4.5:1+). */
 	.studio-scene .studio-tag,
 	.studio-scene .studio-kicker,
 	.studio-scene .studio-hint {
 		font: 500 12.5px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 		letter-spacing: 0.03em;
-		color: #1d4ed8;
+		color: #1e3a9f;
 	}
 	.dark .studio-scene .studio-tag,
 	.dark .studio-scene .studio-kicker,
@@ -507,7 +539,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		padding: 0 1.1rem;
 		border-radius: 999px;
 		border: 1px solid rgb(255 255 255 / 0.22);
-		background: color-mix(in oklab, var(--primary) 80%, transparent);
+		background: var(--primary);
 		color: var(--primary-foreground);
 		font-weight: 600;
 		cursor: pointer;
@@ -658,6 +690,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	}
 	.studio[data-read] .studio-hint {
 		display: none;
+	}
+	html:not(.dark) .studio:not([data-read]) .studio-title {
+		background: color-mix(in oklab, var(--background) 88%, transparent);
 	}
 	.studio[data-read] .studio-title {
 		padding-block: 1.5rem 1rem;
