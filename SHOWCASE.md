@@ -96,3 +96,33 @@ Loaded only when the section comes into view, and only from 768 px up with motio
 | robot showcase + robot model (CAD data included) | 1.4 KB + 15 KB |
 
 Keep the showcase code under about 10 KB gzip on top of the model, and the stills under about 120 KB each at 2x (they're 30 to 89 KB WebP, 20 to 48 KB AVIF). The pixel ratio comes from the tier (see above); the model views no longer cap it. The showcase code creates no objects per frame (only the label positions are written each frame).
+
+# Home studio (the home page)
+
+The home page is one 3D room the camera moves through as the page scrolls: `src/components/Studio.astro` (page,
+text panels, ruler, keyboard, loop), `src/lib/studio/engine.ts` (camera), `room.ts` (shell, desk, helpers),
+`stations.ts` (everything else), `scenes.ts` (where the camera stands for each scene). Words: `src/text/home.ts`,
+`src/text/site.ts`, `src/text/studio.ts`; the projects and people come from their Markdown files.
+
+| # | Scene | In the room |
+| - | ----- | ----------- |
+| 0 | Title | the desk from across the room; the lamp switches on |
+| 1 | Sketch | the sketchbook draws the F450 from its real numbers |
+| 2 | Research | the monitor scrolls the build guide (a screenshot of the real page) |
+| 3 | Robotics, Drones, Networks, Web | KitBot on a cart (its CAD), the F450 lifting off its mat (its CAD), a switch rack with blinking ports, a laptop and phone scrolling this site |
+| 4 | Selected work | one panel per project on a curved wall; they turn to face you |
+| 5 | Standards | the whiteboard writes out the standards and the three steps |
+| 6 | Timeline | the long window, a year on each pane (2023 and 2024 tagged "Before JPL") |
+| 7 | The team | the table, a chair and a portrait screen per member |
+| 8 | Contact | the door opens a little; the lit sign says Let's talk |
+
+After Contact the camera turns on the spot back to the desk and the scroll resets unseen: the loop (wheel, trackpad
+and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `/#work`, `/#team`, `/#contact`.
+
+- **Camera:** a closed curve through the scenes' positions, a critically damped spring on the scroll, and a hold in the
+  middle of each scene. It turns by heading and tilt (never by sliding a look-at point), so a 180° turn is clean.
+- **Read mode** (under 768 px, reduced motion, Settings → Motion → Read mode, no WebGL): the same text as one page, with
+  a picture of each scene: `public/studio/scenes/`, made by `python scripts/studio-stills.py` against a preview
+  (`?studio=capture` hides the text; `window.__studio.go(n)` jumps the camera).
+- **Screens:** `python scripts/studio-screens.py` refreshes the build guide and site screenshots on the monitor and laptop.
+- `/studio/` (the Phase 1 prototype) redirects to `/`.
