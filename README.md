@@ -33,6 +33,7 @@ Use **npm** (not bun): `package-lock.json` holds the esbuild/rollup overrides.
 | `python scripts/studio-screens.py` | the build guide and site screenshots shown on the monitor and laptop in the studio |
 | `node scripts/make-og.mjs` | `public/assets/og-studio.jpg`, the link-preview picture |
 | `python scripts/showcase-stills.py` | the drone and robot showcases' stills |
+| `node scripts/measure-contrast.mjs` + `python scripts/measure-contrast.py` | not a picture: measures text contrast over the 3D scene and over photos (how: `SHOWCASE.md`) |
 
 Each needs `npm run build && npx astro preview` running (the scripts say how).
 - `src/styles/global.css` — colour tokens (light + dark), fonts, chart colours.

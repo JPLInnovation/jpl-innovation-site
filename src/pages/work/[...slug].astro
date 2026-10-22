@@ -3,6 +3,7 @@ import { srcset } from "@/lib/images";
 import { type CollectionEntry, getCollection, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
+import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import PageIntro from "@/components/PageIntro.astro";
@@ -26,6 +27,7 @@ const { data } = entry;
 ---
 
 <BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
+	<ChapterBackdrop project={entry.id} />
 	<PageIntro title={data.title} lede={data.description}>
 		<div slot="before" class="flex flex-col gap-4">
 			<BackLink href="/work/">{backToWork}</BackLink>

@@ -3,6 +3,7 @@ import { getEntry, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
 import IosTerminal from "@/components/IosTerminal.astro";
+import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import ModelViewer from "@/components/model-viewer";
@@ -27,6 +28,7 @@ const legend = [
 ---
 
 <BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
+	<ChapterBackdrop project="cybersecurity" />
 	<PageIntro title={data.title} lede={data.description}>
 		<div slot="before" class="flex flex-col gap-4">
 			<BackLink href="/work/">{backToWork}</BackLink>

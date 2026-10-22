@@ -233,6 +233,9 @@ function startingTier(renderer: WebGLRenderer): Tier {
 	const info = gl.getExtension("WEBGL_debug_renderer_info");
 	const gpu = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
 	if (/swiftshader|llvmpipe|software|basic render/i.test(gpu)) return "low";
+	// Integrated Intel graphics (Iris, UHD): the plan's target laptop. Ambient occlusion at full resolution would run
+	// slowly for the first second and then be dropped on screen, so start on medium. (Intel Arc is a discrete GPU.)
+	if (/intel/i.test(gpu) && !/arc/i.test(gpu)) return "medium";
 	const coarse = matchMedia("(pointer: coarse)").matches;
 	if (coarse && Math.max(screen.width, screen.height) < 1000) return "low"; // phones
 	if (coarse) return "medium"; // tablets
