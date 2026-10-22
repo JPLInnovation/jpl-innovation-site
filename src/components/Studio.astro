@@ -160,6 +160,11 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		left: auto;
 		right: clamp(1rem, 5vw, 4.5rem);
 	}
+	/* Before the room is up, the title's words show at once (the room fades in under them): no blank wait after a page change. */
+	.studio:not([data-read]):not([data-live]) .studio-panels > [data-scene]:first-child {
+		--on: 1;
+		--seen: visible;
+	}
 	/* The title scene: under the logo on the wall, centred low in the frame. */
 	.studio:not([data-read]) .studio-panels > [data-scene][data-place="center"] {
 		left: 50%;
