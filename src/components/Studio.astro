@@ -1,0 +1,470 @@
+---
+/**
+ * The studio: a 3D room the camera moves through sideways as the page scrolls (src/lib/studio/*), with each scene's
+ * text as real HTML over it.
+ *
+ * Usage: <Studio scenes={["title", "sketch", ...]} anchors={{ services: "robotics" }}> and one child per scene,
+ * `<section data-scene="title">…</section>`, in the same order. Every scene is one screen of native scroll (the
+ * scrollbar is hidden, the wheel, trackpad, keyboard and back button work as always); after the last scene the camera
+ * curves back to the first and the scroll resets to the top at a frame where both look the same: the loop.
+ *
+ * Read mode (the same text as one ordinary vertical page, no 3D, no loop): screens under 768 px, reduced motion, no
+ * WebGL, a device too slow for the room, or chosen by the visitor (localStorage "studio-mode" = "read"). Decided
+ * before the first paint, so nothing jumps.
+ *
+ * Keyboard: arrows, Page Up/Down and Space move one scene; Home and End go to the first and the last. Keyboard users
+ * get a normal end (no loop). Focusing a link inside a scene's text brings the camera to that scene.
+ * `anchors` maps a page anchor (#services) to a scene, so links to it land on that scene.
+ */
+import { SHOTS } from "@/lib/studio/scenes";
+import { sceneNames, studio } from "@/text/studio";
+
+interface Props {
+	scenes: string[];
+	anchors?: Record<string, string>;
+	/** false: no loop back to the start (the camera stops at the last scene). */
+	loop?: boolean;
+}
+const { scenes, anchors = {}, loop = true } = Astro.props;
+const shots = scenes.map((id) => SHOTS[id]);
+const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]) => [scene, anchor]));
+---
+
+<div class="studio" data-studio data-loop={loop ? "" : undefined} style={`--scenes: ${scenes.length}`}>
+	<script is:inline>
+		// Read mode or the full studio, decided before the first paint.
+		(() => {
+			const el = document.currentScript.parentElement;
+			let mode = null;
+			try {
+				mode = localStorage.getItem("studio-mode");
+			} catch {}
+			const read =
+				mode === "read" ||
+				document.documentElement.classList.contains("read-mode") ||
+				matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
+			if (read) el.setAttribute("data-read", "");
+			else document.documentElement.classList.add("studio-on");
+		})();
+	</script>
+	<div class="studio-stage">
+		<canvas role="img" aria-label={studio.canvasLabel}></canvas>
+	</div>
+	<div class="studio-track" aria-hidden="true">
+		<div class="studio-probe"></div>
+		{
+			scenes.map((id, i) => (
+				<span class="studio-mark" style={`top: calc(${i} * 100svh)`} id={anchorAt[id]} data-mark={id} />
+			))
+		}
+	</div>
+	<div class="studio-panels">
+		<slot />
+	</div>
+	<nav class="studio-ruler" aria-label={studio.rulerLabel}>
+		<ol>
+			{
+				scenes.map((id, i) => (
+					<li>
+						<button type="button" data-goto={i} aria-label={sceneNames[id] ?? id}>
+							<span class="tick" aria-hidden="true" />
+						</button>
+					</li>
+				))
+			}
+		</ol>
+		<p class="studio-ruler-label" aria-hidden="true"><span data-ruler-index>01</span> <span data-ruler-name>{sceneNames[scenes[0]]}</span></p>
+	</nav>
+	<script type="application/json" data-studio-shots set:html={JSON.stringify(shots)} />
+</div>
+
+<style is:global>
+	/* ---------- The full studio ---------- */
+	html.studio-on {
+		scrollbar-width: none;
+	}
+	html.studio-on::-webkit-scrollbar {
+		display: none;
+	}
+	/* The loop never reaches the page's end, so the footer belongs to read mode (its links are in the contact scene). */
+	html.studio-on body > footer {
+		display: none;
+	}
+	.studio {
+		position: relative;
+	}
+	.studio:not([data-read]) .studio-stage {
+		position: fixed;
+		inset: 0;
+		z-index: 0;
+		background: var(--background);
+	}
+	.studio:not([data-read]) .studio-stage canvas {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		transition: opacity 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	.studio[data-live] .studio-stage canvas {
+		opacity: 1;
+	}
+	.studio-track {
+		position: relative;
+		height: calc((var(--scenes) + 1) * 100svh);
+		pointer-events: none;
+	}
+	.studio-probe {
+		position: absolute;
+		top: 0;
+		width: 0;
+		height: 100svh;
+	}
+	.studio-mark {
+		position: absolute;
+		left: 0;
+		width: 1px;
+		height: 1px;
+		scroll-margin-top: 0;
+	}
+	/* Each scene's text: over the room, the current one showing. --on (0 to 1) is set by the script every frame. */
+	.studio:not([data-read]) .studio-panels > [data-scene] {
+		position: fixed;
+		z-index: 2;
+		left: clamp(1rem, 5vw, 4.5rem);
+		bottom: 6.5rem;
+		width: min(34rem, calc(100vw - 2rem));
+		max-height: calc(100svh - 12rem);
+		overflow: auto;
+		opacity: var(--on, 0);
+		transform: translate3d(0, calc((1 - var(--on, 0)) * 18px), 0);
+		visibility: var(--seen, hidden);
+	}
+	.studio:not([data-read]) .studio-panels > [data-scene][data-side="right"] {
+		left: auto;
+		right: clamp(1rem, 5vw, 4.5rem);
+	}
+	/* The title scene: under the logo on the wall, centred low in the frame. */
+	.studio:not([data-read]) .studio-panels > [data-scene][data-place="center"] {
+		left: 50%;
+		bottom: 5.5rem;
+		width: min(46rem, calc(100vw - 2rem));
+		transform: translate3d(-50%, calc((1 - var(--on, 0)) * 18px), 0);
+		text-align: center;
+	}
+	/* The film ruler: a tick per scene, the current scene's number and name. */
+	.studio-ruler {
+		position: fixed;
+		z-index: 3;
+		left: 50%;
+		bottom: 1.25rem;
+		transform: translateX(-50%);
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		color: var(--foreground);
+	}
+	.studio[data-read] .studio-ruler {
+		display: none;
+	}
+	.studio-ruler ol {
+		display: flex;
+		align-items: flex-end;
+	}
+	.studio-ruler button {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		width: 1.75rem;
+		height: 2rem;
+		cursor: pointer;
+	}
+	.studio-ruler .tick {
+		width: 2px;
+		height: 0.75rem;
+		border-radius: 1px;
+		background: color-mix(in oklab, var(--foreground) 45%, transparent);
+		transition:
+			height 0.4s cubic-bezier(0.65, 0, 0.35, 1),
+			background-color 0.4s;
+	}
+	.studio-ruler button:hover .tick {
+		background: var(--foreground);
+	}
+	.studio-ruler button[aria-current] .tick {
+		height: 1.5rem;
+		background: var(--accent);
+	}
+	.studio-ruler-label {
+		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.04em;
+		color: var(--muted-foreground);
+	}
+	.studio-ruler-label [data-ruler-index] {
+		color: var(--accent);
+	}
+
+	/* ---------- Read mode: one ordinary page ---------- */
+	.studio[data-read] .studio-stage,
+	.studio[data-read] .studio-track {
+		display: none;
+	}
+	.studio[data-read] .studio-panels > [data-scene] {
+		position: static;
+		opacity: 1;
+		transform: none;
+		visibility: visible;
+	}
+</style>
+
+<script>
+	import { afterIntro } from "@/lib/splash";
+	import type { SceneShot } from "@/lib/studio/scenes";
+	import { sceneNames } from "@/text/studio";
+
+	let cleanup: (() => void) | undefined;
+
+	function init() {
+		cleanup?.();
+		cleanup = undefined;
+		const root = document.querySelector<HTMLElement>("[data-studio]");
+		if (!root) {
+			document.documentElement.classList.remove("studio-on");
+			return;
+		}
+		if (root.hasAttribute("data-read")) return;
+
+		const shots = JSON.parse(root.querySelector("[data-studio-shots]")!.textContent!) as SceneShot[];
+		const n = shots.length;
+		const probe = root.querySelector<HTMLElement>(".studio-probe")!;
+		const track = root.querySelector<HTMLElement>(".studio-track")!;
+		const stage = root.querySelector<HTMLElement>(".studio-stage")!;
+		const canvas = stage.querySelector("canvas")!;
+		const panels = [...root.querySelectorAll<HTMLElement>(".studio-panels > [data-scene]")];
+		const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-goto]")];
+		const rulerIndex = root.querySelector<HTMLElement>("[data-ruler-index]")!;
+		const rulerName = root.querySelector<HTMLElement>("[data-ruler-name]")!;
+		const loop = root.hasAttribute("data-loop");
+
+		// Offsets, measured on resize only: each scene is one screen of scroll from the top of the track.
+		let screenH = 1;
+		let top = 0;
+		const measure = () => {
+			screenH = probe.offsetHeight || innerHeight;
+			top = track.getBoundingClientRect().top + scrollY;
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(document.documentElement);
+		const position = () => (scrollY - top) / screenH;
+		const goTo = (scene: number, smooth = true) => scrollTo({ top: top + scene * screenH, behavior: smooth ? "smooth" : "instant" });
+
+		// Keyboard users get a normal end; the loop is for wheel, trackpad and touch.
+		let keyboard = false;
+		const onKey = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			const target = event.target as HTMLElement;
+			if (target.closest("input, textarea, select, [contenteditable], dialog")) return;
+			const here = Math.round(position());
+			const keys: Record<string, number> = {
+				ArrowDown: here + 1,
+				ArrowRight: here + 1,
+				PageDown: here + 1,
+				" ": event.shiftKey ? here - 1 : here + 1,
+				ArrowUp: here - 1,
+				ArrowLeft: here - 1,
+				PageUp: here - 1,
+				Home: 0,
+				End: n - 1,
+			};
+			if (!(event.key in keys)) return;
+			event.preventDefault();
+			keyboard = true;
+			goTo(Math.max(0, Math.min(n - 1, keys[event.key])));
+		};
+		addEventListener("keydown", onKey);
+		const onPointer = () => (keyboard = false);
+		addEventListener("wheel", onPointer, { passive: true });
+		addEventListener("touchstart", onPointer, { passive: true });
+
+		// Ruler buttons and anything that asks to go back to the start.
+		const onClick = (event: MouseEvent) => {
+			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart]");
+			if (!el || !root.contains(el)) return;
+			event.preventDefault();
+			if (el.hasAttribute("data-studio-restart")) goTo(loop && !keyboard ? n : 0);
+			else goTo(Number(el.dataset.goto));
+		};
+		root.addEventListener("click", onClick);
+		// A link inside a scene's text gets focus: bring the camera to that scene.
+		const onFocus = (event: FocusEvent) => {
+			const panel = (event.target as Element).closest<HTMLElement>("[data-scene]");
+			if (!panel) return;
+			const index = panels.indexOf(panel);
+			if (index >= 0 && Math.abs(position() - index) > 0.3) goTo(index, false);
+		};
+		root.addEventListener("focusin", onFocus);
+
+		// The text and the ruler follow the camera.
+		let shown = -1;
+		const levels = new Float32Array(panels.length).fill(-1);
+		let handle: { snap(scene: number): void } | undefined;
+		const onFrame = (at: number) => {
+			panels.forEach((panel, i) => {
+				const d = Math.min(Math.abs(at - i), Math.abs(at - i - n));
+				const on = Math.round(Math.max(0, Math.min(1, (0.42 - d) / 0.22)) * 100) / 100;
+				if (on === levels[i]) return;
+				levels[i] = on;
+				panel.style.setProperty("--on", String(on));
+				panel.style.setProperty("--seen", on > 0 ? "visible" : "hidden");
+			});
+			const current = Math.round(at) % n;
+			if (current !== shown) {
+				shown = current;
+				buttons.forEach((b, i) => (i === current ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
+				rulerIndex.textContent = String(current + 1).padStart(2, "0");
+				rulerName.textContent = sceneNames[shots[current].id] ?? shots[current].id;
+			}
+			// The loop: back at the first scene's frame, so the scroll resets to the top unseen.
+			if (loop && !keyboard && position() >= n - 0.002) {
+				goTo(0, false);
+				handle?.snap(0);
+			}
+		};
+
+		let cancelled = false;
+		let dispose: (() => void) | undefined;
+		Promise.all([import("@/lib/three/stage"), import("@/lib/studio/engine"), afterIntro()])
+			.then(async ([stageModule, engine]) => {
+				if (cancelled) return;
+				dispose = await stageModule.mountStage(
+					stage,
+					canvas,
+					(ctx) => {
+						const model = engine.drive(ctx, { shots, position, onFrame });
+						handle = model;
+						return model;
+					},
+					{ camera: shots[0].camera, target: shots[0].target, fov: 42, orbit: false },
+				);
+				if (cancelled) dispose();
+				else root.setAttribute("data-live", "");
+			})
+			.catch((error) => {
+				// No WebGL: read mode, the same text as one ordinary page.
+				console.warn("Studio has no 3D, switching to read mode.", error);
+				if (cancelled) return;
+				root.setAttribute("data-read", "");
+				document.documentElement.classList.remove("studio-on");
+			});
+
+		cleanup = () => {
+			cancelled = true;
+			removeEventListener("keydown", onKey);
+			removeEventListener("wheel", onPointer);
+			removeEventListener("touchstart", onPointer);
+			resize.disconnect();
+			dispose?.();
+			document.documentElement.classList.remove("studio-on");
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => {
+		cleanup?.();
+		cleanup = undefined;
+	});
+</script>
+
+<style is:global>
+	/* ---------- Scene text ---------- */
+	.studio-scene h2 {
+		font-stretch: 125%;
+		font-weight: 850;
+		font-size: clamp(1.6rem, 3vw, 2.4rem);
+		line-height: 1.02;
+	}
+	.studio-scene p {
+		color: color-mix(in oklab, var(--foreground) 82%, transparent);
+	}
+	/* A glass card: blur over the room, a thin light edge, a navy tint. Text stays 4.5:1 or more over any of it. */
+	.studio-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1.5rem 1.75rem;
+		border-radius: 1rem;
+		border: 1px solid rgb(255 255 255 / 0.14);
+		background: color-mix(in oklab, var(--background) 72%, transparent);
+		box-shadow: 0 20px 50px -24px rgb(0 0 0 / 0.55);
+		-webkit-backdrop-filter: blur(14px) saturate(1.3);
+		backdrop-filter: blur(14px) saturate(1.3);
+	}
+	/* Small HUD-style labels: monospace, blue on the light theme and cyan on the dark one (both 4.5:1+). */
+	.studio-scene .studio-tag,
+	.studio-scene .studio-kicker,
+	.studio-scene .studio-hint {
+		font: 500 12.5px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		letter-spacing: 0.03em;
+		color: #1d4ed8;
+	}
+	.dark .studio-scene .studio-tag,
+	.dark .studio-scene .studio-kicker,
+	.dark .studio-scene .studio-hint {
+		color: #67e8f9;
+	}
+	.studio-scene .studio-big {
+		font-size: 1.15rem;
+		color: var(--foreground);
+	}
+	.studio-title {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		text-shadow: 0 2px 24px rgb(0 0 0 / 0.35);
+	}
+	.studio-scene .studio-wordmark {
+		font-stretch: 125%;
+		font-weight: 900;
+		font-size: clamp(2.2rem, 5vw, 4.25rem);
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		color: var(--foreground);
+	}
+	.studio-scene .studio-lede {
+		max-width: 34ch;
+		font-size: clamp(1.05rem, 1.6vw, 1.35rem);
+		color: var(--foreground);
+	}
+	.studio-restart {
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		padding: 0 1.1rem;
+		border-radius: 999px;
+		border: 1px solid rgb(255 255 255 / 0.22);
+		background: color-mix(in oklab, var(--primary) 80%, transparent);
+		color: var(--primary-foreground);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	/* Read mode: ordinary sections down the page. */
+	.studio[data-read] .studio-panels {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		width: 100%;
+		max-width: 76rem;
+		margin-inline: auto;
+		padding: 2rem clamp(1rem, 4vw, 2.5rem) 5rem;
+	}
+	.studio[data-read] .studio-title {
+		padding-block: 3rem 1rem;
+		text-align: center;
+	}
+</style>
