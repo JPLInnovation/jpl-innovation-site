@@ -300,7 +300,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		const onKey = (event: KeyboardEvent) => {
 			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
 			const target = event.target as HTMLElement;
-			if (target.closest("input, textarea, select, [contenteditable], dialog")) return;
+			if (target.closest("input, textarea, select, [contenteditable], dialog, [popover]")) return;
+			// Space and Enter belong to a focused button or link (a click), not to the camera.
+			if ((event.key === " " || event.key === "Enter") && target.closest("button, a, summary")) return;
 			const here = Math.round(position());
 			const keys: Record<string, number> = {
 				ArrowDown: here + 1,

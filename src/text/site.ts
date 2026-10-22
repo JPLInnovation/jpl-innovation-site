@@ -83,6 +83,7 @@ export const emailPopup = {
 	description: "Tell us about your project, or ask what we can help with. We read every message.",
 	copy: "Copy",
 	copied: "Copied",
+	close: "Close",
 	copyFailed: "Copying isn't allowed here. Select the address above and copy it.",
 	openGmail: "Open in Gmail",
 	openMailApp: "Open your mail app",

@@ -1,9 +1,8 @@
 import { memo, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowRight, Clock, Flag, Quote, Trophy } from "lucide-react";
+import { ArrowRight, Clock, Flag, Mail, Quote, Trophy } from "lucide-react";
 import { MotionConfig, motion } from "motion/react";
-import ContactDialog from "@/components/contact-dialog";
 import { CountUp, Grow, Reveal } from "@/components/motion-primitives";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
 import { season2026, season2027, seasonsText } from "@/text/projects/frc";
@@ -123,7 +122,9 @@ const Season2027 = memo(function Season2027({ onShow2026 }: { onShow2026: (seaso
 				</h2>
 				<p className="max-w-[60ch] text-lg">{season2027.intro}</p>
 				<div className="flex flex-wrap gap-3 pt-2">
-					<ContactDialog look="signal" label={t27.joinButton} subject={t27.joinEmailSubject} />
+					<button type="button" data-email-open data-subject={t27.joinEmailSubject} className={buttonVariants({ variant: "signal", size: "lg" })}>
+						<Mail aria-hidden="true" /> {t27.joinButton}
+					</button>
 					<Button variant="outline" size="lg" onClick={() => onShow2026("2026")}>
 						{t27.lookBackButton} <ArrowRight aria-hidden="true" />
 					</Button>
