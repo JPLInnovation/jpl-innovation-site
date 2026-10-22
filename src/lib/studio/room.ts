@@ -36,6 +36,7 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
+import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
 import { buildStations, SCREEN_STEP } from "./stations";
@@ -397,6 +398,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
 	const pool = createLightPool(group, accents, overhead);
 	const ambience = buildAmbience(group);
+	const props = buildProps(group);
 
 	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
 	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
@@ -410,6 +412,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 			const { lamp: on, time, near } = state;
 			stations.update(state, Math.max(0, time - lastTime));
 			ambience.update(state, Math.max(0, time - lastTime));
+			props.update(state, Math.max(0, time - lastTime));
 			lastTime = time;
 			// The lamp, and the room coming up with it.
 			const level = on * on * (3 - 2 * on);

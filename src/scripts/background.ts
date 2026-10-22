@@ -236,7 +236,15 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 		}
 	}
 
+	// The home page's studio covers the whole window with its own opaque 3D stage (html.studio-on): drawing the sky behind
+	// it would only compete with the 3D for the GPU, so it rests until the studio is left.
+	const covered = () => document.documentElement.classList.contains("studio-on");
+
 	function frame(now: number) {
+		if (covered()) {
+			raf = 0;
+			return;
+		}
 		const dt = Math.min(now - last, 50);
 		// Touch devices: about 30 fps is plenty for motion this slow, and saves battery.
 		if (touch && dt < 30) {
@@ -250,7 +258,7 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	}
 
 	const play = () => {
-		if (raf || reducedMotion() || document.hidden) return;
+		if (raf || reducedMotion() || document.hidden || covered()) return;
 		last = performance.now();
 		if (!nextShooter) nextShooter = last + 6000 + Math.random() * 6000;
 		raf = requestAnimationFrame(frame);
@@ -288,7 +296,11 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	// Light/dark switch: pick up the new colours (redraw now if the loop isn't running).
 	new MutationObserver(() => {
 		colors = readColors();
-		if (!raf) draw(performance.now());
+		if (covered()) pause();
+		else if (!raf) {
+			if (reducedMotion() || document.hidden) draw(performance.now());
+			else play();
+		}
 	}).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
 
 	// Page changes inside the site (Astro's client router): warp out as the next page loads, settle once it's in.
