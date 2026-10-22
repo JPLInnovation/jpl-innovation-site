@@ -1,0 +1,458 @@
+/**
+ * The studio room, blocked out in code (no downloaded model): one round workspace for the home page's camera to move
+ * through. Metres, y up. The room spans x -8.5 to 8.5 and z -3.4 (front wall) to 6.4 (back wall), 3.4 m high.
+ *
+ *   Front wall, left to right:  the desk (lamp, sketchbook, monitor, keyboard, the logo on the wall above), then the
+ *                               four work stations (robot cart, drone bench, switch rack, laptop), and the curved
+ *                               project wall at the right-hand end.
+ *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door.
+ *
+ * Everything on a screen or on paper is real: the build guide on the monitor and this site on the laptop are
+ * screenshots of the live pages (public/studio/, scripts/studio-screens.py), the projects and portraits are the site's
+ * own pictures. The sketchbook draws the F450 from its real numbers until scanned sketches replace it.
+ *
+ * Each station's parts are added by `stations` (Phase 3); this file holds the shell, the desk and the shared helpers.
+ */
+import {
+	BoxGeometry,
+	CanvasTexture,
+	CylinderGeometry,
+	DoubleSide,
+	Fog,
+	Group,
+	HemisphereLight,
+	type Material,
+	Mesh,
+	MeshBasicMaterial,
+	MeshStandardMaterial,
+	PlaneGeometry,
+	PointLight,
+	SphereGeometry,
+	SpotLight,
+	SRGBColorSpace,
+	type Texture,
+	TextureLoader,
+} from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { hardware } from "../three/finish";
+import type { Palette, StageContext } from "../three/stage";
+
+export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+export const asset = (path: string) => `${BASE}${path}`;
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+export function boxAt(parent: Group, w: number, h: number, d: number, material: Material, x: number, y: number, z: number, radius = 0) {
+	const geometry = radius > 0 ? new RoundedBoxGeometry(w, h, d, 2, Math.min(radius, w / 2, h / 2, d / 2)) : new BoxGeometry(w, h, d);
+	const mesh = new Mesh(geometry, material);
+	mesh.position.set(x, y, z);
+	parent.add(mesh);
+	return mesh;
+}
+
+/** A canvas you can draw into, shown on a surface. `redraw()` after drawing. */
+export function canvasSurface(width: number, height: number) {
+	const canvas = document.createElement("canvas");
+	canvas.width = width;
+	canvas.height = height;
+	const g = canvas.getContext("2d")!;
+	const texture = new CanvasTexture(canvas);
+	texture.colorSpace = SRGBColorSpace;
+	texture.anisotropy = 8;
+	return { canvas, g, texture, redraw: () => (texture.needsUpdate = true) };
+}
+
+const loader = new TextureLoader();
+export function imageTexture(path: string) {
+	const texture = loader.load(asset(path));
+	texture.colorSpace = SRGBColorSpace;
+	texture.anisotropy = 8;
+	return texture;
+}
+
+/** An image file (SVG included) as an <img>, for drawing into a canvas. */
+export function loadImage(path: string) {
+	return new Promise<HTMLImageElement>((resolve, reject) => {
+		const img = new Image();
+		img.onload = () => resolve(img);
+		img.onerror = reject;
+		img.src = asset(path);
+	});
+}
+
+/** A screen that shows a texture without being lit (it glows a little in the dark). */
+export const screenMaterial = (map: Texture) => new MeshBasicMaterial({ map, toneMapped: false });
+
+/* ------------------------------------------------------------------ */
+/* The sketch                                                          */
+/* ------------------------------------------------------------------ */
+
+type Stroke = { pts: number[]; width: number; label?: { text: string; x: number; y: number; size: number } };
+
+/**
+ * The F450 sketched over two pages, from its real numbers (the build guide's): top view on the left, side view on
+ * the right. Stroke by stroke, with a little pencil wobble.
+ */
+function sketchStrokes(): Stroke[] {
+	let seed = 11;
+	const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+	const strokes: Stroke[] = [];
+	const line = (x0: number, y0: number, x1: number, y1: number, width = 2.2) => {
+		const pts: number[] = [];
+		const n = 14;
+		for (let i = 0; i <= n; i++) {
+			const t = i / n;
+			pts.push(x0 + (x1 - x0) * t + (rand() - 0.5) * 1.6, y0 + (y1 - y0) * t + (rand() - 0.5) * 1.6);
+		}
+		strokes.push({ pts, width });
+	};
+	const circle = (cx: number, cy: number, r: number, width = 1.6, from = 0, to = Math.PI * 2) => {
+		const pts: number[] = [];
+		const n = 40;
+		for (let i = 0; i <= n; i++) {
+			const a = from + ((to - from) * i) / n;
+			const wobble = 1 + (rand() - 0.5) * 0.02;
+			pts.push(cx + Math.cos(a) * r * wobble, cy + Math.sin(a) * r * wobble);
+		}
+		strokes.push({ pts, width });
+	};
+	const label = (text: string, x: number, y: number, size = 26) => strokes.push({ pts: [x, y], width: 0, label: { text, x, y, size } });
+
+	// Left page: the top view. Centre (350, 250); motors 450 mm apart across the diagonal.
+	const cx = 350, cy = 250, arm = 150;
+	for (const a of [45, 135, 225, 315]) {
+		const r = (a * Math.PI) / 180;
+		line(cx + Math.cos(r) * 34, cy + Math.sin(r) * 34, cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, a === 225 || a === 315 ? 3.4 : 2.4);
+	}
+	line(cx - 42, cy - 42, cx + 42, cy - 42);
+	line(cx + 42, cy - 42, cx + 42, cy + 42);
+	line(cx + 42, cy + 42, cx - 42, cy + 42);
+	line(cx - 42, cy + 42, cx - 42, cy - 42);
+	for (const a of [45, 135, 225, 315]) {
+		const r = (a * Math.PI) / 180;
+		circle(cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, 12, 2);
+		circle(cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, 82, 1.1);
+	}
+	line(cx, cy - 18, cx, cy - 110, 1.6);
+	line(cx, cy - 110, cx - 10, cy - 94, 1.6);
+	line(cx, cy - 110, cx + 10, cy - 94, 1.6);
+	label("front", cx + 14, cy - 100, 22);
+	line(cx - arm * 0.71, cy + arm * 0.71 + 92, cx + arm * 0.71, cy + arm * 0.71 + 92, 1.2);
+	label("F450 · 450 mm", cx - 80, cy + arm * 0.71 + 124, 26);
+	label("props 10 × 4.5", 70, 60, 24);
+	label("quad-X", 540, 60, 24);
+
+	// Right page: the side view.
+	const sx = 1050, sy = 210;
+	line(sx - 220, sy, sx + 220, sy, 3);
+	line(sx - 60, sy - 18, sx + 60, sy - 18, 2);
+	line(sx - 160, sy, sx - 160, sy - 24, 2);
+	line(sx + 160, sy, sx + 160, sy - 24, 2);
+	line(sx - 210, sy - 28, sx - 110, sy - 28, 1.4);
+	line(sx + 110, sy - 28, sx + 210, sy - 28, 1.4);
+	line(sx - 50, sy, sx - 50, sy + 60, 2);
+	line(sx + 50, sy, sx + 50, sy + 60, 2);
+	line(sx - 50, sy + 60, sx + 50, sy + 60, 2);
+	label("3S 2200 mAh", sx - 44, sy + 92, 22);
+	line(sx - 120, sy + 10, sx - 150, sy + 150, 2.2);
+	line(sx + 120, sy + 10, sx + 150, sy + 150, 2.2);
+	line(sx - 185, sy + 150, sx - 115, sy + 150, 2.2);
+	line(sx + 115, sy + 150, sx + 185, sy + 150, 2.2);
+	line(sx + 170, sy + 6, sx + 200, sy + 40, 2);
+	circle(sx + 206, sy + 48, 10, 2);
+	line(sx + 206, sy + 48, sx + 250, sy + 84, 1.2);
+	line(sx + 206, sy + 48, sx + 262, sy + 52, 1.2);
+	label("Camera Module 3", sx + 120, sy + 128, 22);
+	label("tilt 0 to 45° down", sx + 120, sy + 156, 20);
+	label("4G: watch from anywhere", 780, 60, 26);
+	return strokes;
+}
+
+function drawSketch(g: CanvasRenderingContext2D, strokes: Stroke[], progress: number) {
+	const { width: w, height: h } = g.canvas;
+	// Two pages of cream paper, the spine in the middle.
+	g.fillStyle = "#f4efe2";
+	g.fillRect(0, 0, w, h);
+	const spine = g.createLinearGradient(w / 2 - 40, 0, w / 2 + 40, 0);
+	spine.addColorStop(0, "rgba(0,0,0,0)");
+	spine.addColorStop(0.5, "rgba(60,48,30,0.22)");
+	spine.addColorStop(1, "rgba(0,0,0,0)");
+	g.fillStyle = spine;
+	g.fillRect(w / 2 - 40, 0, 80, h);
+	g.strokeStyle = "rgba(90,120,170,0.18)";
+	g.lineWidth = 1;
+	for (let y = 40; y < h; y += 34) {
+		g.beginPath();
+		g.moveTo(20, y);
+		g.lineTo(w - 20, y);
+		g.stroke();
+	}
+	// The strokes, in order, up to `progress` of the way through.
+	const total = strokes.length;
+	const upTo = progress * total;
+	g.strokeStyle = "#2b2f3a";
+	g.fillStyle = "#2b2f3a";
+	g.lineCap = "round";
+	g.lineJoin = "round";
+	for (let i = 0; i < total && i < upTo; i++) {
+		const s = strokes[i];
+		const part = Math.min(1, upTo - i);
+		if (s.label) {
+			g.globalAlpha = part;
+			g.font = `italic 500 ${s.label.size}px "Archivo Variable", "Segoe Print", cursive`;
+			g.fillText(s.label.text, s.label.x, s.label.y);
+			g.globalAlpha = 1;
+			continue;
+		}
+		const n = s.pts.length / 2;
+		const last = Math.max(1, Math.floor((n - 1) * part));
+		g.lineWidth = s.width;
+		g.beginPath();
+		g.moveTo(s.pts[0], s.pts[1]);
+		for (let k = 1; k <= last; k++) g.lineTo(s.pts[k * 2], s.pts[k * 2 + 1]);
+		g.stroke();
+	}
+}
+
+/* ------------------------------------------------------------------ */
+/* The room                                                            */
+/* ------------------------------------------------------------------ */
+
+export interface RoomState {
+	/** Where the camera is along the scenes (0 = the first; fractions in between). */
+	position: number;
+	/** How far the first scene's lamp has come on, 0 to 1. */
+	lamp: number;
+	/** Seconds since the room appeared (screens that play). */
+	time: number;
+	/** How much each scene is in view, 0 to 1, by scene id. */
+	near: Record<string, number>;
+}
+
+export interface Room {
+	group: Group;
+	update(state: RoomState): void;
+	applyPalette(p: Palette): void;
+}
+
+export function buildRoom(ctx: StageContext): Room {
+	const group = new Group();
+	ctx.root.add(group);
+	const { x0, x1, z0, z1, h } = ROOM;
+	const width = x1 - x0;
+	const depth = z1 - z0;
+
+	/* ---------- Shell ---------- */
+	const wallMat = new MeshStandardMaterial({ color: 0x0c1631, roughness: 0.92 });
+	const floorMat = hardware({ color: 0x0a1022, roughness: 0.55, metalness: 0 }, "plastic");
+	const ceilingMat = new MeshStandardMaterial({ color: 0x0a1228, roughness: 1 });
+	const floor = new Mesh(new PlaneGeometry(width, depth), floorMat);
+	floor.rotation.x = -Math.PI / 2;
+	floor.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+	group.add(floor);
+	const ceiling = new Mesh(new PlaneGeometry(width, depth), ceilingMat);
+	ceiling.rotation.x = Math.PI / 2;
+	ceiling.position.set((x0 + x1) / 2, h, (z0 + z1) / 2);
+	group.add(ceiling);
+	const wall = (w: number, x: number, z: number, turn: number) => {
+		const mesh = new Mesh(new PlaneGeometry(w, h), wallMat);
+		mesh.position.set(x, h / 2, z);
+		mesh.rotation.y = turn;
+		group.add(mesh);
+		return mesh;
+	};
+	wall(width, 0, z0, 0); // front, facing +z
+	wall(width, 0, z1, Math.PI); // back, facing -z
+	wall(depth, x0, (z0 + z1) / 2, Math.PI / 2);
+	wall(depth, x1, (z0 + z1) / 2, -Math.PI / 2);
+	// A skirting line and ceiling light strips: the room's lines, which make the camera's moves readable.
+	const trimMat = new MeshStandardMaterial({ color: 0x1b2a52, roughness: 0.6 });
+	boxAt(group, width, 0.08, 0.02, trimMat, 0, 0.04, z0 + 0.01);
+	boxAt(group, width, 0.08, 0.02, trimMat, 0, 0.04, z1 - 0.01);
+	const stripMat = new MeshBasicMaterial({ color: 0x9fdcff, toneMapped: false });
+	for (let x = -7; x <= 7; x += 3.5) boxAt(group, 2.4, 0.03, 0.08, stripMat, x, h - 0.02, 1.5);
+
+	/* ---------- Lights: dim room light; the desk lamp does the work in scene 0 ---------- */
+	const sky = new HemisphereLight(0x8fb4ff, 0x0a1022, 0.4);
+	group.add(sky);
+	const roomLights = [-4.5, 0, 4.5].map((x) => {
+		const light = new PointLight(0xcfe3ff, 6, 9, 1.6);
+		light.position.set(x, h - 0.4, 1.5);
+		group.add(light);
+		return light;
+	});
+
+	/* ---------- The desk (scene 0 to 2) ---------- */
+	const deskX = -6;
+	const deskZ = -2.45;
+	const deskTop = 0.76;
+	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
+	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
+	boxAt(group, 2.3, 0.05, 0.9, wood, deskX, deskTop - 0.025, deskZ, 0.012);
+	for (const [dx, dz] of [[-1.08, -0.38], [1.08, -0.38], [-1.08, 0.38], [1.08, 0.38]]) boxAt(group, 0.05, deskTop - 0.05, 0.05, steel, deskX + dx, (deskTop - 0.05) / 2, deskZ + dz);
+	// Chair, pushed in.
+	const fabric = hardware({ color: 0x1d2b4f, roughness: 0.9 }, "fabric");
+	boxAt(group, 0.5, 0.07, 0.48, fabric, deskX - 0.2, 0.47, deskZ + 0.95, 0.03);
+	boxAt(group, 0.5, 0.55, 0.06, fabric, deskX - 0.2, 0.82, deskZ + 1.18, 0.03);
+	boxAt(group, 0.04, 0.44, 0.04, steel, deskX - 0.2, 0.22, deskZ + 0.95);
+
+	// The sketchbook, open flat; the pencil beside it.
+	const sketch = canvasSurface(1400, 500);
+	const strokes = sketchStrokes();
+	let drawnSketch = -1;
+	const book = new Mesh(new PlaneGeometry(0.84, 0.3), hardware({ color: 0xffffff, map: sketch.texture, roughness: 0.9 }, "printed"));
+	book.rotation.x = -Math.PI / 2;
+	book.rotation.z = 0.06;
+	book.position.set(deskX - 0.32, deskTop + 0.011, deskZ + 0.14);
+	group.add(book);
+	// The cover, just under the pages and a little bigger.
+	boxAt(group, 0.87, 0.009, 0.32, new MeshStandardMaterial({ color: 0x23324f, roughness: 0.7 }), deskX - 0.32, deskTop + 0.005, deskZ + 0.14).rotation.y = -0.06;
+	const pencil = new Mesh(new CylinderGeometry(0.004, 0.004, 0.17, 8), hardware({ color: 0xe0a82a, roughness: 0.5 }, "plastic"));
+	pencil.rotation.z = Math.PI / 2;
+	pencil.rotation.y = 0.5;
+	pencil.position.set(deskX + 0.16, deskTop + 0.006, deskZ + 0.26);
+	group.add(pencil);
+
+	// The monitor: the build guide on screen, scrolling while you look at it.
+	const monitorX = deskX + 0.88;
+	const screen = canvasSurface(1280, 760);
+	let guide: HTMLImageElement | undefined;
+	loadImage("/studio/research.webp").then((img) => (guide = img), () => undefined);
+	boxAt(group, 0.84, 0.52, 0.03, new MeshStandardMaterial({ color: 0x11141c, roughness: 0.4 }), monitorX, deskTop + 0.36, deskZ - 0.24, 0.01);
+	const display = new Mesh(new PlaneGeometry(0.8, 0.475), screenMaterial(screen.texture));
+	display.position.set(monitorX, deskTop + 0.36, deskZ - 0.223);
+	group.add(display);
+	boxAt(group, 0.06, 0.1, 0.06, steel, monitorX, deskTop + 0.05, deskZ - 0.26);
+	boxAt(group, 0.26, 0.012, 0.18, steel, monitorX, deskTop + 0.006, deskZ - 0.24, 0.004);
+	const screenGlow = new PointLight(0x9ccfff, 0, 1.6, 2);
+	screenGlow.position.set(monitorX, deskTop + 0.36, deskZ + 0.05);
+	group.add(screenGlow);
+	boxAt(group, 0.44, 0.02, 0.15, new MeshStandardMaterial({ color: 0x1b1f2a, roughness: 0.6 }), monitorX, deskTop + 0.01, deskZ + 0.12, 0.005);
+	const mug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), hardware({ color: 0xf2f4f8, roughness: 0.35 }, "wrap"));
+	mug.position.set(deskX - 0.95, deskTop + 0.05, deskZ - 0.15);
+	group.add(mug);
+
+	// The lamp: a base, an arm, a shade; it switches on as the first scene opens.
+	const lampBase = new Mesh(new CylinderGeometry(0.09, 0.1, 0.025, 24), steel);
+	lampBase.position.set(deskX - 0.78, deskTop + 0.012, deskZ - 0.22);
+	group.add(lampBase);
+	const arm = new Mesh(new CylinderGeometry(0.01, 0.01, 0.62, 8), steel);
+	arm.position.set(deskX - 0.66, deskTop + 0.3, deskZ - 0.14);
+	arm.rotation.z = -0.4;
+	group.add(arm);
+	const shade = new Mesh(new CylinderGeometry(0.05, 0.11, 0.13, 24, 1, true), hardware({ color: 0xe9eef7, roughness: 0.35, side: DoubleSide }, "plastic"));
+	shade.position.set(deskX - 0.5, deskTop + 0.58, deskZ - 0.06);
+	shade.rotation.z = 0.35;
+	group.add(shade);
+	const bulb = new Mesh(new SphereGeometry(0.03, 16, 12), new MeshBasicMaterial({ color: 0xfff0d0, toneMapped: false }));
+	bulb.position.set(shade.position.x + 0.012, shade.position.y - 0.03, shade.position.z);
+	group.add(bulb);
+	const lamp = new SpotLight(0xffe6c0, 0, 4, 0.75, 0.7, 1.6);
+	lamp.position.copy(bulb.position);
+	lamp.target.position.set(deskX - 0.25, deskTop, deskZ + 0.12);
+	group.add(lamp, lamp.target);
+
+	// The logo on the wall above the desk, lit from below.
+	const logoLight = imageTexture("/assets/jpl-logo-dark-480.webp");
+	const logoDark = imageTexture("/assets/jpl-logo-light-480.webp");
+	const logo = new Mesh(new PlaneGeometry(1.66, 0.6), new MeshBasicMaterial({ map: logoLight, transparent: true, toneMapped: false }));
+	logo.position.set(deskX, 2.15, z0 + 0.02);
+	group.add(logo);
+
+	/* ---------- Blocked-out stations (Phase 3 fills them) ---------- */
+	const bench = hardware({ color: 0x2a3550, roughness: 0.6 }, "plastic");
+	const stations = new Group();
+	group.add(stations);
+	for (const x of [-2.6, -0.6, 1.4, 3.3]) boxAt(stations, 1.6, 0.06, 0.8, bench, x, 0.82, -2.6, 0.01);
+	boxAt(stations, 0.08, 2.2, 3.4, bench, 7.9, 1.3, 1.0);
+	for (const [x, w] of [[5, 2.4], [1.2, 3.8], [-2.4, 2.2], [-5.6, 1.2]] as const) boxAt(stations, w, 1.6, 0.06, bench, x, 1.5, z1 - 0.04);
+
+	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
+	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
+
+	let palette: Palette | undefined;
+	return {
+		group,
+		update({ lamp: on, time, near }) {
+			// The lamp, and the room coming up with it.
+			const level = on * on * (3 - 2 * on);
+			lamp.intensity = 7 * level;
+			(bulb.material as MeshBasicMaterial).color.setRGB(0.2 + 0.8 * level, 0.18 + 0.76 * level, 0.15 + 0.66 * level);
+			sky.intensity = (palette?.dark ? 0.35 : 0.9) * (0.25 + 0.75 * level);
+			for (const light of roomLights) light.intensity = (palette?.dark ? 3.5 : 9) * level;
+			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
+
+			// The sketch draws itself as the sketch scene comes into view.
+			const p = Math.round(Math.min(1, near.sketch ?? 0) * 200) / 200;
+			if (p !== drawnSketch) {
+				drawnSketch = p;
+				drawSketch(sketch.g, strokes, p);
+				sketch.redraw();
+			}
+
+			// The monitor plays while the research scene is in view (and holds still otherwise).
+			const research = near.research ?? 0;
+			screenGlow.intensity = 1.2 * Math.max(research, 0.3) * level;
+			if (research > 0.02 || screen.canvas.dataset.drawn !== "1") {
+				drawScreen(screen.g, guide, time * 45 * Math.min(1, research * 1.5));
+				screen.redraw();
+				screen.canvas.dataset.drawn = guide ? "1" : "";
+			}
+		},
+		applyPalette(p) {
+			palette = p;
+			const dark = p.dark;
+			wallMat.color.set(dark ? 0x0c1631 : 0xdfe7f5);
+			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
+			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
+			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
+			(bench as MeshStandardMaterial).color.set(dark ? 0x2a3550 : 0xc9d3e6);
+			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
+			(logo.material as MeshBasicMaterial).needsUpdate = true;
+			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);
+			(ctx.scene.fog as Fog).near = dark ? 7 : 12;
+			(ctx.scene.fog as Fog).far = dark ? 19 : 32;
+			sky.color.set(dark ? 0x8fb4ff : 0xffffff);
+			sky.groundColor.set(dark ? 0x0a1022 : 0xb9c4d8);
+			// The stage's product lights ride on the camera; in a room they'd flatten it, so they stay low.
+			ctx.lights.key.intensity = dark ? 0.55 : 1.1;
+			ctx.lights.fill.intensity = dark ? 0.2 : 0.45;
+			ctx.lights.rim.intensity = dark ? 0.35 : 0.5;
+			ctx.scene.environmentIntensity = dark ? 0.22 : 0.6;
+		},
+	};
+}
+
+/** The monitor: a browser window on the build guide, scrolled `scroll` pixels down (it loops). */
+function drawScreen(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number) {
+	const { width: w, height: h } = g.canvas;
+	g.fillStyle = "#f3f5f9";
+	g.fillRect(0, 0, w, h);
+	const bar = 54;
+	if (page) {
+		const scale = w / page.naturalWidth;
+		const pageH = page.naturalHeight * scale;
+		const max = Math.max(1, pageH - (h - bar));
+		const y = scroll % (max * 2);
+		const offset = y < max ? y : max * 2 - y; // down, then back up
+		g.drawImage(page, 0, bar - offset, w, pageH);
+	}
+	g.fillStyle = "#1f2430";
+	g.fillRect(0, 0, w, bar);
+	for (const [i, c] of ["#f0596b", "#ffc20e", "#34d399"].entries()) {
+		g.fillStyle = c;
+		g.beginPath();
+		g.arc(26 + i * 24, bar / 2, 7, 0, Math.PI * 2);
+		g.fill();
+	}
+	g.fillStyle = "#2c3343";
+	g.fillRect(110, 12, w - 140, bar - 24);
+	g.fillStyle = "#c5cee0";
+	g.font = '500 20px "Archivo Variable", sans-serif';
+	g.textBaseline = "middle";
+	g.fillText("jpl-innovation.github.io/work/drone/build-guide/", 130, bar / 2 + 1);
+}
+

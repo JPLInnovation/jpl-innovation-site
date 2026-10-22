@@ -1,0 +1,41 @@
+---
+/**
+ * Phase 1 of the documentary redesign: the studio prototype. Desk to screen, one flight across the room, the loop.
+ * Not linked and not indexed; the home page becomes the studio in Phase 3.
+ * All the words: src/text/home.ts (the scenes' text) and src/text/studio.ts.
+ */
+import Studio from "@/components/Studio.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { hero, mission, pageHeading, servicesSection } from "@/text/home";
+import { prototype, studio } from "@/text/studio";
+
+const [plan, build] = mission.process;
+---
+
+<BaseLayout title={prototype.title}>
+	<meta slot="head" name="robots" content="noindex" />
+	<Studio scenes={["title", "sketch", "research", "flight"]}>
+		<section data-scene="title" data-place="center" class="studio-scene studio-title">
+			<p class="studio-kicker">{hero.kicker}</p>
+			<h1 class="sr-only">{pageHeading}</h1>
+			<p class="studio-lede">{hero.support}</p>
+			<p class="studio-hint">{studio.scrollHint} <span aria-hidden="true">↓</span></p>
+		</section>
+		<section data-scene="sketch" class="studio-scene studio-card">
+			<p class="studio-tag">{mission.stepLabel} 01 · {plan.title}</p>
+			<h2>{servicesSection.heading}</h2>
+			<p class="studio-big">{servicesSection.intro}</p>
+			<p>{plan.desc}</p>
+		</section>
+		<section data-scene="research" data-side="right" class="studio-scene studio-card">
+			<p class="studio-tag">{mission.stepLabel} 02 · {build.title}</p>
+			<h2>{mission.processHeading}</h2>
+			<p>{build.desc}</p>
+		</section>
+		<section data-scene="flight" class="studio-scene studio-card">
+			<h2>{prototype.flightHeading}</h2>
+			<p>{prototype.flightText}</p>
+			<button type="button" class="studio-restart" data-studio-restart>{studio.backToStart} <span aria-hidden="true">↺</span></button>
+		</section>
+	</Studio>
+</BaseLayout>
