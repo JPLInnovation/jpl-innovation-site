@@ -11,7 +11,7 @@
  * screenshots of the live pages (public/studio/, scripts/studio-screens.py), the projects and portraits are the site's
  * own pictures. The sketchbook draws the F450 from its real numbers until scanned sketches replace it.
  *
- * Each station's parts are added by `stations` (Phase 3); this file holds the shell, the desk and the shared helpers.
+ * This file holds the shell, the desk and the shared helpers; the stations and the back wall are in stations.ts.
  */
 import {
 	BoxGeometry,
@@ -36,6 +36,7 @@ import {
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
+import { buildStations } from "./stations";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -73,13 +74,29 @@ export function imageTexture(path: string) {
 	return texture;
 }
 
-/** An image file (SVG included) as an <img>, for drawing into a canvas. */
-export function loadImage(path: string) {
+/**
+ * An image file as an <img>, for drawing into a canvas. An SVG with only a viewBox has no size of its own (the browser
+ * would draw it at 300 × 150), so it gets one from its viewBox, at `svgWidth` pixels wide.
+ */
+export async function loadImage(path: string, svgWidth = 1600) {
+	let src = asset(path);
+	let url: string | undefined;
+	if (path.endsWith(".svg")) {
+		const text = await (await fetch(src)).text();
+		const box = /viewBox="([\d.\s-]+)"/.exec(text)?.[1].trim().split(/\s+/).map(Number);
+		if (box?.length === 4 && !/<svg[^>]*\swidth=/.test(text)) {
+			const sized = text.replace("<svg", `<svg width="${svgWidth}" height="${Math.round((svgWidth * box[3]) / box[2])}"`);
+			src = url = URL.createObjectURL(new Blob([sized], { type: "image/svg+xml" }));
+		}
+	}
 	return new Promise<HTMLImageElement>((resolve, reject) => {
 		const img = new Image();
-		img.onload = () => resolve(img);
+		img.onload = () => {
+			resolve(img);
+			if (url) URL.revokeObjectURL(url);
+		};
 		img.onerror = reject;
-		img.src = asset(path);
+		img.src = src;
 	});
 }
 
@@ -232,13 +249,27 @@ export interface RoomState {
 	near: Record<string, number>;
 }
 
+/** What the room shows, from the site's own content (the page passes it in; src/components/Studio.astro). */
+export interface RoomContent {
+	/** The project wall, in order. `img` is a path under public/. */
+	projects: { title: string; img: string; badge?: string }[];
+	/** The portrait screens by the table. */
+	portraits: { name: string; role: string; img: string }[];
+	/** The whiteboard: a heading, the standards, and the steps of how we work (the last one circled). */
+	standards: { heading: string; items: string[]; steps: string[] };
+	/** The window: a year on each pane. */
+	milestones: { year: string; state: "past" | "now" | "future" }[];
+	/** The lit sign over the door. */
+	sign: string;
+}
+
 export interface Room {
 	group: Group;
 	update(state: RoomState): void;
 	applyPalette(p: Palette): void;
 }
 
-export function buildRoom(ctx: StageContext): Room {
+export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	const group = new Group();
 	ctx.root.add(group);
 	const { x0, x1, z0, z1, h } = ROOM;
@@ -247,7 +278,8 @@ export function buildRoom(ctx: StageContext): Room {
 
 	/* ---------- Shell ---------- */
 	const wallMat = new MeshStandardMaterial({ color: 0x0c1631, roughness: 0.92 });
-	const floorMat = hardware({ color: 0x0a1022, roughness: 0.55, metalness: 0 }, "plastic");
+	// Matte, and plain: a clear coat would mirror the bright generated environment at grazing angles (a pale band).
+	const floorMat = new MeshStandardMaterial({ color: 0x0a1022, roughness: 0.85, envMapIntensity: 0.35 });
 	const ceilingMat = new MeshStandardMaterial({ color: 0x0a1228, roughness: 1 });
 	const floor = new Mesh(new PlaneGeometry(width, depth), floorMat);
 	floor.rotation.x = -Math.PI / 2;
@@ -362,21 +394,20 @@ export function buildRoom(ctx: StageContext): Room {
 	logo.position.set(deskX, 2.15, z0 + 0.02);
 	group.add(logo);
 
-	/* ---------- Blocked-out stations (Phase 3 fills them) ---------- */
-	const bench = hardware({ color: 0x2a3550, roughness: 0.6 }, "plastic");
-	const stations = new Group();
-	group.add(stations);
-	for (const x of [-2.6, -0.6, 1.4, 3.3]) boxAt(stations, 1.6, 0.06, 0.8, bench, x, 0.82, -2.6, 0.01);
-	boxAt(stations, 0.08, 2.2, 3.4, bench, 7.9, 1.3, 1.0);
-	for (const [x, w] of [[5, 2.4], [1.2, 3.8], [-2.4, 2.2], [-5.6, 1.2]] as const) boxAt(stations, w, 1.6, 0.06, bench, x, 1.5, z1 - 0.04);
+	/* ---------- The stations, the project wall and the back wall ---------- */
+	const stations = buildStations(ctx, group, content);
 
 	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
 	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
 
 	let palette: Palette | undefined;
+	let lastTime = 0;
 	return {
 		group,
-		update({ lamp: on, time, near }) {
+		update(state) {
+			const { lamp: on, time, near } = state;
+			stations.update(state, Math.max(0, time - lastTime));
+			lastTime = time;
 			// The lamp, and the room coming up with it.
 			const level = on * on * (3 - 2 * on);
 			lamp.intensity = 7 * level;
@@ -409,7 +440,7 @@ export function buildRoom(ctx: StageContext): Room {
 			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
-			(bench as MeshStandardMaterial).color.set(dark ? 0x2a3550 : 0xc9d3e6);
+			stations.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
 			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);

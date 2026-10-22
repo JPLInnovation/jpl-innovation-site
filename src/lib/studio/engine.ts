@@ -2,8 +2,10 @@
  * The studio's camera (src/components/Studio.astro), on the shared 3D stage (src/lib/three/stage.ts).
  *
  * The page scrolls natively: every scene is one screen of scroll, and the camera follows that position.
- *   - It travels a closed curve through the scenes' camera points (and a second one through what it looks at), so it
- *     moves sideways around the room and, after the last scene, curves back to the first: the loop.
+ *   - It travels a closed curve through the scenes' camera points, so it moves sideways around the room and, after the
+ *     last scene, curves back to the first: the loop.
+ *   - It turns by heading and tilt from one scene's view to the next (the shorter way round), never by sliding a
+ *     point it looks at: the loop's last move is a turn on the spot, from the door back to the desk.
  *   - It follows the scroll through a critically damped spring (about 1 s to settle, never overshoots): the damping
  *     is the camera operator.
  *   - It holds still for the middle of each scene's scroll, where its text is read, and eases between scenes.
@@ -12,7 +14,7 @@
  */
 import { CatmullRomCurve3, Vector3 } from "three";
 import type { Model, StageContext } from "../three/stage";
-import { buildRoom, type RoomState } from "./room";
+import { buildRoom, type RoomContent, type RoomState } from "./room";
 import type { SceneShot } from "./scenes";
 
 const FOLLOW = 4.2; // per second: the spring the camera follows the scroll through (critically damped, about 1 s)
@@ -25,6 +27,8 @@ const settle = (f: number) => smootherstep(clamp((f - HOLD) / (1 - 2 * HOLD), 0,
 
 export interface StudioOptions {
 	shots: SceneShot[];
+	/** What the room shows: the projects on the wall, the portraits by the table and so on. */
+	content: RoomContent;
 	/** Where the page is, in scenes: 0 = the first; shots.length = back at the first (the end of the loop). */
 	position(): number;
 	/** Every frame, after the camera has moved: where the camera is, in scenes (for the text and the ruler). */
@@ -36,12 +40,18 @@ export interface StudioHandle {
 	snap(scene: number): void;
 }
 
-export function drive(ctx: StageContext, { shots, position, onFrame }: StudioOptions): Model & StudioHandle {
+export function drive(ctx: StageContext, { shots, content, position, onFrame }: StudioOptions): Model & StudioHandle {
 	const { camera } = ctx;
-	const room = buildRoom(ctx);
+	const room = buildRoom(ctx, content);
 	const n = shots.length;
 	const path = new CatmullRomCurve3(shots.map((s) => new Vector3(...s.camera)), true, "centripetal", 0.5);
-	const aim = new CatmullRomCurve3(shots.map((s) => new Vector3(...s.target)), true, "centripetal", 0.5);
+	// Each scene's view as a heading (around y) and a tilt (up or down).
+	const views = shots.map(({ camera: c, target: t }) => {
+		const dx = t[0] - c[0];
+		const dy = t[1] - c[1];
+		const dz = t[2] - c[2];
+		return { yaw: Math.atan2(dx, dz), pitch: Math.atan2(dy, Math.hypot(dx, dz)) };
+	});
 	const at = new Vector3();
 	const look = new Vector3();
 
@@ -57,10 +67,17 @@ export function drive(ctx: StageContext, { shots, position, onFrame }: StudioOpt
 		// Held near each scene, eased between: the curve's parameter moves only in the middle of each scene's scroll.
 		const i = Math.floor(s);
 		const f = s - i;
-		const u = (i + settle(f)) / n;
+		const e = settle(f);
+		const u = (i + e) / n;
 		path.getPoint(((u % 1) + 1) % 1, at);
-		aim.getPoint(((u % 1) + 1) % 1, look);
+		const a = views[((i % n) + n) % n];
+		const b = views[(((i + 1) % n) + n) % n];
+		let turn = b.yaw - a.yaw;
+		turn -= Math.round(turn / (Math.PI * 2)) * Math.PI * 2;
+		const yaw = a.yaw + turn * e;
+		const pitch = a.pitch + (b.pitch - a.pitch) * e;
 		camera.position.copy(at);
+		look.set(at.x + Math.sin(yaw) * Math.cos(pitch), at.y + Math.sin(pitch), at.z + Math.cos(yaw) * Math.cos(pitch));
 		camera.lookAt(look);
 		for (let k = 0; k < n; k++) {
 			// How much scene k is in view: 1 on it, 0 a scene away (the loop's end counts as the first scene).
