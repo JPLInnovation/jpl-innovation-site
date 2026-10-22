@@ -78,3 +78,27 @@ bytes.
 
 Making it look like a standard template: plain paper-and-ink palettes, generic grids of identical cards, stock
 illustrations, fake stats or testimonials, uppercase eyebrow labels on every heading, em dashes.
+
+## The studio (22 October 2026, the documentary redesign)
+
+The home page is now one workspace the camera moves through: the desk and sketchbook, the monitor, four work benches,
+the wall of projects, the whiteboard, the window, the team's table and the door, then round to the desk again. The
+night-sky look carries in (the starfield is in the window, the room is navy under cyan, amber and violet light, LED
+strips under the benches) and so do Archivo and the logo. In the light theme the same room is a bright day-lit studio
+with a dusk window.
+
+- **Honest.** Nothing is shown as done before it is: the F450 stays on its mat (it has not flown); the 3D robot is the
+  standard KitBot platform and says so; the sketchbook is drawn from the real numbers until scanned sketches replace it;
+  the screens show the real pages.
+- **Real scrolling underneath.** The scrollbar is hidden but the wheel, trackpad, touch, keyboard and Back button work as
+  always; the camera follows through a critically damped spring and dwells on each scene while its words are read.
+- **Text is real HTML**, every scene always in the accessibility tree; **read mode** (phones, short windows, reduced
+  motion, no WebGL, no JavaScript, or chosen in Settings) is the same words as one page with a render of each scene.
+- **Glass**: no more than four glass elements on screen (header, Let's talk, the scene card, the ruler), tinted enough
+  that contrast never depends on what is behind (measured: `scripts/measure-contrast.*`).
+- **Lighting**: eight lights in the whole room (two of them travel with the camera), everything else is emissive or a
+  flat glowing decal, so an integrated GPU can hold the frame rate.
+- **Sound** is off and not built: the plan's rule is that every sound is recorded by the team.
+
+Project pages open over slow footage of their own station and end on a Next chapter card; Work is the same wall at full
+size; 404 is a drone camera that has lost its signal.
