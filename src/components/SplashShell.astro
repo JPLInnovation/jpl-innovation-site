@@ -40,7 +40,7 @@ const boot = `(() => {
 		const tpl = document.getElementById("splash-template");
 		if (mode === "none" || !tpl) return;
 		root.classList.add("splash", "splash-" + kind);
-		if (matchMedia("(prefers-reduced-motion: reduce)").matches) root.classList.add("splash-reduced");
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches || root.classList.contains("reduce-motion")) root.classList.add("splash-reduced");
 		const overlay = tpl.content.cloneNode(true);
 		if (t0) overlay.firstElementChild.dataset.splashT0 = String(t0); // when it went up (for a late script)
 		// Straight under <html>: during a real load <body> doesn't exist yet. It's position: fixed on top anyway.

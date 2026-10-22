@@ -59,9 +59,17 @@ const splash = splashFor(Astro.url.pathname);
 			// Inlined and blocking so the page never flashes the wrong theme.
 			// `motion` hides scroll-revealed content until src/scripts/motion.ts animates it in.
 			// Skipped for reduced motion; removed again if the script hasn't started within 2.5 s.
+			// The visitor's Motion setting (the Settings panel): "reduced" turns animation off like the system setting does,
+			// "read" also turns the studio into one ordinary page. Stored only in this browser.
 			const applyMotion = () => {
 				const root = document.documentElement;
-				if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+				let pref = null;
+				try {
+					pref = localStorage.getItem("motion");
+				} catch {}
+				root.classList.toggle("reduce-motion", pref === "reduced" || pref === "read");
+				root.classList.toggle("read-mode", pref === "read");
+				if (pref === "reduced" || pref === "read" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 				root.classList.add("motion");
 				setTimeout(() => {
 					if (!root.classList.contains("motion-live")) root.classList.remove("motion");

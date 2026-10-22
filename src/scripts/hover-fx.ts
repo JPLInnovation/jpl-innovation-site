@@ -13,9 +13,10 @@
  */
 const TILT = 5; // degrees at the card's edge
 
+import { reducedMotion } from "@/lib/prefs";
+
 const fine = matchMedia("(hover: hover) and (pointer: fine)");
-const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-const on = () => fine.matches && !reduced.matches;
+const on = () => fine.matches && !reducedMotion();
 
 /** Headings whose content is plain text (a heading with animated parts inside, like the FRC odometer, is left alone). */
 function markHeadings() {

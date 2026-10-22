@@ -16,6 +16,8 @@
  *   reacts if the setting changes).
  * - Colours come from --bg-star / --bg-star-alt / --bg-shoot, so it follows light/dark mode (kept faint for WCAG AA).
  */
+import { reducedMotion } from "@/lib/prefs";
+
 type Star = { x: number; y: number; z: number; r: number; phase: number; alt: boolean };
 type Shooter = { x: number; y: number; vx: number; vy: number; life: number };
 
@@ -143,7 +145,7 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	function draw(now: number) {
 		const c = ctx!;
 		c.clearRect(0, 0, width, height);
-		const still = reduced.matches;
+		const still = reducedMotion();
 		// Cursor parallax: near stars shift more than far ones (centre of the screen = no shift).
 		const px = still ? 0 : (eased.x - 0.5) * -2 * PARALLAX;
 		const py = still ? 0 : (eased.y - 0.5) * -2 * PARALLAX;
@@ -248,7 +250,7 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 	}
 
 	const play = () => {
-		if (raf || reduced.matches || document.hidden) return;
+		if (raf || reducedMotion() || document.hidden) return;
 		last = performance.now();
 		if (!nextShooter) nextShooter = last + 6000 + Math.random() * 6000;
 		raf = requestAnimationFrame(frame);
@@ -271,7 +273,7 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 
 	document.addEventListener("visibilitychange", () => (document.hidden ? pause() : play()));
 	reduced.addEventListener("change", () => {
-		if (reduced.matches) {
+		if (reducedMotion()) {
 			pause();
 			draw(performance.now());
 		} else {
@@ -299,7 +301,7 @@ function start(canvas: HTMLCanvasElement, glow: HTMLElement | null) {
 		settleTimer = window.setTimeout(() => (warpTarget = 0), Math.max(0, warpAt + WARP_HOLD - performance.now()));
 	};
 	document.addEventListener("astro:before-preparation", () => {
-		if (reduced.matches) return;
+		if (reducedMotion()) return;
 		clearTimeout(settleTimer);
 		warpAt = performance.now();
 		warpTarget = 1;

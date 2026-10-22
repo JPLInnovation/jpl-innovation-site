@@ -138,8 +138,10 @@ export default function Showcase({ model, text, stills = {}, children, className
 		let cancelled = false;
 		let started = false;
 		let dispose: (() => void) | undefined;
+		// Reduced or Read mode chosen in Settings: the stacked cards and the page's picture, as without WebGL.
+		if (document.documentElement.classList.contains("reduce-motion")) section.dataset.static = "";
 		const start = () => {
-			if (started || !pinned.matches) return;
+			if (started || !pinned.matches || section.hasAttribute("data-static")) return;
 			started = true;
 			resize.observe(track);
 			resize.observe(document.documentElement); // things above the showcase changing height move it

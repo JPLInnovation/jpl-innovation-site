@@ -50,6 +50,7 @@ import {
 } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { qualityPref, reducedMotion as prefersReducedMotion } from "../prefs";
 import { setDetail, simplify } from "./finish";
 
 /** Site colours (from the CSS custom properties in global.css), as Three.js colours. */
@@ -218,6 +219,8 @@ const SAMPLE = 50; // frames timed for the first verdict (about a second at 50 t
 function startingTier(renderer: WebGLRenderer): Tier {
 	const forced = new URLSearchParams(location.search).get("quality");
 	if (forced === "high" || forced === "medium" || forced === "low") return forced;
+	const chosen = qualityPref(); // the Settings panel
+	if (chosen) return chosen;
 	const nav = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number };
 	if (nav.connection?.saveData) return "low";
 	if ((nav.deviceMemory ?? 8) <= 2 || (navigator.hardwareConcurrency ?? 8) <= 2) return "low";
@@ -259,7 +262,7 @@ export async function mountStage(
 	factory: ModelFactory,
 	view: StageView,
 ): Promise<() => void> {
-	const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const reducedMotion = prefersReducedMotion();
 	const finePointer = matchMedia("(pointer: fine)").matches;
 
 	const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -268,7 +271,7 @@ export async function mountStage(
 	renderer.outputColorSpace = SRGBColorSpace;
 
 	let tier = startingTier(renderer);
-	const pinned = new URLSearchParams(location.search).has("quality");
+	const pinned = new URLSearchParams(location.search).has("quality") || qualityPref() !== null;
 	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1 };
 	registry.push(stats);
 	setDetail(tier !== "low");
