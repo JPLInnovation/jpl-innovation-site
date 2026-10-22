@@ -130,6 +130,11 @@ export interface StageContext {
 	refreshShadows(): void;
 	/** Draw right now, so the canvas can be read back in the same task (canvas.toDataURL). */
 	render(): void;
+	/**
+	 * Build the shaders of everything in the scene now, off screen parts included, so the first time the camera reaches
+	 * a model that loaded late there is no pause while its shaders compile. Call after adding it.
+	 */
+	precompile(): void;
 	/** The light rig (it rides on the camera; positions are in the camera's space). For a light sweep. */
 	lights: { key: DirectionalLight; fill: DirectionalLight; rim: DirectionalLight };
 	/** 0..1: how much ambient occlusion to blend in (high tier). Lowered while the model is pulled apart. */
@@ -241,6 +246,10 @@ interface StageStats {
 	frameMs: number;
 	drops: Array<{ from: Tier; to: Tier; frameMs: number }>;
 	pixelRatio: number;
+	/** What the last frame cost the GPU's driver: draw calls and triangles (a frame with ambient occlusion counts its extra passes too), and lights in the scene. */
+	calls: number;
+	triangles: number;
+	readonly lights: number;
 }
 const registry: StageStats[] = [];
 (window as unknown as { __stage?: StageStats[] }).__stage = registry;
@@ -269,10 +278,18 @@ export async function mountStage(
 	renderer.setClearColor(0x000000, 0);
 	renderer.toneMapping = ACESFilmicToneMapping;
 	renderer.outputColorSpace = SRGBColorSpace;
+	renderer.info.autoReset = false; // reset once per frame (render below), so the stats count a frame's extra passes too
 
 	let tier = startingTier(renderer);
 	const pinned = new URLSearchParams(location.search).has("quality") || qualityPref() !== null;
-	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1 };
+	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1, calls: 0, triangles: 0,
+		// Counted when asked for (window.__stage in the console), not every frame.
+		get lights() {
+			let n = 0;
+			scene.traverse((o) => ((o as { isLight?: boolean }).isLight ? n++ : 0));
+			return n;
+		},
+	};
 	registry.push(stats);
 	setDetail(tier !== "low");
 
@@ -350,6 +367,9 @@ export async function mountStage(
 			invalidate();
 		},
 		render: () => render(),
+		precompile() {
+			renderer.compileAsync(scene, camera).then(invalidate, () => undefined);
+		},
 		lights: { key, fill, rim },
 		occlusion: 1,
 		label(text, at, className = "") {
@@ -390,6 +410,12 @@ export async function mountStage(
 			console.warn("3D: higher quality unavailable, using the plain renderer.", error);
 			tier = stats.tier = "low";
 		}
+	}
+	// Build every shader before the first frame (in parallel where the browser can), so nothing compiles mid-move.
+	try {
+		await renderer.compileAsync(scene, camera);
+	} catch {
+		/* the first frame compiles them instead */
 	}
 	const pixelRatio = () => {
 		let ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
@@ -480,8 +506,11 @@ export async function mountStage(
 			shadows?.update();
 			shadowsDirty = false;
 		}
+		renderer.info.reset();
 		if (pipeline && ctx.occlusion > 0.01) pipeline.render(ctx.occlusion);
 		else renderer.render(scene, camera);
+		stats.calls = renderer.info.render.calls;
+		stats.triangles = renderer.info.render.triangles;
 		positionLabels();
 		needsRender = false;
 	};
