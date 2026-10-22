@@ -1,0 +1,57 @@
+---
+/**
+ * The end of a project page: a card that leads to the next project, so the work reads as chapters one after another.
+ * The last project leads back to the first. The order is the `order:` in src/text/projects/*.md; the words are in
+ * src/text/work.ts (`nextChapter`).
+ */
+import { ArrowRight } from "lucide-react";
+import StatusTag from "./StatusTag.astro";
+import { getProjects } from "@/lib/content";
+import { srcset } from "@/lib/images";
+import { nextChapter } from "@/text/work";
+
+interface Props {
+	/** This page's project id ("drone", "frc", ...). */
+	current: string;
+}
+const { current } = Astro.props;
+const projects = await getProjects();
+const index = projects.findIndex((p) => p.id === current);
+const next = projects[(index + 1) % projects.length];
+const looped = index === projects.length - 1;
+---
+
+{
+	index >= 0 && next && next.id !== current && (
+		<section class="border-t" aria-labelledby="next-chapter-heading">
+			<div class="wrapper py-14 md:py-20">
+				<a
+					href={`/work/${next.id}/`}
+					data-tilt
+					class="press group grid items-center gap-6 rounded-xl border surface p-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-10 md:p-8"
+				>
+					<img
+						src={next.data.img}
+						srcset={srcset(next.data.img)}
+						sizes="(min-width: 1216px) 475px, (min-width: 768px) 40vw, 100vw"
+						alt=""
+						loading="lazy"
+						class="aspect-[16/10] w-full rounded-lg bg-muted object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+					/>
+					<div class="flex flex-col items-start gap-3">
+						<p id="next-chapter-heading" class="font-mono text-[13px] font-medium tracking-wide text-primary uppercase dark:text-accent">
+							{looped ? nextChapter.loopLabel : nextChapter.label}
+						</p>
+						{next.data.badge && <StatusTag>{next.data.badge}</StatusTag>}
+						<h2 class="font-semiwide text-2xl font-[780] md:text-[2.25rem]">{next.data.title}</h2>
+						<p class="max-w-[58ch] text-muted-foreground">{next.data.description}</p>
+						<span class="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold transition-[gap] group-hover:gap-3">
+							{`${nextChapter.open} ${next.data.title}`}
+							<ArrowRight className="size-4" aria-hidden="true" />
+						</span>
+					</div>
+				</a>
+			</div>
+		</section>
+	)
+}

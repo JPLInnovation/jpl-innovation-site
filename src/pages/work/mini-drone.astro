@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight, ExternalLink } fro
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
 import ContactSection from "@/components/ContactSection.astro";
+import NextChapter from "@/components/NextChapter.astro";
 import PartsTable from "@/components/parts-table";
 import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -195,5 +196,6 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 		</div>
 	</section>
 
+	<NextChapter current={"mini-drone"} />
 	<ContactSection />
 </BaseLayout>
