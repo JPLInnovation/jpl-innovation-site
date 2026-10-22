@@ -53,6 +53,15 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			if (!read) {
 				el.removeAttribute("data-read");
 				document.documentElement.classList.add("studio-on");
+				// Failsafe: if the 3D has not come up within 30 s (scripts blocked, a cached page whose files have since
+				// moved after an update, a very slow device), show the plain page rather than an empty one.
+				setTimeout(() => {
+					if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
+						el.setAttribute("data-read", "");
+						document.documentElement.classList.remove("studio-on");
+						console.warn("Studio: the 3D did not start in time, showing the plain page.");
+					}
+				}, 30000);
 			}
 		})();
 	</script>
@@ -285,6 +294,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 <script>
 	import { afterIntro } from "@/lib/splash";
+	import { warmRoom } from "@/lib/studio/prefetch";
 	import type { RoomContent } from "@/lib/studio/room";
 	import type { SceneShot } from "@/lib/studio/scenes";
 	import { sceneNames } from "@/text/studio";
@@ -313,6 +323,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		const shots = JSON.parse(root.querySelector("[data-studio-shots]")!.textContent!) as SceneShot[];
 		const content = JSON.parse(root.querySelector("[data-studio-content]")!.textContent!) as RoomContent;
 		const n = shots.length;
+		warmRoom(content);
 		const probe = root.querySelector<HTMLElement>(".studio-probe")!;
 		const track = root.querySelector<HTMLElement>(".studio-track")!;
 		const stage = root.querySelector<HTMLElement>(".studio-stage")!;
@@ -341,7 +352,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		// Keyboard users get a normal end; the loop is for wheel, trackpad and touch.
 		let keyboard = false;
 		const onKey = (event: KeyboardEvent) => {
-			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			if (root.hasAttribute("data-read") || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
 			const target = event.target as HTMLElement;
 			if (target.closest("input, textarea, select, [contenteditable], dialog, [popover]")) return;
 			// Space and Enter belong to a focused button or link (a click), not to the camera.
@@ -373,12 +384,18 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart]");
 			if (!el || !root.contains(el)) return;
 			event.preventDefault();
+			if (root.hasAttribute("data-read")) {
+				// (read mode, after a fall back from the 3D) "Back to the start" is just the top of the page
+				if (el.hasAttribute("data-studio-restart")) scrollTo({ top: 0, behavior: "smooth" });
+				return;
+			}
 			if (el.hasAttribute("data-studio-restart")) goTo(loop && !keyboard ? n : 0);
 			else goTo(Number(el.dataset.goto));
 		};
 		root.addEventListener("click", onClick);
 		// A link inside a scene's text gets focus: bring the camera to that scene.
 		const onFocus = (event: FocusEvent) => {
+			if (root.hasAttribute("data-read")) return;
 			const panel = (event.target as Element).closest<HTMLElement>("[data-scene]");
 			if (!panel) return;
 			const index = panels.indexOf(panel);
@@ -398,6 +415,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				levels[i] = on;
 				panel.style.setProperty("--on", String(on));
 				panel.style.setProperty("--seen", on > 0.3 ? "auto" : "none");
+				panel.toggleAttribute("data-shown", on > 0);
 			});
 			const current = Math.round(at) % n;
 			if (current !== shown) {
@@ -418,9 +436,28 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 		let cancelled = false;
 		let dispose: (() => void) | undefined;
+		const detach = () => {
+			removeEventListener("keydown", onKey);
+			removeEventListener("wheel", onPointer);
+			removeEventListener("touchstart", onPointer);
+			resize.disconnect();
+		};
+		/** The plain page, for any reason the 3D cannot carry on (no WebGL, too slow, the GPU lost, an error, scripts that never arrived). */
+		const toRead = (why: string) => {
+			if (cancelled || root.hasAttribute("data-read")) return;
+			console.warn(`Studio: switching to read mode (${why}).`);
+			detach();
+			root.setAttribute("data-read", "");
+			root.removeAttribute("data-live");
+			document.documentElement.classList.remove("studio-on");
+			dispose?.();
+			dispose = undefined;
+			scrollTo({ top: 0, behavior: "instant" }); // the tall track is gone; start the ordinary page at its top
+		};
 		Promise.all([import("@/lib/three/stage"), import("@/lib/studio/engine"), afterIntro()])
 			.then(async ([stageModule, engine]) => {
-				if (cancelled) return;
+				// (read mode may already have been chosen by the failsafe timer, if everything was very slow)
+				if (cancelled || root.hasAttribute("data-read")) return;
 				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
@@ -429,12 +466,16 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 						handle = model;
 						return model;
 					},
-					{ camera: shots[0].camera, target: shots[0].target, fov: 42, orbit: false },
+					{ camera: shots[0].camera, target: shots[0].target, fov: 42, orbit: false, onFallback: (reason) => toRead(reason) },
 				);
-				if (cancelled) dispose();
-				else root.setAttribute("data-live", "");
+				if (cancelled || root.hasAttribute("data-read")) {
+					dispose();
+					dispose = undefined;
+					return;
+				}
+				root.setAttribute("data-live", "");
 				// ?studio=capture: the room alone, for read mode's pictures (scripts/studio-stills.py).
-				if (!cancelled && new URLSearchParams(location.search).get("studio") === "capture") {
+				if (new URLSearchParams(location.search).get("studio") === "capture") {
 					root.setAttribute("data-capture", "");
 					(window as unknown as { __studio?: object }).__studio = {
 						ids: shots.map((shot) => shot.id),
@@ -445,21 +486,12 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					};
 				}
 			})
-			.catch((error) => {
-				// No WebGL: read mode, the same text as one ordinary page.
-				console.warn("Studio has no 3D, switching to read mode.", error);
-				if (cancelled) return;
-				root.setAttribute("data-read", "");
-				document.documentElement.classList.remove("studio-on");
-			});
+			.catch((error) => toRead(`no 3D: ${error}`));
 
 		cleanup = () => {
 			cancelled = true;
 			window.clearTimeout(announceTimer);
-			removeEventListener("keydown", onKey);
-			removeEventListener("wheel", onPointer);
-			removeEventListener("touchstart", onPointer);
-			resize.disconnect();
+			detach();
 			dispose?.();
 			document.documentElement.classList.remove("studio-on");
 		};
@@ -559,6 +591,12 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		cursor: pointer;
 	}
 	/* Links and lists inside the cards. */
+	/* Blur only what is on screen: the scenes that are not showing are transparent and need no backdrop filter. */
+	.studio:not([data-read]) .studio-panels > [data-scene]:not([data-shown]):not(:first-child),
+	.studio:not([data-read])[data-live] .studio-panels > [data-scene]:not([data-shown]) {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+	}
 	.studio-scene a:not(.studio-link) {
 		text-decoration: underline;
 		text-decoration-thickness: 1.5px;

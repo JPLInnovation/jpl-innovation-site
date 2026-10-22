@@ -107,6 +107,13 @@ export interface StageView {
 	orbit?: boolean;
 	/** Highest device pixel ratio to render at, on any tier (the tiers have their own caps). */
 	pixelRatio?: number;
+	/**
+	 * Called once when the stage gives up and the page should show its plain version instead: the frame loop threw
+	 * ("error"), the GPU is too slow even on the lowest tier ("slow"; never when the quality was pinned by ?quality= or
+	 * Settings), or the WebGL context was lost and did not come back ("context"). The stage has already stopped drawing;
+	 * the caller disposes it.
+	 */
+	onFallback?(reason: "error" | "slow" | "context"): void;
 }
 
 export interface StageContext {
@@ -150,6 +157,11 @@ export interface Model {
 	update?(t: number, dt: number): void | boolean;
 	/** Re-colour after a light/dark switch. */
 	applyPalette?(p: Palette): void;
+	/**
+	 * True while nothing moves but the scene's own slow life (dust, a breath of camera sway): the stage then draws every
+	 * other frame (about 30 a second), which halves the GPU's work while someone is reading and costs nothing to look at.
+	 */
+	idle?: boolean;
 	dispose?(): void;
 }
 
@@ -215,10 +227,16 @@ export function textTexture(text: string, opts: { width?: number; height?: numbe
 
 const TIERS: Tier[] = ["high", "medium", "low"];
 const PIXEL_RATIO: Record<Tier, number> = { high: 2, medium: 1.5, low: 1.25 };
-const MAX_PIXELS = 4.6e6; // high tier: at most this many canvas pixels (a full-window stage on a 2x laptop screen)
+// At most this many canvas pixels per tier. A big display (a 4K screen or projector at 1x) would otherwise be drawn at its
+// full size, which an integrated GPU cannot keep up with; drawing a little below native size and letting the browser
+// scale it up keeps the motion smooth. The HTML on top stays sharp.
+const MAX_PIXELS: Record<Tier, number> = { high: 4.6e6, medium: 3.2e6, low: 2.2e6 };
+const MIN_RATIO = 0.6;
 const SLOW = 22; // ms: frames slower than this, on average, drop a tier
 const WARMUP = 12; // frames skipped before timing (shaders compiling, textures uploading)
 const SAMPLE = 50; // frames timed for the first verdict (about a second at 50 to 60 fps)
+const VERY_SLOW = 66; // ms: a median frame slower than this (under 15 a second) is a slideshow: straight to the lowest tier, and if it is still that slow there, the page falls back to its plain version
+const RECENT = 16; // frames the very slow verdict is judged on (the median, so a few hitches while textures arrive do not count)
 
 /** What the device suggests, before any frame is timed. */
 function startingTier(renderer: WebGLRenderer): Tier {
@@ -252,6 +270,8 @@ interface StageStats {
 	/** What the last frame cost the GPU's driver: draw calls and triangles (a frame with ambient occlusion counts its extra passes too), and lights in the scene. */
 	calls: number;
 	triangles: number;
+	/** Frames actually drawn so far (a still room draws every other animation frame). */
+	renders: number;
 	readonly lights: number;
 }
 const registry: StageStats[] = [];
@@ -285,7 +305,7 @@ export async function mountStage(
 
 	let tier = startingTier(renderer);
 	const pinned = new URLSearchParams(location.search).has("quality") || qualityPref() !== null;
-	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1, calls: 0, triangles: 0,
+	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1, calls: 0, triangles: 0, renders: 0,
 		// Counted when asked for (window.__stage in the console), not every frame.
 		get lights() {
 			let n = 0;
@@ -339,6 +359,9 @@ export async function mountStage(
 	const scratch = new Vector3();
 
 	let palette = readPalette();
+	// Models may ask for a redraw (a texture arrived) or build shaders while the stage is still setting itself up (it
+	// awaits the quality code and the shader compile); those asks are answered by the first render at the end of setup.
+	let ready = false;
 	let needsRender = true;
 	let running = false;
 	let sleeping = false;
@@ -346,6 +369,7 @@ export async function mountStage(
 	let shadowsDirty = false;
 	const invalidate = () => {
 		needsRender = true;
+		if (!ready) return;
 		if (reducedMotion || !running || sleeping) requestStill();
 	};
 	const wake = () => {
@@ -421,10 +445,9 @@ export async function mountStage(
 		/* the first frame compiles them instead */
 	}
 	const pixelRatio = () => {
-		let ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
+		const ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
 		const area = Math.max(1, container.clientWidth * container.clientHeight);
-		if (tier === "high") ratio = Math.min(ratio, Math.sqrt(MAX_PIXELS / area));
-		return Math.max(1, ratio);
+		return Math.max(MIN_RATIO, Math.min(ratio, Math.sqrt(MAX_PIXELS[tier] / area)));
 	};
 	const dropTier = (frameMs: number) => {
 		const next = TIERS[TIERS.indexOf(tier) + 1];
@@ -512,6 +535,7 @@ export async function mountStage(
 		renderer.info.reset();
 		if (pipeline && ctx.occlusion > 0.01) pipeline.render(ctx.occlusion);
 		else renderer.render(scene, camera);
+		stats.renders++;
 		stats.calls = renderer.info.render.calls;
 		stats.triangles = renderer.info.render.triangles;
 		positionLabels();
@@ -547,9 +571,40 @@ export async function mountStage(
 	let windowMs = 0;
 	let windowFrames = 0;
 	let slowStreak = 0;
+	const recent: number[] = [];
+	let sinceVerdict = 0;
+	let verySlow = 0;
+	let failed = false;
+	let lostTimer = 0;
+	/** The stage gives up: stop drawing and tell the page to show its plain version (once). */
+	const fail = (reason: "error" | "slow" | "context") => {
+		if (failed) return;
+		failed = true;
+		console.warn(`3D: switching to the plain page (${reason}).`);
+		stop();
+		window.clearTimeout(lostTimer);
+		view.onFallback?.(reason);
+	};
+	const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[xs.length >> 1];
 	const time = (ms: number) => {
 		frames++;
 		if (frames <= WARMUP || ms > 1000) return; // compiling, or a pause (a dropped tab, a debugger)
+		// A slideshow (the median of the last frames is under 15 a second): no point stepping down one tier at a time.
+		recent.push(ms);
+		if (recent.length > RECENT) recent.shift();
+		if (recent.length === RECENT && ++sinceVerdict >= RECENT / 2) {
+			sinceVerdict = 0;
+			verySlow = median(recent) > VERY_SLOW ? verySlow + 1 : 0;
+			if (verySlow >= 1 && tier !== "low" && !pinned) {
+				for (let step = 0; step < 2 && (tier as Tier) !== "low"; step++) dropTier(median(recent));
+				frames = WARMUP;
+				recent.length = 0;
+				verySlow = 0;
+				windowMs = windowFrames = slowStreak = 0;
+				return;
+			}
+			if (verySlow >= 2 && tier === "low" && !pinned && view.onFallback) return fail("slow");
+		}
 		windowMs += ms;
 		windowFrames++;
 		if (windowFrames < SAMPLE) return;
@@ -561,23 +616,36 @@ export async function mountStage(
 		if (slowStreak >= (frames <= WARMUP + SAMPLE ? 1 : 2)) {
 			slowStreak = 0;
 			frames = WARMUP; // time the new tier from scratch, without another warm-up
+			recent.length = 0;
 			dropTier(average);
 		}
 	};
+	let skip = false;
 	const frame = () => {
-		const now = performance.now();
-		const ms = now - last;
-		const dt = Math.min(ms / 1000, 0.05);
-		last = now;
-		elapsed += dt;
-		if (view.spin && now > idleAt) root.rotation.y += view.spin * dt;
-		const moving = controls?.update() ?? false;
-		const more = model.update?.(elapsed, dt);
-		render();
-		time(ms);
-		if (more === false && !moving && !view.spin) {
-			sleeping = true;
-			stop();
+		// An error here would end the loop silently and leave a frozen picture: say so, stop, and let the page fall back.
+		try {
+			const now = performance.now();
+			const ms = now - last;
+			const dt = Math.min(ms / 1000, 0.05);
+			last = now;
+			elapsed += dt;
+			if (view.spin && now > idleAt) root.rotation.y += view.spin * dt;
+			const moving = controls?.update() ?? false;
+			const more = model.update?.(elapsed, dt);
+			// While nothing moves, draw every other frame (the model still advances every frame).
+			if (model.idle && !moving) {
+				skip = !skip;
+				if (skip) return;
+			} else skip = false;
+			render();
+			time(ms);
+			if (more === false && !moving && !view.spin) {
+				sleeping = true;
+				stop();
+			}
+		} catch (error) {
+			console.error("3D stopped:", error);
+			fail("error");
 		}
 	};
 	const start = () => {
@@ -609,6 +677,20 @@ export async function mountStage(
 	});
 	intersection.observe(container);
 	document.addEventListener("visibilitychange", sync);
+	// The GPU can drop the WebGL context (a display plugged in or out, a driver reset). The browser usually gives it
+	// back within a moment and three.js rebuilds what it needs; if it does not, the page falls back to its plain version.
+	const onContextLost = () => {
+		window.clearTimeout(lostTimer);
+		lostTimer = window.setTimeout(() => fail("context"), 5000);
+	};
+	const onContextRestored = () => {
+		window.clearTimeout(lostTimer);
+		sleeping = false;
+		invalidate();
+		sync();
+	};
+	canvas.addEventListener("webglcontextlost", onContextLost);
+	canvas.addEventListener("webglcontextrestored", onContextRestored);
 	if (reducedMotion) {
 		// One pose, redrawn on demand (drag, resize, theme).
 		model.update?.(0, 0);
@@ -642,6 +724,7 @@ export async function mountStage(
 
 	resize();
 	render();
+	ready = true;
 
 	return () => {
 		stop();
@@ -650,6 +733,9 @@ export async function mountStage(
 		resizeObserver.disconnect();
 		themeObserver.disconnect();
 		document.removeEventListener("visibilitychange", sync);
+		window.clearTimeout(lostTimer);
+		canvas.removeEventListener("webglcontextlost", onContextLost);
+		canvas.removeEventListener("webglcontextrestored", onContextRestored);
 		controls?.dispose();
 		model.dispose?.();
 		shadows?.dispose();

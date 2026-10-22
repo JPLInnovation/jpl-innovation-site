@@ -155,3 +155,24 @@ reduced motion, no WebGL, or Settings). A new project is one file in `src/text/p
 - **No JavaScript?** The studio and the Work wall start as ordinary pages; the switch to 3D runs before the first paint.
 - **Chapter openers** (`src/components/ChapterBackdrop.astro`): each project page opens over slow footage of its own
   station (the studio renders in `public/studio/scenes/`), behind a scrim.
+
+# Safety nets (the 3D must never leave a blank or frozen page)
+
+The studio and the Work wall fall back to their plain pages, by themselves, when:
+
+| What goes wrong | What happens |
+| :-- | :-- |
+| No WebGL, or a script fails to load | plain page at once |
+| The scripts never arrive (blocked, or a cached page whose files moved after an update) | after 30 s the page switches to its plain version (the title shows meanwhile) |
+| A frame throws an error | the loop stops (it would otherwise freeze silently) and the page falls back |
+| The GPU is too slow even on the lowest tier (median frame over 66 ms, about 15 a second) | straight to the lowest tier, then, if still that slow, the plain page (never when the quality is pinned by `?quality=` or Settings) |
+| The WebGL context is lost (a display plugged in, a driver reset) | three.js rebuilds it if the browser gives it back; if not within 5 s, the plain page |
+
+Also: huge displays are drawn a little below native size (pixel caps per tier: 4.6 / 3.2 / 2.2 million) and scaled up by
+the browser, so a 4K projector at 1x stays smooth; a still room draws every other frame (about 30 a second) and every
+frame as soon as anything moves; blur is only on the cards that are showing; the room's pictures and the drone's CAD are
+fetched while the logo intro plays. `window.__stage` shows each stage's tier, frame time, draw calls, lights and renders.
+
+Tests that were run (and can be repeated): scripts blocked, context lost and restored, context lost for good, an
+injected error inside a frame, software GL with no pin (falls back by itself), pinned quality (never falls back), every
+page under all three tiers in both themes at 1920 x 1080, six Home to Work round trips (one stage, stable memory).

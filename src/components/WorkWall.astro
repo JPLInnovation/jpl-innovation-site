@@ -33,7 +33,17 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 				root.classList.contains("read-mode") ||
 				root.classList.contains("reduce-motion") ||
 				matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
-			if (!read) el.removeAttribute("data-read");
+			if (!read) {
+				el.removeAttribute("data-read");
+				// Failsafe: if the 3D has not come up within 30 s (scripts blocked, a cached page whose files have since
+				// moved after an update, a very slow device), show the plain page rather than an empty one.
+				setTimeout(() => {
+					if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
+						el.setAttribute("data-read", "");
+						console.warn("Work wall: the 3D did not start in time, showing the plain page.");
+					}
+				}, 30000);
+			}
 		})();
 	</script>
 	<div class="wall-read">
@@ -324,7 +334,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		addEventListener("scroll", onScroll, { passive: true });
 
 		const onKey = (event: KeyboardEvent) => {
-			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			if (root.hasAttribute("data-read") || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
 			if ((event.target as HTMLElement).closest("input, textarea, select, [contenteditable], dialog, [popover]")) return;
 			if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
 			const rect = stage.getBoundingClientRect();
@@ -358,9 +368,27 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		};
 		root.addEventListener("click", onClick);
 
+		const detach = () => {
+			removeEventListener("scroll", onScroll);
+			removeEventListener("keydown", onKey);
+			resize.disconnect();
+		};
+		/** The plain heading and list, for any reason the 3D cannot carry on (no WebGL, too slow, the GPU lost, an error, scripts that never arrived). */
+		const toRead = (why: string) => {
+			if (cancelled || root.hasAttribute("data-read")) return;
+			console.warn(`Work wall: switching to the plain list (${why}).`);
+			detach();
+			root.setAttribute("data-read", "");
+			root.removeAttribute("data-live");
+			dispose?.();
+			dispose = undefined;
+			scrollTo({ top: 0, behavior: "instant" });
+		};
+
 		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/work-wall"), afterIntro()])
 			.then(async ([stageModule, wall]) => {
-				if (cancelled) return;
+				// (read mode may already have been chosen by the failsafe timer, if everything was very slow)
+				if (cancelled || root.hasAttribute("data-read")) return;
 				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
@@ -369,21 +397,20 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 						model.setTarget(position());
 						return model;
 					},
-					wall.view,
+					{ ...wall.view, onFallback: (reason) => toRead(reason) },
 				);
-				if (cancelled) dispose();
-				else root.setAttribute("data-live", "");
+				if (cancelled || root.hasAttribute("data-read")) {
+					dispose();
+					dispose = undefined;
+					return;
+				}
+				root.setAttribute("data-live", "");
 			})
-			.catch((error) => {
-				console.warn("Work wall has no 3D, showing the list.", error);
-				if (!cancelled) root.setAttribute("data-read", "");
-			});
+			.catch((error) => toRead(`no 3D: ${error}`));
 
 		cleanup = () => {
 			cancelled = true;
-			removeEventListener("scroll", onScroll);
-			removeEventListener("keydown", onKey);
-			resize.disconnect();
+			detach();
 			dispose?.();
 		};
 	}

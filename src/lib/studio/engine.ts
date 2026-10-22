@@ -158,9 +158,12 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 	};
 	step(0);
 
-	return {
+	const api: Model & StudioHandle = {
+		idle: false,
 		update(_t, dt) {
 			step(dt);
+			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
+			api.idle = clock > OPEN_TIME && lamp >= 1 && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
@@ -172,4 +175,5 @@ export function drive(ctx: StageContext, { shots, content, position, onFrame }: 
 			place();
 		},
 	};
+	return api;
 }
