@@ -13,6 +13,16 @@ export const workPage = {
 	lede: "What we've built, what's on the bench now, and what's coming next.",
 };
 
+/** The Work page's 3D project wall (the words around it; the projects come from src/text/projects/*.md). */
+export const workWall = {
+	/** Read by screen readers for the 3D view. */
+	canvasLabel: "A curved wall of project panels in 3D: the F450 4G drone, cybersecurity, FIRST Robotics and the mini Arduino drone.",
+	rulerLabel: "Projects on the wall",
+	hint: "Scroll to move along the wall · click a panel to open it",
+	/** Heading over the plain list of projects under the wall (the same projects, as ordinary links). */
+	listHeading: "All projects",
+};
+
 /** On every project card: "Read about F450 4G Drone" and so on. */
 export const projectCard = {
 	readMore: "Read about",

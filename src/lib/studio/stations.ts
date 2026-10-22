@@ -34,6 +34,7 @@ import { hardware } from "../three/finish";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import type { LightSpec } from "./lights";
+import { cover, projectFace } from "./panels";
 import type { RoomContent, RoomState } from "./room";
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -47,14 +48,6 @@ export interface Stations {
 	accents: Record<string, LightSpec>;
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
-}
-
-/** Draws `img` into the box, cropped to fill it (like CSS object-fit: cover). */
-function cover(g: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, w: number, h: number) {
-	const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-	const sw = w / scale;
-	const sh = h / scale;
-	g.drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, x, y, w, h);
 }
 
 /** Wraps `text` into lines that fit `width` at the current font. */
@@ -309,43 +302,7 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		// Facing the arc's centre.
 		holder.rotation.y = -Math.PI / 2 - angle;
 		group.add(holder);
-		const face = canvasSurface(1024, 720);
-		const draw = (img?: HTMLImageElement) => {
-			const { g } = face;
-			g.fillStyle = "#0b1226";
-			g.fillRect(0, 0, 1024, 720);
-			if (img) cover(g, img, 0, 0, 1024, 560);
-			else {
-				g.fillStyle = "#16224a";
-				g.fillRect(0, 0, 1024, 560);
-			}
-			const fade = g.createLinearGradient(0, 420, 0, 560);
-			fade.addColorStop(0, "rgba(11,18,38,0)");
-			fade.addColorStop(1, "rgba(11,18,38,0.85)");
-			g.fillStyle = fade;
-			g.fillRect(0, 420, 1024, 140);
-			g.fillStyle = "#f3f6fc";
-			g.font = `800 64px ${FONT}`;
-			g.textBaseline = "alphabetic";
-			g.fillText(project.title, 40, 640);
-			if (project.badge) {
-				g.font = `500 30px ${MONO}`;
-				const w = g.measureText(project.badge).width;
-				g.fillStyle = "rgba(255,255,255,0.1)";
-				g.beginPath();
-				g.roundRect(40, 668, w + 56, 40, 20);
-				g.fill();
-				g.fillStyle = "#ffc20e";
-				g.beginPath();
-				g.arc(62, 688, 7, 0, Math.PI * 2);
-				g.fill();
-				g.fillStyle = "#cfe0ff";
-				g.fillText(project.badge, 80, 699);
-			}
-			face.redraw();
-		};
-		draw();
-		loadImage(project.img).then(draw, () => undefined);
+		const face = projectFace(project);
 		boxAt(holder, 1.24, 0.9, 0.04, dark, 0, 0, -0.03, 0.01);
 		const screen = new Mesh(new PlaneGeometry(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
