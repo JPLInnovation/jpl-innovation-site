@@ -222,11 +222,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	let sketchShown = 0;
 	let sketchAt = -1;
 	const book = new Mesh(new PlaneGeometry(0.84, 0.3), hardware({ color: 0xffffff, map: sketch.texture, roughness: 0.9 }, "printed"));
-	// The page carries a little light of its own, so the handwriting reads in the dark theme as well as under the lamp.
+	// The lamp and the room's light fall on the page, and white paper under that much light is nearly white itself, which
+	// leaves the pen little to show against: the page is dimmed (see applyPalette) so the ink keeps its contrast.
 	const bookMaterial = book.material as MeshStandardMaterial;
-	bookMaterial.emissive.set(0xffffff);
-	bookMaterial.emissiveMap = sketch.texture;
-	bookMaterial.emissiveIntensity = 0.3;
 	book.rotation.x = -Math.PI / 2;
 	book.rotation.z = 0.03;
 	book.position.set(deskX - 0.32, deskTop + 0.011, deskZ + 0.14);
@@ -347,10 +345,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
-			// The notebook page: it glows a little of its own in the dark room, and in the daylight one it is toned down (the
-			// bright rig would wash the pen out against a white page).
-			bookMaterial.color.setScalar(dark ? 1 : 0.78);
-			bookMaterial.emissiveIntensity = dark ? 0.3 : 0;
+			bookMaterial.color.setScalar(dark ? 0.46 : 0.45);
 			stations.applyPalette(p);
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
