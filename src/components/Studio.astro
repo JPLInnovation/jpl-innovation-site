@@ -501,7 +501,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 						handle = model;
 						return model;
 					},
-					{ camera: shots[0].camera, target: shots[0].target, fov: 42, orbit: false, onFallback: (reason) => toRead(reason) },
+					{ camera: shots[0].camera, target: shots[0].target, fov: 42, near: 0.05, orbit: false, onFallback: (reason) => toRead(reason) },
 				);
 				if (cancelled || root.hasAttribute("data-read")) {
 					dispose();

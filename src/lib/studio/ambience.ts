@@ -96,10 +96,12 @@ export function buildAmbience(parent: Group): Ambience {
 	/* ---------- Floor light pools ---------- */
 	const poolTexture = softDot();
 	const pools = Object.entries(POOLS).map(([id, p]) => {
-		const material = new MeshBasicMaterial({ map: poolTexture, color: p.color, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false });
+		// Well above the rug (a few millimetres apart, two flat surfaces take turns being in front, pixel by pixel: the streaks), and
+			// drawn in front of it by the depth buffer's own offset as well.
+			const material = new MeshBasicMaterial({ map: poolTexture, color: p.color, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
 		const mesh = new Mesh(new PlaneGeometry(p.size, p.size), material);
 		mesh.rotation.x = -Math.PI / 2;
-		mesh.position.set(p.at[0], 0.006, p.at[1]);
+		mesh.position.set(p.at[0], 0.02, p.at[1]);
 		parent.add(mesh);
 		return { id, material };
 	});
