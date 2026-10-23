@@ -13,7 +13,9 @@
  *   high    4x MSAA, ambient occlusion (GTAO), soft contact shadows, up to 2x device pixels, the full finishes
  *   medium  the canvas's own MSAA, soft contact shadows, up to 1.5x device pixels, the full finishes
  *   low     the plain renderer: round blob shadows, 1.25x device pixels at most, standard materials
- * The first second of animation is timed; while frames stay above 22 ms it drops a tier (never climbs back).
+ * Frames are timed while something moves. Slower than 19 ms on average, the stage first lowers the resolution a little (in
+ * proportion to how slow it is, down to 0.7 of the tier's pixel ratio; it creeps back after a steady stretch), and only
+ * if that is not enough drops a tier (never climbs back).
  * ?quality=high|medium|low pins a tier (for testing). window.__stage lists every stage's tier and frame time.
  *
  * Behaviour:
@@ -232,7 +234,11 @@ const PIXEL_RATIO: Record<Tier, number> = { high: 2, medium: 1.5, low: 1.25 };
 // scale it up keeps the motion smooth. The HTML on top stays sharp.
 const MAX_PIXELS: Record<Tier, number> = { high: 4.6e6, medium: 3.2e6, low: 2.2e6 };
 const MIN_RATIO = 0.6;
-const SLOW = 22; // ms: frames slower than this, on average, drop a tier
+const SLOW = 19; // ms: frames slower than this, on average, first lose some resolution, then a tier
+const TARGET = 15; // ms: what the resolution is steered to when frames run slow (a little under one 60 Hz frame)
+const GOOD = 17.6; // ms: an average at or under this is a steady 60 a second (a 60 Hz screen cannot show less)
+const SCALE_MIN = 0.7; // dynamic resolution: the least share of a tier's pixel ratio it steps down to
+const SCALE_UP = 1.12; // and the step back up, once frames have been steady for a while
 const WARMUP = 12; // frames skipped before timing (shaders compiling, textures uploading)
 const SAMPLE = 50; // frames timed for the first verdict (about a second at 50 to 60 fps)
 const VERY_SLOW = 66; // ms: a median frame slower than this (under 15 a second) is a slideshow: straight to the lowest tier, and if it is still that slow there, the page falls back to its plain version
@@ -267,6 +273,8 @@ interface StageStats {
 	frameMs: number;
 	drops: Array<{ from: Tier; to: Tier; frameMs: number }>;
 	pixelRatio: number;
+	/** Dynamic resolution: the share of the tier's pixel ratio in use (1 until frames run slow). */
+	scale: number;
 	/** What the last frame cost the GPU's driver: draw calls and triangles (a frame with ambient occlusion counts its extra passes too), and lights in the scene. */
 	calls: number;
 	triangles: number;
@@ -305,7 +313,7 @@ export async function mountStage(
 
 	let tier = startingTier(renderer);
 	const pinned = new URLSearchParams(location.search).has("quality") || qualityPref() !== null;
-	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1, calls: 0, triangles: 0, renders: 0,
+	const stats: StageStats = { tier, started: tier, frameMs: 0, drops: [], pixelRatio: 1, scale: 1, calls: 0, triangles: 0, renders: 0,
 		// Counted when asked for (window.__stage in the console), not every frame.
 		get lights() {
 			let n = 0;
@@ -444,10 +452,11 @@ export async function mountStage(
 	} catch {
 		/* the first frame compiles them instead */
 	}
+	let scale = 1; // dynamic resolution (see time())
 	const pixelRatio = () => {
 		const ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
 		const area = Math.max(1, container.clientWidth * container.clientHeight);
-		return Math.max(MIN_RATIO, Math.min(ratio, Math.sqrt(MAX_PIXELS[tier] / area)));
+		return Math.max(MIN_RATIO, Math.min(ratio, Math.sqrt(MAX_PIXELS[tier] / area)) * scale);
 	};
 	const dropTier = (frameMs: number) => {
 		const next = TIERS[TIERS.indexOf(tier) + 1];
@@ -571,6 +580,9 @@ export async function mountStage(
 	let windowMs = 0;
 	let windowFrames = 0;
 	let slowStreak = 0;
+	let goodStreak = 0;
+	let probing = false; // the last change was a step back up in resolution
+	let locked = false; // a step back up ran slow: no more of them
 	const recent: number[] = [];
 	let sinceVerdict = 0;
 	let verySlow = 0;
@@ -611,21 +623,48 @@ export async function mountStage(
 		const average = windowMs / windowFrames;
 		stats.frameMs = Math.round(average * 10) / 10;
 		windowMs = windowFrames = 0;
-		// The first window decides straight away; after that a tier only goes after two slow windows in a row.
-		slowStreak = average > SLOW ? slowStreak + 1 : 0;
-		if (slowStreak >= (frames <= WARMUP + SAMPLE ? 1 : 2)) {
-			slowStreak = 0;
-			frames = WARMUP; // time the new tier from scratch, without another warm-up
+		if (pinned) return;
+		// Time the next window from scratch (the new size or tier needs no warm-up of its own).
+		const restart = () => {
+			frames = WARMUP;
 			recent.length = 0;
-			dropTier(average);
+			slowStreak = goodStreak = 0;
+		};
+		const setScale = (next: number) => {
+			scale = stats.scale = Math.round(next * 100) / 100;
+			resize();
+			restart();
+		};
+		if (average > SLOW) {
+			goodStreak = 0;
+			if (probing) locked = true; // it ran slow again after stepping back up: stay where it is
+			probing = false;
+			// Fill-bound frames cost in proportion to the pixels, so one proportional step usually does it. This costs
+			// nothing to look at while the camera moves, and a whole tier is only given up when it is not enough.
+			if (scale > SCALE_MIN + 0.01) return setScale(Math.max(SCALE_MIN, scale * Math.sqrt(TARGET / average)));
+			// The first window decides straight away; after that a tier only goes after two slow windows in a row.
+			if (++slowStreak >= (frames <= WARMUP + SAMPLE ? 1 : 2)) {
+				restart();
+				dropTier(average);
+			}
+			return;
+		}
+		slowStreak = 0;
+		probing = false;
+		// Steady for about seven seconds of movement: try a little more resolution again (once; if that runs slow it stays).
+		if (average > GOOD) goodStreak = 0;
+		else if (scale < 1 && !locked && ++goodStreak >= 8) {
+			probing = true;
+			setScale(Math.min(1, scale * SCALE_UP));
 		}
 	};
 	let skip = false;
-	const frame = () => {
+	// `now` is the browser's own time for this frame (the same for everything drawn in it, aligned to the screen's refresh),
+	// so the movement steps by even amounts; reading performance.now() here would add the jitter of when this ran.
+	const frame = (now: number = performance.now()) => {
 		// An error here would end the loop silently and leave a frozen picture: say so, stop, and let the page fall back.
 		try {
-			const now = performance.now();
-			const ms = now - last;
+			const ms = Math.max(0, now - last);
 			const dt = Math.min(ms / 1000, 0.05);
 			last = now;
 			elapsed += dt;
@@ -638,7 +677,7 @@ export async function mountStage(
 				if (skip) return;
 			} else skip = false;
 			render();
-			time(ms);
+			if (!model.idle || moving) time(ms); // (a still room draws every other frame: those say nothing about the cost of a move)
 			if (more === false && !moving && !view.spin) {
 				sleeping = true;
 				stop();
