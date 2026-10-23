@@ -13,7 +13,7 @@ const scenes: Record<string, string> = { drone: "drones", frc: "robotics", cyber
 const scene = scenes[Astro.props.project] ?? "sketch";
 ---
 
-<div class="chapter-backdrop" aria-hidden="true">
+<div class="chapter-backdrop" data-scene={scene} aria-hidden="true">
 	<img
 		src={`/studio/scenes/${scene}-800.webp`}
 		srcset={`/studio/scenes/${scene}-800.webp 800w, /studio/scenes/${scene}.webp 1600w`}
@@ -44,6 +44,19 @@ const scene = scenes[Astro.props.project] ?? "sketch";
 		opacity: 0.2;
 		transform-origin: 70% 40%;
 		animation: chapter-drift 36s ease-in-out infinite alternate;
+	}
+	/* The drone page (two columns, 1024 px and up): the drone is small and low in its shot, and the page's text and 3D
+	   card cover the rest, so the shot is zoomed in on the landing pad and moved up behind the top of the page, like the
+	   KitBot on FRC. Phones and tablets keep the whole shot. */
+	@media (min-width: 1024px) {
+		.chapter-backdrop[data-scene="drones"] img {
+			position: absolute;
+			max-width: none;
+			width: 200%;
+			height: 200%;
+			left: -16%;
+			top: -61%;
+		}
 	}
 	.dark .chapter-backdrop img {
 		opacity: 0.4;
