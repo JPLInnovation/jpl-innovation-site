@@ -119,6 +119,7 @@ const stills = Object.fromEntries(
 							{step.state !== "upcoming" && (
 								<span
 									data-draw
+									data-draw-watch="parent"
 									data-reveal-delay={i * 150}
 									class={cn("block w-full rounded-full", step.state === "done" ? "bg-foreground" : "bg-accent")}
 								/>

@@ -8,7 +8,8 @@
  *   data-draw              a line or bar grows from its start edge once in view
  *   data-count="1234"      counts up from zero once in view (data-count-format="vnd" for ₫)
  *
- *   data-draw-duration / data-draw-ease="linear" / data-reveal-delay (ms) tune the above
+ *   data-draw-duration / data-draw-ease="linear" / data-reveal-delay (ms) tune the above;
+ *   data-draw-watch="parent" starts a bar when its track comes into view (for bars that start at zero width)
  *
  * React islands animate themselves (src/components/motion-primitives.tsx): editing their DOM before
  * hydration would make React throw it away, so anything inside <astro-island> is skipped here.
@@ -95,7 +96,9 @@ function init() {
 
 	for (const el of all("[data-draw]")) {
 		const vertical = el.dataset.draw === "y";
-		once(el, () =>
+		// A bar that starts at zero width has nothing for the scroll watcher to see (one of the roadmap bars was never
+		// drawn): data-draw-watch="parent" watches its track instead.
+		once(el.dataset.drawWatch === "parent" && el.parentElement ? el.parentElement : el, () =>
 			animate(el, vertical ? { scaleY: [0, 1] } : { scaleX: [0, 1] }, {
 				duration: Number(el.dataset.drawDuration ?? 1.2),
 				ease: el.dataset.drawEase === "linear" ? "linear" : [0.22, 1, 0.36, 1],
