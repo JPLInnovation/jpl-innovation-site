@@ -36,6 +36,8 @@ const boot = `(() => {
 	const root = document.documentElement;
 	/** Put this page's overlay on screen (its <template> is in <head>). */
 	const show = (kind, mode, t0) => {
+		// While the first-visit question is up (BaseLayout), no intro: it plays after the answer, if they chose 3D.
+		if (root.classList.contains("choose-experience")) mode = "none";
 		root.classList.add("intro-" + mode);
 		const tpl = document.getElementById("splash-template");
 		if (mode === "none" || !tpl) return;

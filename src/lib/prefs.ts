@@ -6,9 +6,12 @@
  *                                          the studio into one ordinary page. BaseLayout puts html.reduce-motion and
  *                                          html.read-mode on before the first paint.
  *   quality  "high" | "low" (else auto)    The 3D stage's starting tier (src/lib/three/stage.ts).
+ *   experience "3d" | "classic"            The answer to the first-visit question; "classic" is motion = "read".
  */
 export const MOTION_KEY = "motion";
 export const QUALITY_KEY = "quality";
+/** Set once the visitor has answered the first-visit question (ExperienceChoice.astro): "3d" or "classic". */
+export const EXPERIENCE_KEY = "experience";
 
 const read = (key: string) => {
 	try {

@@ -4,6 +4,7 @@ import SiteFooter from "@/components/SiteFooter.astro";
 import SiteHeader from "@/components/SiteHeader.astro";
 import DroneSplash from "@/components/DroneSplash.astro";
 import EmailDialog from "@/components/EmailDialog.astro";
+import ExperienceChoice from "@/components/ExperienceChoice.astro";
 import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
 import { splashFor } from "@/lib/splash";
@@ -68,12 +69,28 @@ const splash = splashFor(Astro.url.pathname);
 			const applyMotion = () => {
 				const root = document.documentElement;
 				let pref = null;
+				let answered = false;
+				let stored = true;
 				try {
 					pref = localStorage.getItem("motion");
-				} catch {}
-				root.classList.toggle("reduce-motion", pref === "reduced" || pref === "read");
-				root.classList.toggle("read-mode", pref === "read");
-				if (pref === "reduced" || pref === "read" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+					answered = !!(localStorage.getItem("experience") || localStorage.getItem("quality"));
+				} catch {
+					stored = false;
+				}
+				// A first visit on a computer that would run the 3D: ask which version they want before any 3D starts (the
+				// dialog is src/components/ExperienceChoice.astro). Until they answer, the page behaves as the classic one.
+				// Not asked on phones and other screens that get the classic page anyway, when nothing can be remembered, or
+				// on a link that names a quality (?quality=, ?studio=).
+				const asks =
+					stored &&
+					!pref &&
+					!answered &&
+					!/[?&](quality|studio)=/.test(location.search) &&
+					!matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
+				root.classList.toggle("choose-experience", asks);
+				root.classList.toggle("reduce-motion", asks || pref === "reduced" || pref === "read");
+				root.classList.toggle("read-mode", asks || pref === "read");
+				if (asks || pref === "reduced" || pref === "read" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 				root.classList.add("motion");
 				setTimeout(() => {
 					if (!root.classList.contains("motion-live")) root.classList.remove("motion");
@@ -126,6 +143,7 @@ const splash = splashFor(Astro.url.pathname);
 		</main>
 		<SiteFooter />
 		<EmailDialog />
+		<ExperienceChoice />
 		<script>
 			import "@/scripts/background";
 			import "@/scripts/motion";
