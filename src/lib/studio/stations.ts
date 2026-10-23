@@ -16,6 +16,7 @@
  * The robot and the drone load their CAD in the background; the room is complete without them.
  */
 import {
+	AdditiveBlending,
 	CatmullRomCurve3,
 	Color,
 	CylinderGeometry,
@@ -25,12 +26,14 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
+	NormalBlending,
 	Object3D,
 	PlaneGeometry,
 	TubeGeometry,
 	Vector3,
 } from "three";
 import { hardware } from "../three/finish";
+import { tick } from "../three/yield";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import type { LightSpec } from "./lights";
@@ -46,6 +49,8 @@ const ease = (x: number) => {
 export interface Stations {
 	/** The glow of each scene's subject, for the pooled lights (lights.ts). */
 	accents: Record<string, LightSpec>;
+	/** The project wall's panels, for the pointer: the engine casts a ray at `screens`, and tells the one under it with `hover`. */
+	wall: { screens: Mesh[]; hover(index: number): void };
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -70,7 +75,8 @@ export const SCREEN_STEP = 0.05;
 const FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
 const MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
-export function buildStations(ctx: StageContext, parent: Group, content: RoomContent): Stations {
+/** Built in slices (`tick`), so the page stays responsive while the room comes up. */
+export async function buildStations(ctx: StageContext, parent: Group, content: RoomContent): Promise<Stations> {
 	const group = new Group();
 	parent.add(group);
 	const { z0, z1 } = ROOM;
@@ -142,6 +148,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		})
 		.catch((error) => console.warn("Studio: the robot did not load.", error));
 
+	await tick();
+
 	/* ================================================================== */
 	/* Drones: the F450 on a landing mat                                   */
 	/* ================================================================== */
@@ -185,6 +193,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	// A battery charger and a spare pack beside it.
 	boxAt(group, 0.16, 0.06, 0.12, dark, droneX + 0.55, benchTop + 0.03, -2.75, 0.01);
 	boxAt(group, 0.14, 0.035, 0.05, hardware({ color: 0x24324f, roughness: 0.3 }, "wrap"), droneX + 0.55, benchTop + 0.018, -2.5, 0.008);
+
+	await tick();
 
 	/* ================================================================== */
 	/* Networks: the switch rack                                           */
@@ -248,6 +258,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		rack.add(new Mesh(new TubeGeometry(curve, 24, 0.0035, 6), hardware({ color: cableColors[c % cableColors.length], roughness: 0.5 }, "plastic")));
 	}
 
+	await tick();
+
 	/* ================================================================== */
 	/* Web: the laptop                                                     */
 	/* ================================================================== */
@@ -280,6 +292,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	let webDrawn = false;
 	let webAt = -1;
 
+	await tick();
+
 	/* ================================================================== */
 	/* The wall: one panel per project, two rows on an arc                 */
 	/* ================================================================== */
@@ -292,12 +306,17 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 	wallBack.position.set(arc.x, 1.3, arc.z);
 	group.add(wallBack);
 	themed.push({ mat: wallBack.material as MeshStandardMaterial, dark: 0x0e1834, light: 0xd3dcec });
+	// The panel under the pointer (-1: none) lifts toward the camera, glows at its edge and brightens; the others dim a little.
+	let hovered = -1;
+	let wallHover = 0;
 	const panels = content.projects.map((project, i) => {
 		// Two to a row, read left to right and top to bottom (the camera looks along +x, so its right is +z).
 		const angle = ((i % 2) - 0.5) * arc.step;
 		const y = arc.y + (Math.floor(i / 2) === 0 ? arc.row / 2 : -arc.row / 2);
 		const holder = new Group();
-		holder.position.set(arc.x + Math.cos(angle) * arc.r, y, arc.z + Math.sin(angle) * arc.r);
+		const bx = arc.x + Math.cos(angle) * arc.r;
+		const bz = arc.z + Math.sin(angle) * arc.r;
+		holder.position.set(bx, y, bz);
 		// Facing the arc's centre.
 		holder.rotation.y = -Math.PI / 2 - angle;
 		group.add(holder);
@@ -305,7 +324,10 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		boxAt(holder, 1.24, 0.9, 0.04, dark, 0, 0, -0.03, 0.01);
 		const screen = new Mesh(new PlaneGeometry(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
-		return { holder, base: holder.rotation.y, y, screen };
+		const edge = new Mesh(new PlaneGeometry(1.31, 0.955), new MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
+		edge.position.z = -0.06;
+		holder.add(edge);
+		return { holder, base: holder.rotation.y, y, screen, edge, bx, bz, toward: [-Math.cos(angle), -Math.sin(angle)] as const, hover: 0 };
 	});
 
 	/* ================================================================== */
@@ -411,6 +433,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			binder.rotation.z = i === 6 ? 0.18 : 0;
 		});
 
+	await tick();
+
 	/* ================================================================== */
 	/* Timeline: the long window                                           */
 	/* ================================================================== */
@@ -489,6 +513,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		sky.redraw();
 	};
 
+	await tick();
+
 	/* ================================================================== */
 	/* The crew: the table, the chairs and the portraits                   */
 	/* ================================================================== */
@@ -532,6 +558,8 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		screen.rotation.y = Math.PI;
 		group.add(screen);
 	});
+
+	await tick();
 
 	/* ================================================================== */
 	/* Contact: the door and its sign                                      */
@@ -592,6 +620,12 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 
 	return {
 		accents,
+		wall: {
+			screens: panels.map((panel) => panel.screen),
+			hover(index) {
+				hovered = index;
+			},
+		},
 		update({ near, lamp }, dt) {
 			clock += dt;
 			const level = lamp * lamp * (3 - 2 * lamp);
@@ -620,17 +654,24 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 			// (Redrawn about 20 times a second: a full-size texture upload every frame is the costly part.)
 			if ((w > 0.02 && clock - webAt > SCREEN_STEP) || (!webDrawn && site)) {
 				webAt = clock;
-				drawPage(web.g, site, clock * 60 * Math.min(1, w * 1.5));
+				drawPage(web.g, site, clock * 60 * Math.min(1, w * 1.5), content.domain);
 				web.redraw();
 				webDrawn = !!site;
 			}
 
 			// The wall: the panels turn to face the camera, one after another, as the scene opens.
 			const wallIn = near.wall ?? 0;
+			const settle = 1 - Math.exp(-14 * dt);
+			wallHover += ((hovered >= 0 ? 1 : 0) - wallHover) * settle;
 			panels.forEach((panel, i) => {
 				const turn = ease(wallIn * 1.6 - i * 0.15);
+				panel.hover += ((hovered === i ? 1 : 0) - panel.hover) * settle;
+				const h = panel.hover;
 				panel.holder.rotation.y = panel.base + (1 - turn) * 0.5;
-				panel.holder.position.y = panel.y - (1 - turn) * 0.04;
+				panel.holder.position.set(panel.bx + panel.toward[0] * 0.12 * h, panel.y - (1 - turn) * 0.04, panel.bz + panel.toward[1] * 0.12 * h);
+				panel.holder.scale.setScalar(1 + 0.05 * h);
+				(panel.screen.material as MeshBasicMaterial).color.setScalar(1 - 0.3 * wallHover * (1 - h));
+				(panel.edge.material as MeshBasicMaterial).opacity = (palette?.dark === false ? 0.4 : 0.5) * h;
 			});
 
 			// The whiteboard writes itself out.
@@ -647,6 +688,12 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 		},
 		applyPalette(p) {
 			palette = p;
+			for (const panel of panels) {
+				const edge = panel.edge.material as MeshBasicMaterial;
+				edge.color.set(p.dark ? 0x67e8f9 : 0x1d4ed8);
+				edge.blending = p.dark ? AdditiveBlending : NormalBlending;
+				edge.needsUpdate = true;
+			}
 			for (const { mat, dark: d, light } of themed) mat.color.set(p.dark ? d : light);
 			robot?.applyPalette(p);
 			drawPeg(p.dark);
@@ -657,7 +704,7 @@ export function buildStations(ctx: StageContext, parent: Group, content: RoomCon
 }
 
 /** The laptop's screen: this site, scrolled `scroll` pixels down and back up. */
-function drawPage(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number) {
+function drawPage(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number, address: string) {
 	const { width: w, height: h } = g.canvas;
 	g.fillStyle = "#050a1f";
 	g.fillRect(0, 0, w, h);
@@ -676,5 +723,5 @@ function drawPage(g: CanvasRenderingContext2D, page: HTMLImageElement | undefine
 	g.fillStyle = "#c5cee0";
 	g.font = `500 20px ${FONT}`;
 	g.textBaseline = "middle";
-	g.fillText("jpl-innovation.github.io", 110, bar / 2 + 1);
+	g.fillText(address, 110, bar / 2 + 1);
 }

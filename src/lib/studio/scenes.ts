@@ -18,8 +18,11 @@ export interface SceneShot {
 export const SHOTS: Record<string, SceneShot> = {
 	/** 0 Title: the desk from across the room, under the lamp, with the logo on the wall; turned a little left, so the desk sits right of centre and the words have the empty wall beside it. */
 	title: { id: "title", camera: [-6.0, 1.45, 2.3], target: [-6.9, 1.45, -2.6] },
-	/** 1 Sketch: above the desk, looking down into the open sketchbook. */
-	sketch: { id: "sketch", camera: [-6.3, 1.62, -1.45], target: [-6.32, 0.79, -2.32] },
+	/**
+	 * 1 Sketch: over the desk, steeply down into the open sketchbook (the handwriting has to be readable), the whole spread fits a 16:10 window (the
+	 * narrowest shape the camera keeps its field for), low and to the right, so the words have the empty desk above them.
+	 */
+	sketch: { id: "sketch", camera: [-6.395, 1.572, -1.97], target: [-6.395, 0.6915, -2.444] },
 	/** 2 Research: slid right to the monitor. */
 	research: { id: "research", camera: [-5.12, 1.2, -1.32], target: [-5.12, 1.11, -2.7] },
 	/**

@@ -21,6 +21,7 @@ import {
 	BoxGeometry,
 } from "three";
 import { largestCopy } from "@/lib/images";
+import { displayDomain } from "@/text/site";
 import { contactShadow, type Model, type StageContext, type StageView, standard } from "../stage";
 
 /** 480 px WebP copy of the dark logo (scripts/resize-images.mjs); drawn at most ~300 px wide (badge back). */
@@ -350,7 +351,7 @@ async function drawBack({ c, texture }: Face, member: BadgeMember) {
 	c.fillStyle = "#ffffff";
 	c.font = `700 24px ${FONT}`;
 	c.textAlign = "center";
-	c.fillText("jpl-innovation.github.io", TEX_W / 2, 870);
+	c.fillText(displayDomain, TEX_W / 2, 870);
 	texture.needsUpdate = true;
 }
 
