@@ -78,7 +78,7 @@ export const services: Service[] = [
 /** "Selected work": the heading above the project cards. */
 export const workSection = {
 	heading: "Selected work",
-	intro: "Our own builds and the team we compete with: a drone that streams over 4G, a secured network lab, and an FRC robot.",
+	intro: "Our own builds and the team we compete with: a drone that streams over 4G, an FRC robot, and a secured network lab.",
 	allWorkLink: "All work",
 };
 

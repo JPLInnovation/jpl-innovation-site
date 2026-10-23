@@ -6,7 +6,7 @@ badge: Preseason
 description: |
   FRC Team 10951, the Saigon South Dragons: a rookie FIRST Robotics Competition team that designs, builds
   and programs competition robots. The team is in preseason for 2027, and our founders build with the team.
-order: 3
+order: 2
 ---
 
 <!--
