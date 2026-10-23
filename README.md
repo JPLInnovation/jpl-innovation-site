@@ -33,7 +33,8 @@ src/
     prefs.ts    Settings: theme, motion, sound, 3D quality (saved in localStorage)
   scripts/      starfield background and the page intros
   styles/       global.css: colour tokens (light + dark), glass, fonts
-public/         files served as they are: assets/ (photos, logos), studio/ (scene renders, screens), showcase/,
+public/         files served as they are: assets/ (photos, logos), fonts/ (the sketchbook's handwriting), studio/ (scene renders,
+                screens), showcase/,
                 work/drone/ (the build guide, 3D layout and camera POV pages, each a single HTML file)
 scripts/        tools that make files (below); nothing here runs in the browser
 docs/           SHOWCASE.md (how the 3D works, tiers, safety nets, accessibility checks), DEMO.md (a checklist for

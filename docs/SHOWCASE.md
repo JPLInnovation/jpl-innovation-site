@@ -51,7 +51,7 @@ Every 3D view on the site (the showcases and the plain viewers) runs on the shar
 - **Look on every tier:** ACES filmic tone mapping (AgX washed the CAD's reds and yellows out), a generated studio environment (RoomEnvironment, nothing downloaded), and a key, fill and rim light that ride on the camera, so every angle is lit. Light and dark themes have their own exposure and light balance.
 - **Finishes** (`finish.ts`), by CAD material, colours always the model's own: glossy PCB with a clear coat, the F450's fibreglass plates, matte printed PETG with a little sheen, moulded plastic, LiPo shrink wrap, machined metal, brushed motor bells (anisotropic, with tangents around each motor's axis), anodised aluminium on the robot, rubber, bumper fabric (sheen), FUEL foam, the camera lens, and see-through polycarbonate (no transmission pass: faint face on, more solid at grazing angles).
 - **Contact shadows:** each model's floor plane is replaced by its real footprint, rendered once from below into a 512 px depth texture and blurred twice; drawn again only when the model changes shape (the exploded view). Moving things (FUEL) are left out.
-- **Adaptive:** the first 50 frames after a 12-frame warm-up are timed; if they average more than 22 ms the stage drops a tier at once, and after that two slow windows in a row drop it again. It never climbs back. `?quality=high|medium|low` pins a tier; `window.__stage` lists each stage's tier, last frame time and drops.
+- **Adaptive:** frames are timed while something moves (a still room, drawn every other frame, is not timed), in windows of 50 after a 12-frame warm-up. A window averaging over 19 ms first lowers the **resolution** (dynamic resolution: the pixel ratio is scaled by the square root of 15 ms over the average, down to 0.7 of the tier's own, so one step usually does it), and only if that is not enough drops a tier (at once in the first window, after two slow windows in a row later). After about seven seconds of steady 60 a second it steps the resolution back up, once (if that runs slow again it stays). Tiers never climb back. Frame steps use the browser's own frame time, so the movement is even. `?quality=high|medium|low` pins a tier (and switches all of this off); `window.__stage` lists each stage's tier, scale, pixel ratio, last frame time and drops.
 - **Only when needed:** renders only while on screen and the tab is visible, and stops when the model reports it is at rest.
 - The logo intros keep their own plain materials (the richer finishes take longer to compile, which would stall the intro's clock).
 
@@ -107,10 +107,10 @@ text panels, ruler, keyboard, loop), `src/lib/studio/engine.ts` (camera), `room.
 | # | Scene | In the room |
 | - | ----- | ----------- |
 | 0 | Title | the desk from across the room; the lamp switches on |
-| 1 | Sketch | the sketchbook draws the F450 from its real numbers |
+| 1 | Sketch | the sketchbook: the F450's design page, drawn stroke by stroke in pen over four seconds once the camera is at the book (what it has to do, the camera's tilt mount, the flight controller, how it fits together, the roadmap with "we are here"); it stays drawn |
 | 2 | Research | the monitor scrolls the build guide (a screenshot of the real page) |
 | 3 | Robotics, Drones, Networks, Web | KitBot on a cart (its CAD), the F450 on its landing mat, powered up but not flying: it has not flown yet (its CAD), a switch rack with blinking ports, a laptop and phone scrolling this site |
-| 4 | Selected work | one panel per project on a curved wall; they turn to face you |
+| 4 | Selected work | one panel per project on a curved wall; they turn to face you. Hover lifts and lights one (the others dim), a click pushes the camera in and opens the project |
 | 5 | Standards | the whiteboard writes out the standards and the three steps |
 | 6 | Timeline | the long window, a year on each pane (2023 and 2024 tagged "Before JPL") |
 | 7 | The team | the table, a chair and a portrait screen per member |
@@ -119,10 +119,13 @@ text panels, ruler, keyboard, loop), `src/lib/studio/engine.ts` (camera), `room.
 After Contact the camera turns on the spot back to the desk and the scroll resets unseen: the loop (wheel, trackpad
 and touch; keyboard users get a normal end). Anchors: `/#services` (Robotics), `/#work`, `/#team`, `/#contact`.
 
-- **Camera:** a closed curve through the scenes' positions, a critically damped spring on the scroll, and a hold in the
-  middle of each scene. It turns by heading and tilt (never by sliding a look-at point), so a 180° turn is clean.
+- **Camera:** a closed curve through the scenes' positions and a critically damped spring on the scroll (follow rate 10 a second:
+  about 0.2 s behind a steady scroll, about 0.4 s to settle, no overshoot). Between two scenes the camera moves mostly in step with
+  the scroll, eased only a little at each end; there is no dead zone before it starts to move (an earlier hold of 22% of each scene and a
+  slower spring made the first few notches of the wheel do nothing visible: that felt like lag). It turns by heading and tilt (never by
+  sliding a look-at point), so a 180° turn is clean.
 - **Lights:** the room carries 8 (two hemisphere, the camera's key, fill and rim, the desk lamp, and two point lights that slide between scenes: the glow of what the camera is on, and a ceiling light above it; `src/lib/studio/lights.ts`). A point light costs every lit pixel, so the room used to be 14. Count them, draw calls and triangles with `window.__stage` in the console (`?quality=high`).
-- **No hitches:** every shader is built before the first frame and again after the robot and drone CAD load (`ctx.precompile()`), the live screens redraw about 20 times a second, and while the page moves faster than about 1.5 scenes a second the camera's hold at each scene gives way, so a click on the ruler or a link to `/#contact` is one flight, not a stop at every scene on the way.
+- **No hitches:** every shader is built before the first frame and again after the robot and drone CAD load (`ctx.precompile()`), the live screens redraw about 20 times a second, and the room is built in slices (`src/lib/three/yield.ts`) so a page change never waits on one long block of work; the 3D code is fetched in idle time on every page (`src/scripts/warm.ts`), so a click on Home or Work does not wait for it. A click on the ruler or a link to `/#contact` is one flight, not a stop at every scene on the way.
 - **Read mode** (under 768 px wide or 560 px tall, taller than wide, reduced motion, Settings → Motion → Read mode, no WebGL): the same text as one page, with
   a picture of each scene: `public/studio/scenes/`, made by `python scripts/studio-stills.py` against a preview
   (`?studio=capture` hides the text; `window.__studio.go(n)` jumps the camera).
