@@ -98,6 +98,8 @@ export interface StageView {
 	camera: [number, number, number];
 	target?: [number, number, number];
 	fov?: number;
+	/** The nearest distance the camera draws (m), default 1 cm. A room has nothing that close, and the further this is, the more precisely the depth buffer tells flat surfaces a few millimetres apart (a rug, a pool of light) from each other at a distance. */
+	near?: number;
 	/** Radians per second the model turns on its own (0 = still). */
 	spin?: number;
 	/** Keep the camera above the floor: polar angle limits in radians. */
@@ -330,7 +332,7 @@ export async function mountStage(
 	scene.environment = environment;
 	pmrem.dispose();
 
-	const camera = new PerspectiveCamera(view.fov ?? 35, 1, 0.01, 40);
+	const camera = new PerspectiveCamera(view.fov ?? 35, 1, view.near ?? 0.01, 40);
 	camera.position.set(...view.camera);
 	const target = new Vector3(...(view.target ?? [0, 0, 0]));
 	camera.lookAt(target);
