@@ -3,6 +3,18 @@
 @import "@fontsource-variable/archivo/wdth.css";
 @plugin "@tailwindcss/typography";
 
+/*
+ * Caveat (SIL Open Font License; public/fonts/CAVEAT-OFL.txt): the handwriting in the studio's sketchbook, drawn onto a
+ * canvas (src/lib/studio/sketch.ts). Basic Latin only, 40 KB, and only fetched when the sketchbook asks for it.
+ */
+@font-face {
+	font-family: "Caveat";
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("/fonts/caveat-600.woff2") format("woff2");
+}
+
 @custom-variant dark (&:is(.dark *));
 
 /*

@@ -25,6 +25,12 @@ export const menu = [
 	{ label: "About", href: "/about/" },
 ];
 
+/**
+ * The web address drawn on the studio's screens (the research monitor, the laptop) and on the team badges.
+ * It is made up: the site is not on a domain of its own yet. When it is, change this one line.
+ */
+export const displayDomain = "jplinnovation.vn";
+
 /** The glass button at the far right of the header: opens the email pop-up from any page. */
 export const talk = {
 	label: "Let’s talk",

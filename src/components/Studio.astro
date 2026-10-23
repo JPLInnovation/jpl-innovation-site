@@ -188,6 +188,13 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		transform: translate3d(-50%, calc((1 - var(--on, 0)) * 18px), 0);
 		text-align: center;
 	}
+	/* The sketch scene: its words sit at the top left, over the empty desk, and the notebook fills the lower right. */
+	.studio:not([data-read]) .studio-panels > [data-scene][data-place="top"] {
+		bottom: auto;
+		top: 6rem;
+		width: min(34rem, 46vw, calc(100vw - 2rem));
+		max-height: calc(100svh - 8rem);
+	}
 	/* Wide screens: the words sit on the empty wall to the left, so the desk (the subject) stays clear. */
 	@media (min-width: 1101px) {
 		.studio:not([data-read]) .studio-panels > [data-scene][data-place="center"] {
@@ -271,6 +278,13 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		color: var(--accent);
 	}
 
+	/* A project's panel was clicked: the words and the ruler let go as the camera pushes in. */
+	.studio[data-leaving] .studio-panels,
+	.studio[data-leaving] .studio-ruler {
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.3s;
+	}
 	.studio[data-capture] .studio-panels,
 	.studio[data-capture] .studio-ruler {
 		display: none;
@@ -293,7 +307,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 </style>
 
 <script>
+	import { navigate } from "astro:transitions/client";
 	import { afterIntro } from "@/lib/splash";
+	import type { StudioHandle } from "@/lib/studio/engine";
 	import { warmRoom } from "@/lib/studio/prefetch";
 	import type { RoomContent } from "@/lib/studio/room";
 	import type { SceneShot } from "@/lib/studio/scenes";
@@ -380,7 +396,26 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		addEventListener("touchstart", onPointer, { passive: true });
 
 		// Ruler buttons and anything that asks to go back to the start.
+		// A click on a project's panel in the 3D wall opens that project: the camera pushes in, the page changes.
+		let leaving = false;
 		const onClick = (event: MouseEvent) => {
+			if (event.target === canvas && handle && !leaving && !root.hasAttribute("data-read")) {
+				const hit = handle.pickWall(event.clientX, event.clientY);
+				if (hit >= 0 && content.projects[hit]) {
+					leaving = true;
+					root.setAttribute("data-leaving", "");
+					// (the push-in is over in under half a second; if frames stall, the page changes after a moment anyway)
+					Promise.race([handle.leave(), new Promise<void>((resolve) => setTimeout(resolve, 1500))])
+						.then(() => navigate(content.projects[hit].href))
+						.catch(() => undefined)
+						.finally(() => {
+							leaving = false;
+							root.removeAttribute("data-leaving");
+							handle?.release();
+						});
+					return;
+				}
+			}
 			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart]");
 			if (!el || !root.contains(el)) return;
 			event.preventDefault();
@@ -406,7 +441,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		// The text and the ruler follow the camera.
 		let shown = -1;
 		const levels = new Float32Array(panels.length).fill(-1);
-		let handle: { snap(scene: number): void } | undefined;
+		let handle: StudioHandle | undefined;
 		const onFrame = (at: number) => {
 			panels.forEach((panel, i) => {
 				const d = Math.min(Math.abs(at - i), Math.abs(at - i - n));
@@ -461,8 +496,8 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
-					(ctx) => {
-						const model = engine.drive(ctx, { shots, content, position, onFrame });
+					async (ctx) => {
+						const model = await engine.drive(ctx, { shots, content, position, onFrame });
 						handle = model;
 						return model;
 					},

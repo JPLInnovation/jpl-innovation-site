@@ -9,7 +9,7 @@
  *
  * Everything on a screen or on paper is real: the build guide on the monitor and this site on the laptop are
  * screenshots of the live pages (public/studio/, scripts/studio-screens.py), the projects and portraits are the site's
- * own pictures. The sketchbook draws the F450 from its real numbers until scanned sketches replace it.
+ * own pictures. The sketchbook is the F450's design page, drawn stroke by stroke (sketch.ts).
  *
  * This file holds the shell, the desk and the shared helpers; the stations and the back wall are in stations.ts.
  */
@@ -34,11 +34,14 @@ import {
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
+import { tick } from "../three/yield";
+import type { SketchText } from "../../text/studio";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
+import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { buildStations, SCREEN_STEP } from "./stations";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
@@ -107,137 +110,6 @@ export async function loadImage(path: string, svgWidth = 1600) {
 export const screenMaterial = (map: Texture) => new MeshBasicMaterial({ map, toneMapped: false });
 
 /* ------------------------------------------------------------------ */
-/* The sketch                                                          */
-/* ------------------------------------------------------------------ */
-
-type Stroke = { pts: number[]; width: number; label?: { text: string; x: number; y: number; size: number } };
-
-/**
- * The F450 sketched over two pages, from its real numbers (the build guide's): top view on the left, side view on
- * the right. Stroke by stroke, with a little pencil wobble.
- */
-function sketchStrokes(): Stroke[] {
-	let seed = 11;
-	const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-	const strokes: Stroke[] = [];
-	const line = (x0: number, y0: number, x1: number, y1: number, width = 2.2) => {
-		const pts: number[] = [];
-		const n = 14;
-		for (let i = 0; i <= n; i++) {
-			const t = i / n;
-			pts.push(x0 + (x1 - x0) * t + (rand() - 0.5) * 1.6, y0 + (y1 - y0) * t + (rand() - 0.5) * 1.6);
-		}
-		strokes.push({ pts, width });
-	};
-	const circle = (cx: number, cy: number, r: number, width = 1.6, from = 0, to = Math.PI * 2) => {
-		const pts: number[] = [];
-		const n = 40;
-		for (let i = 0; i <= n; i++) {
-			const a = from + ((to - from) * i) / n;
-			const wobble = 1 + (rand() - 0.5) * 0.02;
-			pts.push(cx + Math.cos(a) * r * wobble, cy + Math.sin(a) * r * wobble);
-		}
-		strokes.push({ pts, width });
-	};
-	const label = (text: string, x: number, y: number, size = 26) => strokes.push({ pts: [x, y], width: 0, label: { text, x, y, size } });
-
-	// Left page: the top view. Centre (350, 250); motors 450 mm apart across the diagonal.
-	const cx = 350, cy = 250, arm = 150;
-	for (const a of [45, 135, 225, 315]) {
-		const r = (a * Math.PI) / 180;
-		line(cx + Math.cos(r) * 34, cy + Math.sin(r) * 34, cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, a === 225 || a === 315 ? 3.4 : 2.4);
-	}
-	line(cx - 42, cy - 42, cx + 42, cy - 42);
-	line(cx + 42, cy - 42, cx + 42, cy + 42);
-	line(cx + 42, cy + 42, cx - 42, cy + 42);
-	line(cx - 42, cy + 42, cx - 42, cy - 42);
-	for (const a of [45, 135, 225, 315]) {
-		const r = (a * Math.PI) / 180;
-		circle(cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, 12, 2);
-		circle(cx + Math.cos(r) * arm, cy + Math.sin(r) * arm, 82, 1.1);
-	}
-	line(cx, cy - 18, cx, cy - 110, 1.6);
-	line(cx, cy - 110, cx - 10, cy - 94, 1.6);
-	line(cx, cy - 110, cx + 10, cy - 94, 1.6);
-	label("front", cx + 14, cy - 100, 22);
-	line(cx - arm * 0.71, cy + arm * 0.71 + 92, cx + arm * 0.71, cy + arm * 0.71 + 92, 1.2);
-	label("F450 · 450 mm", cx - 80, cy + arm * 0.71 + 124, 26);
-	label("props 10 × 4.5", 70, 60, 24);
-	label("quad-X", 540, 60, 24);
-
-	// Right page: the side view.
-	const sx = 1050, sy = 210;
-	line(sx - 220, sy, sx + 220, sy, 3);
-	line(sx - 60, sy - 18, sx + 60, sy - 18, 2);
-	line(sx - 160, sy, sx - 160, sy - 24, 2);
-	line(sx + 160, sy, sx + 160, sy - 24, 2);
-	line(sx - 210, sy - 28, sx - 110, sy - 28, 1.4);
-	line(sx + 110, sy - 28, sx + 210, sy - 28, 1.4);
-	line(sx - 50, sy, sx - 50, sy + 60, 2);
-	line(sx + 50, sy, sx + 50, sy + 60, 2);
-	line(sx - 50, sy + 60, sx + 50, sy + 60, 2);
-	label("3S 2200 mAh", sx - 44, sy + 92, 22);
-	line(sx - 120, sy + 10, sx - 150, sy + 150, 2.2);
-	line(sx + 120, sy + 10, sx + 150, sy + 150, 2.2);
-	line(sx - 185, sy + 150, sx - 115, sy + 150, 2.2);
-	line(sx + 115, sy + 150, sx + 185, sy + 150, 2.2);
-	line(sx + 170, sy + 6, sx + 200, sy + 40, 2);
-	circle(sx + 206, sy + 48, 10, 2);
-	line(sx + 206, sy + 48, sx + 250, sy + 84, 1.2);
-	line(sx + 206, sy + 48, sx + 262, sy + 52, 1.2);
-	label("Camera Module 3", sx + 120, sy + 128, 22);
-	label("tilt 0 to 45° down", sx + 120, sy + 156, 20);
-	label("4G: watch from anywhere", 780, 60, 26);
-	return strokes;
-}
-
-function drawSketch(g: CanvasRenderingContext2D, strokes: Stroke[], progress: number) {
-	const { width: w, height: h } = g.canvas;
-	// Two pages of cream paper, the spine in the middle.
-	g.fillStyle = "#f4efe2";
-	g.fillRect(0, 0, w, h);
-	const spine = g.createLinearGradient(w / 2 - 40, 0, w / 2 + 40, 0);
-	spine.addColorStop(0, "rgba(0,0,0,0)");
-	spine.addColorStop(0.5, "rgba(60,48,30,0.22)");
-	spine.addColorStop(1, "rgba(0,0,0,0)");
-	g.fillStyle = spine;
-	g.fillRect(w / 2 - 40, 0, 80, h);
-	g.strokeStyle = "rgba(90,120,170,0.18)";
-	g.lineWidth = 1;
-	for (let y = 40; y < h; y += 34) {
-		g.beginPath();
-		g.moveTo(20, y);
-		g.lineTo(w - 20, y);
-		g.stroke();
-	}
-	// The strokes, in order, up to `progress` of the way through.
-	const total = strokes.length;
-	const upTo = progress * total;
-	g.strokeStyle = "#2b2f3a";
-	g.fillStyle = "#2b2f3a";
-	g.lineCap = "round";
-	g.lineJoin = "round";
-	for (let i = 0; i < total && i < upTo; i++) {
-		const s = strokes[i];
-		const part = Math.min(1, upTo - i);
-		if (s.label) {
-			g.globalAlpha = part;
-			g.font = `italic 500 ${s.label.size}px "Archivo Variable", "Segoe Print", cursive`;
-			g.fillText(s.label.text, s.label.x, s.label.y);
-			g.globalAlpha = 1;
-			continue;
-		}
-		const n = s.pts.length / 2;
-		const last = Math.max(1, Math.floor((n - 1) * part));
-		g.lineWidth = s.width;
-		g.beginPath();
-		g.moveTo(s.pts[0], s.pts[1]);
-		for (let k = 1; k <= last; k++) g.lineTo(s.pts[k * 2], s.pts[k * 2 + 1]);
-		g.stroke();
-	}
-}
-
-/* ------------------------------------------------------------------ */
 /* The room                                                            */
 /* ------------------------------------------------------------------ */
 
@@ -257,7 +129,7 @@ export interface RoomState {
 /** What the room shows, from the site's own content (the page passes it in; src/components/Studio.astro). */
 export interface RoomContent {
 	/** The project wall, in order. `img` is a path under public/. */
-	projects: { title: string; img: string; badge?: string }[];
+	projects: { title: string; img: string; badge?: string; href: string }[];
 	/** The portrait screens by the table. */
 	portraits: { name: string; role: string; img: string }[];
 	/** The whiteboard: a heading, the standards, and the steps of how we work (the last one circled). */
@@ -266,15 +138,24 @@ export interface RoomContent {
 	milestones: { year: string; state: "past" | "now" | "future" }[];
 	/** The lit sign over the door. */
 	sign: string;
+	/** The web address drawn in the address bars of the monitor and the laptop (src/text/site.ts). */
+	domain: string;
+	/** The sketchbook: its words (src/text/studio.ts) and where the project is on its roadmap ("done", "current", "upcoming", in order). */
+	sketch: { text: SketchText; states: string[] };
 }
 
 export interface Room {
 	group: Group;
+	/** The project wall's panels, for the pointer (see Stations). */
+	wall: { screens: Mesh[]; hover(index: number): void };
+	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
+	finishSketch(): void;
 	update(state: RoomState): void;
 	applyPalette(p: Palette): void;
 }
 
-export function buildRoom(ctx: StageContext, content: RoomContent): Room {
+/** Built in slices (`tick`), so the page stays responsive while the room comes up. */
+export async function buildRoom(ctx: StageContext, content: RoomContent): Promise<Room> {
 	const group = new Group();
 	ctx.root.add(group);
 	const { x0, x1, z0, z1, h } = ROOM;
@@ -316,6 +197,8 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	const sky = new HemisphereLight(0x8fb4ff, 0x0a1022, 0.4);
 	group.add(sky);
 
+	await tick();
+
 	/* ---------- The desk (scene 0 to 2) ---------- */
 	const deskX = -6;
 	const deskZ = -2.45;
@@ -331,16 +214,25 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	boxAt(group, 0.04, 0.44, 0.04, steel, deskX - 0.2, 0.22, deskZ + 0.95);
 
 	// The sketchbook, open flat; the pencil beside it.
-	const sketch = canvasSurface(1400, 500);
-	const strokes = sketchStrokes();
-	let drawnSketch = -1;
+	const sketch = canvasSurface(SKETCH_WIDTH, SKETCH_HEIGHT);
+	const sketchPages = createSketch(sketch, content.sketch.text, { states: content.sketch.states });
+	const SKETCH_TIME = 4; // seconds the pen takes, from the moment the camera gets to the book
+	let sketchStart = -1;
+	let sketchDone = false;
+	let sketchShown = 0;
+	let sketchAt = -1;
 	const book = new Mesh(new PlaneGeometry(0.84, 0.3), hardware({ color: 0xffffff, map: sketch.texture, roughness: 0.9 }, "printed"));
+	// The page carries a little light of its own, so the handwriting reads in the dark theme as well as under the lamp.
+	const bookMaterial = book.material as MeshStandardMaterial;
+	bookMaterial.emissive.set(0xffffff);
+	bookMaterial.emissiveMap = sketch.texture;
+	bookMaterial.emissiveIntensity = 0.3;
 	book.rotation.x = -Math.PI / 2;
-	book.rotation.z = 0.06;
+	book.rotation.z = 0.03;
 	book.position.set(deskX - 0.32, deskTop + 0.011, deskZ + 0.14);
 	group.add(book);
 	// The cover, just under the pages and a little bigger.
-	boxAt(group, 0.87, 0.009, 0.32, new MeshStandardMaterial({ color: 0x23324f, roughness: 0.7 }), deskX - 0.32, deskTop + 0.005, deskZ + 0.14).rotation.y = -0.06;
+	boxAt(group, 0.87, 0.009, 0.32, new MeshStandardMaterial({ color: 0x23324f, roughness: 0.7 }), deskX - 0.32, deskTop + 0.005, deskZ + 0.14).rotation.y = -0.03;
 	const pencil = new Mesh(new CylinderGeometry(0.004, 0.004, 0.17, 8), hardware({ color: 0xe0a82a, roughness: 0.5 }, "plastic"));
 	pencil.rotation.z = Math.PI / 2;
 	pencil.rotation.y = 0.5;
@@ -390,8 +282,11 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	logo.position.set(deskX, 2.15, z0 + 0.02);
 	group.add(logo);
 
+	await tick();
+
 	/* ---------- The stations, the project wall and the back wall ---------- */
-	const stations = buildStations(ctx, group, content);
+	const stations = await buildStations(ctx, group, content);
+	await tick();
 	// The pooled point lights: the glow of what the camera is on, and a ceiling light above the camera.
 	const accents: Record<string, LightSpec> = { ...stations.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
 	const overhead: Record<string, LightSpec> = {};
@@ -408,6 +303,10 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 	let screenAt = -1;
 	return {
 		group,
+		wall: stations.wall,
+		finishSketch() {
+			sketchDone = true;
+		},
 		update(state) {
 			const { lamp: on, time, near } = state;
 			stations.update(state, Math.max(0, time - lastTime));
@@ -422,19 +321,21 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 			pool.update(state.focus, level, !!palette?.dark);
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
 
-			// The sketch draws itself as the sketch scene comes into view.
-			const p = Math.round(Math.min(1, near.sketch ?? 0) * 200) / 200;
-			if (p !== drawnSketch) {
-				drawnSketch = p;
-				drawSketch(sketch.g, strokes, p);
-				sketch.redraw();
+			// The sketch draws itself once the camera is at the book, over a few seconds (the strokes arrive a few times a
+			// second at most), and stays drawn from then on, wherever the camera goes.
+			if (sketchStart < 0 && (near.sketch ?? 0) > 0.6) sketchStart = time;
+			const sketchWant = sketchDone ? 1 : sketchStart < 0 ? 0 : Math.min(1, (time - sketchStart) / SKETCH_TIME);
+			if (sketchWant > sketchShown && (time - sketchAt > 0.05 || sketchWant >= 1)) {
+				sketchShown = sketchWant;
+				sketchAt = time;
+				sketchPages.show(sketchWant);
 			}
 
 			// The monitor plays while the research scene is in view (and holds still otherwise).
 			const research = near.research ?? 0;
 			if ((research > 0.02 && time - screenAt > SCREEN_STEP) || screen.canvas.dataset.drawn !== "1") {
 				screenAt = time;
-				drawScreen(screen.g, guide, time * 45 * Math.min(1, research * 1.5));
+				drawScreen(screen.g, guide, time * 45 * Math.min(1, research * 1.5), `${content.domain}/build-guide`);
 				screen.redraw();
 				screen.canvas.dataset.drawn = guide ? "1" : "";
 			}
@@ -446,6 +347,10 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
+			// The notebook page: it glows a little of its own in the dark room, and in the daylight one it is toned down (the
+			// bright rig would wash the pen out against a white page).
+			bookMaterial.color.setScalar(dark ? 1 : 0.78);
+			bookMaterial.emissiveIntensity = dark ? 0.3 : 0;
 			stations.applyPalette(p);
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
@@ -465,7 +370,7 @@ export function buildRoom(ctx: StageContext, content: RoomContent): Room {
 }
 
 /** The monitor: a browser window on the build guide, scrolled `scroll` pixels down (it loops). */
-function drawScreen(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number) {
+function drawScreen(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number, address: string) {
 	const { width: w, height: h } = g.canvas;
 	g.fillStyle = "#f3f5f9";
 	g.fillRect(0, 0, w, h);
@@ -491,6 +396,6 @@ function drawScreen(g: CanvasRenderingContext2D, page: HTMLImageElement | undefi
 	g.fillStyle = "#c5cee0";
 	g.font = '500 20px "Archivo Variable", sans-serif';
 	g.textBaseline = "middle";
-	g.fillText("jpl-innovation.github.io/work/drone/build-guide/", 130, bar / 2 + 1);
+	g.fillText(address, 130, bar / 2 + 1);
 }
 

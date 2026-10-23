@@ -16,8 +16,9 @@ import { copyUpTo, srcset } from "@/lib/images";
 import type { RoomContent } from "@/lib/studio/room";
 import { HOME } from "@/lib/studio/scenes";
 import { hero, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
-import { contact, footer, site, talk } from "@/text/site";
-import { studio } from "@/text/studio";
+import { roadmap } from "@/text/projects/drone";
+import { contact, displayDomain, footer, site, talk } from "@/text/site";
+import { sketchText, studio } from "@/text/studio";
 
 const projects = await getProjects();
 const members = await getMembers();
@@ -25,11 +26,13 @@ const [plan, build, handOver] = mission.process;
 
 // What the room itself shows.
 const content: RoomContent = {
-	projects: projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge })),
+	projects: projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge, href: `/work/${p.id}/` })),
 	portraits: members.map((m) => ({ name: m.data.title, role: toBadge(m).title ?? "", img: copyUpTo(m.data.img, 900) })),
 	standards: { heading: mission.standardsHeading, items: mission.standards, steps: mission.process.map((s) => s.title) },
 	milestones: journey.milestones.map(({ year, state }) => ({ year, state })),
 	sign: talk.label,
+	domain: displayDomain,
+	sketch: { text: sketchText, states: roadmap.map((step) => step.state) },
 };
 
 // The work stations, one per service, text on alternate sides.
@@ -67,7 +70,7 @@ const organization = {
 		</section>
 
 		<!-- 1 Sketch: where every project starts -->
-		<section data-scene="sketch" class="studio-scene studio-card" aria-labelledby="scene-sketch">
+		<section data-scene="sketch" data-place="top" class="studio-scene studio-card" aria-labelledby="scene-sketch">
 			<img class="studio-still" {...still("sketch")} alt="" loading="lazy" width="1600" height="900" />
 			<p class="studio-tag">{mission.stepLabel} 01 · {plan.title}</p>
 			<h2 id="scene-sketch">{servicesSection.heading}</h2>

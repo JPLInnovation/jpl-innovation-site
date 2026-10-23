@@ -15,6 +15,8 @@
 | **"Page not found" page** ("Signal lost") | `site.ts` → `notFound` |
 | **Home page** is a 3D studio: the first scene's words | `home.ts` → `hero` |
 | Home: the studio's own words (screen reader description, ruler names, hints) | `studio.ts` |
+| Home: the **sketchbook** on the desk (the criteria, the camera and flight-controller notes, the labels on the drone) | `studio.ts` → `sketchText` |
+| The web address drawn on the screens and badges (invented: the site has no domain of its own yet) | `site.ts` → `displayDomain` |
 | Home: "What we do" (services) | `home.ts` → `servicesSection` and `services` |
 | Home: "Selected work" heading | `home.ts` → `workSection` |
 | Home: "Our mission", "What we hold ourselves to", "How we work" | `home.ts` → `mission` |

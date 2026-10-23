@@ -40,3 +40,63 @@ export const sceneNames: Record<string, string> = {
 	crew: "The team",
 	contact: "Contact",
 };
+
+/**
+ * THE SKETCHBOOK on the desk (the second scene), drawn by hand-style strokes in src/lib/studio/sketch.ts: the F450 drone's
+ * design page, a list of what it has to do and sketches of the camera, the flight controller and how it all fits together.
+ *
+ * Every fact here is from the drone page's own words (src/text/projects/drone.ts): if one changes there, change it here
+ * too. The sketch only says what the plan says (nothing here claims the drone has flown). Short lines: they are written
+ * in a notebook, not a report. The roadmap strip's "we are here" follows the roadmap's own state (drone.ts).
+ */
+export const sketchText = {
+	title: "F450 4G drone",
+	status: "not flown yet",
+	criteriaHeading: "What it has to do",
+	criteria: [
+		"Live video over 4G: watch it from anywhere",
+		"Camera tilts 0 to 45° down",
+		"Pi on its own 5 V, so it never browns out the FC",
+		"Fly it by radio, with little lag",
+		"Battery and attitude on a dashboard (USB, MSP)",
+	],
+	camera: {
+		heading: "Camera",
+		model: "Camera Module 3",
+		specs: "12 MP, autofocus, 720p at 60 fps",
+		mount: "printed PETG tilt mount",
+		ribbon: "CSI ribbon to the Pi",
+		level: "0°",
+		down: "45° down",
+	},
+	fc: {
+		heading: "Flight controller",
+		model: "MicoAir743 V2",
+		specs: "H743, 30 × 30 mm, INAV 9.1",
+		sbus: "SBUS from the receiver",
+		ioBoard: "8-pin cable to the IO board",
+		usb: "USB-C to the Pi: MSP telemetry",
+		warning: "its 5 V never goes to the Pi!",
+	},
+	drone: {
+		frame: "F450 · 450 mm",
+		front: "front",
+		fc: "FC",
+		io: "IO board",
+		receiver: "receiver MC7RE V2",
+		motors: "A2212 1000KV + 30 A ESC",
+		props: "props 10 × 4.5: 2 CW, 2 CCW",
+		underneath: "hangs under the frame",
+		battery: "3S 2200 mAh",
+		bec: "Matek BEC 5 V 5 A",
+		pi: "Raspberry Pi 4",
+		modem: "ZTE MF833 4G",
+		viewer: "watch from anywhere",
+		link: "4G + Tailscale",
+	},
+	/** The roadmap's six steps, short, in the same order as drone.ts's roadmap. */
+	steps: ["design", "parts", "build", "FC setup", "4G video", "field test"],
+	here: "we are here",
+};
+
+export type SketchText = typeof sketchText;
