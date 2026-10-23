@@ -24,7 +24,7 @@ export const droneShowcase = {
 			facts: [
 				{ label: 'Frame', value: 'F450, 450 mm' },
 				{ label: 'Layout', value: 'Quad-X' },
-				{ label: 'Status', value: 'Being built, not flown yet' },
+				{ label: 'Status', value: 'Bench tested, not flown yet' },
 			],
 		},
 		{

@@ -2,7 +2,7 @@
 title: F450 4G Drone
 img: /assets/f450-drone.svg
 img_alt: Illustration of the F450 quadcopter seen from above
-badge: Build in progress
+badge: Bench tested
 description: |
   A quadcopter on the classic F450 frame that streams live video over 4G — Raspberry Pi 4,
   a Camera Module 3 on a printed tilt mount, and a MicoAir H743 flight controller.

@@ -123,12 +123,12 @@ export const season2027 = {
 	status: 'Coming soon',
 	headline: 'Season two is loading…',
 	intro:
-		'Our second season begins when FIRST reveals the 2027 game at Kickoff in January. Until then, we are turning everything we learned as rookies into a faster, more reliable team.',
+		'We are in preseason. Our second season begins when FIRST reveals the 2027 game at Kickoff in January. Until then, we are turning everything we learned as rookies into a faster, more reliable team.',
 	timeline: [
 		{
 			when: 'Sep – Dec 2026',
 			title: 'Preseason',
-			desc: 'Recruitment, skill workshops, CAD and programming training, and prototyping practice.',
+			desc: 'Recruitment, skill workshops, CAD and programming training, and prototyping practice. We are also considering the 2026 game as our preseason build: recreating the top teams’ robots, two swerve-drive robots, one with a turret and one with a mass shooter.',
 			state: 'current',
 		},
 		{

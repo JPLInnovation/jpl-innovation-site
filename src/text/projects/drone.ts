@@ -80,7 +80,7 @@ export interface PartGroup {
 
 export const drone = {
 	name: 'F450 4G Drone',
-	status: 'Build in progress',
+	status: 'Bench tested, first flight next',
 	intro:
 		'A quadcopter built on the classic F450 frame that streams live, high-quality video over the 4G mobile network — so it can be watched from anywhere with signal, not just within Wi-Fi range.',
 	/** Who's building it. `members` are ids from src/text/members/*.md; leave a role's `member` out to show the name only. */
@@ -98,12 +98,12 @@ export const drone = {
 } as const;
 
 export const roadmap = [
-	{ title: 'Design & parts list', desc: 'Components chosen and budgeted.', state: 'done' },
-	{ title: 'Sourcing parts', desc: 'Main parts in hand; the printed camera mount and a few cables still to get.', state: 'current' },
-	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, IO board, battery switch, Matek BEC and 150 mm legs on the F450.', state: 'upcoming' },
-	{ title: 'Flight controller setup', desc: 'INAV 9.1, calibration, radio binding, failsafe tests and the first hover.', state: 'upcoming' },
-	{ title: '4G video link', desc: 'Pi 4 streaming the Camera Module 3 over 4G, with a live dashboard of the flight data.', state: 'upcoming' },
-	{ title: 'Field testing', desc: 'Test flights and tuning.', state: 'upcoming' },
+	{ title: 'Design, parts & sourcing', desc: 'Components chosen, budgeted and in hand.', state: 'done' },
+	{ title: 'Frame & power assembly', desc: 'Motors, ESCs, IO board, battery switch, Matek BEC and 150 mm legs on the F450.', state: 'done' },
+	{ title: 'Flight controller setup', desc: 'Flight controller, ESCs and receiver wired and working, and bench tested.', state: 'done' },
+	{ title: '4G video link', desc: 'Pi 4 companion computer and the 4G video link wired and working.', state: 'done' },
+	{ title: 'Printed mounts', desc: 'Custom 3D-printed mounts for the camera, battery, 4G stick, receiver and flight controller, printing now and fitted next.', state: 'current' },
+	{ title: 'First hover & tuning', desc: 'A balance check, the first hover test, then PID tuning.', state: 'upcoming' },
 ] as const;
 
 /** How the parts connect. `link` labels the connection *into* that step. */
