@@ -5,7 +5,7 @@
  * script that opens and closes the same panel by a `data-open` attribute.
  *
  *   Theme      Light / Dark (localStorage "theme", the same as before)
- *   Motion     Full / Reduced / Read mode (localStorage "motion"; src/lib/prefs.ts); the page reloads to apply it
+ *   Experience Classic / 3D (localStorage "experience"; src/lib/prefs.ts); the page reloads into it
  *   Sound      Off; "On" is there but disabled until the sounds exist
  *   3D quality Auto / High / Low (localStorage "quality"; the 3D stage's starting tier); the page reloads
  *
@@ -16,7 +16,7 @@ import { settings as text } from "@/text/site";
 
 const groups = [
 	{ name: "theme", label: text.theme.label, options: [["light", text.theme.light], ["dark", text.theme.dark]] },
-	{ name: "motion", label: text.motion.label, options: [["full", text.motion.full], ["reduced", text.motion.reduced], ["read", text.motion.read]], note: text.motion.note },
+	{ name: "experience", label: text.experience.label, options: [["classic", text.experience.classic], ["3d", text.experience.threeD]], note: text.experience.note },
 	{ name: "sound", label: text.sound.label, options: [["off", text.sound.off], ["on", text.sound.on]], note: text.sound.note, disabled: ["on"] },
 	{ name: "quality", label: text.quality.label, options: [["auto", text.quality.auto], ["high", text.quality.high], ["low", text.quality.low]], note: text.quality.note },
 ] as const;
@@ -142,7 +142,7 @@ const groups = [
 </style>
 
 <script>
-	import { MOTION_KEY, QUALITY_KEY } from "@/lib/prefs";
+	import { EXPERIENCE_KEY, QUALITY_KEY } from "@/lib/prefs";
 
 	const read = (key: string) => {
 		try {
@@ -162,7 +162,7 @@ const groups = [
 	function sync(panel: HTMLElement) {
 		const current: Record<string, string> = {
 			theme: document.documentElement.classList.contains("dark") ? "dark" : "light",
-			motion: read(MOTION_KEY) ?? "full",
+			experience: read(EXPERIENCE_KEY) === "3d" ? "3d" : "classic",
 			sound: "off",
 			quality: read(QUALITY_KEY) ?? "auto",
 		};
@@ -207,9 +207,9 @@ const groups = [
 		if (name === "theme") {
 			document.documentElement.classList.toggle("dark", input.value === "dark");
 			write("theme", input.value);
-		} else if (name === "motion") {
-			write(MOTION_KEY, input.value === "full" ? null : input.value);
-			location.reload(); // everything that animates reads it on load
+		} else if (name === "experience") {
+			write(EXPERIENCE_KEY, input.value);
+			location.reload(); // the home page swaps between the classic page and the studio on load
 		} else if (name === "quality") {
 			write(QUALITY_KEY, input.value === "auto" ? null : input.value);
 			location.reload();

@@ -1,0 +1,182 @@
+---
+/**
+ * Classic mode's home page: the original home page from before the studio (commit 4a4324a), word for word.
+ * Shown when the studio isn't running (Classic chosen, Read mode, phones, reduced motion, no JavaScript);
+ * src/pages/index.astro swaps it with the studio. The camera flies through the letters J-P-L (home-portal.tsx).
+ */
+import { ArrowRight, ArrowUpRight, CircleCheck, Cog, CodeXml, Drone, NotebookPen, ShieldCheck } from "lucide-react";
+import HomePortal from "@/components/home-portal";
+import ContactSection from "@/components/ContactSection.astro";
+import MemberList from "@/components/MemberList.astro";
+import ProjectList from "@/components/ProjectList.astro";
+import { journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
+import { getMembers, getProjects } from "@/lib/content";
+import { cn } from "@/lib/utils";
+
+const projects = await getProjects();
+const members = await getMembers();
+
+const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml };
+const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
+---
+
+	<h1 class="sr-only">{pageHeading}</h1>
+
+	<!-- Pulled up under the sticky header so the opening frame fills the screen. -->
+	<div class="-mt-18">
+		<HomePortal client:load />
+	</div>
+
+	<!-- Services -->
+	<!-- TODO: confirm services — placeholder copy, edit in src/text/home.ts -->
+	<section id="services" class="wrapper py-20 md:py-28" aria-labelledby="services-heading">
+		<div class="mb-10 flex max-w-2xl flex-col gap-3 md:mb-12" data-reveal>
+			<h2 id="services-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{servicesSection.heading}</h2>
+			<p class="text-lg text-muted-foreground">{servicesSection.intro}</p>
+		</div>
+		<ul class="grid gap-5 md:grid-cols-2" data-reveal-group>
+			{
+				services.map((s) => {
+					const Icon = serviceIcons[s.icon];
+					const external = s.proof?.href.startsWith("http");
+					return (
+						<li data-tilt class="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
+							<Icon className="size-8 text-primary dark:text-accent" strokeWidth={1.75} aria-hidden="true" />
+							<h3 class="font-semiwide text-xl font-[760]">{s.title}</h3>
+							<p class="text-muted-foreground">{s.desc}</p>
+							{s.proof && (
+								<a
+									href={s.proof.href}
+									class="press mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline"
+									{...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+								>
+									{servicesSection.linkPrefix} {s.proof.label}
+									<ArrowUpRight className="size-4" aria-hidden="true" />
+								</a>
+							)}
+						</li>
+					);
+				})
+			}
+		</ul>
+	</section>
+
+	<!-- Projects -->
+	<section class="border-t bg-card/70" aria-labelledby="work-heading">
+		<div class="wrapper py-20 md:py-28">
+			<div class="mb-8 flex max-w-2xl flex-col gap-3 md:mb-10" data-reveal>
+				<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{workSection.heading}</h2>
+				<p class="text-lg text-muted-foreground">{workSection.intro}</p>
+			</div>
+			<ProjectList projects={projects} />
+		</div>
+	</section>
+
+	<!-- Mission -->
+	<section class="border-y" aria-labelledby="mission-heading">
+		<div class="wrapper flex flex-col gap-6 pb-16 pt-24 md:pb-24 md:pt-36">
+			<h2 id="mission-heading" class="text-lg font-semibold text-muted-foreground" data-reveal>{mission.label}</h2>
+			<p data-words class="max-w-5xl font-wide text-[clamp(1.9rem,4.6vw,4.25rem)] font-[850] leading-[1.06] tracking-[-0.02em]">
+				{mission.statement}
+			</p>
+		</div>
+		<div class="wrapper grid gap-10 pb-16 md:grid-cols-[1fr_1.4fr] md:gap-16 md:pb-20">
+			<h3 class="text-lg font-semibold" data-reveal>{mission.standardsHeading}</h3>
+			<ul class="flex flex-col" data-reveal-group>
+				{
+					mission.standards.map((s) => (
+						<li class="flex gap-3 border-t py-4">
+							<CircleCheck className="mt-0.5 size-5 shrink-0 text-primary dark:text-accent" aria-hidden="true" />
+							<span>{s}</span>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+		<div class="wrapper pb-20 md:pb-28">
+			<h3 class="mb-2 text-lg font-semibold" data-reveal>{mission.processHeading}</h3>
+			<ol class="grid gap-10 border-t pt-10 md:grid-cols-3" data-reveal-group>
+				{
+					mission.process.map(({ icon, title, desc }, i) => {
+						const StepIcon = processIcons[icon];
+						return (
+						<li class="flex flex-col gap-3">
+							<span class="flex items-center gap-3">
+								<StepIcon className="size-7" strokeWidth={1.75} aria-hidden="true" />
+								<span class="text-sm font-semibold text-muted-foreground">{mission.stepLabel} {i + 1}</span>
+							</span>
+							<h4 class="font-semiwide text-xl font-[760]">{title}</h4>
+							<p class="text-muted-foreground">{desc}</p>
+						</li>
+						);
+					})
+				}
+			</ol>
+		</div>
+	</section>
+
+	<!-- Journey -->
+	<section class="wrapper py-20 md:py-28" aria-labelledby="journey-heading">
+		<h2 data-reveal id="journey-heading" class="mb-12 max-w-2xl font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">
+			{journey.heading}
+		</h2>
+		<div class="relative">
+			<!-- Progress so far: draws from 2023 to the "Now" dot (4th of 6 columns). -->
+			<span
+				aria-hidden="true"
+				data-draw
+				data-draw-duration="1.6"
+				class="absolute left-0 top-0 z-[1] hidden h-0.5 w-1/2 bg-accent lg:block"
+			></span>
+			<ol class="grid lg:grid-cols-6" data-reveal-group>
+				{
+					journey.milestones.map((m) => (
+						<li
+							class={cn(
+								"relative border-l-2 pb-10 pl-7 lg:border-l-0 lg:border-t-2 lg:pb-0 lg:pl-0 lg:pr-6 lg:pt-8",
+								m.state === "future" ? "border-dashed border-foreground/25" : "border-foreground",
+							)}
+						>
+							<span
+								aria-hidden="true"
+								class={cn(
+									"absolute -left-[9px] top-1 z-[2] size-4 rounded-full border-2 lg:-top-[9px] lg:left-0",
+									m.state === "past" && "border-foreground bg-foreground",
+									m.state === "now" && "border-foreground bg-accent ring-4 ring-accent/35",
+									m.state === "future" && "border-foreground/40 bg-background",
+								)}
+							/>
+							<p class="flex items-center gap-2 font-semiwide text-2xl font-[800]">
+								{m.year}
+								{m.state === "now" && (
+									<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
+										{journey.nowTag}
+									</span>
+								)}
+							</p>
+							<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
+							<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</section>
+
+	<!-- Team -->
+	<section class="border-t bg-card/70" aria-labelledby="team-heading">
+		<div class="wrapper py-20 md:py-28">
+			<div class="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between" data-reveal>
+				<div class="flex max-w-2xl flex-col gap-3">
+					<h2 id="team-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{teamSection.heading}</h2>
+					<p class="text-lg text-muted-foreground">{teamSection.intro}</p>
+				</div>
+				<a href="/members/" class="press inline-flex min-h-11 items-center gap-2 font-semibold">
+					{teamSection.allMembersLink} <ArrowRight className="size-4" aria-hidden="true" />
+				</a>
+			</div>
+			<MemberList members={members} />
+		</div>
+	</section>
+
+	<ContactSection />
