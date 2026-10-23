@@ -9,6 +9,7 @@
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
 import StatusTag from "@/components/StatusTag.astro";
+import ClassicHome from "@/components/ClassicHome.astro";
 import Studio from "@/components/Studio.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, getProjects, toBadge } from "@/lib/content";
@@ -59,6 +60,9 @@ const organization = {
 
 <BaseLayout>
 	<script is:inline type="application/ld+json" slot="head" set:html={JSON.stringify(organization)} />
+	<!-- The studio (3D) and the classic home page. Only one shows: html.studio-on is set by Studio before the first paint
+	     when the 3D will run; otherwise (Classic, Read mode, phones, reduced motion, no JavaScript) the classic page shows. -->
+	<div class="studio-home">
 	<Studio scenes={HOME} content={content} anchors={{ services: "robotics", work: "wall", team: "crew", contact: "contact" }}>
 		<!-- 0 Title -->
 		<section data-scene="title" data-place="center" class="studio-scene studio-title">
@@ -206,4 +210,22 @@ const organization = {
 			</nav>
 		</section>
 	</Studio>
+	</div>
+	<div class="classic-home">
+		<ClassicHome />
+	</div>
+	<script is:inline data-astro-rerun>
+		// Both versions use the same anchors (#services, #work, #team, #contact); keep them only on the one showing,
+		// so links like /#services land in the right place.
+		(() => {
+			const hidden = document.querySelector(document.documentElement.classList.contains("studio-on") ? ".classic-home" : ".studio-home");
+			hidden?.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+		})();
+	</script>
+	<style is:global>
+		html.studio-on .classic-home,
+		html:not(.studio-on) .studio-home {
+			display: none;
+		}
+	</style>
 </BaseLayout>

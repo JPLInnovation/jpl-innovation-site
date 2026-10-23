@@ -42,6 +42,13 @@ export const settings = {
 	button: "Settings",
 	heading: "Settings",
 	theme: { label: "Theme", light: "Light", dark: "Dark" },
+	experience: {
+		label: "Experience",
+		classic: "Classic",
+		threeD: "3D",
+		/** Under the choices. */
+		note: "3D turns the home page into a walk through our studio. It can lag on older computers.",
+	},
 	motion: {
 		label: "Motion",
 		full: "Full",

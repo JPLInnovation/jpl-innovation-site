@@ -64,39 +64,33 @@ const splash = splashFor(Astro.url.pathname);
 			// Inlined and blocking so the page never flashes the wrong theme.
 			// `motion` hides scroll-revealed content until src/scripts/motion.ts animates it in.
 			// Skipped for reduced motion; removed again if the script hasn't started within 2.5 s.
-			// The visitor's Motion setting (the Settings panel): "reduced" turns animation off like the system setting does,
-			// "read" also turns the studio into one ordinary page. Stored only in this browser.
 			const applyMotion = () => {
 				const root = document.documentElement;
-				let pref = null;
-				let answered = false;
-				let stored = true;
-				try {
-					pref = localStorage.getItem("motion");
-					answered = !!(localStorage.getItem("experience") || localStorage.getItem("quality"));
-				} catch {
-					stored = false;
-				}
-				// A first visit on a computer that would run the 3D: ask which version they want before any 3D starts (the
-				// dialog is src/components/ExperienceChoice.astro). Until they answer, the page behaves as the classic one.
-				// Not asked on phones and other screens that get the classic page anyway, when nothing can be remembered, or
-				// on a link that names a quality (?quality=, ?studio=).
-				const asks =
-					stored &&
-					!pref &&
-					!answered &&
-					!/[?&](quality|studio)=/.test(location.search) &&
-					!matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
-				root.classList.toggle("choose-experience", asks);
-				root.classList.toggle("reduce-motion", asks || pref === "reduced" || pref === "read");
-				root.classList.toggle("read-mode", asks || pref === "read");
-				if (asks || pref === "reduced" || pref === "read" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+				if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 				root.classList.add("motion");
 				setTimeout(() => {
 					if (!root.classList.contains("motion-live")) root.classList.remove("motion");
 				}, 2500);
 			};
 			applyMotion();
+			// Classic or 3D (src/components/ExperienceChoice.astro, and Settings in the header). Classic keeps every animation;
+			// it only keeps the 3D off: html.read-mode, unless the visitor chose 3D. A first visit on a computer that could run
+			// the 3D is asked once (html.choose-experience, after the logo intro), not on phones and other screens that get the
+			// classic page anyway, or when nothing can be remembered.
+			const applyExperience = () => {
+				const root = document.documentElement;
+				let choice = null;
+				let stored = true;
+				try {
+					choice = localStorage.getItem("experience");
+				} catch {
+					stored = false;
+				}
+				const small = matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
+				root.classList.toggle("choose-experience", stored && !choice && !small && !/[?&](quality|studio)=/.test(location.search));
+				root.classList.toggle("read-mode", choice !== "3d");
+			};
+			applyExperience();
 			// The only thing this site keeps in localStorage is this theme choice (no tokens, no accounts).
 			// Anything other than "dark"/"light" is ignored and the system setting is used instead.
 			const applyTheme = () => {
@@ -114,6 +108,7 @@ const splash = splashFor(Astro.url.pathname);
 				document.addEventListener("astro:after-swap", () => {
 					applyTheme();
 					applyMotion();
+					applyExperience();
 				});
 				window.__jplThemeHook = true;
 			}

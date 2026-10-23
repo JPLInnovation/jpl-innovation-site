@@ -2,13 +2,13 @@
 /**
  * The first-visit question: the 3D studio or the classic page. BaseLayout's head script puts html.choose-experience on
  * (before the first paint) for a visitor who has never answered, on a computer that would run the 3D; until they answer,
- * the page behaves as the classic one (reduce-motion and read-mode, so no 3D starts and no intro plays). This dialog
- * (the browser's own <dialog>) then asks:
+ * the page is the classic site (read-mode keeps the studio off). After the logo intro this dialog (the browser's own
+ * <dialog>) asks:
  *
  *   Explore in 3D   the answer is saved and the page reloads into the studio (with a straight warning about lag)
- *   Classic         the answer is saved as Motion: Read mode (Settings) and the page stays as it is
+ *   Classic         the answer is saved and the classic site stays, with all its motion
  *
- * Escape means Classic (the safe one). It is never asked again; Settings → Motion changes it. Words: src/text/site.ts
+ * Escape means Classic (the safe one). It is never asked again; the 3D / Classic switch in the header changes it. Words: src/text/site.ts
  * (`experience`).
  */
 import { BookOpen, Box, TriangleAlert } from "lucide-react";
@@ -159,32 +159,29 @@ import { experience as text } from "@/text/site";
 </style>
 
 <script>
-	import { EXPERIENCE_KEY, MOTION_KEY } from "@/lib/prefs";
+	import { EXPERIENCE_KEY } from "@/lib/prefs";
+	import { afterIntro } from "@/lib/splash";
 
-	const store = (key: string, value: string | null) => {
-		try {
-			if (value === null) localStorage.removeItem(key);
-			else localStorage.setItem(key, value);
-		} catch {}
-	};
 	const dialog = () => document.getElementById("experience-dialog") as HTMLDialogElement | null;
 
 	function answer(choice: "3d" | "classic") {
-		const d = dialog();
-		store(EXPERIENCE_KEY, choice);
+		try {
+			localStorage.setItem(EXPERIENCE_KEY, choice);
+		} catch {}
 		if (choice === "3d") {
-			// Full motion; the page loads again with the studio in it (everything that animates reads this on load).
-			store(MOTION_KEY, null);
+			// The page loads again with the studio in it.
 			location.reload();
 			return;
 		}
-		// Classic is the read mode of Settings: the page is already showing it, so it just stays.
-		store(MOTION_KEY, "read");
+		// Classic is the page already showing, with all its motion: nothing else changes.
 		document.documentElement.classList.remove("choose-experience");
-		d?.close();
+		dialog()?.close();
 	}
 
-	function ask() {
+	// Asked after the logo intro has finished, so the intro plays first.
+	async function ask() {
+		if (!document.documentElement.classList.contains("choose-experience")) return;
+		await afterIntro();
 		const d = dialog();
 		if (d && document.documentElement.classList.contains("choose-experience") && !d.open) d.showModal();
 	}
