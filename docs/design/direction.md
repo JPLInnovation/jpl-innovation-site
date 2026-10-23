@@ -88,10 +88,10 @@ strips under the benches) and so do Archivo and the logo. In the light theme the
 with a dusk window.
 
 - **Honest.** Nothing is shown as done before it is: the F450 stays on its mat (it has not flown); the 3D robot is the
-  standard KitBot platform and says so; the sketchbook is drawn from the real numbers until scanned sketches replace it;
+  standard KitBot platform and says so; the sketchbook is the drone's design page in the drone page's own facts (nothing ticked, "not flown yet", "we are here" follows the roadmap);
   the screens show the real pages.
 - **Real scrolling underneath.** The scrollbar is hidden but the wheel, trackpad, touch, keyboard and Back button work as
-  always; the camera follows through a critically damped spring and dwells on each scene while its words are read.
+  always; the camera follows through a critically damped spring (quick: it answers the first notch of the wheel) and the text fades in as it arrives.
 - **Text is real HTML**, every scene always in the accessibility tree; **read mode** (phones, short windows, reduced
   motion, no WebGL, no JavaScript, or chosen in Settings) is the same words as one page with a render of each scene.
 - **Glass**: no more than four glass elements on screen (header, Let's talk, the scene card, the ruler), tinted enough

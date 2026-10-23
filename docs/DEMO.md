@@ -30,6 +30,14 @@ The room has twelve scenes (the ruler names them): JPL Innovation, Sketch, Resea
 Selected work, Standards, Timeline, The team and Contact. It loops: after the last one, *Back to the start* returns
 to the title.
 
+On the **Selected work** wall, move the pointer over a project's picture: it lifts toward you and lights up (the others
+dim), and a click pushes the camera in and opens that project. The second scene, **Sketch**, draws the drone's design
+page in pen (about four seconds) once you arrive.
+
+The address bars drawn on the monitor and the laptop (and on the team badges) show an **invented** domain,
+`jplinnovation.vn`, so the screens do not advertise the GitHub address. It is one line, `displayDomain` in
+`src/text/site.ts`: change it when a real domain is bought. (The invented one has not been checked for availability.)
+
 A suggested three minutes: the home page's scenes at a calm pace, then **Work** (the curved project wall), one project
 (the F450 drone: 3D showcase, build guide, Camera POV dashboard), then **Members** and **About**.
 
