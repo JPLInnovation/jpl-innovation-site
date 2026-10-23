@@ -55,6 +55,28 @@ export const settings = {
 	close: "Close settings",
 };
 
+/**
+ * The question a first-time visitor is asked before any 3D starts (src/components/ExperienceChoice.astro): the 3D studio
+ * or the classic page (the same words and pictures as one ordinary page). The answer is saved in this browser and can be
+ * changed in the Settings panel. Be straight about the 3D: it can lag on an older computer.
+ */
+export const experience = {
+	title: "Choose your experience",
+	description: "Pick the version made for your computer. It is remembered, and you can switch any time in Settings (the gear at the top).",
+	threeD: {
+		title: "Explore in 3D",
+		text: "Walk through our studio as you scroll: the desk, the work benches, the wall of projects.",
+		warning: "Can lag on older or slower computers",
+		button: "Enter the 3D studio",
+	},
+	classic: {
+		title: "Classic",
+		text: "One simple page with the same words and pictures. Easy to read and quick on any computer.",
+		note: "Best for older computers and small screens",
+		button: "Use the classic site",
+	},
+};
+
 export const footer = {
 	blurb:
 		"A student-founded engineering startup in Ho Chi Minh City. We design, build and secure real technology: robots, drones, networks and the web.",

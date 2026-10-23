@@ -5,6 +5,12 @@ what could not be.
 
 ## Before (10 minutes, ideally the evening before)
 
+0. **The first visit asks a question.** A browser that has never opened the site is asked *Choose your experience*:
+   **Explore in 3D** (with a warning that it can lag on older computers) or **Classic** (the same words and pictures as one
+   ordinary page, easy to read and quick anywhere). The answer is remembered in that browser, and Settings → Motion
+   changes it (Classic is *Read mode*). On the presenting laptop, answer it once beforehand, so the room does not meet the
+   question: pick **Explore in 3D**. Phones and narrow or portrait windows are not asked (they get the classic page).
+   To see the question again, clear the site's data for `jpl-innovation.github.io`.
 1. **Use the newest Chrome or Edge.** It is the browser the site was tested in most. Safari and Firefox should work
    but were not tested on a real machine.
 2. **Plug the laptop in** and turn off battery saver (Windows: power mode *Best performance*; Mac: Low Power Mode off).
