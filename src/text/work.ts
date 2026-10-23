@@ -8,7 +8,7 @@
 export const workPage = {
 	/** Browser tab title and the description Google shows. */
 	seoTitle: "Work | JPL Innovation",
-	seoDescription: "JPL Innovation's projects: FRC Team 10951, the F450 4G drone, and cybersecurity.",
+	seoDescription: "JPL Innovation's projects: the F450 4G drone, FRC Team 10951, the mini Arduino drone and cybersecurity.",
 	title: "Work",
 	lede: "What we've built, what's on the bench now, and what's coming next.",
 };
@@ -16,7 +16,7 @@ export const workPage = {
 /** The Work page's 3D project wall (the words around it; the projects come from src/text/projects/*.md). */
 export const workWall = {
 	/** Read by screen readers for the 3D view. */
-	canvasLabel: "A curved wall of project panels in 3D: the F450 4G drone, cybersecurity, FIRST Robotics and the mini Arduino drone.",
+	canvasLabel: "A curved wall of project panels in 3D: the F450 4G drone, FIRST Robotics, the mini Arduino drone and cybersecurity.",
 	rulerLabel: "Projects on the wall",
 	hint: "Scroll to move along the wall · click a panel to open it",
 	/** Heading over the plain list of projects under the wall (the same projects, as ordinary links). */

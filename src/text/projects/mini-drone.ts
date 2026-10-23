@@ -40,7 +40,7 @@ export interface PartGroup {
 
 export const miniDrone = {
 	name: 'Mini Arduino Drone',
-	status: 'Concept',
+	status: 'Build in progress',
 	intro:
 		'A palm-sized quadcopter driven by an Arduino Pro Mini (ATmega328P) flight controller, flown over a custom 2.4GHz NRF24L01 radio link from a hand-built transmitter — built to learn motor control, IMU stabilisation and a from-scratch RC protocol.',
 	/** Who's building it. `members` are ids from src/text/members/*.md; leave a role's `member` out to show the name only. */
@@ -55,9 +55,9 @@ export const miniDrone = {
 
 export const roadmap = [
 	{ title: 'Design & BOM', desc: 'Frame, flight controller and radio link chosen.', state: 'done' },
-	{ title: 'Transmitter build', desc: 'Arduino Nano, joysticks and the LCD readout.', state: 'current' },
-	{ title: 'Drone wiring', desc: 'MOSFET motor drivers, IMU and the flight controller.', state: 'upcoming' },
-	{ title: 'Firmware & tuning', desc: 'Stabilisation loop and radio binding.', state: 'upcoming' },
+	{ title: 'Transmitter build', desc: 'Arduino Nano, joysticks and the LCD readout.', state: 'done' },
+	{ title: 'Drone wiring', desc: 'MOSFET motor drivers, IMU and the flight controller.', state: 'done' },
+	{ title: 'Firmware & tuning', desc: 'The programming is what is left: the stabilisation loop and radio binding.', state: 'current' },
 	{ title: 'First flight', desc: 'Bench motor tests, then a first hover.', state: 'upcoming' },
 ] as const;
 

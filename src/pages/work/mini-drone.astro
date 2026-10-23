@@ -91,6 +91,7 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 							{step.state !== "upcoming" && (
 								<span
 									data-draw
+									data-draw-watch="parent"
 									data-reveal-delay={i * 150}
 									class:list={["block w-full rounded-full", step.state === "done" ? "bg-foreground" : "bg-accent"]}
 								/>
