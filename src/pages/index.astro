@@ -27,8 +27,8 @@ const [plan, build, handOver] = mission.process;
 
 // What the room itself shows.
 const content: RoomContent = {
-	projects: projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge, href: `/work/${p.id}/` })),
-	portraits: members.map((m) => ({ name: m.data.title, role: toBadge(m).title ?? "", img: copyUpTo(m.data.img, 900) })),
+	projects: projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1920), badge: p.data.badge, href: `/work/${p.id}/` })),
+	portraits: members.map((m) => ({ name: m.data.title, role: toBadge(m).title ?? "", img: copyUpTo(m.data.img, 1280) })),
 	standards: { heading: mission.standardsHeading, items: mission.standards, steps: mission.process.map((s) => s.title) },
 	milestones: journey.milestones.map(({ year, state }) => ({ year, state })),
 	sign: talk.label,
