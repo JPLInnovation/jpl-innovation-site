@@ -1,0 +1,35 @@
+{
+	"guide": {
+		"width": 932,
+		"height": 15765,
+		"tile": 2048,
+		"files": [
+			"/studio/screens/guide-0.jpg",
+			"/studio/screens/guide-1.jpg",
+			"/studio/screens/guide-2.jpg",
+			"/studio/screens/guide-3.jpg",
+			"/studio/screens/guide-4.jpg",
+			"/studio/screens/guide-5.jpg",
+			"/studio/screens/guide-6.jpg",
+			"/studio/screens/guide-7.jpg"
+		]
+	},
+	"pov": {
+		"width": 1280,
+		"height": 1769,
+		"tile": 2048,
+		"files": [
+			"/studio/screens/pov-0.jpg"
+		]
+	},
+	"checklist": {
+		"width": 390,
+		"height": 5279,
+		"tile": 2048,
+		"files": [
+			"/studio/screens/checklist-0.jpg",
+			"/studio/screens/checklist-1.jpg",
+			"/studio/screens/checklist-2.jpg"
+		]
+	}
+}

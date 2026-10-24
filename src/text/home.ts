@@ -41,8 +41,8 @@ export const servicesSection = {
 };
 
 export interface Service {
-	/** Icon: "cog" | "drone" | "shield" | "code". */
-	icon: "cog" | "drone" | "shield" | "code";
+	/** Icon: "cog" | "drone" | "shield" | "code" | "test". */
+	icon: "cog" | "drone" | "shield" | "code" | "test";
 	title: string;
 	desc: string;
 	/** The project on this site that shows this work. Leave it out and the card has no link. */
@@ -69,9 +69,10 @@ export const services: Service[] = [
 		proof: { label: "Cybersecurity lab", href: "/work/cybersecurity/" },
 	},
 	{
-		icon: "code",
-		title: "Web development",
-		desc: "Fast, accessible websites built and deployed end to end, like this one.",
+		icon: "test",
+		title: "Testing & upgrades",
+		desc: "Bench and field tests on every build, then upgrades as we learn.",
+		proof: { label: "F450 build guide", href: "/work/drone/build-guide/" },
 	},
 ];
 

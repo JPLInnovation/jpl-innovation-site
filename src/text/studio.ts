@@ -9,7 +9,7 @@
 export const studio = {
 	/** Read by screen readers for the 3D view. */
 	canvasLabel:
-		"The JPL Innovation studio in 3D: a desk with a sketchbook and a monitor, workbenches for robots, drones, networks and the web, a wall of projects, a whiteboard, a window, the team's table and the door.",
+		"The JPL Innovation studio in 3D: a desk with a sketchbook and a monitor, workbenches for robots, drones, networks and testing, a wall of projects, a whiteboard, a window, the team's table and the door.",
 	/** The film ruler at the bottom: what it is, for screen readers. */
 	rulerLabel: "Scenes in the studio",
 	/** Under the first scene, before anyone has scrolled. */
@@ -18,6 +18,8 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
+	/** On the monitor, laptop and phone when the pointer is on them: their pages scroll with the mouse wheel. */
+	screenHint: "Scroll to read",
 	/** Over each work station's text: "What we do · 1 of 4". */
 	stationOf: "of",
 };
@@ -33,7 +35,7 @@ export const sceneNames: Record<string, string> = {
 	robotics: "Robotics",
 	drones: "Drones",
 	networks: "Networks",
-	web: "Web",
+	web: "Testing",
 	wall: "Selected work",
 	standards: "Standards",
 	timeline: "Timeline",

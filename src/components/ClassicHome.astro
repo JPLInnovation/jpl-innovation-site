@@ -4,7 +4,7 @@
  * Shown when the studio isn't running (Classic chosen, Read mode, phones, reduced motion, no JavaScript);
  * src/pages/index.astro swaps it with the studio. The camera flies through the letters J-P-L (home-portal.tsx).
  */
-import { ArrowRight, ArrowUpRight, CircleCheck, Cog, CodeXml, Drone, NotebookPen, ShieldCheck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CircleCheck, ClipboardCheck, Cog, CodeXml, Drone, NotebookPen, ShieldCheck } from "lucide-react";
 import HomePortal from "@/components/home-portal";
 import ContactSection from "@/components/ContactSection.astro";
 import MemberList from "@/components/MemberList.astro";
@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 const projects = await getProjects();
 const members = await getMembers();
 
-const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml };
+const serviceIcons = { cog: Cog, drone: Drone, shield: ShieldCheck, code: CodeXml, test: ClipboardCheck };
 const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
 ---
 

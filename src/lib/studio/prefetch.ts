@@ -21,7 +21,7 @@ export function warmRoom(content: RoomContent) {
 	};
 	for (const p of content.projects) hint(p.img.startsWith("/") ? BASE + p.img : p.img, "image");
 	for (const p of content.portraits) hint(p.img.startsWith("/") ? BASE + p.img : p.img, "image");
-	for (const path of ["/studio/research.webp", "/studio/site.webp", "/assets/jpl-logo-dark-480.webp", "/assets/jpl-logo-light-480.webp"]) hint(BASE + path, "image");
+	for (const path of ["/studio/screens/guide-0.jpg", "/studio/screens/pov-0.jpg", "/studio/screens/checklist-0.jpg", "/assets/jpl-logo-dark-480.webp", "/assets/jpl-logo-light-480.webp"]) hint(BASE + path, "image");
 	hint(droneCad, "fetch");
 	// The sketchbook's handwriting (declared in global.css; a canvas only uses a font that is already loaded).
 	document.fonts?.load('600 40px "Caveat"').catch(() => undefined);

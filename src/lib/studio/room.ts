@@ -3,12 +3,13 @@
  * through. Metres, y up. The room spans x -8.5 to 8.5 and z -3.4 (front wall) to 6.4 (back wall), 3.4 m high.
  *
  *   Front wall, left to right:  the desk (lamp, sketchbook, monitor, keyboard, the logo on the wall above), then the
- *                               four work stations (robot cart, drone bench, switch rack, laptop), and the curved
+ *                               four work stations (robot cart, drone bench, switch rack, test bench), and the curved
  *                               project wall at the right-hand end.
  *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door.
  *
- * Everything on a screen or on paper is real: the build guide on the monitor and this site on the laptop are
- * screenshots of the live pages (public/studio/, scripts/studio-screens.py), the projects and portraits are the site's
+ * Everything on a screen or on paper is real: the build guide on the monitor, and the F450's ground station and
+ * pre-flight checklist on the test bench's laptop and phone, are screenshots of the live pages that scroll with the
+ * mouse wheel (screens.ts; public/studio/screens/, scripts/studio-screens.py); the projects and portraits are the site's
  * own pictures. The sketchbook is the F450's design page, drawn stroke by stroke (sketch.ts).
  *
  * This file holds the shell, the desk and the shared helpers; the stations and the back wall are in stations.ts.
@@ -42,7 +43,8 @@ import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
 import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
-import { buildStations, SCREEN_STEP } from "./stations";
+import { type PageScreen, pageScreen } from "./screens";
+import { buildStations } from "./stations";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -148,6 +150,10 @@ export interface Room {
 	group: Group;
 	/** The project wall's panels, for the pointer (see Stations). */
 	wall: { screens: Mesh[]; hover(index: number): void };
+	/** The screens whose pages scroll with the mouse wheel (screens.ts), for the engine. */
+	screens: PageScreen[];
+	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
+	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
 	finishSketch(): void;
 	update(state: RoomState): void;
@@ -237,15 +243,21 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	pencil.position.set(deskX + 0.16, deskTop + 0.006, deskZ + 0.26);
 	group.add(pencil);
 
-	// The monitor: the build guide on screen, scrolling while you look at it.
+	// The monitor: the build guide on screen. It drifts while you look at it, and scrolls with the mouse wheel (screens.ts).
 	const monitorX = deskX + 0.88;
-	const screen = canvasSurface(1280, 760);
-	let guide: HTMLImageElement | undefined;
-	loadImage("/studio/research.webp").then((img) => (guide = img), () => undefined);
 	boxAt(group, 0.84, 0.52, 0.03, new MeshStandardMaterial({ color: 0x11141c, roughness: 0.4 }), monitorX, deskTop + 0.36, deskZ - 0.24, 0.01);
-	const display = new Mesh(new PlaneGeometry(0.8, 0.475), screenMaterial(screen.texture));
-	display.position.set(monitorX, deskTop + 0.36, deskZ - 0.223);
-	group.add(display);
+	const monitor = pageScreen({
+		page: "guide",
+		pixels: [1280, 760],
+		size: [0.8, 0.475],
+		scene: "research",
+		frame: "browser",
+		address: `${content.domain}/build-guide`,
+		reducedMotion: ctx.reducedMotion,
+		wake: () => ctx.wake(),
+	});
+	monitor.mesh.position.set(monitorX, deskTop + 0.36, deskZ - 0.223);
+	group.add(monitor.mesh);
 	boxAt(group, 0.06, 0.1, 0.06, steel, monitorX, deskTop + 0.05, deskZ - 0.26);
 	boxAt(group, 0.26, 0.012, 0.18, steel, monitorX, deskTop + 0.006, deskZ - 0.24, 0.004);
 	boxAt(group, 0.44, 0.02, 0.15, new MeshStandardMaterial({ color: 0x1b1f2a, roughness: 0.6 }), monitorX, deskTop + 0.01, deskZ + 0.12, 0.005);
@@ -298,19 +310,26 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 
 	let palette: Palette | undefined;
 	let lastTime = 0;
-	let screenAt = -1;
+	// The screens whose pages scroll: the monitor here, the test bench's laptop and phone in stations.ts.
+	const screens = [monitor, ...stations.screens];
+	let busy = false;
 	return {
 		group,
 		wall: stations.wall,
+		screens,
+		busy: () => busy,
 		finishSketch() {
 			sketchDone = true;
 		},
 		update(state) {
 			const { lamp: on, time, near } = state;
-			stations.update(state, Math.max(0, time - lastTime));
-			ambience.update(state, Math.max(0, time - lastTime));
-			props.update(state, Math.max(0, time - lastTime));
+			const dt = Math.max(0, time - lastTime);
+			stations.update(state, dt);
+			ambience.update(state, dt);
+			props.update(state, dt);
 			lastTime = time;
+			busy = false;
+			for (const screen of screens) busy = screen.update(dt, near[screen.scene] ?? 0) || busy;
 			// The lamp, and the room coming up with it.
 			const level = on * on * (3 - 2 * on);
 			lamp.intensity = 7 * level;
@@ -329,14 +348,6 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 				sketchPages.show(sketchWant);
 			}
 
-			// The monitor plays while the research scene is in view (and holds still otherwise).
-			const research = near.research ?? 0;
-			if ((research > 0.02 && time - screenAt > SCREEN_STEP) || screen.canvas.dataset.drawn !== "1") {
-				screenAt = time;
-				drawScreen(screen.g, guide, time * 45 * Math.min(1, research * 1.5), `${content.domain}/build-guide`);
-				screen.redraw();
-				screen.canvas.dataset.drawn = guide ? "1" : "";
-			}
 		},
 		applyPalette(p) {
 			palette = p;
@@ -362,35 +373,5 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ctx.scene.environmentIntensity = dark ? 0.22 : 0.6;
 		},
 	};
-}
-
-/** The monitor: a browser window on the build guide, scrolled `scroll` pixels down (it loops). */
-function drawScreen(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number, address: string) {
-	const { width: w, height: h } = g.canvas;
-	g.fillStyle = "#f3f5f9";
-	g.fillRect(0, 0, w, h);
-	const bar = 54;
-	if (page) {
-		const scale = w / page.naturalWidth;
-		const pageH = page.naturalHeight * scale;
-		const max = Math.max(1, pageH - (h - bar));
-		const y = scroll % (max * 2);
-		const offset = y < max ? y : max * 2 - y; // down, then back up
-		g.drawImage(page, 0, bar - offset, w, pageH);
-	}
-	g.fillStyle = "#1f2430";
-	g.fillRect(0, 0, w, bar);
-	for (const [i, c] of ["#f0596b", "#ffc20e", "#34d399"].entries()) {
-		g.fillStyle = c;
-		g.beginPath();
-		g.arc(26 + i * 24, bar / 2, 7, 0, Math.PI * 2);
-		g.fill();
-	}
-	g.fillStyle = "#2c3343";
-	g.fillRect(110, 12, w - 140, bar - 24);
-	g.fillStyle = "#c5cee0";
-	g.font = '500 20px "Archivo Variable", sans-serif';
-	g.textBaseline = "middle";
-	g.fillText(address, 130, bar / 2 + 1);
 }
 

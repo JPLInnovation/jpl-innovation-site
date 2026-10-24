@@ -6,7 +6,8 @@
  *   Robotics   the KitBot on a low rolling cart, a pegboard of tools behind it (the robot's own CAD, frc-robot.ts)
  *   Drones     the F450 on a landing mat, powered up on the bench (its LED blinks; it has not flown, so it never lifts off) (drone.ts)
  *   Networks   a switch rack with blinking port lights and patch cables
- *   Web        a laptop on the bench, scrolling this site (public/studio/site.webp)
+ *   Testing    the test bench: a laptop on the F450's ground station and a phone on the pre-flight checklist, both
+ *              scrollable with the mouse wheel (screens.ts). Its scene id stays "web" (links and the camera use it).
  *   The wall   one panel per project, on an arc; they turn to face the camera one after another
  *   Standards  the whiteboard (the standards and the three steps, written out as the scene opens) and the binders
  *   Timeline   the long window: night sky in the dark theme, dusk in the light one; a year on each pane
@@ -36,6 +37,7 @@ import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
+import { type PageScreen, pageScreen } from "./screens";
 import type { LightSpec } from "./lights";
 import { cover, projectFace } from "./panels";
 import type { RoomContent, RoomState } from "./room";
@@ -51,6 +53,8 @@ export interface Stations {
 	accents: Record<string, LightSpec>;
 	/** The project wall's panels, for the pointer: the engine casts a ray at `screens`, and tells the one under it with `hover`. */
 	wall: { screens: Mesh[]; hover(index: number): void };
+	/** The test bench's laptop and phone, whose pages scroll (the room updates them with the monitor). */
+	screens: PageScreen[];
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -261,7 +265,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	await tick();
 
 	/* ================================================================== */
-	/* Web: the laptop                                                     */
+	/* Testing & upgrades: the laptop and the phone                        */
 	/* ================================================================== */
 	const webX = 3.3;
 	workbench(webX);
@@ -274,23 +278,36 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	lid.rotation.x = -0.28;
 	group.add(lid);
 	boxAt(lid, 0.44, 0.29, 0.01, aluminium, 0, 0.145, -0.006, 0.006);
-	const web = canvasSurface(1280, 820);
-	let site: HTMLImageElement | undefined;
-	loadImage("/studio/site.webp").then((img) => (site = img), () => undefined);
-	const webScreen = new Mesh(new PlaneGeometry(0.41, 0.262), screenMaterial(web.texture));
-	webScreen.position.set(0, 0.147, 0);
-	lid.add(webScreen);
-	// A phone standing beside it, on the same page.
+	// The laptop: the F450's ground station (Camera POV), with the flight data from a test.
+	const laptop = pageScreen({
+		page: "pov",
+		pixels: [1280, 820],
+		size: [0.41, 0.262],
+		scene: "web",
+		frame: "browser",
+		address: `${content.domain}/work/drone/camera-pov`,
+		reducedMotion: ctx.reducedMotion,
+		wake: () => ctx.wake(),
+	});
+	laptop.mesh.position.set(0, 0.147, 0);
+	lid.add(laptop.mesh);
+	// A phone standing beside it, on the build guide's pre-flight checklist.
 	const phone = new Group();
 	phone.position.set(webX + 0.42, benchTop, laptopZ - 0.05);
 	phone.rotation.set(-0.2, -0.35, 0);
 	group.add(phone);
 	boxAt(phone, 0.075, 0.155, 0.008, dark, 0, 0.08, 0, 0.008);
-	const phoneScreen = new Mesh(new PlaneGeometry(0.068, 0.145), screenMaterial(web.texture));
-	phoneScreen.position.set(0, 0.08, 0.0045);
-	phone.add(phoneScreen);
-	let webDrawn = false;
-	let webAt = -1;
+	const checklist = pageScreen({
+		page: "checklist",
+		pixels: [390, 832],
+		size: [0.068, 0.145],
+		scene: "web",
+		frame: "phone",
+		reducedMotion: ctx.reducedMotion,
+		wake: () => ctx.wake(),
+	});
+	checklist.mesh.position.set(0, 0.08, 0.0045);
+	phone.add(checklist.mesh);
 
 	await tick();
 
@@ -620,6 +637,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 
 	return {
 		accents,
+		screens: [laptop, checklist],
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {
@@ -649,15 +667,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				ledMesh.instanceColor!.needsUpdate = true;
 			}
 
-			// Laptop: the site scrolls while its scene is in view.
-			const w = near.web ?? 0;
-			// (Redrawn about 20 times a second: a full-size texture upload every frame is the costly part.)
-			if ((w > 0.02 && clock - webAt > SCREEN_STEP) || (!webDrawn && site)) {
-				webAt = clock;
-				drawPage(web.g, site, clock * 60 * Math.min(1, w * 1.5), content.domain);
-				web.redraw();
-				webDrawn = !!site;
-			}
 
 			// The wall: the panels turn to face the camera, one after another, as the scene opens.
 			const wallIn = near.wall ?? 0;
@@ -701,27 +710,4 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			(beyond.material as MeshBasicMaterial).color.set(p.dark ? 0x8fd8ff : 0xfff3d6);
 		},
 	};
-}
-
-/** The laptop's screen: this site, scrolled `scroll` pixels down and back up. */
-function drawPage(g: CanvasRenderingContext2D, page: HTMLImageElement | undefined, scroll: number, address: string) {
-	const { width: w, height: h } = g.canvas;
-	g.fillStyle = "#050a1f";
-	g.fillRect(0, 0, w, h);
-	const bar = 52;
-	if (page) {
-		const scale = w / page.naturalWidth;
-		const pageH = page.naturalHeight * scale;
-		const max = Math.max(1, pageH - (h - bar));
-		const y = scroll % (max * 2);
-		g.drawImage(page, 0, bar - (y < max ? y : max * 2 - y), w, pageH);
-	}
-	g.fillStyle = "#1f2430";
-	g.fillRect(0, 0, w, bar);
-	g.fillStyle = "#2c3343";
-	g.fillRect(90, 11, w - 120, bar - 22);
-	g.fillStyle = "#c5cee0";
-	g.font = `500 20px ${FONT}`;
-	g.textBaseline = "middle";
-	g.fillText(address, 110, bar / 2 + 1);
 }

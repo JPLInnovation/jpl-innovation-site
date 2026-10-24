@@ -1,55 +1,74 @@
 """
-Screenshots of the live pages that play on the studio's screens (src/lib/studio/room.ts): the build guide on the
-desk monitor, this site on the laptop. Real pages, so what's on the screens is always what we actually made.
+The pages on the 3D studio's screens, as tall screenshots cut into tiles (public/studio/screens/), and the list of tiles
+the studio reads (src/lib/studio/screens.json). The screens scroll with the mouse wheel, so the text has to be sharp:
+each page is shot at its real size, and a tile is only loaded when it scrolls into view.
 
-    npm run build && npx astro preview           (serves http://localhost:4321)
-    python scripts/studio-screens.py              -> public/studio/research.webp, public/studio/site.webp
+    monitor  the build guide's reading column, from the top to the end of the parts list (desktop layout)
+    laptop   Camera POV, the F450's ground station (desktop, 1280 wide)
+    phone    the build guide's pre-flight checklist, stage 13 (phone, 390 wide)
 
-Options: --url (default http://localhost:4321), --executable (a Chrome or Chromium, if Playwright's isn't installed).
-Needs Python Playwright; the WebP files are made by sharp (ships with Astro).
+Run it after the build guide or Camera POV changes:
+    npm run build
+    npx astro preview          (in another terminal)
+    python scripts/studio-screens.py [--url http://localhost:4321] [--executable path/to/chrome]
+Needs Python Playwright, and Chrome (or a Chromium given with --executable). Replaces the older single screenshots
+(public/studio/research.webp and site.webp).
 """
-
 import argparse
-import pathlib
-import subprocess
-import tempfile
+import json
+import time
+from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-SHOTS = {
-    # file: (path, width, height of the part kept, colour scheme)
-    "research": ("/work/drone/build-guide/#s01", 1280, 3600, "light"),
-    "site": ("/work/", 1280, 800, "dark"),
-}
-SHARP = "require('sharp')(process.argv[1]).resize({ width: Number(process.argv[3]) }).webp({ quality: 74 }).toFile(process.argv[2])"
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "public" / "studio" / "screens"
+MANIFEST = ROOT / "src" / "lib" / "studio" / "screens.json"
+TILE = 2048  # tile height in CSS pixels
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--url", default="http://localhost:4321")
+parser.add_argument("--executable", help="a Chrome or Chromium to use instead of the installed Chrome")
+args = parser.parse_args()
+OUT.mkdir(parents=True, exist_ok=True)
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--url", default="http://localhost:4321")
-    parser.add_argument("--executable")
-    args = parser.parse_args()
-    out = ROOT / "public" / "studio"
-    out.mkdir(parents=True, exist_ok=True)
-    with sync_playwright() as p:
-        browser = p.chromium.launch(executable_path=args.executable) if args.executable else p.chromium.launch()
-        for name, (path, width, height, scheme) in SHOTS.items():
-            page = browser.new_page(viewport={"width": width, "height": 800}, color_scheme=scheme, reduced_motion="reduce")
-            page.add_init_script(f"try{{localStorage.setItem('theme','{scheme}')}}catch(e){{}}")
-            page.goto(args.url + path, wait_until="load")
-            page.keyboard.press("Escape")
-            page.wait_for_timeout(1500)
-            y = page.evaluate("scrollY")
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                page.screenshot(path=tmp.name, full_page=True, clip={"x": 0, "y": y, "width": width, "height": height})
-            target = out / f"{name}.webp"
-            subprocess.run(["node", "-e", SHARP, tmp.name, str(target), "1024"], cwd=ROOT, check=True)
-            pathlib.Path(tmp.name).unlink()
-            print(target.relative_to(ROOT), target.stat().st_size // 1024, "KB")
-            page.close()
-        browser.close()
+def shoot(page, name, top, height, width, left=0):
+    """Cuts the page from `top` (CSS px) for `height`, `width` wide from `left`, into tiles; returns the manifest entry."""
+    files = []
+    for i, y in enumerate(range(0, height, TILE)):
+        path = OUT / f"{name}-{i}.jpg"
+        page.screenshot(path=str(path), full_page=True, type="jpeg", quality=82,
+                        clip={"x": left, "y": top + y, "width": width, "height": min(TILE, height - y)})
+        files.append(f"/studio/screens/{path.name}")
+    print(f"{name}: {width} x {height}, {len(files)} tiles")
+    return {"width": width, "height": height, "tile": TILE, "files": files}
 
 
-if __name__ == "__main__":
-    main()
+screens = {}
+with sync_playwright() as p:
+    browser = p.chromium.launch(executable_path=args.executable) if args.executable else p.chromium.launch(channel="chrome")
+
+    page = browser.new_page(viewport={"width": 1280, "height": 760}, color_scheme="light")
+    page.goto(args.url + "/work/drone/build-guide/", wait_until="networkidle")
+    time.sleep(1.5)
+    end = page.evaluate("Math.round(document.getElementById('s02').getBoundingClientRect().top + scrollY)")
+    # Only the reading column (the stage list on its left is navigation), so the text is bigger on the monitor.
+    left, width = page.evaluate("(() => { const r = document.querySelector('main').getBoundingClientRect(); return [Math.floor(r.left) - 16, Math.ceil(r.width) + 32]; })()")
+    screens["guide"] = shoot(page, "guide", 0, end, width, left)
+
+    page = browser.new_page(viewport={"width": 1280, "height": 820})
+    page.goto(args.url + "/work/drone/camera-pov/", wait_until="networkidle")
+    time.sleep(4)  # let the demo flight put numbers on the gauges
+    screens["pov"] = shoot(page, "pov", 0, page.evaluate("document.documentElement.scrollHeight"), 1280)
+
+    page = browser.new_page(viewport={"width": 390, "height": 844}, color_scheme="light", is_mobile=True, has_touch=True)
+    page.goto(args.url + "/work/drone/build-guide/", wait_until="networkidle")
+    time.sleep(1.5)
+    top, height = page.evaluate("(() => { const r = document.getElementById('s13').getBoundingClientRect(); return [Math.round(r.top + scrollY), Math.round(r.height)]; })()")
+    screens["checklist"] = shoot(page, "checklist", top, height, 390)
+
+    browser.close()
+
+MANIFEST.write_text(json.dumps(screens, indent="\t") + "\n", encoding="utf-8")
+print(f"wrote {MANIFEST.relative_to(ROOT)}")
