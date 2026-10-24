@@ -57,7 +57,8 @@ with sync_playwright() as p:
     left, width = page.evaluate("(() => { const r = document.querySelector('main').getBoundingClientRect(); return [Math.floor(r.left) - 16, Math.ceil(r.width) + 32]; })()")
     screens["guide"] = shoot(page, "guide", 0, end, width, left)
 
-    page = browser.new_page(viewport={"width": 1280, "height": 820})
+    # 1.5x pixels: the laptop is a small screen in the room, so its page needs the extra sharpness.
+    page = browser.new_page(viewport={"width": 1280, "height": 820}, device_scale_factor=1.5)
     page.goto(args.url + "/work/drone/camera-pov/", wait_until="networkidle")
     time.sleep(4)  # let the demo flight put numbers on the gauges
     screens["pov"] = shoot(page, "pov", 0, page.evaluate("document.documentElement.scrollHeight"), 1280)

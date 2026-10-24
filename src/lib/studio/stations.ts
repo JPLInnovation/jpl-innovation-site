@@ -281,7 +281,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	// The laptop: the F450's ground station (Camera POV), with the flight data from a test.
 	const laptop = pageScreen({
 		page: "pov",
-		pixels: [1280, 820],
+		pixels: [1600, 1022],
 		size: [0.41, 0.262],
 		scene: "web",
 		frame: "browser",
@@ -293,7 +293,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	lid.add(laptop.mesh);
 	// A phone standing beside it, on the build guide's pre-flight checklist.
 	const phone = new Group();
-	phone.position.set(webX + 0.42, benchTop, laptopZ - 0.05);
+	phone.position.set(webX + 0.32, benchTop, laptopZ - 0.05);
 	phone.rotation.set(-0.2, -0.35, 0);
 	group.add(phone);
 	boxAt(phone, 0.075, 0.155, 0.008, dark, 0, 0.08, 0, 0.008);
