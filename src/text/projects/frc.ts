@@ -123,7 +123,7 @@ export const season2027 = {
 	status: 'Coming soon',
 	headline: 'Season two is loading…',
 	intro:
-		'We are in preseason. Our second season begins when FIRST reveals the 2027 game at Kickoff in January. Until then, we are turning everything we learned as rookies into a faster, more reliable team.',
+		'We are in preseason. Our second season begins when FIRST reveals the 2027 game, BIOCORE presented by Haas, at Kickoff on January 9, 2027. Until then, we are turning everything we learned as rookies into a faster, more reliable team.',
 	timeline: [
 		{
 			when: 'Sep – Dec 2026',
@@ -132,9 +132,9 @@ export const season2027 = {
 			state: 'current',
 		},
 		{
-			when: 'January 2027',
+			when: 'Jan 9, 2027',
 			title: 'Kickoff & game reveal',
-			desc: 'The 2027 game is announced. Date to be confirmed by FIRST.',
+			desc: 'FIRST reveals the 2027 game: BIOCORE presented by Haas.',
 			state: 'upcoming',
 		},
 		{
@@ -144,9 +144,10 @@ export const season2027 = {
 			state: 'upcoming',
 		},
 		{
-			when: 'Spring 2027',
+			// TODO: venues and cities of both regionals, once confirmed.
+			when: 'Mar – Apr 2027',
 			title: 'Competitions',
-			desc: 'Regional events to be announced.',
+			desc: 'Hawaii Regional, March 18–21. Marmara Regional, April 2–4.',
 			state: 'upcoming',
 		},
 	],
