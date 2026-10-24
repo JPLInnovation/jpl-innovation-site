@@ -2,7 +2,7 @@
 	"guide": {
 		"width": 932,
 		"height": 15765,
-		"tile": 2048,
+		"tile": 683,
 		"files": [
 			"/studio/screens/guide-0.jpg",
 			"/studio/screens/guide-1.jpg",
@@ -11,25 +11,32 @@
 			"/studio/screens/guide-4.jpg",
 			"/studio/screens/guide-5.jpg",
 			"/studio/screens/guide-6.jpg",
-			"/studio/screens/guide-7.jpg"
+			"/studio/screens/guide-7.jpg",
+			"/studio/screens/guide-8.jpg",
+			"/studio/screens/guide-9.jpg",
+			"/studio/screens/guide-10.jpg",
+			"/studio/screens/guide-11.jpg",
+			"/studio/screens/guide-12.jpg",
+			"/studio/screens/guide-13.jpg",
+			"/studio/screens/guide-14.jpg",
+			"/studio/screens/guide-15.jpg",
+			"/studio/screens/guide-16.jpg",
+			"/studio/screens/guide-17.jpg",
+			"/studio/screens/guide-18.jpg",
+			"/studio/screens/guide-19.jpg",
+			"/studio/screens/guide-20.jpg",
+			"/studio/screens/guide-21.jpg",
+			"/studio/screens/guide-22.jpg",
+			"/studio/screens/guide-23.jpg"
 		]
 	},
 	"pov": {
 		"width": 1280,
 		"height": 1769,
-		"tile": 2048,
+		"tile": 900,
 		"files": [
-			"/studio/screens/pov-0.jpg"
-		]
-	},
-	"checklist": {
-		"width": 390,
-		"height": 5279,
-		"tile": 2048,
-		"files": [
-			"/studio/screens/checklist-0.jpg",
-			"/studio/screens/checklist-1.jpg",
-			"/studio/screens/checklist-2.jpg"
+			"/studio/screens/pov-0.jpg",
+			"/studio/screens/pov-1.jpg"
 		]
 	}
 }

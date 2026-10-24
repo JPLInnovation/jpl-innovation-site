@@ -6,8 +6,8 @@
  *   Robotics   the KitBot on a low rolling cart, a pegboard of tools behind it (the robot's own CAD, frc-robot.ts)
  *   Drones     the F450 on a landing mat, powered up on the bench (its LED blinks; it has not flown, so it never lifts off) (drone.ts)
  *   Networks   a switch rack with blinking port lights and patch cables
- *   Testing    the test bench: a laptop on the F450's ground station and a phone on the pre-flight checklist, both
- *              scrollable with the mouse wheel (screens.ts). Its scene id stays "web" (links and the camera use it).
+ *   Testing    the test bench: a laptop on the F450's ground station (its page scrolls with the mouse wheel; screens.ts)
+ *              and an easel whiteboard with the bench test. Its scene id stays "web" (links and the camera use it).
  *   The wall   one panel per project, on an arc; they turn to face the camera one after another
  *   Standards  the whiteboard (the standards and the three steps, written out as the scene opens) and the binders
  *   Timeline   the long window: night sky in the dark theme, dusk in the light one; a year on each pane
@@ -40,6 +40,7 @@ import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
 import type { LightSpec } from "./lights";
 import { cover, projectFace } from "./panels";
+import { benchBoard } from "../../text/studio";
 import type { RoomContent, RoomState } from "./room";
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
@@ -265,7 +266,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	await tick();
 
 	/* ================================================================== */
-	/* Testing & upgrades: the laptop and the phone                        */
+	/* Testing & upgrades: the laptop and the easel whiteboard             */
 	/* ================================================================== */
 	const webX = 3.3;
 	workbench(webX);
@@ -281,33 +282,103 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	// The laptop: the F450's ground station (Camera POV), with the flight data from a test.
 	const laptop = pageScreen({
 		page: "pov",
-		pixels: [1600, 1022],
 		size: [0.41, 0.262],
 		scene: "web",
-		frame: "browser",
 		address: `${content.domain}/work/drone/camera-pov`,
+		background: "#0b1220",
 		reducedMotion: ctx.reducedMotion,
 		wake: () => ctx.wake(),
 	});
 	laptop.mesh.position.set(0, 0.147, 0);
 	lid.add(laptop.mesh);
-	// A phone standing beside it, on the build guide's pre-flight checklist.
-	const phone = new Group();
-	phone.position.set(webX + 0.32, benchTop, laptopZ - 0.05);
-	phone.rotation.set(-0.2, -0.35, 0);
-	group.add(phone);
-	boxAt(phone, 0.075, 0.155, 0.008, dark, 0, 0.08, 0, 0.008);
-	const checklist = pageScreen({
-		page: "checklist",
-		pixels: [390, 832],
-		size: [0.068, 0.145],
-		scene: "web",
-		frame: "phone",
-		reducedMotion: ctx.reducedMotion,
-		wake: () => ctx.wake(),
-	});
-	checklist.mesh.position.set(0, 0.08, 0.0045);
-	phone.add(checklist.mesh);
+
+	// Beside it, a small whiteboard on an easel: the F450's bench test, written by hand (src/text/studio.ts, benchBoard).
+	const easel = new Group();
+	easel.position.set(webX + 0.36, benchTop, laptopZ - 0.22);
+	easel.rotation.y = -0.16;
+	group.add(easel);
+	const boardW = 0.22;
+	const boardH = 0.29;
+	const sheet = canvasSurface(900, 1186);
+	const face = new Group();
+	face.position.set(0, 0.04 + boardH / 2, 0);
+	face.rotation.x = -0.18;
+	easel.add(face);
+	boxAt(face, boardW + 0.018, boardH + 0.018, 0.01, aluminium, 0, 0, -0.007, 0.004);
+	face.add(new Mesh(new PlaneGeometry(boardW, boardH), hardware({ color: 0xffffff, map: sheet.texture, roughness: 0.3 }, "plastic")));
+	boxAt(easel, boardW + 0.03, 0.012, 0.04, aluminium, 0, 0.03, 0.035, 0.003); // the marker tray
+	const leg = boxAt(easel, 0.014, boardH + 0.03, 0.01, aluminium, 0, (boardH + 0.03) / 2, -0.12);
+	leg.rotation.x = 0.3;
+	for (const [i, c] of [0x1d4ed8, 0x15803d, 0xc8283a].entries()) {
+		const marker = new Mesh(new CylinderGeometry(0.006, 0.006, 0.09, 10), hardware({ color: c, roughness: 0.4 }, "plastic"));
+		marker.rotation.z = Math.PI / 2;
+		marker.position.set(-0.05 + i * 0.045, 0.043, 0.04);
+		easel.add(marker);
+	}
+	const HAND = '"Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
+	const drawBench = () => {
+		const { g } = sheet;
+		const w = 900;
+		const h = 1186;
+		g.fillStyle = "#f8f9fb";
+		g.fillRect(0, 0, w, h);
+		// The ghost of an old drawing that was wiped off, as on any well-used whiteboard.
+		g.strokeStyle = "rgba(29, 78, 216, 0.05)";
+		g.lineWidth = 14;
+		g.beginPath();
+		g.ellipse(640, 980, 180, 90, -0.2, 0, Math.PI * 2);
+		g.stroke();
+		/** A line of handwriting, tilted a hair either way so it doesn't look typed. */
+		const hand = (text: string, x: number, y: number, size: number, colour: string, tilt: number) => {
+			g.save();
+			g.translate(x, y);
+			g.rotate(tilt);
+			g.fillStyle = colour;
+			g.font = `700 ${size}px ${HAND}`;
+			g.fillText(text, 0, 0);
+			g.restore();
+		};
+		const stroke = (colour: string, width: number, draw: () => void) => {
+			g.strokeStyle = colour;
+			g.lineWidth = width;
+			g.lineCap = "round";
+			g.lineJoin = "round";
+			g.beginPath();
+			draw();
+			g.stroke();
+		};
+		g.textBaseline = "alphabetic";
+		hand(benchBoard.title, 58, 118, 96, "#1d4ed8", -0.02);
+		stroke("#1d4ed8", 6, () => {
+			g.moveTo(58, 146);
+			g.bezierCurveTo(240, 160, 420, 132, 640, 144);
+		});
+		let y = 250;
+		benchBoard.passed.forEach((item, i) => {
+			stroke("#15803d", 9, () => {
+				g.moveTo(66, y - 26);
+				g.lineTo(88, y - 2);
+				g.lineTo(124, y - 52);
+			});
+			hand(item, 150, y, 66, "#111827", (i % 2 ? 1 : -1) * 0.012);
+			y += 94;
+		});
+		y += 34;
+		hand(benchBoard.nextHeading, 58, y, 74, "#c8283a", -0.015);
+		stroke("#c8283a", 5, () => {
+			g.moveTo(58, y + 14);
+			g.lineTo(200, y + 10);
+		});
+		y += 96;
+		benchBoard.next.forEach((item, i) => {
+			stroke("#111827", 5, () => g.roundRect(68, y - 46, 46, 46, 8));
+			hand(item, 150, y, 62, "#374151", (i % 2 ? -1 : 1) * 0.012);
+			y += 90;
+		});
+		sheet.redraw();
+	};
+	drawBench();
+	document.fonts?.load(`700 96px "Caveat"`).then(drawBench, () => undefined); // again in the handwriting, once it is in
 
 	await tick();
 
@@ -637,7 +708,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 
 	return {
 		accents,
-		screens: [laptop, checklist],
+		screens: [laptop],
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {
