@@ -8,6 +8,12 @@ Settled decisions: no Blender (the room stays built in code) · Archivo Wide · 
 chapters · light and dark themes · sound later · no new libraries · drone first · launch on jpl-innovation.github.io.
 All wording lives in src/text/. Never invent facts: if one is missing, add a marked TODO and list it in the report.
 
+**If the live site breaks after a deploy:** revert the merge (a new revert commit, never a force-push) on all three
+repos and tell Jayden straight away.
+
+**Frame rate:** headless Playwright renders in software, so its frame rate says nothing about the Iris Xe. Jayden
+checks the frame rate himself on his laptop before he says OK.
+
 ---
 
 ## Step 1: hook, regionals, slogan, bio (branch `phase-0-hook`)
@@ -30,6 +36,10 @@ To do:
      5 `Every sketch, every failed test and every hour on the bench is documented here,`
      6 `so anyone can see not just what we built, but how we learned to build it.`
    - skip: `Skip`
+   - playLines: `[2, 3, 4]`: the 3D cut. The heading, then lines 2, 3 and 4, about 16 s, lamp at about 11 s
+     (line 4 is the lampLine, lit as it appears). `lines` stays complete: Classic and the screen-reader text always
+     have the full paragraph.
+   - continue: `Continue` (the reduced-motion card's button)
 2. **Classic** (src/components/ClassicHome.astro): a section right after `<HomePortal>` and before #services:
    the h2 in the same type as the other headings, the paragraph as `lines.join(" ")`, with line 4 in
    text-foreground, semibold. `data-reveal` like the others.
@@ -45,13 +55,23 @@ To do:
    - Script (module in index.astro): arm when html.studio-on and the studio is not data-read, at
      astro:page-load or on the `studio:on` event (first visit, 3D picked on the opening page); only if
      localStorage `hook-seen` is unset and scrollY is near 0. Add `studio-dark` at once (before `splash` goes),
-     wait until `splash` is gone and the studio has `data-live`, then play:
-     heading 2.4 s alone, then each line for 0.9 s + 0.26 s a word, rolling: the current line full, the previous
-     one at 40 %, older ones gone (translate the column so the current line is centred). At line 4 remove
-     `studio-dark` (the lamp warms over LAMP_TIME). After line 6 hold 1.5 s, fade out 0.8 s, remove
-     `studio-hook`, set `hook-seen`.
-   - Skip: the button (bottom centre, where the ruler sits), Esc, any wheel, touch or scroll key → finish at once
-     (both classes off, hook-seen set). Abort if html.studio-on goes away (fell back to Classic).
+     wait until `splash` is gone and the studio has `data-live`, then play **only `playLines`** (the full
+     paragraph stays in the sr-only text): heading 2.4 s alone, then each play line for 0.9 s + 0.26 s a word,
+     rolling: the current line full, the previous one at 40 %, older ones gone (translate the column so the
+     current line is centred). When the lampLine appears, remove `studio-dark` (the lamp warms over LAMP_TIME).
+     Tune the timings so the whole cut is about 16 s with the lamp at about 11 s. After the last line hold
+     1.5 s, fade out 0.8 s, remove `studio-hook`, set `hook-seen`.
+   - Skip: the button (bottom centre, where the ruler sits) **shows from the first frame**; it and Esc finish at
+     once (both classes off, hook-seen set). Wheel, touch and scroll keys also skip, **but only after the first
+     1.5 s** (ignore them before, so trackpad momentum from picking 3D on the opening page doesn't skip it).
+     Abort if html.studio-on goes away (fell back to Classic).
+   - **prefers-reduced-motion** (and html.reduce-motion): no timed hook. Show the heading and the lampLine
+     together as a still card with a `Continue` button; Continue lights the room (instant lamp) and closes it.
+     (Today the studio doesn't start at all with reduced motion, so this applies if a reduced-motion visitor
+     chooses 3D in Settings; check what the page does in that case and make the card work there.)
+   - **"Replay the opening" in Settings** (src/components/ — the settings panel; label in src/text/site.ts under
+     `settings`): clears `hook-seen` and the intro's seen flags, then reloads the home page at the top, so the
+     opening page, the logo and the hook all play again. Shown in both modes.
    - Overlay: fixed, centred, z-index above the panels; headline font-stretch 125 %, weight 850,
      clamp(2rem, 4.5vw, 3.75rem); lines clamp(1.25rem, 2.2vw, 1.75rem), max 34ch; a soft radial scrim of
      --background behind the text for contrast in the light theme.
@@ -59,9 +79,16 @@ To do:
    with site.slogan (`Sketch it. Build it. Secure it.`, src/text/site.ts) in the site font, colour following the
    theme like the logo; it fades in with the lamp (opacity follows `level`, starting from 0, unlike the logo's
    0.25 floor). Add it to RoomContent if it needs the text passed in from index.astro.
+   **Where the slogan is (checked 24 Oct):** on the opening page directly under the logo: yes
+   (IntroSplash.astro `intro-slogan`). At the top of Classic: **no**, the hero shows the kicker, the JPL letters
+   and hero.support (src/components/home-portal.tsx). On the 3D wall: **no**, until this item.
+   → Also add site.slogan to Classic's hero, directly under the JPL letters and above hero.support, styled as a
+   small wide-type line. Report all three places in the step's summary.
 5. Check: `npx astro build`, then `astro preview` on 4321; Playwright screenshots of the 3D hook (a line
-   mid-way, the lamp moment, the lit room with the slogan), Classic's hook section, both themes; the FRC
-   2027 timeline; Jayden's profile. Clear `hook-seen` in the test context. Commit, show, wait for OK.
+   mid-way, the lamp moment, the lit room with the slogan), the reduced-motion card, the Settings replay,
+   Classic's hero slogan and hook section, both themes; the FRC 2027 timeline; Jayden's profile. Test that a
+   wheel in the first 1.5 s does not skip and one after does. Clear `hook-seen` in the test context. Commit,
+   show, wait for OK.
 
 Report: the TODO for the regionals' venues and cities.
 
@@ -77,10 +104,12 @@ No redesign. Show before and after screenshots of every scene (3D) and every sec
 2. **Proof counters (real numbers only)**, added to src/text/home.ts as `proof` and computed where possible,
    never typed by hand:
    - projects: 4 (count of src/text/projects/*.md, via getProjects())
-   - drone parts: 18, and the budget estimate 9.311.000 ₫ (from drone.ts's parts list and its total; labelled
-     "estimate")
+   - drone parts: 18, and the budget 9.311.000 ₫ (from drone.ts's parts list and its total). The budget counter
+     must say **"estimate, parts not yet priced excluded"**, as the drone page does (drone.ts `totalNote`).
    - drone build steps done: 4 of 6 (roadmap states in drone.ts)
    - mini drone build steps done: 3 of 5 (mini-drone.ts)
+   Each counter is labelled as what it counts: **"projects documented"**, **"drone parts"**, **"build steps
+   done"** (labels in src/text/home.ts).
    Show them in 3D on the wall scene's card (or the title card) and in Classic under "Selected work".
 3. **Same words in both modes.** Checklist of differences found so far:
    - Classic's timeline doesn't show the "Before JPL" tag on 2023 and 2024 (the studio does) → add it.
@@ -99,7 +128,7 @@ existing showcase, src/components/showcase*). No new facts; estimates stay label
 | Beat | Content (all from today's page) |
 |---|---|
 | 1 Prologue | "Ho Chi Minh City", live local time; the problem: a drone's video only reaches as far as its radio link |
-| 2 The stakes | one giant number: 720p at 60 fps over 4G |
+| 2 The stakes | one giant number: **"720p at 60 fps camera"** (checked 24 Oct: drone.ts only says the Camera Module 3 "streams 720p at 60 fps" into the Pi, never that the 4G stream runs at 60 fps). Mention the 4G link separately, without a frame rate. |
 | 3 The reveal | "Meet the F450 4G": the model rises out of the dark; status "Bench tested"; credits |
 | 4 Anatomy | the existing Part by part showcase; hero dimension 450 mm |
 | 5 01/04–04/04 | Fly (MC6C → MicoAir743, INAV 9.1) · See (Camera Module 3, 720p60) · Stream (Pi 4, MF833 4G, Tailscale) · Watch (anywhere online, live dashboard) |
@@ -110,10 +139,16 @@ existing showcase, src/components/showcase*). No new facts; estimates stay label
 
 - A chapter map pinned at the side (one dot per beat, current lit, each a link); beats numbered.
 - Parts and budget tables open in a spec-sheet panel (scrolls inside, Esc closes) and appear in full in Classic.
-- Classic (read mode) gets every beat's text in order as one ordinary page.
+- **Classic chapter**: every beat's text in order as one ordinary page. Shown under 768 px wide, with reduced
+  motion, or without WebGL (and when Classic is chosen).
 - Before building: verify each number above against drone.ts (they are the PDF's; the page is the source of truth).
-- Budgets from the PDF: 60 fps on an Iris Xe laptop, never below 30; CLS 0; Lighthouse accessibility ≥ 95.
-- Show screenshots of every beat in both themes, then wait.
+- Budgets from the PDF: 60 fps on an Iris Xe laptop, never below 30 (Jayden measures this himself); CLS 0;
+  Lighthouse accessibility ≥ 95.
+- **Two checkpoints**, screenshots in both themes at each, then wait for OK:
+  1. Beats 1 to 4, with the chapter map and the Classic order.
+  2. Beats 5 to 9.
+- Note: the camera POV HUD says "1080P30" while drone.ts says 720p at 60 fps; still an open question for Jayden,
+  don't change it without his answer.
 
 Later (not in these steps): Work wall, Cybersecurity and Mini drone chapters, FRC after Khoa's checks, Members,
 About, the drone sub-pages' shell.
