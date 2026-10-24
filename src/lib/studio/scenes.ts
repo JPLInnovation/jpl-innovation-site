@@ -32,7 +32,8 @@ export const SHOTS: Record<string, SceneShot> = {
 	robotics: { id: "robotics", camera: [-3.1, 1.35, -0.3], target: [-3.1, 0.75, -2.6] },
 	drones: { id: "drones", camera: [-0.15, 1.4, -0.6], target: [-0.15, 1.0, -2.6] },
 	networks: { id: "networks", camera: [0.95, 1.45, -0.4], target: [0.95, 1.25, -2.9] },
-	web: { id: "web", camera: [3.65, 1.2, -1.45], target: [3.65, 0.98, -2.6] },
+	/** (The test bench: closer than the others, so the laptop's page can be read.) */
+	web: { id: "web", camera: [3.6, 1.17, -1.75], target: [3.6, 0.99, -2.6] },
 	/**
 	 * 4 The wall: the curved wall of project panels at the end of the room, from the centre of its curve (stations.ts),
 	 * turned a little left so the panels sit to the right of the text.
