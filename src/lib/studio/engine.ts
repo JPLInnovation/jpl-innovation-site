@@ -14,7 +14,7 @@
  * Nothing per frame goes through React or layout: the page's position is read from scrollY against offsets measured
  * on resize.
  */
-import { CatmullRomCurve3, type Mesh, Raycaster, Vector2, Vector3 } from "three";
+import { Box3, CatmullRomCurve3, type Mesh, Raycaster, Vector2, Vector3 } from "three";
 import type { Model, StageContext } from "../three/stage";
 import { buildRoom, type RoomContent, type RoomState } from "./room";
 import type { SceneShot } from "./scenes";
@@ -57,6 +57,8 @@ export interface StudioHandle {
 	leave(): Promise<void>;
 	/** Back out again (the page did not change after all). */
 	release(): void;
+	/** Where the logo on the wall is on the screen (CSS pixels), or null if it isn't in view. */
+	logoRect(): DOMRect | null;
 }
 
 export async function drive(ctx: StageContext, { shots, content, position, onFrame }: StudioOptions): Promise<Model & StudioHandle> {
@@ -191,7 +193,10 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 
 	const step = (dt: number) => {
 		fit();
-		clock += dt;
+		// While the logo intro covers the page (the opening page), the opening shot waits: the camera stays back from the
+		// desk with the lamp off, so the intro's logo can land on the wall before the room comes up around it.
+		const waiting = document.documentElement.classList.contains("splash");
+		if (!waiting) clock += dt;
 		const lean = 1 - Math.exp(-4 * dt);
 		px += (pxT - px) * lean;
 		py += (pyT - py) * lean;
@@ -207,7 +212,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			s = page + (x + k * dt) * e;
 			speed = (speed - FOLLOW * k * dt) * e;
 		}
-		lamp = Math.min(1, lamp + dt / LAMP_TIME);
+		if (!waiting) lamp = Math.min(1, lamp + dt / LAMP_TIME);
 		const toward = leaving ? 1 : 0;
 		if (leaveAmt !== toward) {
 			leaveAmt = clamp(leaveAmt + Math.sign(toward - leaveAmt) * (dt / LEAVE_TIME), 0, 1);
@@ -244,7 +249,8 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		update(_t, dt) {
 			step(dt);
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
-			api.idle = clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
+			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
+			api.idle = document.documentElement.classList.contains("splash") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
@@ -253,6 +259,29 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			removeEventListener("blur", onLeave);
 			document.documentElement.removeEventListener("pointerleave", onLeave);
 			ctx.canvas.style.cursor = "";
+		},
+		logoRect() {
+			const box = new Box3().setFromObject(room.logo);
+			if (box.isEmpty()) return null;
+			camera.updateMatrixWorld();
+			const canvas = ctx.canvas.getBoundingClientRect();
+			let x0 = Infinity;
+			let y0 = Infinity;
+			let x1 = -Infinity;
+			let y1 = -Infinity;
+			for (const x of [box.min.x, box.max.x])
+				for (const y of [box.min.y, box.max.y])
+					for (const z of [box.min.z, box.max.z]) {
+						const p = new Vector3(x, y, z).project(camera);
+						if (p.z > 1) return null; // behind the camera
+						const sx = canvas.left + ((p.x + 1) / 2) * canvas.width;
+						const sy = canvas.top + ((1 - p.y) / 2) * canvas.height;
+						x0 = Math.min(x0, sx);
+						y0 = Math.min(y0, sy);
+						x1 = Math.max(x1, sx);
+						y1 = Math.max(y1, sy);
+					}
+			return new DOMRect(x0, y0, x1 - x0, y1 - y0);
 		},
 		snap(scene) {
 			s = scene;

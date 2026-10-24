@@ -216,10 +216,22 @@ const organization = {
 	</div>
 	<script is:inline data-astro-rerun>
 		// Both versions use the same anchors (#services, #work, #team, #contact); keep them only on the one showing,
-		// so links like /#services land in the right place.
+		// so links like /#services land in the right place. The hidden one keeps them aside (data-anchor-id), for when the
+		// opening page switches this page to the studio (studio:on, src/components/Studio.astro).
 		(() => {
-			const hidden = document.querySelector(document.documentElement.classList.contains("studio-on") ? ".classic-home" : ".studio-home");
-			hidden?.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+			const place = () => {
+				const on = document.documentElement.classList.contains("studio-on");
+				document.querySelector(on ? ".classic-home" : ".studio-home")?.querySelectorAll("[id]").forEach((el) => {
+					el.dataset.anchorId = el.id;
+					el.removeAttribute("id");
+				});
+				document.querySelector(on ? ".studio-home" : ".classic-home")?.querySelectorAll("[data-anchor-id]").forEach((el) => {
+					el.id = el.dataset.anchorId;
+					delete el.dataset.anchorId;
+				});
+			};
+			place();
+			document.addEventListener("studio:on", place, { once: true });
 		})();
 	</script>
 	<style is:global>
