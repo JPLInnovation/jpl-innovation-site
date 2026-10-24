@@ -18,7 +18,7 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
-	/** On the monitor, laptop and phone when the pointer is on them: their pages scroll with the mouse wheel. */
+	/** On the monitor and the laptop when the pointer is on them: their pages scroll with the mouse wheel. */
 	screenHint: "Scroll to read",
 	/** Over each work station's text: "What we do · 1 of 4". */
 	stationOf: "of",
@@ -102,3 +102,14 @@ export const sketchText = {
 };
 
 export type SketchText = typeof sketchText;
+
+/**
+ * THE EASEL WHITEBOARD on the test bench (the "Testing" scene): the F450's bench test, written by hand. `passed` get a
+ * tick, `next` an empty box. Keep it in step with the drone page's roadmap (src/text/projects/drone.ts).
+ */
+export const benchBoard = {
+	title: "F450 bench test",
+	passed: ["Flight controller", "ESCs", "Receiver", "Pi 4 companion", "4G video link"],
+	nextHeading: "Next",
+	next: ["Printed mounts", "Balance check", "First hover", "PID tuning"],
+};

@@ -7,9 +7,9 @@
  *                               project wall at the right-hand end.
  *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door.
  *
- * Everything on a screen or on paper is real: the build guide on the monitor, and the F450's ground station and
- * pre-flight checklist on the test bench's laptop and phone, are screenshots of the live pages that scroll with the
- * mouse wheel (screens.ts; public/studio/screens/, scripts/studio-screens.py); the projects and portraits are the site's
+ * Everything on a screen or on paper is real: the build guide on the monitor and the F450's ground station on the test
+ * bench's laptop are 4K screenshots of the live pages that scroll with the mouse wheel (screens.ts;
+ * public/studio/screens/, scripts/studio-screens.py); the projects and portraits are the site's
  * own pictures. The sketchbook is the F450's design page, drawn stroke by stroke (sketch.ts).
  *
  * This file holds the shell, the desk and the shared helpers; the stations and the back wall are in stations.ts.
@@ -250,11 +250,10 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	boxAt(group, 0.84, 0.52, 0.03, new MeshStandardMaterial({ color: 0x11141c, roughness: 0.4 }), monitorX, deskTop + 0.36, deskZ - 0.24, 0.01);
 	const monitor = pageScreen({
 		page: "guide",
-		pixels: [1280, 760],
 		size: [0.8, 0.475],
 		scene: "research",
-		frame: "browser",
 		address: `${content.domain}/build-guide`,
+		background: "#ecf0ee",
 		reducedMotion: ctx.reducedMotion,
 		wake: () => ctx.wake(),
 	});
