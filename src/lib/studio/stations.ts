@@ -22,6 +22,7 @@ import {
 	Color,
 	CylinderGeometry,
 	DoubleSide,
+	ExtrudeGeometry,
 	Group,
 	InstancedMesh,
 	Mesh,
@@ -30,6 +31,7 @@ import {
 	NormalBlending,
 	Object3D,
 	PlaneGeometry,
+	ShapeGeometry,
 	TubeGeometry,
 	Vector3,
 } from "three";
@@ -39,7 +41,7 @@ import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
 import type { LightSpec } from "./lights";
-import { cover, projectFace } from "./panels";
+import { cover, cutCorners, cutCornerSurface, projectFace } from "./panels";
 import { benchBoard } from "../../text/studio";
 import type { RoomContent, RoomState } from "./room";
 
@@ -78,6 +80,8 @@ function wrap(g: CanvasRenderingContext2D, text: string, width: number) {
 /** Live screens redraw at most this often (seconds): about 20 times a second. */
 export const SCREEN_STEP = 0.05;
 const FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
+/** Handwriting (the sketchbook's Caveat, public/fonts): the whiteboards and the names on the crew's photos. */
+const HAND = '"Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
 const MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
 /** Built in slices (`tick`), so the page stays responsive while the room comes up. */
@@ -305,7 +309,10 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	face.rotation.x = -0.18;
 	easel.add(face);
 	boxAt(face, boardW + 0.018, boardH + 0.018, 0.01, aluminium, 0, 0, -0.007, 0.004);
-	face.add(new Mesh(new PlaneGeometry(boardW, boardH), hardware({ color: 0xffffff, map: sheet.texture, roughness: 0.3 }, "plastic")));
+	const easelBoard = new Mesh(new PlaneGeometry(boardW, boardH), hardware({ color: 0xffffff, map: sheet.texture, roughness: 0.75 }, "printed")); // matte: a gloss would wash the marker out
+	face.add(easelBoard);
+	// The light theme's room is bright enough to wash a white board out: dimmed there so the marker keeps its contrast.
+	themed.push({ mat: easelBoard.material as MeshStandardMaterial, dark: 0xffffff, light: 0x9da3ad });
 	boxAt(easel, boardW + 0.03, 0.012, 0.04, aluminium, 0, 0.03, 0.035, 0.003); // the marker tray
 	const leg = boxAt(easel, 0.014, boardH + 0.03, 0.01, aluminium, 0, (boardH + 0.03) / 2, -0.12);
 	leg.rotation.x = 0.3;
@@ -315,7 +322,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		marker.position.set(-0.05 + i * 0.045, 0.043, 0.04);
 		easel.add(marker);
 	}
-	const HAND = '"Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
 	const drawBench = () => {
 		const { g } = sheet;
 		const w = 900;
@@ -408,11 +414,14 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		// Facing the arc's centre.
 		holder.rotation.y = -Math.PI / 2 - angle;
 		group.add(holder);
+		// A poster with cut corners (panels.ts): its frame, its face, and the glow behind it on hover, all in that outline.
 		const face = projectFace(project);
-		boxAt(holder, 1.24, 0.9, 0.04, dark, 0, 0, -0.03, 0.01);
-		const screen = new Mesh(new PlaneGeometry(1.2, 0.844), screenMaterial(face.texture));
+		const frame = new Mesh(new ExtrudeGeometry(cutCorners(1.25, 0.894), { depth: 0.04, bevelEnabled: false }), dark);
+		frame.position.z = -0.05;
+		holder.add(frame);
+		const screen = new Mesh(cutCornerSurface(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
-		const edge = new Mesh(new PlaneGeometry(1.31, 0.955), new MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
+		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
 		edge.position.z = -0.06;
 		holder.add(edge);
 		return { holder, base: holder.rotation.y, y, screen, edge, bx, bz, toward: [-Math.cos(angle), -Math.sin(angle)] as const, hover: 0 };
@@ -422,9 +431,10 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* Standards: the whiteboard and the binders                           */
 	/* ================================================================== */
 	const boardX = 5.0;
-	const board = canvasSurface(1600, 880);
+	const board = canvasSurface(2400, 1320);
 	const whiteboard = new Mesh(new PlaneGeometry(2.3, 1.265), hardware({ color: 0xffffff, map: board.texture, roughness: 0.25 }, "plastic"));
 	whiteboard.position.set(boardX, 1.55, z1 - 0.036);
+	themed.push({ mat: whiteboard.material as MeshStandardMaterial, dark: 0xffffff, light: 0xb2b8c2 }); // (as the easel's)
 	whiteboard.rotation.y = Math.PI;
 	group.add(whiteboard);
 	boxAt(group, 2.38, 1.34, 0.03, steel, boardX, 1.55, z1 - 0.015);
@@ -436,12 +446,21 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		group.add(marker);
 	}
 	let boardDrawn = -1;
+	// Written in marker (the sketchbook's handwriting, Caveat): the standards with hand-drawn ticks, then the three steps
+	// on sticky notes, joined by hand-drawn arrows. Each line appears in turn, as if being written, as the scene opens.
 	const drawBoard = (progress: number) => {
 		const { g } = board;
+		const bw = 2400;
+		const bh = 1320;
 		g.fillStyle = "#f7f8fb";
-		g.fillRect(0, 0, 1600, 880);
+		g.fillRect(0, 0, bw, bh);
+		// The ghost of something wiped off long ago.
+		g.strokeStyle = "rgba(29, 78, 216, 0.04)";
+		g.lineWidth = 22;
+		g.beginPath();
+		g.ellipse(1900, 300, 320, 120, 0.15, 0, Math.PI * 2);
+		g.stroke();
 		const s = content.standards;
-		// Each line appears in order, like it is being written.
 		const lines = 2 + s.items.length + s.steps.length;
 		let shown = progress * lines;
 		const write = (draw: () => void) => {
@@ -451,64 +470,96 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			g.globalAlpha = 1;
 			shown -= 1;
 		};
+		const pen = (colour: string, width: number, draw: () => void) => {
+			g.strokeStyle = colour;
+			g.lineWidth = width;
+			g.lineCap = "round";
+			g.lineJoin = "round";
+			g.beginPath();
+			draw();
+			g.stroke();
+		};
+		const hand = (text: string, x: number, y: number, size: number, colour: string, tilt = 0, weight = 700) => {
+			g.save();
+			g.translate(x, y);
+			g.rotate(tilt);
+			g.fillStyle = colour;
+			g.font = `${weight} ${size}px ${HAND}`;
+			g.fillText(text, 0, 0);
+			g.restore();
+		};
 		g.textBaseline = "alphabetic";
 		write(() => {
-			g.fillStyle = "#1d4ed8";
-			g.font = `italic 700 58px ${FONT}`;
-			g.fillText(s.heading, 70, 110);
+			hand(s.heading, 110, 170, 128, "#1d4ed8", -0.012);
+			pen("#1d4ed8", 9, () => {
+				g.moveTo(112, 206);
+				g.bezierCurveTo(500, 222, 900, 192, 1340, 208);
+			});
 		});
+		let y = 340;
 		s.items.forEach((item, i) =>
 			write(() => {
-				const y = 200 + i * 120;
-				g.strokeStyle = "#15803d";
-				g.lineWidth = 7;
-				g.lineCap = "round";
-				g.beginPath();
-				g.moveTo(74, y - 18);
-				g.lineTo(92, y);
-				g.lineTo(124, y - 40);
-				g.stroke();
-				g.fillStyle = "#111827";
-				g.font = `italic 500 40px ${FONT}`;
-				wrap(g, item, 1380).forEach((l, k) => g.fillText(l, 150, y + k * 48));
+				pen("#15803d", 12, () => {
+					g.moveTo(118, y - 34);
+					g.lineTo(146, y - 4);
+					g.lineTo(196, y - 72);
+				});
+				g.font = `600 76px ${HAND}`;
+				const rows = wrap(g, item, 2000);
+				rows.forEach((row, k) => hand(row, 240, y + k * 84, 76, "#1f2937", (i % 2 ? 1 : -1) * 0.006, 600));
+				y += 84 * rows.length + 56;
 			}),
 		);
-		write(() => {
-			g.strokeStyle = "#111827";
-			g.lineWidth = 3;
-			g.beginPath();
-			g.moveTo(70, 600);
-			g.lineTo(1530, 600);
-			g.stroke();
-		});
+		// The three steps, on sticky notes; the last one (where a project ends up) circled in red.
+		const colours = ["#fde68a", "#a5f3fc", "#fbcfe8"];
+		const noteW = 470;
+		const noteH = 330;
+		const top = 900;
 		s.steps.forEach((step, i) =>
 			write(() => {
-				const x = 90 + i * 500;
-				const last = i === s.steps.length - 1;
-				g.strokeStyle = last ? "#c8283a" : "#1d4ed8";
-				g.lineWidth = last ? 6 : 4;
-				g.beginPath();
-				g.roundRect(x, 650, 400, 150, 30);
-				g.stroke();
+				const x = 150 + i * 790;
+				const tilt = [-0.035, 0.02, -0.015][i % 3];
+				g.save();
+				g.translate(x + noteW / 2, top + noteH / 2);
+				g.rotate(tilt);
+				g.shadowColor = "rgba(15, 23, 42, 0.22)";
+				g.shadowBlur = 26;
+				g.shadowOffsetY = 12;
+				g.fillStyle = colours[i % colours.length];
+				g.fillRect(-noteW / 2, -noteH / 2, noteW, noteH);
+				g.shadowColor = "transparent";
+				g.fillStyle = "rgba(0, 0, 0, 0.05)"; // the sticky strip along the top
+				g.fillRect(-noteW / 2, -noteH / 2, noteW, 46);
 				g.fillStyle = "#111827";
-				g.font = `italic 600 44px ${FONT}`;
-				g.fillText(`${i + 1}. ${step}`, x + 30, 740);
+				const label = `${i + 1}. ${step}`;
+				let size = 92;
+				g.font = `700 ${size}px ${HAND}`;
+				while (g.measureText(label).width > noteW - 60 && size > 50) g.font = `700 ${(size -= 4)}px ${HAND}`;
+				g.textAlign = "center";
+				g.fillText(label, 0, 34);
+				g.textAlign = "start";
+				g.restore();
+				if (i === s.steps.length - 1) {
+					pen("#c8283a", 8, () => g.ellipse(x + noteW / 2, top + noteH / 2, noteW * 0.62, noteH * 0.66, -0.04, 0.2, Math.PI * 2.05));
+				}
 				if (i < s.steps.length - 1) {
-					g.strokeStyle = "#111827";
-					g.lineWidth = 4;
-					g.beginPath();
-					g.moveTo(x + 415, 725);
-					g.lineTo(x + 485, 725);
-					g.lineTo(x + 465, 708);
-					g.moveTo(x + 485, 725);
-					g.lineTo(x + 465, 742);
-					g.stroke();
+					const ax = x + noteW + 40;
+					const ay = top + noteH / 2;
+					pen("#1d4ed8", 9, () => {
+						g.moveTo(ax, ay + 10);
+						g.quadraticCurveTo(ax + 120, ay - 50, ax + 230, ay);
+						g.moveTo(ax + 230, ay);
+						g.lineTo(ax + 190, ay - 34);
+						g.moveTo(ax + 230, ay);
+						g.lineTo(ax + 186, ay + 22);
+					});
 				}
 			}),
 		);
 		board.redraw();
 	};
 	drawBoard(0);
+	document.fonts?.load(`700 128px "Caveat"`).then(() => drawBoard(Math.max(0, boardDrawn)), () => undefined);
 	// The shelf of binders to the whiteboard's left (seen from the room).
 	const shelfX = boardX + 1.75;
 	boxAt(group, 0.9, 0.03, 0.3, wood, shelfX, 1.0, z1 - 0.16);
@@ -621,30 +672,56 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		boxAt(group, 0.5, 0.07, 0.48, chairFabric, x, 0.47, tableZ + 0.75, 0.03);
 		boxAt(group, 0.5, 0.6, 0.06, chairFabric, x, 0.84, tableZ + 1.0, 0.03);
 		boxAt(group, 0.04, 0.44, 0.04, steel, x, 0.22, tableZ + 0.75);
-		// The portrait screen on the wall behind the chair.
-		const face = canvasSurface(600, 800);
+		// The portrait on the wall behind the chair: an instant photo taped up, a little crooked, the name written on it by
+		// hand and the role under it.
+		const photo = canvasSurface(1120, 1360);
 		const draw = (img?: HTMLImageElement) => {
-			const { g } = face;
-			g.fillStyle = "#0b1226";
-			g.fillRect(0, 0, 600, 800);
-			if (img) cover(g, img, 0, 0, 600, 640);
-			g.fillStyle = "#0b1226";
-			g.fillRect(0, 640, 600, 160);
-			g.fillStyle = "#f3f6fc";
-			g.font = `800 46px ${FONT}`;
-			g.fillText(person.name, 32, 706);
-			g.fillStyle = "#67e8f9";
-			g.font = `500 28px ${MONO}`;
-			g.fillText(person.role, 32, 756);
-			face.redraw();
+			const { g } = photo;
+			g.fillStyle = "#f6f7f4";
+			g.fillRect(0, 0, 1120, 1360);
+			if (img) cover(g, img, 64, 64, 992, 992);
+			else {
+				g.fillStyle = "#1b2747";
+				g.fillRect(64, 64, 992, 992);
+			}
+			g.strokeStyle = "rgba(0, 0, 0, 0.08)";
+			g.lineWidth = 2;
+			g.strokeRect(64, 64, 992, 992);
+			g.textAlign = "center";
+			g.textBaseline = "alphabetic";
+			g.fillStyle = "#14213d";
+			g.font = `700 150px ${HAND}`;
+			g.save();
+			g.translate(560, 1210);
+			g.rotate(-0.015);
+			g.fillText(person.name, 0, 0);
+			g.restore();
+			g.fillStyle = "#475569";
+			g.font = `600 44px ${MONO}`;
+			g.fillText(person.role, 560, 1300);
+			g.textAlign = "start";
+			photo.redraw();
 		};
+		let picture: HTMLImageElement | undefined;
 		draw();
-		loadImage(person.img).then(draw, () => undefined);
-		boxAt(group, 0.62, 0.8, 0.03, dark, x, 1.6, z1 - 0.02, 0.01);
-		const screen = new Mesh(new PlaneGeometry(0.57, 0.76), screenMaterial(face.texture));
-		screen.position.set(x, 1.6, z1 - 0.04);
-		screen.rotation.y = Math.PI;
-		group.add(screen);
+		loadImage(person.img).then((img) => draw((picture = img)), () => undefined);
+		document.fonts?.load(`700 150px "Caveat"`).then(() => draw(picture), () => undefined);
+		const tilt = i % 2 ? 0.045 : -0.035;
+		const holder = new Group();
+		holder.position.set(x, 1.62, z1 - 0.025);
+		holder.rotation.set(0, Math.PI, tilt);
+		group.add(holder);
+		// A soft shadow on the wall, then the photo, then a strip of tape across its top edge.
+		const shade = new Mesh(new PlaneGeometry(0.6, 0.72), new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28, depthWrite: false }));
+		shade.position.set(-0.012, -0.016, -0.006);
+		holder.add(shade);
+		// (A little light of its own: the back wall is dim, and a photo should read as paper, not grey.)
+		const screen = new Mesh(new PlaneGeometry(0.56, 0.68), hardware({ color: 0xffffff, map: photo.texture, emissive: 0xffffff, emissiveMap: photo.texture, emissiveIntensity: 0.45, roughness: 0.85 }, "printed"));
+		holder.add(screen);
+		const tape = new Mesh(new PlaneGeometry(0.17, 0.05), new MeshStandardMaterial({ color: i % 2 ? 0xa5f3fc : 0xfde68a, roughness: 0.7, transparent: true, opacity: 0.78 }));
+		tape.position.set(0, 0.335, 0.004);
+		tape.rotation.z = -tilt * 1.6;
+		holder.add(tape);
 	});
 
 	await tick();

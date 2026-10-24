@@ -19,7 +19,7 @@ interface Props {
 	projects: CollectionEntry<"work">[];
 }
 const { projects } = Astro.props;
-const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1280), badge: p.data.badge, href: `/work/${p.id}/` }));
+const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1920), badge: p.data.badge, href: `/work/${p.id}/` }));
 ---
 
 <section class="wall" data-wall data-read style={`--n: ${projects.length}`}>
