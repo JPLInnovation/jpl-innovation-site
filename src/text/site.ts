@@ -8,6 +8,8 @@
 
 export const site = {
 	name: "JPL Innovation",
+	/** Under the logo on the opening page (the logo intro, src/components/IntroSplash.astro). */
+	slogan: "Sketch it. Build it. Secure it.",
 	/** The contact address. Change it here and it updates everywhere (menu, footer, contact box, pop-up). */
 	email: "jpl.innovation05@gmail.com",
 	/** Shown by Google and link previews when a page doesn't have its own description. */

@@ -308,6 +308,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 <script>
 	import { navigate } from "astro:transitions/client";
+	import { offerStart, setLive } from "@/lib/handoff";
 	import { afterIntro } from "@/lib/splash";
 	import type { StudioHandle } from "@/lib/studio/engine";
 	import { warmRoom } from "@/lib/studio/prefetch";
@@ -325,14 +326,33 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			document.documentElement.classList.remove("studio-on");
 			return;
 		}
+		offerStart(undefined);
+		setLive(undefined);
 		if (root.hasAttribute("data-read")) {
+			// A computer that could run the 3D but is on the classic page: the opening page can switch it to 3D right
+			// away when a first visit picks 3D there (src/lib/handoff.ts), without a reload.
+			const capable = !matchMedia("(max-width: 767px), (max-height: 559px), (max-aspect-ratio: 1/1), (prefers-reduced-motion: reduce)").matches;
+			offerStart(
+				capable
+					? () => {
+							root.removeAttribute("data-read");
+							document.documentElement.classList.remove("read-mode");
+							document.documentElement.classList.add("studio-on");
+							document.dispatchEvent(new Event("studio:on")); // the home page moves its anchors to the studio
+							init();
+						}
+					: undefined,
+			);
 			// Read mode: "Back to the start" is just the top of the page.
 			const toTop = (event: MouseEvent) => {
 				if (!(event.target as Element).closest("[data-studio-restart]")) return;
 				scrollTo({ top: 0, behavior: document.documentElement.classList.contains("reduce-motion") ? "instant" : "smooth" });
 			};
 			root.addEventListener("click", toTop);
-			cleanup = () => root.removeEventListener("click", toTop);
+			cleanup = () => {
+				root.removeEventListener("click", toTop);
+				offerStart(undefined);
+			};
 			return;
 		}
 
@@ -485,6 +505,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			root.setAttribute("data-read", "");
 			root.removeAttribute("data-live");
 			document.documentElement.classList.remove("studio-on");
+			setLive(undefined);
 			dispose?.();
 			dispose = undefined;
 			scrollTo({ top: 0, behavior: "instant" }); // the tall track is gone; start the ordinary page at its top
@@ -509,6 +530,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					return;
 				}
 				root.setAttribute("data-live", "");
+				setLive({ logoRect: () => handle?.logoRect() ?? null });
 				// ?studio=capture: the room alone, for read mode's pictures (scripts/studio-stills.py).
 				if (new URLSearchParams(location.search).get("studio") === "capture") {
 					root.setAttribute("data-capture", "");
@@ -525,6 +547,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 
 		cleanup = () => {
 			cancelled = true;
+			setLive(undefined);
 			window.clearTimeout(announceTimer);
 			detach();
 			dispose?.();

@@ -8,11 +8,16 @@
  *   boot     the ring draws itself round, the monitor outline draws on and fills, the screen flickers on
  *            with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
  *   type-on  J P L, a short pause, I N N O V A T I O N, with a cyan cursor that blinks twice.
- *   hand-off a light sweep, then the logo flies into the navbar logo (FLIP) while the overlay fades.
+ *   slogan   "Sketch it. Build it. Secure it." comes in under the logo.
+ *   hold     the opening page: the timeline stops (ctx.hold). A first visit on a computer that could run the 3D is
+ *            asked 3D or Classic here (BaseLayout put html.choose-experience on); later visits pause for a beat.
+ *   hand-off a light sweep, then the logo flies (FLIP) into the navbar logo, or with 3D on the home page onto the
+ *            logo on the studio's wall (src/lib/handoff.ts), while the overlay fades and the page or the room appears.
  *
- * The beats are written on a 3.28 s design clock and played back SPEED times faster (2.8 s in total).
- * On a refresh the same timeline plays FAST_RATE times faster again (about 1.1 s), without the cursor.
+ * The beats are written on a 3.78 s design clock (plus the hold) and played back SPEED times faster.
+ * On a refresh the same timeline plays FAST_RATE times faster again, without the cursor.
  */
+import { startStudio, whenLive } from "@/lib/handoff";
 import { E, flip, onScreen, runSplash, type Frames, type SplashContext } from "./splash-core";
 
 const SPEED = 3.28 / 2.8;
@@ -20,9 +25,12 @@ const FAST_RATE = 2.5;
 const s = (t: number) => t / SPEED; // design seconds → real seconds
 
 /** Design-clock marks. */
-const FLY = 2.74; // the logo starts flying to the navbar
-const LAND = 3.14; // ...and lands
-const END = 3.28; // crossfade into the real navbar logo done
+const HOLD = 2.9; // the opening page: logo and slogan up, the timeline waits here
+const FLY = 3.24; // the logo starts flying to the navbar (or the studio's wall)
+const LAND = 3.64; // ...and lands
+const END = 3.78; // crossfade into the real navbar logo done
+/** How long later visits rest on the opening page, in real seconds (full, then fast). */
+const BEAT = { full: 0.7, fast: 0.25 };
 
 const root = document.documentElement;
 
@@ -46,6 +54,17 @@ function play(ctx: SplashContext) {
 	const bg = el.querySelector<HTMLElement>("[data-splash-bg]");
 	const skipButton = el.querySelector<HTMLElement>("[data-splash-skip]");
 	const { wrap: navWrap } = navLogo();
+	const slogan = el.querySelector<HTMLElement>("[data-intro-slogan]");
+	const choice = el.querySelector<HTMLElement>("[data-intro-choice]");
+	// The first-visit question is asked here, not in the pop-up (ExperienceChoice.astro), and Skip stays off until it
+	// has been answered.
+	const asking = root.classList.contains("choose-experience") && !!choice;
+	if (asking) {
+		root.classList.remove("choose-experience");
+		ctx.skippable(false);
+	}
+	/** Where the logo lands: the navbar logo, unless the studio's wall takes over (3D, home page). */
+	let landing = () => navLogo().img?.getBoundingClientRect();
 
 	/* ---------- Wrench (design 0.0–1.0 s) ---------- */
 	// It flies while the page underneath is still starting up (layout, hydration, image decoding), so it
@@ -243,7 +262,7 @@ function play(ctx: SplashContext) {
 		);
 	}
 
-	/* ---------- Hand-off (design 2.46–3.28 s) ---------- */
+	/* ---------- Hand-off (design 2.96–3.78 s) ---------- */
 	tween(
 		$("sweep"),
 		[
@@ -252,25 +271,58 @@ function play(ctx: SplashContext) {
 			{ opacity: 1, translate: "900px 0", offset: 0.92 },
 			{ opacity: 0, translate: "980px 0" },
 		],
-		2.46,
+		2.96,
 		0.4,
 		E.inOut,
 	);
 	// FLIP into the navbar logo. Measured now, and again just before take-off (fonts or the scrollbar can
 	// nudge the header while the intro plays).
-	const flight = tween(logo, [{ transform: "none" }, { transform: flightTarget(logo) }], FLY, LAND - FLY, E.fly);
-	const retarget = () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo) }]);
+	const flight = tween(logo, [{ transform: "none" }, { transform: flightTarget(logo, landing()) }], FLY, LAND - FLY, E.fly);
+	const retarget = () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo, landing()) }]);
 	ctx.at(s(FLY - 0.06), () => {
 		// Only while it's genuinely about to take off (not paused, not already moving).
 		if (flight && flight.playState === "running" && Number(flight.currentTime) < s(FLY) * 1000) retarget();
 	});
-	tween(bg, [{ opacity: 1 }, { opacity: 0 }], 2.8, LAND - 2.8, E.out);
-	ctx.at(s(2.8), () => root.classList.add("splash-leaving")); // scrollbar back to the page's colours
-	tween(skipButton, [{ opacity: 1 }, { opacity: 0 }], 2.6, 0.3, E.out);
+	tween(bg, [{ opacity: 1 }, { opacity: 0 }], 3.3, LAND - 3.3, E.out);
+	ctx.at(s(3.3), () => root.classList.add("splash-leaving")); // scrollbar back to the page's colours
+	tween(skipButton, [{ opacity: 1 }, { opacity: 0 }], 3.1, 0.3, E.out);
 	if (!root.classList.contains("dark")) {
 		// Light theme: the navbar logo has navy "JPL", so the silver letters turn navy on the way.
-		tween($("jpl-ink"), [{ opacity: 0 }, { opacity: 1 }], 2.84, 0.28, E.inOut);
+		tween($("jpl-ink"), [{ opacity: 0 }, { opacity: 1 }], 3.34, 0.28, E.inOut);
 	}
+
+	/* ---------- Slogan, and the opening page's hold (design 2.5-3.45 s, the hold at 2.9) ---------- */
+	// One animation for in and out (two on the same element would fight over its opacity before the second starts).
+	tween(
+		slogan,
+		[
+			{ opacity: 0, translate: "0 10px", offset: 0 },
+			{ opacity: 1, translate: "0 0", offset: 0.4 },
+			{ opacity: 1, translate: "0 0", offset: 0.74 },
+			{ opacity: 0, translate: "0 0", offset: 1 },
+		],
+		2.5,
+		0.95,
+		E.out,
+	);
+	ctx.hold(
+		s(HOLD),
+		async () => {
+			let pick: "3d" | "classic" = stored() === "3d" ? "3d" : "classic";
+			if (asking) pick = await ask(el, choice!);
+			else await new Promise((resolve) => setTimeout(resolve, BEAT[ctx.mode] * 1000));
+			// 3D on the home page: the studio is built under the opening page (switched on just now after a first visit's
+			// answer), and the logo lands on the logo on its wall. Too slow, or no 3D here: the navbar as usual.
+			if (pick === "3d" && document.querySelector("[data-studio]")) {
+				if (asking) startStudio();
+				const studio = await whenLive(9000);
+				const wall = studio?.logoRect();
+				if (studio && onScreen(wall ?? undefined)) landing = () => studio.logoRect() ?? navLogo().img?.getBoundingClientRect();
+			}
+			retarget();
+		},
+		{ skip: !asking },
+	);
 	// Crossfade into the real navbar image once they're on top of each other (the PNG has a soft shadow
 	// and bevel the flat vectors don't, so this is a blend rather than a swap).
 	tween(logo, [{ opacity: 1 }, { opacity: 0 }], LAND - 0.02, END - LAND, E.inOut);
@@ -314,16 +366,74 @@ function liftWrench(svg: SVGSVGElement, host: HTMLElement) {
 	return { x, y, stretch, spin, squash };
 }
 
-/** Transform (origin: top-left) that puts the splash logo exactly over the navbar logo. */
-function flightTarget(logo: HTMLElement) {
+/** Transform (origin: top-left) that puts the splash logo exactly over `to` (the navbar logo, or the studio's wall). */
+function flightTarget(logo: HTMLElement, to: DOMRect | null | undefined) {
 	const from = logo.getBoundingClientRect();
-	const to = navLogo().img?.getBoundingClientRect();
 	// Header hidden or off-screen (e.g. the page opened scrolled down): shrink away in place instead.
-	if (!onScreen(to)) {
+	if (!onScreen(to ?? undefined)) {
 		const k = 0.9;
 		return `translate(${(from.width * (1 - k)) / 2}px, ${(from.height * (1 - k)) / 2}px) scale(${k})`;
 	}
 	return flip(from, to!);
+}
+
+/** The visitor's saved answer: "3d", "classic" or null. */
+function stored() {
+	try {
+		return localStorage.getItem("experience");
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * The first-visit question on the opening page: shows the two cards, and resolves with the answer (saved in this
+ * browser, read by BaseLayout's head script and the Settings panel). Escape means Classic. While it asks, the overlay
+ * is a labelled dialog that keeps the keyboard's focus on its two buttons.
+ */
+function ask(overlay: HTMLElement, choice: HTMLElement): Promise<"3d" | "classic"> {
+	const buttons = [...choice.querySelectorAll<HTMLButtonElement>("[data-intro-pick]")];
+	choice.hidden = false;
+	overlay.removeAttribute("aria-hidden");
+	overlay.setAttribute("role", "dialog");
+	overlay.setAttribute("aria-modal", "true");
+	overlay.setAttribute("aria-labelledby", "intro-choice-title");
+	overlay.setAttribute("aria-describedby", "intro-slogan");
+	requestAnimationFrame(() => overlay.setAttribute("data-asking", ""));
+	buttons.find((b) => b.dataset.introPick === "classic")?.focus({ preventScroll: true });
+	return new Promise((resolve) => {
+		const answer = (pick: "3d" | "classic") => {
+			choice.removeEventListener("click", onClick);
+			removeEventListener("keydown", onKey, true);
+			try {
+				localStorage.setItem("experience", pick);
+			} catch {
+				/* nothing can be remembered: asked again next time */
+			}
+			overlay.removeAttribute("data-asking");
+			overlay.querySelector<HTMLElement>("[data-splash-skip]")?.style.setProperty("display", "none"); // answered: no Skip needed
+			overlay.setAttribute("aria-hidden", "true");
+			for (const name of ["role", "aria-modal", "aria-labelledby", "aria-describedby"]) overlay.removeAttribute(name);
+			(document.activeElement as HTMLElement | null)?.blur();
+			resolve(pick);
+		};
+		const onClick = (event: Event) => {
+			const button = (event.target as Element).closest<HTMLButtonElement>("[data-intro-pick]");
+			if (button) answer(button.dataset.introPick === "3d" ? "3d" : "classic");
+		};
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === "Escape") {
+				event.preventDefault();
+				answer("classic");
+			} else if (event.key === "Tab") {
+				event.preventDefault();
+				const i = buttons.indexOf(document.activeElement as HTMLButtonElement);
+				buttons[(i + (event.shiftKey ? buttons.length - 1 : 1)) % buttons.length]?.focus();
+			}
+		};
+		choice.addEventListener("click", onClick);
+		addEventListener("keydown", onKey, true);
+	});
 }
 
 /* ---------- Parallax (desktop only): the logo leans a little toward the mouse ---------- */

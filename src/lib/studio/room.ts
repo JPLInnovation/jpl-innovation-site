@@ -152,6 +152,8 @@ export interface Room {
 	wall: { screens: Mesh[]; hover(index: number): void };
 	/** The screens whose pages scroll with the mouse wheel (screens.ts), for the engine. */
 	screens: PageScreen[];
+	/** The logo on the wall above the desk (the opening page's logo flies onto it). */
+	logo: Mesh;
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -317,6 +319,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		group,
 		wall: stations.wall,
 		screens,
+		logo,
 		busy: () => busy,
 		finishSketch() {
 			sketchDone = true;

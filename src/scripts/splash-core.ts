@@ -10,6 +10,8 @@ import type { SplashKind } from "@/lib/splash";
  *   - the version (SplashShell's head script chose it, see src/lib/splash.ts): intro-full plays the timeline at
  *     its written speed, intro-fast plays the very same timeline faster (every animation's playbackRate)
  *   - Skip: the button, a click or tap anywhere, any key, or a scroll
+ *   - a pause point (ctx.hold): the whole timeline stops at a moment and waits (the JPL intro's opening page asks
+ *     3D or Classic there); html.splash-hold is on while it waits
  *   - prefers-reduced-motion: no movement, just a quick 300 ms fade
  *   - a tab opened in the background waits until it's visible; a script that arrives very late doesn't start
  *   - clean-up: overlay removed, page classes reset, nothing left running
@@ -43,6 +45,13 @@ export interface SplashContext {
 	tween: (el: Element | null | undefined, frames: Frames, start: number, dur: number, easing?: string, options?: KeyframeAnimationOptions) => Animation | undefined;
 	/** Run `fn` at `seconds` of the timeline (skipped once the splash has ended). */
 	at: (seconds: number, fn: () => void) => void;
+	/**
+	 * Stop the whole timeline at `seconds` and wait for `wait()` before going on. `skip: false` turns Skip off while it
+	 * waits (the opening page's buttons need their clicks).
+	 */
+	hold: (seconds: number, wait: () => Promise<void>, options?: { skip?: boolean }) => void;
+	/** Turn Skip off (or back on) from now (the opening page while it is going to ask a question). */
+	skippable: (on: boolean) => void;
 	/** Clean up when this animation finishes (the last one in the timeline). */
 	endWith: (animation: Animation | undefined) => void;
 	/** Extra clean-up for this intro (canvases, listeners...). */
@@ -53,11 +62,24 @@ export interface SplashContext {
 
 const root = document.documentElement;
 const anims: Animation[] = [];
-const timers: number[] = [];
+/** `at` callbacks: when (timeline seconds) and what; `id` while one is waiting to fire. */
+const timers: Array<{ t: number; fn: () => void; id: number; done: boolean }> = [];
 const cleanups: Array<() => void> = [];
 let finished = false;
 let rate = 1;
 let unwire = () => {};
+let skipping = true; // Skip is off while a hold asks for that
+/** When the timeline's clock started (moved later by each hold, so `now - started` is always timeline time). */
+let started = 0;
+/** Where the timeline is now, in its own seconds. */
+const now = () => ((performance.now() - started) * rate) / 1000;
+
+function schedule(timer: (typeof timers)[number], from: number) {
+	timer.id = window.setTimeout(() => {
+		timer.done = true;
+		if (!finished) timer.fn();
+	}, ((timer.t - from) * 1000) / rate);
+}
 
 /** Transform (origin: top-left) that moves and scales box `from` exactly onto box `to`. */
 export function flip(from: DOMRect, to: DOMRect) {
@@ -81,15 +103,16 @@ function cleanup(el: HTMLElement) {
 	if (finished) return;
 	finished = true;
 	unwire();
-	for (const t of timers) clearTimeout(t);
+	for (const t of timers) clearTimeout(t.id);
 	for (const fn of cleanups) fn();
-	root.classList.remove("splash", "splash-live", "splash-reduced", "splash-leaving", "splash-jpl", "splash-frc", "splash-drone", "splash-fast");
+	root.classList.remove("splash", "splash-live", "splash-reduced", "splash-leaving", "splash-jpl", "splash-frc", "splash-drone", "splash-fast", "splash-hold");
 	for (const a of anims) a.cancel(); // page elements the splash hid get their own styles back
 	el.remove();
 }
 
 function wireSkip(el: HTMLElement) {
 	const skip = () => {
+		if (!skipping) return;
 		for (const a of anims) {
 			try {
 				a.finish();
@@ -129,6 +152,7 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 	anims.length = timers.length = cleanups.length = 0;
 	finished = false;
 	rate = 1;
+	skipping = true;
 	// Seconds since the overlay went up: from the page load, or from the in-site swap that put it there.
 	const waited = performance.now() - Number(el.dataset.splashT0 ?? 0);
 	// A script that arrives late (slow connection) plays the fast version, so the page isn't held back long.
@@ -145,13 +169,52 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 		const fast = root.classList.contains("intro-fast") || late;
 		if (fast) root.classList.add("splash-fast");
 		rate = fast ? fastRate : 1;
+		started = performance.now();
 		let extras: Record<string, unknown> = {};
 		play({
 			el,
 			mode: fast ? "fast" : "full",
 			rate,
 			tween,
-			at: (seconds, fn) => timers.push(window.setTimeout(() => !finished && fn(), (seconds * 1000) / rate)),
+			at: (seconds, fn) => {
+				const timer = { t: seconds, fn, id: 0, done: false };
+				timers.push(timer);
+				schedule(timer, now());
+			},
+			skippable: (on) => (skipping = on),
+			hold: (seconds, wait, { skip = true } = {}) => {
+				const stop = { t: seconds, fn: () => {}, id: 0, done: false };
+				stop.fn = () => {
+					// Freeze every animation still to play exactly at the hold, and put off every callback still to come. The
+					// ones already over are finished for good (play() would rewind them to their first frame).
+					const ms = seconds * 1000;
+					const ongoing = anims.filter((a) => {
+						const { delay = 0, duration = 0 } = a.effect?.getTiming() ?? {};
+						if (delay + Number(duration) > ms) return true;
+						a.finish();
+						return false;
+					});
+					for (const a of ongoing) {
+						a.pause();
+						a.currentTime = ms;
+					}
+					const waiting = timers.filter((t) => !t.done && t !== stop);
+					for (const t of waiting) clearTimeout(t.id);
+					const at = performance.now();
+					skipping = skip;
+					root.classList.add("splash-hold");
+					wait().then(() => {
+						if (finished) return;
+						root.classList.remove("splash-hold");
+						skipping = true;
+						started += performance.now() - at;
+						for (const a of ongoing) a.play();
+						for (const t of waiting) schedule(t, seconds);
+					});
+				};
+				timers.push(stop);
+				schedule(stop, now());
+			},
 			endWith: (a) => (a ?? anims[anims.length - 1])?.finished.then(() => cleanup(el), () => {}),
 			onCleanup: (fn) => cleanups.push(fn),
 			devExtras: (x) => (extras = { ...extras, ...x }),

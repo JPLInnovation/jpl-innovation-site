@@ -49,18 +49,20 @@ export function markSeen(kind: SplashKind) {
 /**
  * Resolves once no logo intro covers the page, so a 3D model (src/components/model-viewer.tsx, showcase.tsx) doesn't
  * build and render underneath it while the intro needs the GPU (the drone page's intro flies a 3D drone itself).
- * Gives up waiting after 8 s.
+ * Also once the intro pauses on the opening page (html.splash-hold, src/scripts/intro-splash.ts): nothing moves then,
+ * and the 3D studio has to be built under it so the logo can fly onto its wall. Gives up waiting after 8 s.
  */
 export function afterIntro() {
 	const root = document.documentElement;
-	if (!root.classList.contains("splash")) return Promise.resolve();
+	const covered = () => root.classList.contains("splash") && !root.classList.contains("splash-hold");
+	if (!covered()) return Promise.resolve();
 	return new Promise<void>((resolve) => {
 		const done = () => {
 			observer.disconnect();
 			clearTimeout(timer);
 			resolve();
 		};
-		const observer = new MutationObserver(() => !root.classList.contains("splash") && done());
+		const observer = new MutationObserver(() => !covered() && done());
 		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
 		const timer = setTimeout(done, 8000);
 	});
