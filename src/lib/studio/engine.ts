@@ -110,6 +110,32 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		return hit ? room.wall.screens.indexOf(hit.object as Mesh) : -1;
 	};
 	let hoverIndex = -1;
+
+	// The monitor, laptop and phone scroll their pages with the wheel while the pointer is on them (screens.ts) and their
+	// scene is in view. At the page's top or bottom the wheel goes on to the page, which moves the camera as usual.
+	const screenMeshes = room.screens.map((screen) => screen.mesh);
+	/** The scrollable screen under a point (normalised device coordinates) whose scene is in view, if any. */
+	const screenAt = (x: number, y: number) => {
+		const live = room.screens.filter((screen) => (near[screen.scene] ?? 0) > 0.6);
+		if (!live.length) return undefined;
+		camera.updateMatrixWorld();
+		raycaster.setFromCamera(ndc.set(x, y), camera);
+		const hit = raycaster.intersectObjects(screenMeshes, false)[0];
+		const screen = hit && room.screens[screenMeshes.indexOf(hit.object as Mesh)];
+		return screen && live.includes(screen) ? screen : undefined;
+	};
+	let hoverScreen: (typeof room.screens)[number] | undefined;
+	const onWheel = (event: WheelEvent) => {
+		if (leaving || event.ctrlKey || event.target !== ctx.canvas) return;
+		const screen = screenAt((event.clientX / innerWidth) * 2 - 1, -((event.clientY / innerHeight) * 2 - 1));
+		if (!screen) return;
+		const dy = event.deltaMode === 1 ? event.deltaY * 40 : event.deltaMode === 2 ? event.deltaY * innerHeight : event.deltaY;
+		if (screen.scroll(dy)) {
+			event.preventDefault();
+			ctx.wake();
+		}
+	};
+	addEventListener("wheel", onWheel, { passive: false });
 	// The push-in toward the wall: 0 = normal, 1 = pushed in. It follows `leaving` at a steady rate.
 	let leaving = false;
 	let leaveAmt = 0;
@@ -202,6 +228,13 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			room.wall.hover(over);
 			ctx.canvas.style.cursor = over >= 0 ? "pointer" : "";
 		}
+		// A scrollable screen under the pointer shows its scrollbar and "Scroll to read".
+		const screen = !leaving && pointer.over ? screenAt(pointer.x, pointer.y) : undefined;
+		if (screen !== hoverScreen) {
+			hoverScreen?.hover(false);
+			screen?.hover(true);
+			hoverScreen = screen;
+		}
 		onFrame(s);
 	};
 	step(0);
@@ -211,10 +244,11 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		update(_t, dt) {
 			step(dt);
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
-			api.idle = clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
+			api.idle = clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
+			removeEventListener("wheel", onWheel);
 			removeEventListener("pointermove", onPointer);
 			removeEventListener("blur", onLeave);
 			document.documentElement.removeEventListener("pointerleave", onLeave);

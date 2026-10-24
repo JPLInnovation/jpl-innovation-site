@@ -53,7 +53,7 @@ Run from the repo root. The ones marked * need `npm run build && npx astro previ
 | Script | Does |
 | :-- | :-- |
 | `python scripts/studio-stills.py` * | `public/studio/scenes/*.webp`: read mode's picture of each studio scene |
-| `python scripts/studio-screens.py` * | `public/studio/research.webp` and `site.webp`: the screens on the studio's monitor and laptop |
+| `python scripts/studio-screens.py` * | `public/studio/screens/` and `src/lib/studio/screens.json`: the scrollable pages on the studio's monitor, laptop and phone |
 | `node scripts/make-og.mjs` | `public/assets/og-studio.jpg`: the link-preview picture (from the first scene's still) |
 | `python scripts/showcase-stills.py` * | the drone and robot showcases' stills |
 | `node scripts/measure-contrast.mjs` + `python scripts/measure-contrast.py` * | measures text contrast over the 3D scene and photos |
