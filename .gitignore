@@ -31,6 +31,8 @@ screenshots/
 
 # full-size audit captures (the report uses the smaller sheets in audit/before/)
 audit/screenshots/
+# the Home regression check's captures (scripts/home-regression.py)
+audit/regression/
 
 # Playwright MCP page snapshots
 .playwright-mcp/
