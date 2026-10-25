@@ -8,7 +8,7 @@
 //   - a proper <head>: title, description, canonical address, favicon (the artifact's own <title> sat in the body)
 //   - a "back to the F450 page" link
 //   - every link to one of the three artifacts points at the site's copy instead
-//   - the build guide: two lines say that 720p60 is the camera's, not the 4G stream's
+//   - the build guide and the 3D layout: the camera's two modes (720p60 or 1080p30), said of the camera, not the 4G stream
 //   - the 3D layout and the camera mount save their downloads through Claude's runtime (window.claude); on the site a
 //     small shim does the same with an ordinary browser download
 // Every edit must match exactly the expected number of times, so an artifact that has changed shape fails loudly
@@ -78,9 +78,14 @@ const guide = relink(
 				".rail .back:hover{color:var(--pcb);background:none;text-decoration:underline}\n",
 			1,
 		],
-		// 720p60 is the camera's (Camera Module 3 into the Pi), not the 4G stream's: say so where it could read as the stream.
-		["<dd>720p60 · 4G<small>", "<dd>720p60 camera · 4G link<small>", 1],
-		["720p60 with hardware H.264 straight from MediaMTX", "720p60 from the camera, with hardware H.264 straight from MediaMTX", 1],
+		// The camera's two modes, 720p at 60 fps and 1080p at 30 fps (Jayden, 25 Oct 2026): the camera's (Camera Module 3 into
+		// the Pi), never the 4G stream's.
+		["<dd>720p60 · 4G<small>", "<dd>720p60 or 1080p30 camera · 4G link<small>", 1],
+		["720p60 with hardware H.264 straight from MediaMTX", "720p60 or 1080p30 from the camera, with hardware H.264 straight from MediaMTX", 1],
+		["MediaMTX reads it directly at 1280 × 720, 60 fps.", "MediaMTX reads it directly at 1280 × 720, 60 fps (or 1080p, 30 fps).", 1],
+		["video, 1280 × 720 at 60 fps", "video, 1280 × 720 at 60 fps or 1080p at 30 fps", 1],
+		["imx708 · 1280×720 60 fps", "imx708 · 720p60 / 1080p30", 1],
+		["On this build: 1280×720 video at 60 fps from the Camera Module 3", "On this build: 1280×720 video at 60 fps (or 1080p at 30 fps) from the Camera Module 3", 1],
 	]),
 	"build guide",
 );
@@ -93,6 +98,9 @@ const layout = relink(
 		[".eyebrow{margin:0;font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--pcb)}\n", `.eyebrow{margin:0;font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--pcb)}\n.eyebrow ${BACK_CSS.replace(".back:hover", ".eyebrow .back:hover")}\n`, 1],
 		// the README inside the zip needs real addresses, not site-relative ones
 		['"Camera mount page: " + MOUNT_URL, "Build guide: " + GUIDE,', '"Camera mount page: " + new URL(MOUNT_URL, location.href).href, "Build guide: " + new URL(GUIDE, location.href).href,', 1],
+		// The camera's two modes (Jayden, 25 Oct 2026), as in the build guide.
+		["1280 × 720 at 60 fps · printed mount", "1280 × 720 at 60 fps or 1080p at 30 fps · printed mount", 1],
+		["(720p60 video)", "(720p60 or 1080p30 video)", 1],
 	]),
 	"3D layout",
 );

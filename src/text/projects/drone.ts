@@ -94,6 +94,8 @@ export const droneChapter = {
 		label: 'The camera',
 		value: '720p',
 		unit: 'at 60 fps',
+		/** The camera's other mode, smaller under the number (see `cameraModes`). */
+		secondary: 'or 1080p at 30 fps',
 		source: 'Camera Module 3, straight into the Raspberry Pi 4',
 		/** The 4G link, said separately: no frame rate is stated for the stream. */
 		link: 'Then live over the 4G mobile network, so it can be watched from anywhere with signal.',
@@ -107,6 +109,14 @@ export const droneChapter = {
 		label: 'F450 frame',
 	},
 };
+
+/**
+ * The camera's video modes: the Camera Module 3's own video into the Pi, not the 4G stream (no frame rate is stated
+ * for the stream). Stated by Jayden 25 Oct 2026.
+ * TODO(Jayden): how is the mode selected (the MediaMTX config, a command, something else), and were both modes
+ * tested on the bench?
+ */
+export const cameraModes = ['720p at 60 fps', '1080p at 30 fps'] as const;
 
 export interface Part {
 	name: string;
@@ -249,7 +259,7 @@ export const partGroups: PartGroup[] = [
 		color: 'var(--chart-4)',
 		parts: [
 			{ name: 'Raspberry Pi 4 (4 GB)', why: 'Streams the video over 4G, reads flight data from the flight controller over USB and serves the live dashboard.', price: 3_600_000 },
-			{ name: 'Raspberry Pi Camera Module 3', why: '12 MP autofocus camera that plugs straight into the Pi with a ribbon and streams 720p at 60 fps.', price: 864_000 },
+			{ name: 'Raspberry Pi Camera Module 3', why: '12 MP autofocus camera that plugs straight into the Pi with a ribbon and streams 720p at 60 fps or 1080p at 30 fps.', price: 864_000 },
 			{ name: 'Printed Camera Tilt Mount', why: 'PETG case and hinge under the front of the frame: tilts the camera from 0 to 45° down. Includes its screws.', price: 130_000 },
 			{ name: 'ZTE MF833 4G Modem', why: 'The USB 4G stick that gives the drone internet.', price: 780_000 },
 		],
@@ -262,8 +272,8 @@ export const partGroups: PartGroup[] = [
  */
 export const droneIntro = {
 	camera: 'CAM 1',
-	/** The Camera Module 3's own video, into the Pi (not the 4G stream). */
-	video: '720P60',
+	/** The Camera Module 3's own video modes, into the Pi (not the 4G stream): see `cameraModes`. */
+	video: '720P60 / 1080P30',
 	network: '4G',
 	/** "LINK: WEAK" while the 4G link connects, then "LINK: GOOD". */
 	link: 'LINK:',
