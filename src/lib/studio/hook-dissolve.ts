@@ -4,7 +4,9 @@
  * (the real CAD's triangles, weighted by area, coloured by the material under them).
  *
  * One Points draw call; every motion is in its vertex shader, driven by a few uniforms (no CPU per frame). The cut is in
- * world space, so the drone's props (inside their hub groups) dissolve with the rest.
+ * world space, so the drone's props (inside their hub groups) dissolve with the rest. Then the particles collapse into
+ * one glowing line (uCollapse), each keeping its place from left to right; a soft sprite behind it is the glow (no
+ * post-processing).
  */
 import {
 	BufferAttribute,
@@ -17,6 +19,10 @@ import {
 	type Object3D,
 	Points,
 	ShaderMaterial,
+	Sprite,
+	SpriteMaterial,
+	AdditiveBlending,
+	CanvasTexture,
 	Vector3,
 } from "three";
 
@@ -77,6 +83,8 @@ export function dissolveMaterials(root: Object3D, uniforms: DissolveUniforms) {
 export interface Particles {
 	points: Points;
 	material: ShaderMaterial;
+	/** The line they collapse into, in the drone's own space: its ends. */
+	line: [Vector3, Vector3];
 }
 
 /**
@@ -148,8 +156,24 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 		colours.set([s.colour.r, s.colour.g, s.colour.b], i * 3);
 		seeds[i] = rand();
 	}
+	// The line: level, through the middle of the drone, as wide as most of it; each particle keeps its place along it.
+	let x0 = Infinity;
+	let x1 = -Infinity;
+	let ySum = 0;
+	let zSum = 0;
+	for (let i = 0; i < count; i++) {
+		x0 = Math.min(x0, positions[i * 3]);
+		x1 = Math.max(x1, positions[i * 3]);
+		ySum += positions[i * 3 + 1];
+		zSum += positions[i * 3 + 2];
+	}
+	const along = new Float32Array(count);
+	for (let i = 0; i < count; i++) along[i] = (positions[i * 3] - x0) / Math.max(1e-6, x1 - x0);
+	const inset = (x1 - x0) * 0.08;
+	const line: [Vector3, Vector3] = [new Vector3(x0 + inset, ySum / count, zSum / count), new Vector3(x1 - inset, ySum / count, zSum / count)];
 	const geometry = new BufferGeometry();
 	geometry.setAttribute("position", new BufferAttribute(positions, 3));
+	geometry.setAttribute("along", new BufferAttribute(along, 1));
 	geometry.setAttribute("colour", new BufferAttribute(colours, 3));
 	geometry.setAttribute("seed", new BufferAttribute(seeds, 1));
 
@@ -163,11 +187,19 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 			uTime: { value: 0 },
 			uSize: { value: 2.3 * Math.min(window.devicePixelRatio, 1.5) },
 			uOpacity: { value: 0 },
-			uGlow: { value: new Color(0x8fe3ff) },
+			uCollapse: { value: 0 },
+			uLineA: { value: line[0] },
+			uLineB: { value: line[1] },
+			uLineColour: { value: new Color(0x9fe8ff) },
 		},
 		vertexShader: /* glsl */ `
 			attribute vec3 colour;
 			attribute float seed;
+			attribute float along;
+			uniform float uCollapse;
+			uniform vec3 uLineA;
+			uniform vec3 uLineB;
+			uniform vec3 uLineColour;
 			uniform float uHookCut;
 			uniform float uAfter;
 			uniform float uTime;
@@ -183,11 +215,17 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 				vec3 away = normalize(vec3(sin(seed * 91.7), 0.7 + 0.5 * fract(seed * 13.3), cos(seed * 53.1)));
 				vec3 drift = away * since * 0.35;
 				drift += vec3(sin(uTime * 0.8 + seed * 40.0), sin(uTime * 0.6 + seed * 23.0), cos(uTime * 0.7 + seed * 31.0)) * 0.012 * released;
-				vec4 view = modelViewMatrix * vec4(position + drift * released, 1.0);
+				vec3 free = position + drift * released;
+				// The collapse: each particle onto its place along the line, a little after its neighbours (by its seed),
+				// and the line breathes a hair.
+				float c = clamp(uCollapse * 1.5 - seed * 0.5, 0.0, 1.0);
+				c = c * c * (3.0 - 2.0 * c);
+				vec3 onLine = mix(uLineA, uLineB, along) + vec3(0.0, sin(uTime * 2.2 + along * 18.0) * 0.0025, sin(seed * 70.0) * 0.003);
+				vec4 view = modelViewMatrix * vec4(mix(free, onLine, c), 1.0);
 				gl_Position = projectionMatrix * view;
-				gl_PointSize = uSize * (0.7 + 0.6 * fract(seed * 7.0));
-				vColour = mix(colour, vec3(0.56, 0.89, 1.0), 0.35);
-				vAlpha = uOpacity * released;
+				gl_PointSize = uSize * (0.7 + 0.6 * fract(seed * 7.0)) * (1.0 - 0.3 * c);
+				vColour = mix(mix(colour, vec3(0.56, 0.89, 1.0), 0.35), uLineColour, c);
+				vAlpha = uOpacity * max(released, c);
 			}`,
 		fragmentShader: /* glsl */ `
 			varying vec3 vColour;
@@ -200,5 +238,32 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 	});
 	const points = new Points(geometry, material);
 	points.frustumCulled = false;
-	return { points, material };
+	return { points, material, line };
+}
+
+/** The line's glow: a soft, wide light behind it (a sprite, additive), as wide as the line. */
+export function lineGlow(line: [Vector3, Vector3]) {
+	const canvas = document.createElement("canvas");
+	canvas.width = 256;
+	canvas.height = 64;
+	const g = canvas.getContext("2d")!;
+	const across = g.createLinearGradient(0, 0, 256, 0);
+	across.addColorStop(0, "rgba(255,255,255,0)");
+	across.addColorStop(0.15, "rgba(255,255,255,1)");
+	across.addColorStop(0.85, "rgba(255,255,255,1)");
+	across.addColorStop(1, "rgba(255,255,255,0)");
+	g.fillStyle = across;
+	g.fillRect(0, 0, 256, 64);
+	g.globalCompositeOperation = "destination-in";
+	const down = g.createLinearGradient(0, 0, 0, 64);
+	down.addColorStop(0, "rgba(0,0,0,0)");
+	down.addColorStop(0.5, "rgba(0,0,0,1)");
+	down.addColorStop(1, "rgba(0,0,0,0)");
+	g.fillStyle = down;
+	g.fillRect(0, 0, 256, 64);
+	const material = new SpriteMaterial({ map: new CanvasTexture(canvas), color: 0x6fdcff, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, fog: false });
+	const sprite = new Sprite(material);
+	sprite.position.copy(line[0]).lerp(line[1], 0.5);
+	sprite.scale.set(line[0].distanceTo(line[1]) * 1.25, 0.05, 1);
+	return { sprite, material };
 }
