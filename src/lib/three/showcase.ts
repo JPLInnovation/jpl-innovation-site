@@ -37,6 +37,8 @@ export interface ShowcaseStop {
 	label: V3;
 	/** How far the label moves with its parts when the model is fully pulled apart (exploded view). */
 	labelShift?: V3;
+	/** A close-up: the camera stays this far from `target`, framed as given, instead of fitting the whole model. */
+	distance?: number;
 }
 
 /**
@@ -56,6 +58,8 @@ export interface ShowcaseModel extends Model {
 	focus?(weights: ArrayLike<number>, explode: number): void;
 	/** How far apart the model is on each stop, 0 (assembled) to 1. Needs the `explode` vertex attribute. */
 	explode?: number[];
+	/** The stops that keep the whole model in colour (default: the first only). */
+	whole?: number[];
 	/**
 	 * The opening beat, while the section scrolls into place: 0 (the section just coming into view) to 1 (the first
 	 * stop). Called every frame before update(); also returns how far apart the model is at that point (0 = together).
@@ -74,6 +78,8 @@ interface Options {
 	opening(): number;
 	/** The stop being read changed. */
 	onStop(index: number): void;
+	/** Every frame, after the camera has moved: where the camera is, in stops (for text that follows it). */
+	onFrame?(at: number): void;
 }
 
 const HOLD = 0.2; // the camera stays put for this share of the way either side of each stop
@@ -81,7 +87,7 @@ const FOLLOW = 15; // per second: the spring the camera follows the scroll throu
 const GLIDE = [2.5, 6]; // stops per second: between these speeds the holds fade out, so fast jumps glide through
 const LABEL = 0.12; // the label shows within this share of a stop of its camera
 const SPRING = 13; // per second: back to the scroll camera after a drag, critically damped (about 0.4 s)
-const DIM_SLOTS = 8;
+const DIM_SLOTS = 12;
 const FILL = 0.86; // share of the stage's width or height the model may take: clear of the faded edges (about 7% each)
 const ARC = 0.16; // how much further back the camera swings in the middle of a half turn
 const LIFT = 0.14; // radians the camera rises in the middle of a half turn
@@ -179,7 +185,7 @@ function fit(stop: ShowcaseStop, points: Float32Array, aspect: number, tanHalf: 
 }
 
 /** Wraps a showcase model so the stage runs it: camera, fading, labels and drag. */
-export function drive(ctx: StageContext, model: ShowcaseModel, { titles, position, opening, onStop }: Options): Model {
+export function drive(ctx: StageContext, model: ShowcaseModel, { titles, position, opening, onStop, onFrame }: Options): Model {
 	const { camera, canvas } = ctx;
 	const stops = model.stops;
 	const last = stops.length - 1;
@@ -225,7 +231,7 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		aspect = camera.aspect;
 		const tanHalf = Math.tan((camera.fov * Math.PI) / 360);
 		// An exploded stop is framed pulled apart, so its parts stay inside the stage too.
-		stops.forEach((stop, i) => (distances[i] = fit(stop, points, aspect, tanHalf, targets[i], shifts, apart[i])));
+		stops.forEach((stop, i) => (distances[i] = stop.distance ?? fit(stop, points, aspect, tanHalf, targets[i], shifts, apart[i])));
 	};
 
 	/* ---------- Fading: one value per feature, shared by every patched material ---------- */
@@ -242,11 +248,13 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		}
 	});
 	const weights = new Float32Array(stops.length);
+	const whole = model.whole ?? [0];
 
 	/* ---------- Labels ---------- */
 	const labelPoints = stops.map((s) => new Vector3(...s.label));
+	// (a stop without a title has no label)
 	const labels = stops.map((_, i) =>
-		ctx.label(titles[i] ?? "", labelPoints[i], "opacity-0 transition-opacity duration-300 data-[on]:opacity-100"),
+		titles[i] ? ctx.label(titles[i], labelPoints[i], "opacity-0 transition-opacity duration-300 data-[on]:opacity-100") : undefined,
 	);
 	let labelled = -1;
 
@@ -369,7 +377,9 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		weights.fill(0);
 		weights[i] = 1 - u;
 		weights[j] += u;
-		for (let n = 0; n < DIM_SLOTS; n++) dim.value[n] = 1 - Math.min(1, weights[0] + (n > 0 && n <= last ? weights[n] : 0));
+		let all = 0;
+		for (const k of whole) all += weights[k];
+		for (let n = 0; n < DIM_SLOTS; n++) dim.value[n] = 1 - Math.min(1, all + (n > 0 && n <= last && !whole.includes(n) ? weights[n] : 0));
 
 		// Exploded view: how far apart this stop is, plus whatever the opening beat asks for.
 		let explode = apart[i] * (1 - u) + apart[j] * u;
@@ -383,6 +393,7 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 			if (shift) p.set(p.x + shift[0] * explode, p.y + shift[1] * explode, p.z + shift[2] * explode);
 		});
 		model.focus?.(weights, explode);
+		onFrame?.(s);
 
 		// The label once the camera is there; the text and dots follow the page itself.
 		const near = Math.round(s);

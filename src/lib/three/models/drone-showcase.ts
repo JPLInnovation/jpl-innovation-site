@@ -13,7 +13,7 @@
 import { BufferAttribute, type Mesh, MeshBasicMaterial, MeshStandardMaterial, type Object3D, Vector3 } from "three";
 import type { ShowcaseModel, ShowcaseStop } from "../showcase";
 import { contactShadow, type StageContext, type StageView } from "../stage";
-import { loadDrone } from "./drone";
+import { type DroneRig, loadDrone } from "./drone";
 
 type V3 = [number, number, number];
 
@@ -117,6 +117,10 @@ const PARTS: Record<string, { look: string[]; also?: string[] }> = {
  * is worked out for the stage, so the whole drone always fits and no part is cut off (src/lib/three/showcase.ts).
  */
 const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
+	// The drone chapter's first three beats (src/components/DroneChapter.astro): the whole drone, no label.
+	prologue: { from: [-0.55, 0.1, -0.82], label: [0, 0, 0] }, // low, behind on the left: a silhouette against the rim light
+	stakes: { from: [0, -0.26, 0.97], label: [0, 0, 0] }, // (replaced by the close-up on the lens, below)
+	reveal: { from: [0.66, 0.38, 0.78], label: [0, 0, 0] }, // up and round to the front right, as the lights come up
 	overview: { from: [-0.73, 0.57, 0.66], label: [0.7, 0.15, 0.45] }, // the hero's three-quarter view
 	"flight-controller": { from: [-0.2, 0.55, 0.27], label: [1.4, 0.8, 0] }, // high, looking down at the top plate
 	motors: { at: [-0.56, -0.35, 0.4], from: [-0.36, 0.09, -0.1], label: [-0.6, 1.5, 0.52] }, // low, beside the front-left (red) arm
@@ -136,6 +140,11 @@ const EXPLODE: Record<string, number> = { "flight-controller": 0.45, power: 0.5 
 /** Per axis: how far each part moves from the middle of the drone, as a share of how far its centre already is.
  *  Mostly up and down, so the layers of the stack separate; a little outward, so the arms clear the plates. */
 const SPREAD: V3 = [0.45, 2.1, 0.45];
+
+/** The stops that show the whole drone in colour: the overview, and the chapter's first three beats. */
+const WHOLE = ["prologue", "stakes", "reveal", "overview"];
+/** Metres from the camera lens for the chapter's close-up on it (the stakes). */
+const LENS_CLOSE = 0.42;
 
 /** Extras drone.ts adds outside the CAD export, by geometry: the prop discs (motors) and the 4G stick's rings. */
 const EXTRAS: Record<string, string> = { CircleGeometry: "motors", TorusGeometry: "video-link" };
@@ -221,8 +230,19 @@ function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, e
 	});
 }
 
+export interface DroneShowcaseOptions {
+	/** The props turn only at this stop (and as the camera nears it); by default they always turn. */
+	spinAt?: string;
+	/** false: no blinking FC LED (the chapter shows only what the page states). */
+	led?: boolean;
+}
+
 /** `ids`: the features in the order the page shows them. */
-export default async function createDroneShowcase(ctx: StageContext, ids: string[]): Promise<ShowcaseModel> {
+export default async function createDroneShowcase(
+	ctx: StageContext,
+	ids: string[],
+	options: DroneShowcaseOptions = {},
+): Promise<ShowcaseModel & { rig: DroneRig }> {
 	const rig = await loadDrone();
 	const parts = Object.entries(rig.parts).map(([name, b]) => ({ name, lo: b.slice(0, 3), hi: b.slice(3) }));
 	const all: Box = {
@@ -246,6 +266,7 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 
 	// A feature added to the text without a stop here gets the overview's camera and no parts of its own.
 	const partsOf = (id: string) => PARTS[id] ?? { look: [] };
+
 	const stops: ShowcaseStop[] = ids.map((id) => {
 		const framing = FRAMING[id] ?? FRAMING.overview;
 		const box = around(partsOf(id).look);
@@ -257,6 +278,20 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 			labelShift: box === all ? undefined : shiftOf(box),
 		};
 	});
+	// The chapter's stakes: close in on the camera's lens glass, from straight in front of it.
+	const close = ids.indexOf("stakes");
+	if (close >= 0) {
+		const glass = rig.lens.position;
+		const out = new Vector3(0, 0, 1).applyQuaternion(rig.lens.quaternion);
+		stops[close] = {
+			target: glass.toArray() as V3,
+			camera: glass.clone().addScaledVector(out, LENS_CLOSE).toArray() as V3,
+			label: glass.toArray() as V3,
+			distance: LENS_CLOSE,
+		};
+	}
+	const spinAt = options.spinAt ? ids.indexOf(options.spinAt) : -1;
+	let spin = spinAt >= 0 ? 0 : 1;
 
 	// Feature n's parts get n; the overview (0) shares 0 with the frame, since it keeps everything in colour.
 	const featureOf = new Map<string, number>();
@@ -297,7 +332,7 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 		if (Math.abs(amount - drawn) < 1e-4) return;
 		drawn = amount;
 		for (const m of movers) m.object.position.copy(m.home).addScaledVector(m.shift, amount);
-		if (led) led.visible = amount < 0.02;
+		if (led) led.visible = options.led !== false && amount < 0.02;
 		// The floor shadow is the assembled drone's: it lightens as the parts lift away from it.
 		(shadow.material as MeshBasicMaterial).opacity = shadowOpacity * (1 - 0.6 * smooth(amount));
 	};
@@ -320,15 +355,17 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 	const videoLink = ids.indexOf("video-link");
 	let signal = 0;
 	const update = (t: number, dt: number) => {
-		rig.animate(t, dt);
+		rig.animate(t, dt, spin);
 		for (const ring of rings) ring.opacity *= signal;
 		if (discs) discs.opacity *= DISC_OPACITY;
 	};
 
 	return {
+		rig,
 		stops,
 		floor: rig.floor,
 		explode,
+		whole: WHOLE.map((id) => ids.indexOf(id)).filter((i) => i >= 0),
 		opening(progress) {
 			const k = smooth(Math.min(1, Math.max(0, progress)));
 			key.position.set(keyHome.x + (1 - k) * 9, keyHome.y - (1 - k) * 2.5, keyHome.z);
@@ -336,6 +373,7 @@ export default async function createDroneShowcase(ctx: StageContext, ids: string
 		},
 		focus(weights, amount) {
 			signal = videoLink < 0 ? 0 : weights[videoLink];
+			if (spinAt >= 0) spin = smooth(weights[spinAt]);
 			for (const ring of rings) ring.visible = signal > 0.01;
 			pullApart(amount);
 		},

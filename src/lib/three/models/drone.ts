@@ -101,12 +101,39 @@ const FINISH: Record<string, Finish> = {
 };
 
 let cad: Promise<{ header: CadHeader; buffer: ArrayBuffer; body: number }> | undefined;
+const watchers = new Set<(received: number) => void>();
+let receivedSoFar = 0;
+/** Bytes of f450-cad.bin received so far, as they arrive (the drone chapter's loading gate). Returns a stop function. */
+export function onCadProgress(watch: (received: number) => void) {
+	watchers.add(watch);
+	watch(receivedSoFar); // (a load started earlier, by the intro, has already got this far)
+	return () => watchers.delete(watch);
+}
+/** The response's bytes, telling the watchers as they arrive. */
+async function readAll(res: Response) {
+	if (!res.body) return res.arrayBuffer();
+	const reader = res.body.getReader();
+	const chunks: Uint8Array[] = [];
+	let received = 0;
+	for (;;) {
+		const { done, value } = await reader.read();
+		if (done) break;
+		chunks.push(value);
+		received += value.length;
+		receivedSoFar = received;
+		watchers.forEach((w) => w(received));
+	}
+	const all = new Uint8Array(received);
+	let at = 0;
+	for (const c of chunks) all.set(c, (at += c.length) - c.length);
+	return all.buffer;
+}
 /** Fetch and unzip the model once; the intro and the page's 3D share it. */
 function loadCad() {
 	cad ??= fetch(cadUrl)
 		.then(async (res) => {
 			if (!res.ok) throw new Error(`${cadUrl}: ${res.status}`);
-			let buffer = await res.arrayBuffer();
+			let buffer = await readAll(res);
 			// Gzipped, unless the server already unzipped it on the way.
 			if (new Uint8Array(buffer, 0, 2).join() === "31,139") {
 				buffer = await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
@@ -128,8 +155,8 @@ type Spot = "fc" | "io" | "rx" | "cam" | "lipo" | "pi" | "bec" | "modem";
 export interface DroneRig {
 	/** The whole drone, in metres. */
 	model: Group;
-	/** Spins the props, blinks the FC's LED and pulses the 4G rings. dt = 0 for a still frame. */
-	animate(t: number, dt: number): void;
+	/** Spins the props (`spin`: 0 still to 1 full speed, default 1), blinks the FC's LED and pulses the 4G rings. dt = 0 for a still frame. */
+	animate(t: number, dt: number, spin?: number): void;
 	/** An object at a point in the drone's own space, which moves with it. */
 	anchor(x: number, y: number, z: number): Object3D;
 	spots: Record<Spot, [number, number, number]>;
@@ -252,9 +279,9 @@ export async function loadDrone(): Promise<DroneRig> {
 		spots,
 		floor: part("Landing gear").lo[1],
 		parts: header.parts,
-		animate(t, dt) {
-			if (dt > 0) for (const { hub, clockwise } of props) hub.rotation.y += (clockwise ? -1 : 1) * dt * 30;
-			discMaterial.opacity = dt > 0 ? 0.06 : 0;
+		animate(t, dt, spin = 1) {
+			if (dt > 0) for (const { hub, clockwise } of props) hub.rotation.y += (clockwise ? -1 : 1) * dt * 30 * spin;
+			discMaterial.opacity = dt > 0 ? 0.06 * spin : 0;
 			(led.material as MeshStandardMaterial).emissiveIntensity = Math.sin(t * 5) > 0.2 ? 2.4 : 0.2;
 			rings.forEach((ring, i) => {
 				const phase = (((t * 0.7 + i / 3) % 1) + 1) % 1;
