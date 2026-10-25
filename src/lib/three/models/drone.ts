@@ -74,6 +74,8 @@ const FINISH: Record<string, Finish> = {
 	"#56605c/0.6": "printed", // Pi case holder, FC deck
 	"#2a2e2d/0.62": "printed", // camera case
 	"#3b4140/0.6": "printed", // tilt mount
+	"#d5dbd8/0.6": "printed", // the printed parts in white (CAD/f450-drone-web.blend): FC deck, holders, tilt mount
+	"#d5dbd8/0.62": "printed", // camera case, in white
 	"#d5dbd8/0.4": "clear", // BEC sleeve (printed, see-through)
 	"#e9e7e0/0.7": "plastic", // arms
 	"#c8302b/0.7": "plastic", // front arms
