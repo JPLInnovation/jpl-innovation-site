@@ -8,7 +8,11 @@
  *     first 1.5 s: a trackpad's momentum from picking 3D on the opening page would skip it.
  *   - Reduced motion: no timing, the heading and the lamp line as a still card with Continue.
  *   - Seen once per browser (localStorage "hook-seen"; Settings' "Replay the opening" forgets it).
+ *   - The 3D under the words (hook B) follows these same timers: each run, its line times and its end are told to
+ *     src/lib/studio/hook-state.ts, which the studio's engine reads.
  */
+import { hookEnded, hookStarted } from "@/lib/studio/hook-state";
+
 const SEEN = "hook-seen";
 const QUIET = 1500; // ms in which scrolling doesn't skip
 const HEADING = 2400; // ms the heading is up alone
@@ -61,6 +65,7 @@ function arm() {
 	function finish() {
 		if (over) return;
 		over = true;
+		hookEnded();
 		reset();
 		try {
 			localStorage.setItem(SEEN, "1");
@@ -73,6 +78,7 @@ function arm() {
 	}
 	abort = () => {
 		over = true;
+		hookEnded();
 		reset();
 		clear();
 	};
@@ -105,16 +111,20 @@ function arm() {
 			el.setAttribute("data-still", "");
 			skip.textContent = skip.dataset.continue ?? skip.textContent;
 			lines.forEach((line, j) => (line.dataset.state = j === lampAt ? "current" : "old"));
+			hookStarted({ start: started, lines: [], lamp: lampAt, end: Infinity, still: true });
 			return;
 		}
 		addEventListener("wheel", onScroll, { capture: true, passive: false });
 		addEventListener("touchmove", onScroll, { capture: true, passive: false });
 		let t = HEADING;
+		const times: number[] = [];
 		lines.forEach((line, i) => {
+			times.push(t);
 			timers.push(window.setTimeout(() => show(i), t));
 			t += LINE + PER_WORD * line.textContent!.trim().split(/\s+/).length;
 		});
 		timers.push(window.setTimeout(finish, t + HOLD));
+		hookStarted({ start: started, lines: times, lamp: lampAt, end: t + HOLD, still: false });
 	};
 	// Starts once the logo intro has gone and the room is up; lets go if the page falls back to Classic.
 	const check = () => {

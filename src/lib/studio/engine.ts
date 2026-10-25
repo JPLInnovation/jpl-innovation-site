@@ -16,6 +16,8 @@
  */
 import { Box3, CatmullRomCurve3, type Mesh, Raycaster, Vector2, Vector3 } from "three";
 import type { Model, StageContext } from "../three/stage";
+import { createHookScene } from "./hook-scene";
+import { HOOK_3D } from "./hook-state";
 import { buildRoom, type RoomContent, type RoomState } from "./room";
 import type { SceneShot } from "./scenes";
 
@@ -64,6 +66,8 @@ export interface StudioHandle {
 export async function drive(ctx: StageContext, { shots, content, position, onFrame }: StudioOptions): Promise<Model & StudioHandle> {
 	const { camera } = ctx;
 	const room = await buildRoom(ctx, content);
+	// The 3D under the opening words (hook-scene.ts). Off with the flag; with no words playing it changes nothing.
+	const hook = HOOK_3D ? createHookScene(ctx, room) : undefined;
 	const n = shots.length;
 	const path = new CatmullRomCurve3(shots.map((s) => new Vector3(...s.camera)), true, "centripetal", 0.5);
 	// Each scene's view as a heading (around y) and a tilt (up or down).
@@ -224,6 +228,8 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			}
 		}
 		place();
+		// While the opening words play, their 3D takes the camera (and hands it back); otherwise it does nothing.
+		hook?.update(dt, s);
 		state.position = s;
 		state.lamp = lamp;
 		state.time = clock;
@@ -252,10 +258,12 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			step(dt);
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
 			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
-			api.idle = document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
+			// (Never while the opening words' 3D plays: it moves every frame.)
+			api.idle = !hook?.busy() && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
+			hook?.dispose();
 			removeEventListener("wheel", onWheel);
 			removeEventListener("pointermove", onPointer);
 			removeEventListener("blur", onLeave);
