@@ -26,10 +26,14 @@ import {
 	Vector3,
 } from "three";
 
-/** The uniforms every patched material shares: where the cut is (world y) and the colour of its edge. */
+/**
+ * The uniforms every patched material shares: where the cut is (world y), the colour of its edge, and how far the
+ * reassembly has got (1 = whole; below, the pieces seat bottom to top, from their exploded-view offsets: hook-blueprint.ts).
+ */
 export interface DissolveUniforms {
 	uHookCut: { value: number };
 	uHookEdge: { value: Color };
+	uHookAssemble: { value: number };
 }
 
 const NOISE = /* glsl */ `
@@ -61,13 +65,17 @@ export function dissolveMaterials(root: Object3D, uniforms: DissolveUniforms) {
 				previous.call(m, shader, renderer);
 				Object.assign(shader.uniforms, uniforms);
 				shader.vertexShader = shader.vertexShader
-					.replace("void main() {", "varying vec3 vHookWorld;\nvoid main() {")
+					.replace("void main() {", "attribute vec3 hookOffset;\nattribute float hookOrder;\nuniform float uHookAssemble;\nvarying vec3 vHookWorld;\nvarying float vHookOrder;\nvoid main() {")
+					.replace(
+						"#include <begin_vertex>",
+						"#include <begin_vertex>\n\tfloat hookSeated = smoothstep(hookOrder * 0.7, hookOrder * 0.7 + 0.3, uHookAssemble);\n\ttransformed += hookOffset * (1.0 - hookSeated);\n\tvHookOrder = hookOrder;",
+					)
 					.replace("#include <project_vertex>", "#include <project_vertex>\n\tvHookWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;");
 				shader.fragmentShader = shader.fragmentShader
-					.replace("void main() {", `uniform float uHookCut;\nuniform vec3 uHookEdge;\nvarying vec3 vHookWorld;\n${NOISE}\nvoid main() {`)
+					.replace("void main() {", `uniform float uHookCut;\nuniform vec3 uHookEdge;\nuniform float uHookAssemble;\nvarying vec3 vHookWorld;\nvarying float vHookOrder;\n${NOISE}\nvoid main() {`)
 					.replace(
 						"#include <clipping_planes_fragment>",
-						"#include <clipping_planes_fragment>\n\tfloat hookD = vHookWorld.y + (hookNoise(vHookWorld * 70.0) - 0.5) * 0.03 - uHookCut;\n\tif (hookD > 0.0) discard;",
+						"#include <clipping_planes_fragment>\n\tfloat hookD = vHookWorld.y + (hookNoise(vHookWorld * 70.0) - 0.5) * 0.03 - uHookCut;\n\tif (hookD > 0.0) discard;\n\tif (uHookAssemble < 0.999 && uHookAssemble < vHookOrder * 0.7 - 0.01) discard; // (not its turn to seat yet)",
 					)
 					.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n\ttotalEmissiveRadiance += uHookEdge * (1.0 - smoothstep(0.0, 0.012, -hookD));");
 			};
@@ -188,6 +196,8 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 			uSize: { value: 2.3 * Math.min(window.devicePixelRatio, 1.5) },
 			uOpacity: { value: 0 },
 			uCollapse: { value: 0 },
+			uBlue: { value: 0 },
+			uSolid: { value: 0 },
 			uLineA: { value: line[0] },
 			uLineB: { value: line[1] },
 			uLineColour: { value: new Color(0x9fe8ff) },
@@ -196,6 +206,10 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 			attribute vec3 colour;
 			attribute float seed;
 			attribute float along;
+			attribute vec3 blue;
+			attribute float blueOrder;
+			uniform float uBlue;
+			uniform float uSolid;
 			uniform float uCollapse;
 			uniform vec3 uLineA;
 			uniform vec3 uLineB;
@@ -221,11 +235,16 @@ export function surfaceParticles(root: Object3D, count: number, uniforms: Dissol
 				float c = clamp(uCollapse * 1.5 - seed * 0.5, 0.0, 1.0);
 				c = c * c * (3.0 - 2.0 * c);
 				vec3 onLine = mix(uLineA, uLineB, along) + vec3(0.0, sin(uTime * 2.2 + along * 18.0) * 0.0025, sin(seed * 70.0) * 0.003);
-				vec4 view = modelViewMatrix * vec4(mix(free, onLine, c), 1.0);
+				// Then the line spreads into the blueprint (each particle to its point on a part box's edge), and each fades
+				// as its part seats.
+				float bl = clamp(uBlue * 1.4 - seed * 0.4, 0.0, 1.0);
+				bl = bl * bl * (3.0 - 2.0 * bl);
+				float seated = smoothstep(blueOrder * 0.7, blueOrder * 0.7 + 0.3, uSolid);
+				vec4 view = modelViewMatrix * vec4(mix(mix(free, onLine, c), blue, bl), 1.0);
 				gl_Position = projectionMatrix * view;
 				gl_PointSize = uSize * (0.7 + 0.6 * fract(seed * 7.0)) * (1.0 - 0.3 * c);
 				vColour = mix(mix(colour, vec3(0.56, 0.89, 1.0), 0.35), uLineColour, c);
-				vAlpha = uOpacity * max(released, c);
+				vAlpha = uOpacity * max(released, c) * (1.0 - seated);
 			}`,
 		fragmentShader: /* glsl */ `
 			varying vec3 vColour;
