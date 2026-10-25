@@ -143,6 +143,8 @@ const SPREAD: V3 = [0.45, 2.1, 0.45];
 
 /** The stops that show the whole drone in colour: the overview, and the chapter's first three beats. */
 const WHOLE = ["prologue", "stakes", "reveal", "overview"];
+/** The moment (seconds) the still 4G rings are drawn at: the same as the stills' pose, three rings part way out. */
+const RINGS_AT = 0.35;
 /** Metres from the camera lens for the chapter's close-up on it (the stakes). */
 const LENS_CLOSE = 0.42;
 
@@ -235,6 +237,8 @@ export interface DroneShowcaseOptions {
 	spinAt?: string;
 	/** false: no blinking FC LED (the chapter shows only what the page states). */
 	led?: boolean;
+	/** true: the 4G stick's signal rings stay still, drawn at one moment, instead of pulsing (the drone is on the bench). */
+	staticRings?: boolean;
 }
 
 /** `ids`: the features in the order the page shows them. */
@@ -355,7 +359,7 @@ export default async function createDroneShowcase(
 	const videoLink = ids.indexOf("video-link");
 	let signal = 0;
 	const update = (t: number, dt: number) => {
-		rig.animate(t, dt, spin);
+		rig.animate(options.staticRings ? RINGS_AT : t, dt, spin);
 		for (const ring of rings) ring.opacity *= signal;
 		if (discs) discs.opacity *= DISC_OPACITY;
 	};
@@ -379,7 +383,7 @@ export default async function createDroneShowcase(
 		},
 		update,
 		pose() {
-			update(0.35, 1e-3); // the rings part way out, for the 4G video link's still
+			update(RINGS_AT, 1e-3); // the rings part way out, for the 4G video link's still
 			if (discs) discs.opacity = 0; // and no blur discs: nothing spins in a still
 		},
 		applyPalette(p) {

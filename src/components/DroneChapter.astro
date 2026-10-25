@@ -55,7 +55,7 @@ const still = (id: string) =>
 const overviewStill = still("overview");
 ---
 
-<div class="dch showcase" data-dch data-read data-cad-bytes={cadBytes} data-stops={JSON.stringify(stops)} data-titles={JSON.stringify(titles)} data-measure={chapter.anatomy.value} style={`--stops: ${stops.length}`}>
+<div class="dch showcase" data-dch data-read data-cad-bytes={cadBytes} data-stops={JSON.stringify(stops)} data-titles={JSON.stringify(titles)} data-measure={chapter.anatomy.measure} style={`--stops: ${stops.length}`}>
 	<script is:inline data-astro-rerun>
 		// Before the first paint: the 3D chapter unless Classic was chosen, the window is under 768 px, motion is reduced
 		// or there is no WebGL. In 3D the whole chapter has the dark theme's colours, in both themes.
