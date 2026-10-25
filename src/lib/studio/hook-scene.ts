@@ -5,14 +5,17 @@
  *
  *   0 s       the heading: the F450 on the open sketchbook on the dark desk, in a cool rim light; the camera behind the
  *             desk, looking across the dark room to the city through the back wall
+ *   line 1    "Then the season ends...": a second after it appears, the drone dissolves top to bottom (3.6 s) into
+ *             particles sampled from its surface (hook-dissolve.ts), which hang and drift
  *   the end   the camera hands back to the room's own (the title shot), and the drone stays on the desk until the
  *             camera leaves the title
  *
  * The desk drone is a clone of the drone bench's F450 (stations.ts): it shares its geometry. If that drone hasn't
  * loaded when the words begin, the words play over the dark room as they always did.
  */
-import { Group, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
+import { Box3, Color, Group, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
 import type { StageContext } from "../three/stage";
+import { type DissolveUniforms, dissolveMaterials, type Particles, surfaceParticles } from "./hook-dissolve";
 import { type HookRun, hookState } from "./hook-state";
 import { DESK, type Room } from "./room";
 
@@ -27,6 +30,11 @@ export const HOOK_LOOK = {
 	open: { camera: [-6.1, 1.1, -3.18] as const, target: [-5.79, 0.72, -0.2] as const, push: 0.08 },
 	/** The stage's lights while the room is dark: a whisper of key, no fill, a cool rim that outlines the drone. */
 	dark: { key: 0.05, fill: 0, rim: 1.5, rimColor: 0xbfe3ff },
+	/** The dissolve: how long after its line appears it starts (s), how long the cut takes (s), its edge's colour. */
+	dissolve: { after: 1, time: 3.6, edge: 0x6fdcff },
+	/** How many particles (fewer on the low tier). */
+	particles: 4500,
+	particlesLow: 1500,
 	/** Seconds for the hand-back to the room's camera (and after Skip). */
 	handBack: 1.1,
 	skip: 0.8,
@@ -51,6 +59,9 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 	holder.visible = false;
 	room.group.add(holder);
 	let drone: Object3D | undefined;
+	const cut: DissolveUniforms = { uHookCut: { value: 100 }, uHookEdge: { value: new Color(HOOK_LOOK.dissolve.edge) } };
+	let particles: Particles | undefined;
+	const bounds = new Box3();
 
 	let run: HookRun | undefined; // the run being shown (with the 3D)
 	let skipped: HookRun | undefined; // a run that started without the drone: words only
@@ -76,6 +87,10 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 		if (!source) return false;
 		drone = source.model.clone(true);
 		holder.add(drone);
+		// Its own materials (the cut), and the particles it turns into.
+		dissolveMaterials(drone, cut);
+		particles = surfaceParticles(drone, ctx.tier === "low" ? HOOK_LOOK.particlesLow : HOOK_LOOK.particles, cut);
+		drone.add(particles.points);
 		return true;
 	};
 
@@ -86,6 +101,9 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 		}
 		run = r;
 		holder.visible = true;
+		holder.updateMatrixWorld(true);
+		bounds.setFromObject(drone!);
+		cut.uHookCut.value = bounds.max.y + 0.05;
 		onDesk = true;
 		saved.key = ctx.lights.key.intensity;
 		saved.fill = ctx.lights.fill.intensity;
@@ -129,12 +147,29 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 			camera.position.lerpVectors(eye, engineAt, w);
 			camera.quaternion.slerpQuaternions(aimQ, engineQ, w);
 
+			// The dissolve: the cut sweeps down through the drone; the particles hang and drift.
+			const top = bounds.max.y + 0.05;
+			const bottom = bounds.min.y - 0.02;
+			const dissolveAt = (run.lines[0] ?? 0) / 1000 + HOOK_LOOK.dissolve.after;
+			const swept = run.still ? 0 : smoother(clamp01((t - dissolveAt) / HOOK_LOOK.dissolve.time));
+			// (until the later moments exist: the drone comes back with the lamp)
+			const back = run.still ? 0 : smoother(clamp01((t - lampAt) / 1.2));
+			const gone = run.ended !== undefined ? 1 - w : 1;
+			cut.uHookCut.value = top - (top - bottom) * swept * (1 - back) * gone;
+			if (particles) {
+				particles.material.uniforms.uTime.value = t;
+				particles.material.uniforms.uAfter.value = Math.max(0, t - dissolveAt - HOOK_LOOK.dissolve.time);
+				particles.material.uniforms.uOpacity.value = 0.9 * (1 - back) * gone;
+			}
+
 			// The lights: dark until the lamp line, then back to the room's own as the lamp comes up.
 			const lamp = run.still ? 0 : clamp01((t - lampAt) / 1.6);
 			restoreLights(run.ended !== undefined ? Math.max(lamp, w) : lamp);
 
 			if (w >= 1) {
 				restoreLights(1);
+				cut.uHookCut.value = top;
+				if (particles) particles.material.uniforms.uOpacity.value = 0;
 				run = undefined;
 			}
 		},
