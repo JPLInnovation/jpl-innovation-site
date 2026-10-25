@@ -89,7 +89,14 @@ const overviewStill = still("overview");
 
 	<div class="dch-track">
 		<div class="dch-pin">
-			<div class="dch-bg" aria-hidden="true"></div>
+			<!-- The backdrop, a layer per beat (public/chapter/drone/, scripts/drone-backdrops.mjs); the script fades each in
+			     with the camera. -->
+			<div class="dch-bg" aria-hidden="true">
+				<div class="dch-bd dch-bd-city"><div class="dch-drift dch-drift-far"></div><div class="dch-drift dch-drift-near"></div></div>
+				<div class="dch-bd dch-bd-dusk"><span style="--depth: 0"></span><span style="--depth: 0.6"></span><span style="--depth: 1.2"></span><span style="--depth: 2"></span><span style="--depth: 3"></span></div>
+				<div class="dch-bd dch-bd-skyline"></div>
+				<div class="dch-bd dch-bd-streaks"></div>
+			</div>
 			<div class="dch-stage" data-dch-stage>
 				<canvas role="img" aria-label={parts.modelLabel}></canvas>
 			</div>
@@ -483,8 +490,9 @@ const overviewStill = still("overview");
 		padding-bottom: 10rem;
 		/* The still gradient: the 3D's colours, fading into the page. */
 		background:
-			radial-gradient(60% 40% at 70% 30%, rgb(34 211 238 / 0.08), transparent 70%),
-			linear-gradient(to bottom, #071822, #030a10 calc(100% - 10rem), transparent);
+			linear-gradient(to bottom, rgb(3 10 16 / 0.35), rgb(3 10 16 / 0.6) 60%, #030a10 calc(100% - 10rem), transparent),
+			url("/chapter/drone/classic.webp") center 35% / cover no-repeat,
+			#071822;
 	}
 	.dch[data-read] .dch-back {
 		padding-top: 1.5rem;
@@ -580,6 +588,85 @@ const overviewStill = still("overview");
 			radial-gradient(120% 90% at 50% 10%, #0b2130, transparent 70%),
 			linear-gradient(to bottom, #071822, #030a10);
 	}
+	/* The backdrop layers: their images only once the 3D is up (data-images: beat 1's first, then the rest), each shown
+	   by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). Moved with transform and opacity only. */
+	.dch-bd {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.dch-bd[data-off] {
+		visibility: hidden;
+	}
+	.dch-bd-city {
+		opacity: calc(var(--bd-city, 0) * var(--look-city, 0.85));
+		overflow: hidden;
+	}
+	.dch-drift {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 200%;
+		background-repeat: repeat-x;
+		background-size: 50% 100%;
+		animation: dch-drift var(--drift, 240s) linear infinite;
+		animation-play-state: paused;
+		will-change: transform;
+	}
+	.dch-drift-far {
+		--drift: var(--look-far-drift, 260s);
+	}
+	.dch-drift-near {
+		--drift: var(--look-near-drift, 170s);
+		animation-direction: reverse;
+	}
+	.dch-pin[data-city-on] .dch-drift {
+		animation-play-state: running;
+	}
+	@keyframes dch-drift {
+		to {
+			transform: translateX(-50%);
+		}
+	}
+	.dch-pin[data-images] .dch-drift-far { background-image: url("/chapter/drone/city-far.webp"); }
+	.dch-pin[data-images] .dch-drift-near { background-image: url("/chapter/drone/city-near.webp"); }
+	.dch-bd-dusk {
+		opacity: calc(var(--bd-dusk, 0) * var(--look-dusk, 1));
+		overflow: hidden;
+	}
+	.dch-bd-dusk > span {
+		position: absolute;
+		inset: 0 -4%;
+		background: center / cover no-repeat;
+		/* A little sideways with the camera's swing, the nearer ridges more: depth, never travel. */
+		translate: calc(var(--bd-swing, 0) * var(--depth) * var(--look-parallax, 1) * -1%) 0;
+	}
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(1) { background-image: url("/chapter/drone/dusk-sky.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(2) { background-image: url("/chapter/drone/dusk-1.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(3) { background-image: url("/chapter/drone/dusk-2.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(4) { background-image: url("/chapter/drone/dusk-3.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(5) { background-image: url("/chapter/drone/dusk-4.webp"); }
+	/* (its foot on the 4G stop's horizon, behind the drone) */
+	.dch-bd-skyline {
+		inset: auto 0 33% 0;
+		height: 22%;
+		opacity: calc(var(--bd-video, 0) * var(--look-skyline, 0.16));
+		background: center bottom / 100% 100% no-repeat;
+	}
+	.dch-pin[data-images="all"] .dch-bd-skyline { background-image: url("/chapter/drone/skyline.webp"); }
+	/* The camera's video: streaks from the lens (where the crosshair is), growing as the camera pushes in. */
+	.dch-bd-streaks {
+		inset: auto;
+		left: var(--focus-x);
+		top: 50%;
+		width: 120vmin;
+		aspect-ratio: 1;
+		translate: -50% -50%;
+		scale: calc(0.45 + var(--bd-push, 0) * var(--look-grow, 0.75));
+		opacity: calc(var(--bd-streaks, 0) * var(--look-streaks, 0.85));
+		background: center / contain no-repeat;
+		mix-blend-mode: screen;
+	}
+	.dch-pin[data-images="all"] .dch-bd-streaks { background-image: url("/chapter/drone/streaks.webp"); }
 	.dch-stage {
 		position: absolute;
 		inset: 0;
@@ -601,7 +688,7 @@ const overviewStill = still("overview");
 		inset: 0;
 		pointer-events: none;
 		background:
-			linear-gradient(to right, rgb(3 10 16 / var(--look-scrim, 0.7)), rgb(3 10 16 / calc(var(--look-scrim, 0.7) * 0.6)) 30%, transparent 52%),
+			linear-gradient(to right, rgb(3 10 16 / var(--bd-scrim, 0.7)), rgb(3 10 16 / calc(var(--bd-scrim, 0.7) * 0.75)) 36%, transparent 60%),
 			radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
 	}
 	@media (max-aspect-ratio: 6/5) {
@@ -1028,6 +1115,40 @@ const overviewStill = still("overview");
 		root.addEventListener("focusin", onFocus);
 		cleanups.push(() => root.removeEventListener("focusin", onFocus));
 
+		// The backdrop follows the camera too: how much of each beat's layer shows, the dusk's swing, the scrim.
+		const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+		const round = (x: number) => Math.round(x * 100) / 100;
+		const layers = {
+			city: root.querySelector<HTMLElement>(".dch-bd-city")!,
+			dusk: root.querySelector<HTMLElement>(".dch-bd-dusk")!,
+			video: root.querySelector<HTMLElement>(".dch-bd-skyline")!,
+			streaks: root.querySelector<HTMLElement>(".dch-bd-streaks")!,
+		};
+		const shown: Record<string, number> = {};
+		let scrims = { base: 0.7, prologue: 0, stakes: 0, reveal: 0, video: 0 };
+		const set = (name: string, value: number) => {
+			const v = round(value);
+			if (shown[name] === v) return;
+			shown[name] = v;
+			pin.style.setProperty(`--bd-${name}`, String(v));
+		};
+		const backdrop = (at: number) => {
+			const city = clamp01(1 - at * 0.8);
+			const streaks = clamp01(1 - Math.abs(at - 1) * 1.6);
+			const dusk = clamp01(1 - Math.abs(at - 2) * 1.05);
+			const video = clamp01(1 - Math.abs(at - (stops.length - 1)) * 1.6);
+			set("city", city);
+			set("streaks", streaks);
+			set("push", clamp01(at));
+			set("dusk", dusk);
+			set("swing", Math.max(-1, Math.min(1, at - 2)));
+			set("video", video);
+			set("scrim", scrims.base + scrims.prologue * city + scrims.stakes * streaks + scrims.reveal * dusk + scrims.video * video);
+			for (const [name, value] of [["city", city], ["dusk", dusk], ["video", video], ["streaks", streaks]] as const) layers[name].toggleAttribute("data-off", value <= 0.005);
+			pin.toggleAttribute("data-city-on", city > 0.005);
+		};
+		backdrop(0);
+
 		// The words, the HUD's counter, the map and the announcement follow the camera.
 		const levels = new Float32Array(panels.length).fill(-1);
 		let shownStop = -1;
@@ -1043,6 +1164,7 @@ const overviewStill = still("overview");
 				panel.toggleAttribute("data-shown", on > 0.5);
 			});
 			root.style.setProperty("--w-stakes", String(Math.round(Math.max(0, 1 - Math.abs(at - 1) * 2.2) * 100) / 100));
+			backdrop(at);
 			root.style.setProperty("--past", String(Math.round(Math.min(1, Math.max(0, at * 2)) * 100) / 100));
 			const current = Math.max(0, Math.min(last, Math.round(at)));
 			if (current === shownStop) return;
@@ -1120,7 +1242,21 @@ const overviewStill = still("overview");
 				pin.style.setProperty("--look-glow", String(look.glow));
 				pin.style.setProperty("--look-vignette", String(look.vignette));
 				pin.style.setProperty("--look-grain", String(look.grain));
-				pin.style.setProperty("--look-scrim", String(look.scrim));
+				const b = look.backdrop;
+				const values = {
+					city: b.prologue.cityOpacity,
+					"far-drift": `${b.prologue.farDrift}s`,
+					"near-drift": `${b.prologue.nearDrift}s`,
+					streaks: b.stakes.streaksOpacity,
+					grow: b.stakes.streaksGrow,
+					dusk: b.reveal.duskOpacity,
+					parallax: b.reveal.parallax,
+					skyline: b["video-link"].skylineOpacity,
+				};
+				for (const [name, value] of Object.entries(values)) pin.style.setProperty(`--look-${name}`, String(value));
+				scrims = { base: look.scrim, prologue: b.prologue.scrim, stakes: b.stakes.scrim, reveal: b.reveal.scrim, video: b["video-link"].scrim };
+				delete shown.scrim;
+				backdrop(position());
 				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
@@ -1149,6 +1285,10 @@ const overviewStill = still("overview");
 				}
 				root.setAttribute("data-live", "");
 				closeGate();
+				// The backdrop's images: beat 1's now, the rest a moment later.
+				pin.setAttribute("data-images", "first");
+				const more = window.setTimeout(() => pin.setAttribute("data-images", "all"), 1200);
+				cleanups.push(() => clearTimeout(more));
 				// A link to a stop (/work/drone/#motors) lands on it, on arrival and when the address changes to one.
 				const toHash = () => {
 					const hashed = stops.indexOf(decodeURIComponent(location.hash.slice(1)));
