@@ -194,8 +194,10 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 	const step = (dt: number) => {
 		fit();
 		// While the logo intro covers the page (the opening page), the opening shot waits: the camera stays back from the
-		// desk with the lamp off, so the intro's logo can land on the wall before the room comes up around it.
-		const waiting = document.documentElement.classList.contains("splash");
+		// desk with the lamp off, so the intro's logo can land on the wall before the room comes up around it. The same
+		// while the home page's "why we exist" words play over the dark room (html.studio-dark, src/pages/index.astro).
+		const html = document.documentElement.classList;
+		const waiting = html.contains("splash") || html.contains("studio-dark");
 		if (!waiting) clock += dt;
 		const lean = 1 - Math.exp(-4 * dt);
 		px += (pxT - px) * lean;
@@ -250,7 +252,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			step(dt);
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
 			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
-			api.idle = document.documentElement.classList.contains("splash") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
+			api.idle = document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01;
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
