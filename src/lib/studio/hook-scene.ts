@@ -17,8 +17,9 @@
  *             as the camera leaves the title, so Home is as it always is from there on.
  *
  * The desk drone is a clone of the drone bench's F450 (stations.ts): it shares its geometry. If that drone hasn't
- * loaded when the words begin, the words play over the dark room as they always did. Reduced motion: one still frame,
- * the end state (the drone whole, the blueprint lit), under the still card.
+ * loaded when the words begin, the words play over the dark room as they always did. Reduced motion: Home opens in its
+ * read mode (Studio.astro), so none of this runs; a still run (the words' still card) gets one still frame, the drone
+ * whole and the blueprint lit, with no camera move.
  */
 import { Box3, CatmullRomCurve3, Color, Group, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
 import type { StageContext } from "../three/stage";
@@ -203,7 +204,7 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 			const pullTo = end - HOOK_LOOK.handBack;
 			const pull = run.still ? 0 : span(t, pullFrom, pullTo);
 			if (pull > 0) path.getPoint(pull, eye);
-			else eye.copy(open.camera).addScaledVector(forward, HOOK_LOOK.open.push * 0.75 * smoother(clamp01(t / Math.max(1, pullFrom))));
+			else eye.copy(open.camera).addScaledVector(forward, run.still ? 0 : HOOK_LOOK.open.push * 0.75 * smoother(clamp01(t / Math.max(1, pullFrom))));
 			look.lerpVectors(open.target, centre, smoother(clamp01(pull * 1.6)));
 			let w = run.still ? 0 : span(t, pullTo, end);
 			if (skipping) w = Math.max(w, span((now - run.ended!) / 1000, 0, HOOK_LOOK.skip));
