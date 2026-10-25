@@ -37,6 +37,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SIZE = {"width": 1600, "height": 1200}  # the cards show the pictures at 4:3; this is the 2x size
 SMALL = 800  # the 1x width
 PAGES = {"drone": "/work/drone/", "robot": "/work/frc/"}
+# The pages whose cards offer AVIF (src/components/showcase.tsx). The drone chapter's Classic cards
+# (src/components/DroneChapter.astro) use WebP only, so the drone gets no AVIF copies.
+AVIF = {"robot"}
 # WebGL without a GPU, for Playwright's own Chromium (Chrome finds its own way).
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
 
@@ -66,24 +69,24 @@ FADE = """(url) => new Promise((done) => {
 })"""
 
 
-# Four files from one PNG: 2x and 1x, WebP and AVIF (both keep the transparent background).
+# From one PNG: 2x and 1x WebP, and AVIF too where the page offers it (all keep the transparent background).
 SHARP = """
 const sharp = require('sharp');
-const [png, base, small] = process.argv.slice(1);
+const [png, base, small, avif] = process.argv.slice(1);
 (async () => {
   for (const [suffix, width] of [['', null], ['-' + small, Number(small)]]) {
     const img = () => (width ? sharp(png).resize({ width }) : sharp(png));
     await img().webp({ quality: 78, alphaQuality: 85, effort: 6 }).toFile(base + suffix + '.webp');
-    await img().avif({ quality: 55, effort: 6 }).toFile(base + suffix + '.avif');
+    if (avif === '1') await img().avif({ quality: 55, effort: 6 }).toFile(base + suffix + '.avif');
   }
 })().catch((e) => { console.error(e); process.exit(1); });
 """
 
 
-def write_pictures(png: bytes, base: pathlib.Path) -> None:
+def write_pictures(png: bytes, base: pathlib.Path, avif: bool) -> None:
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         tmp.write(png)
-    subprocess.run(["node", "-e", SHARP, tmp.name, str(base), str(SMALL)], cwd=ROOT, check=True)
+    subprocess.run(["node", "-e", SHARP, tmp.name, str(base), str(SMALL), "1" if avif else "0"], cwd=ROOT, check=True)
     pathlib.Path(tmp.name).unlink()
 
 
@@ -119,8 +122,9 @@ def main() -> None:
         for n, feature in enumerate(ids):
             data_url = page.evaluate(f"(n) => {{ window.__showcase.go(n); return ({FADE})(window.__showcase.capture()); }}", n)
             base = out / feature
-            write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base)
-            sizes = ", ".join(f"{(base.parent / (base.name + s)).stat().st_size // 1024} KB {s.lstrip('-')}" for s in [".webp", ".avif", f"-{SMALL}.webp", f"-{SMALL}.avif"])
+            write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base, args.page in AVIF)
+            kinds = [".webp", f"-{SMALL}.webp"] + ([".avif", f"-{SMALL}.avif"] if args.page in AVIF else [])
+            sizes = ", ".join(f"{(base.parent / (base.name + s)).stat().st_size // 1024} KB {s.lstrip('-')}" for s in kinds)
             print(f"{base.relative_to(ROOT) if base.is_relative_to(ROOT) else base}: {sizes}")
         browser.close()
 
