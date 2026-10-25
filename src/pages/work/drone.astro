@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
+import BeatLabel from "@/components/BeatLabel.astro";
 import { buttonVariants } from "@/components/ui/button";
 import { backToWork } from "@/text/work";
 import DroneIllustration from "@/components/DroneIllustration.astro";
@@ -17,13 +18,16 @@ import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md),
 // and the "Part by part" showcase: src/text/showcase/drone.ts
-import { drone, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
+import { drone, droneChapter as chapter, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
 import { droneShowcase } from "@/text/showcase/drone";
 import { formatVnd } from "@/lib/format";
 import { DataIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const entry = (await getEntry("work", "drone"))!;
+
+/** The chapter's beats so far, in page order (each one's id is its section's). */
+const beatIds = ["prologue", "stakes", "reveal", "anatomy"] as const;
 
 const team = await Promise.all(
 	drone.team.map(async (t) => ({ role: t.role, member: "member" in t ? await getEntry("members", t.member) : null })),
@@ -46,67 +50,154 @@ const stills = Object.fromEntries(
 
 <BaseLayout title={`${drone.name} | JPL Innovation`} description={entry.data.description}>
 	<ChapterBackdrop project="drone" />
-	<!-- Hero -->
-	<header class="wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
-		<div class="flex flex-col gap-6">
-			<BackLink href="/work/">{backToWork}</BackLink>
-			<div data-reveal><StatusTag>{drone.status}</StatusTag></div>
-			<h1 data-reveal class="font-wide text-[clamp(2.8rem,8vw,6.25rem)] font-[900] leading-[0.94]">{drone.name}</h1>
-			<p class="max-w-[56ch] text-lg" data-reveal data-reveal-delay="150">{drone.intro}</p>
-			<dl class="grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-6 sm:grid-cols-4" data-reveal-group>
+	<!-- The chapter: beats 1 to 4 (words: src/text/projects/drone.ts, droneChapter). In 3D, beats 1 to 3 are a screen each
+	     over the dark and the chapter map sits at the side; in Classic (data-read: phones, reduced motion, no WebGL, Classic
+	     chosen) the same words are an ordinary page in the same order. src/scripts/drone-chapter.ts runs the clock, the
+	     map and the beats coming in. -->
+	<div class="drone-chapter" data-drone-chapter data-read>
+		<script is:inline data-astro-rerun>
+			// Before the first paint: the 3D chapter unless Classic was chosen, the window is under 768 px, motion is reduced
+			// or there is no WebGL.
+			(() => {
+				const el = document.currentScript.parentElement;
+				const root = document.documentElement;
+				const read =
+					root.classList.contains("read-mode") ||
+					root.classList.contains("reduce-motion") ||
+					matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches;
+				if (read) return;
+				const gl = document.createElement("canvas").getContext("webgl2") || document.createElement("canvas").getContext("webgl");
+				if (!gl) return;
+				gl.getExtension("WEBGL_lose_context")?.loseContext();
+				el.removeAttribute("data-read");
+			})();
+		</script>
+		<nav class="chapter-map" aria-label={chapter.mapLabel} data-chapter-map>
+			<ol>
 				{
-					drone.facts.map((f) => (
-						<div class="flex flex-col gap-1">
-							<dt class="flex items-center gap-1.5 text-sm text-muted-foreground">
-								<DataIcon name={f.icon} className="size-4" />
-								{f.label}
-							</dt>
-							<dd class="font-semibold">{f.value}</dd>
-						</div>
-					))
-				}
-			</dl>
-			<ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" data-reveal>
-				{
-					team.map((t) => (
+					beatIds.map((id) => (
 						<li>
-							{t.role}
-							{t.member && (
-								<>
-									{" — "}
-									<a href={`/members/${t.member.id}/`} class="font-medium text-foreground hover:underline">
-										{t.member.data.title}
-									</a>
-								</>
-							)}
+							<a href={`#${id}`} data-map-link={id}>
+								<span class="chapter-map-dot" aria-hidden="true" />
+								<span class="chapter-map-n">{chapter.beats[id].number}</span>
+								<span class="chapter-map-title">{chapter.beats[id].title}</span>
+							</a>
 						</li>
 					))
 				}
-			</ul>
-			<!-- data-astro-reload: the guide, the 3D layout and the camera mount are standalone pages, so load them fully instead of a client-side swap. -->
-			<div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-reveal>
-				<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
-				<a href={text.layout3d.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.layout3d.label}</a>
-				<a href={text.cameraPov.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.cameraPov.label}</a>
-				<p class="max-w-[40ch] text-sm text-muted-foreground">{text.buildGuide.note}</p>
+			</ol>
+		</nav>
+
+		<div class="chapter-band" data-chapter-band>
+			<script is:inline data-astro-rerun>
+				// In 3D the first three beats are dark in both themes: the band takes the dark theme's colours.
+				(() => {
+					const band = document.currentScript.parentElement;
+					if (!band.closest("[data-drone-chapter]").hasAttribute("data-read")) band.classList.add("dark");
+				})();
+			</script>
+			<div class="chapter-back wrapper pt-6 md:pt-10"><BackLink href="/work/">{backToWork}</BackLink></div>
+
+			<!-- 01 Prologue: the drone's real state, where it is and the local time, and the problem it solves -->
+			<section id="prologue" data-beat="prologue" class="chapter-beat chapter-screen wrapper" aria-labelledby="prologue-label">
+				<BeatLabel id="prologue-label" beat={chapter.beats.prologue} />
+				<p class="chapter-hud">
+					<span class="chapter-hud-state"><span class="chapter-hud-dot" aria-hidden="true"></span>{chapter.hud.state}</span>
+					<span class="chapter-hud-place">
+						<span aria-hidden="true">{chapter.hud.city}</span>
+						<span class="sr-only">{chapter.hud.timeLabel} {chapter.hud.city}:</span>
+						<time class="chapter-hud-time" data-chapter-clock={chapter.hud.timeZone}>--:--:--</time>
+					</span>
+				</p>
+				<p class="chapter-statement font-wide">{chapter.prologue.problem}</p>
+			</section>
+
+			<!-- 02 The stakes: the camera's 720p at 60 fps, and the 4G link said on its own (no frame rate for the stream) -->
+			<section id="stakes" data-beat="stakes" class="chapter-beat chapter-screen wrapper" aria-labelledby="stakes-label">
+				<BeatLabel id="stakes-label" beat={chapter.beats.stakes} />
+				<div class="chapter-stat">
+					<p class="chapter-stat-label">{chapter.stakes.label}</p>
+					<p class="chapter-stat-value font-wide"><span>{chapter.stakes.value}</span> <span class="chapter-stat-unit">{chapter.stakes.unit}</span></p>
+					<p class="chapter-stat-source">{chapter.stakes.source}</p>
+				</div>
+				<p class="chapter-aside">{chapter.stakes.link}</p>
+			</section>
+
+		<!-- 03 The reveal: the drone's name, status and credits, and the 3D model rising out of the dark -->
+		<header id="reveal" data-beat="reveal" aria-labelledby="reveal-label" class="chapter-beat wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
+				<BeatLabel id="reveal-label" beat={chapter.beats.reveal} class="lg:col-span-2" />
+			<div class="flex flex-col gap-6">
+				<div data-reveal><StatusTag>{drone.status}</StatusTag></div>
+				<h1 data-reveal class="font-wide text-[clamp(2.8rem,8vw,6.25rem)] font-[900] leading-[0.94]"><span class="chapter-kicker">{chapter.reveal.kicker}</span> {drone.name}</h1>
+				<p class="max-w-[56ch] text-lg" data-reveal data-reveal-delay="150">{drone.intro}</p>
+				<dl class="grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-6 sm:grid-cols-4" data-reveal-group>
+					{
+						drone.facts.map((f) => (
+							<div class="flex flex-col gap-1">
+								<dt class="flex items-center gap-1.5 text-sm text-muted-foreground">
+									<DataIcon name={f.icon} className="size-4" />
+									{f.label}
+								</dt>
+								<dd class="font-semibold">{f.value}</dd>
+							</div>
+						))
+					}
+				</dl>
+				<ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" data-reveal>
+					{
+						team.map((t) => (
+							<li>
+								{t.role}
+								{t.member && (
+									<>
+										{" — "}
+										<a href={`/members/${t.member.id}/`} class="font-medium text-foreground hover:underline">
+											{t.member.data.title}
+										</a>
+									</>
+								)}
+							</li>
+						))
+					}
+				</ul>
+				<!-- data-astro-reload: the guide, the 3D layout and the camera mount are standalone pages, so load them fully instead of a client-side swap. -->
+				<div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-reveal>
+					<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
+					<a href={text.layout3d.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.layout3d.label}</a>
+					<a href={text.cameraPov.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.cameraPov.label}</a>
+					<p class="max-w-[40ch] text-sm text-muted-foreground">{text.buildGuide.note}</p>
+				</div>
 			</div>
+			<figure transition:name="project-drone" class="chapter-rise flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
+				<ModelViewer
+					client:visible
+					model="drone"
+					label={text.model3d.description}
+					className="aspect-square w-full"
+				>
+					<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
+				</ModelViewer>
+				<figcaption class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+					<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
+					<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
+					<span>{text.model3d.layoutNote}</span>
+				</figcaption>
+			</figure>
+		</header>
 		</div>
-		<figure transition:name="project-drone" class="flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
-			<ModelViewer
-				client:visible
-				model="drone"
-				label={text.model3d.description}
-				className="aspect-square w-full"
-			>
-				<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
-			</ModelViewer>
-			<figcaption class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
-				<span>{text.model3d.layoutNote}</span>
-			</figcaption>
-		</figure>
-	</header>
+
+		<!-- 04 Anatomy: the frame's 450 mm, then the part-by-part showcase -->
+		<section id="anatomy" data-beat="anatomy" class="chapter-beat" aria-labelledby="anatomy-label">
+			<div class="wrapper flex flex-col gap-3 pb-4 md:pb-8">
+				<BeatLabel id="anatomy-label" beat={chapter.beats.anatomy} />
+				<p class="chapter-stat-value chapter-stat-small font-wide" data-reveal><span>{chapter.anatomy.value}</span> <span class="chapter-stat-unit">{chapter.anatomy.label}</span></p>
+			</div>
+		<!-- Part by part: the 3D drone turns to each part as its text scrolls past (src/components/showcase.tsx) -->
+		<Showcase client:visible={{ rootMargin: "200px" }} model="drone" text={droneShowcase} stills={stills}>
+			<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
+		</Showcase>
+		</section>
+	</div>
 
 	<!-- Progress -->
 	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">
@@ -143,11 +234,6 @@ const stills = Object.fromEntries(
 			}
 		</ol>
 	</section>
-
-	<!-- Part by part: the 3D drone turns to each part as its text scrolls past (src/components/showcase.tsx) -->
-	<Showcase client:visible={{ rootMargin: "200px" }} model="drone" text={droneShowcase} stills={stills}>
-		<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
-	</Showcase>
 
 	<!-- How it works -->
 	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
@@ -292,4 +378,271 @@ const stills = Object.fromEntries(
 
 	<NextChapter current={"drone"} />
 	<ContactSection />
+	<script>
+		import "@/scripts/drone-chapter";
+	</script>
+	<style is:global>
+		/* ---------- The drone chapter, both modes (Classic: an ordinary page, in the same order) ---------- */
+		.chapter-label {
+			font: 600 0.8rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: var(--muted-foreground);
+		}
+		.chapter-label-n {
+			color: var(--foreground);
+			margin-right: 0.6em;
+		}
+		.chapter-beat {
+			scroll-margin-top: 4.5rem;
+		}
+		.chapter-screen {
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+			padding-block: 2.5rem;
+		}
+		.chapter-hud {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			gap: 0.5rem 2rem;
+			padding-block: 0.75rem;
+			border-block: 1px solid var(--border);
+			font: 500 0.85rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+		.chapter-hud-state {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.6em;
+		}
+		.chapter-hud-dot {
+			width: 0.55em;
+			height: 0.55em;
+			border-radius: 50%;
+			background: #1fb0d6;
+			box-shadow: 0 0 8px rgb(31 176 214 / 0.8);
+		}
+		.chapter-hud-place {
+			display: inline-flex;
+			gap: 1em;
+			color: var(--muted-foreground);
+		}
+		.chapter-hud-time {
+			min-width: 8ch;
+			color: var(--foreground);
+			font-variant-numeric: tabular-nums;
+		}
+		.chapter-statement {
+			max-width: 18ch;
+			font-stretch: 125%;
+			font-weight: 860;
+			font-size: clamp(2rem, 5vw, 3.5rem);
+			line-height: 1.02;
+			letter-spacing: -0.02em;
+			text-wrap: balance;
+		}
+		.chapter-stat {
+			display: flex;
+			flex-direction: column;
+			gap: 0.75rem;
+		}
+		.chapter-stat-label {
+			font: 600 0.85rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+			letter-spacing: 0.12em;
+			text-transform: uppercase;
+			color: var(--muted-foreground);
+		}
+		.chapter-stat-value {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			gap: 0 0.3em;
+			font-stretch: 125%;
+			font-weight: 900;
+			font-size: clamp(4rem, 15vw, 9rem);
+			line-height: 0.86;
+			letter-spacing: -0.03em;
+			font-variant-numeric: tabular-nums;
+		}
+		.chapter-stat-small {
+			font-size: clamp(2.75rem, 8vw, 5rem);
+		}
+		.chapter-stat-value > span:first-child {
+			white-space: nowrap;
+		}
+		.chapter-stat-unit {
+			font-size: 0.32em;
+			font-weight: 760;
+			letter-spacing: 0;
+			color: var(--muted-foreground);
+		}
+		.chapter-stat-source {
+			font-size: 1.125rem;
+			color: var(--muted-foreground);
+		}
+		.chapter-aside {
+			max-width: 46ch;
+			font-size: 1.125rem;
+		}
+		.chapter-kicker {
+			display: block;
+			margin-bottom: 0.15em;
+			font-size: 0.36em;
+			font-weight: 720;
+			letter-spacing: 0;
+			color: var(--muted-foreground);
+		}
+		#anatomy {
+			padding-top: 2rem;
+		}
+		/* The map is the 3D chapter's only. */
+		.chapter-map {
+			display: none;
+		}
+
+		/* ---------- 3D: beats 1 to 3 a screen each, over the dark (the band has the dark theme's colours) ---------- */
+		.drone-chapter:not([data-read]) .chapter-band {
+			position: relative;
+			padding-bottom: 12rem;
+			color: var(--foreground);
+			background: linear-gradient(to bottom, #04070a, #04070a calc(100% - 12rem), transparent);
+		}
+		html:has(.drone-chapter:not([data-read])) .chapter-backdrop {
+			display: none;
+		}
+		.drone-chapter:not([data-read]) .chapter-screen {
+			min-height: calc(100svh - 9rem);
+			justify-content: center;
+			gap: 2.5rem;
+			padding-block: 3rem;
+		}
+		.drone-chapter:not([data-read]) #prologue {
+			justify-content: space-between;
+		}
+		.drone-chapter:not([data-read]) .chapter-statement {
+			font-size: clamp(2.6rem, 5.8vw, 5.75rem);
+			max-width: 15ch;
+			margin-block: auto;
+		}
+		.drone-chapter:not([data-read]) #stakes .chapter-stat-value {
+			font-size: clamp(6rem, 18vw, 16rem);
+		}
+		.drone-chapter:not([data-read]) #reveal {
+			min-height: 100svh;
+			align-content: center;
+		}
+		/* The model floats in the dark: no card around it. */
+		.drone-chapter:not([data-read]) .chapter-rise {
+			border-color: transparent;
+			background: none;
+			box-shadow: none;
+		}
+
+		/* Each beat comes in as it reaches the screen (src/scripts/drone-chapter.ts), and the model rises out of the dark.
+		   Individual translate/scale/filter, so they never fight the site's own reveal (which animates transform). */
+		.drone-chapter[data-live] :is(#prologue, #stakes) > * {
+			opacity: 0;
+			translate: 0 28px;
+			transition:
+				opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+				translate 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+		}
+		.drone-chapter[data-live] :is(#prologue, #stakes)[data-in] > * {
+			opacity: 1;
+			translate: 0 0;
+		}
+		.drone-chapter[data-live] :is(#prologue, #stakes)[data-in] > :nth-child(2) { transition-delay: 0.2s; }
+		.drone-chapter[data-live] :is(#prologue, #stakes)[data-in] > :nth-child(3) { transition-delay: 0.45s; }
+		.drone-chapter[data-live] :is(#prologue, #stakes)[data-in] > :nth-child(4) { transition-delay: 0.7s; }
+		.drone-chapter[data-live] .chapter-rise {
+			translate: 0 16vh;
+			scale: 0.92;
+			filter: brightness(0);
+			transition:
+				translate 1.8s cubic-bezier(0.16, 1, 0.3, 1),
+				scale 1.8s cubic-bezier(0.16, 1, 0.3, 1),
+				filter 2.2s cubic-bezier(0.33, 1, 0.68, 1);
+		}
+		.drone-chapter[data-live] #reveal[data-in] .chapter-rise {
+			translate: 0 0;
+			scale: 1;
+			filter: none;
+		}
+
+		/* The chapter map: a dot per beat at the window's right edge, the current one lit; each is a link. */
+		.drone-chapter:not([data-read]) .chapter-map {
+			display: block;
+			position: fixed;
+			right: max(0.75rem, env(safe-area-inset-right));
+			top: 50%;
+			z-index: 30;
+			translate: 0 -50%;
+			padding: 0.5rem 0.3rem;
+			border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+			border-radius: 999px;
+			background: color-mix(in oklab, var(--background) 72%, transparent);
+			-webkit-backdrop-filter: blur(10px);
+			backdrop-filter: blur(10px);
+		}
+		.chapter-map ol {
+			display: flex;
+			flex-direction: column;
+			gap: 0.15rem;
+		}
+		.chapter-map a {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 0.2rem;
+			padding: 0.4rem 0.35rem;
+			border-radius: 999px;
+			color: var(--muted-foreground);
+			font: 600 0.68rem/1 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+			text-decoration: none;
+		}
+		.chapter-map a:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: 2px;
+		}
+		.chapter-map-dot {
+			width: 0.55rem;
+			height: 0.55rem;
+			border-radius: 50%;
+			border: 1.5px solid currentColor;
+			transition: background 0.3s, scale 0.3s;
+		}
+		.chapter-map a[aria-current] {
+			color: var(--foreground);
+		}
+		.chapter-map a[aria-current] .chapter-map-dot {
+			border-color: #1fb0d6;
+			background: #1fb0d6;
+			scale: 1.25;
+		}
+		/* The beat's name, beside its dot: the current one, and any you point at or move to. */
+		.chapter-map-title {
+			position: absolute;
+			right: calc(100% + 0.6rem);
+			top: 50%;
+			translate: 6px -50%;
+			padding: 0.4rem 0.65rem;
+			border-radius: 999px;
+			white-space: nowrap;
+			background: color-mix(in oklab, var(--background) 86%, transparent);
+			border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+			color: var(--foreground);
+			font: 600 0.75rem/1 var(--font-sans, inherit);
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 0.25s, translate 0.25s;
+		}
+		.chapter-map a:is(:hover, :focus-visible) .chapter-map-title {
+			opacity: 1;
+			translate: 0 -50%;
+		}
+	</style>
 </BaseLayout>

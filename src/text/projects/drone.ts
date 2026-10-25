@@ -63,6 +63,51 @@ export const dronePage = {
 	},
 };
 
+/**
+ * The drone chapter: the top of the page as numbered beats (src/pages/work/drone.astro). In 3D they play one screen
+ * each over the dark, with the chapter map at the side; in Classic (phones, reduced motion, no WebGL, Classic chosen)
+ * the same words are one ordinary page, in the same order. Beats 5 to 9 come later.
+ * Only what the page already says: no new facts.
+ */
+export const droneChapter = {
+	/** Read aloud by screen readers for the dots at the side. */
+	mapLabel: 'Chapters of the drone page',
+	beats: {
+		prologue: { number: '01', title: 'Prologue' },
+		stakes: { number: '02', title: 'The stakes' },
+		reveal: { number: '03', title: 'The reveal' },
+		anatomy: { number: '04', title: 'Anatomy' },
+	},
+	/** The status strip at the top: the drone's real state, the city and its live local time. */
+	hud: {
+		state: 'PRE-FLIGHT · ON THE BENCH',
+		city: 'Ho Chi Minh City',
+		/** The clock's time zone (IANA name). */
+		timeZone: 'Asia/Ho_Chi_Minh',
+		/** Read aloud before the time: "Local time in Ho Chi Minh City". */
+		timeLabel: 'Local time in',
+	},
+	prologue: {
+		problem: 'A drone’s video only reaches as far as its radio link.',
+	},
+	stakes: {
+		label: 'The camera',
+		value: '720p',
+		unit: 'at 60 fps',
+		source: 'Camera Module 3, straight into the Raspberry Pi 4',
+		/** The 4G link, said separately: no frame rate is stated for the stream. */
+		link: 'Then live over the 4G mobile network, so it can be watched from anywhere with signal.',
+	},
+	reveal: {
+		/** Above the drone's name: "Meet the / F450 4G Drone". */
+		kicker: 'Meet the',
+	},
+	anatomy: {
+		value: '450 mm',
+		label: 'F450 frame',
+	},
+};
+
 export interface Part {
 	name: string;
 	why: string;
