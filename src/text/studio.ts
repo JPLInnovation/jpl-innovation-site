@@ -96,9 +96,14 @@ export const sketchText = {
 		viewer: "watch from anywhere",
 		link: "4G + Tailscale",
 	},
-	/** The roadmap's six steps, short, in the same order as drone.ts's roadmap. */
-	steps: ["design", "parts", "build", "FC setup", "4G video", "field test"],
+	/**
+	 * The roadmap's six steps, short, one for each step of drone.ts's roadmap and in its order (each takes that step's
+	 * done / current / upcoming). A long one wraps onto two lines.
+	 */
+	steps: ["design & parts", "frame & power", "FC setup", "4G video", "printed mounts", "First hover & tuning"],
 	here: "we are here",
+	/** Under a step that hasn't started yet. */
+	planned: "planned",
 };
 
 export type SketchText = typeof sketchText;
