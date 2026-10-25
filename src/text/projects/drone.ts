@@ -114,6 +114,11 @@ export const droneChapter = {
 	anatomy: {
 		value: '450 mm',
 		label: 'F450 frame',
+		/**
+		 * The label on the line drawn from motor to motor in the 3D: the frame's size as its name gives it (the model's
+		 * motors measure about 455 mm apart, so it says "frame", not a measured distance).
+		 */
+		measure: '450 mm frame',
 	},
 };
 

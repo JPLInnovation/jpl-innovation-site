@@ -38,3 +38,10 @@ audit/screenshots/
 # Raw CAD exports: over GitHub's 100 MB file limit. scripts/kitbot-cad.py reduces the KitBot export to
 # src/lib/three/models/frc-robot-cad.json (50 KB), which is what the site's 3D robot is built from.
 CAD/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# local agent skills
+.agents/
+.skills.json
+skills-lock.json
