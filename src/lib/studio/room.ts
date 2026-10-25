@@ -5,7 +5,9 @@
  *   Front wall, left to right:  the desk (lamp, sketchbook, monitor, keyboard, the logo on the wall above), then the
  *                               four work stations (robot cart, drone bench, switch rack, test bench), and the curved
  *                               project wall at the right-hand end.
- *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door.
+ *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door. Above its sill
+ *                               the back wall is glass, onto the city at night (backdrop.ts), except around the door
+ *                               and behind the whiteboard and the binders.
  *
  * Everything on a screen or on paper is real: the build guide on the monitor and the F450's ground station on the test
  * bench's laptop are 4K screenshots of the live pages that scroll with the mouse wheel (screens.ts;
@@ -39,6 +41,7 @@ import { tick } from "../three/yield";
 import type { SketchText } from "../../text/studio";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
+import { buildBackdrop } from "./backdrop";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
@@ -193,7 +196,34 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		return mesh;
 	};
 	wall(width, 0, z0, 0); // front, facing +z
-	wall(width, 0, z1, Math.PI); // back, facing -z
+	// The back wall: solid below the sill, around the door and its sign, and behind the whiteboard and the binders
+	// (stations.ts); glass everywhere else, onto the night outside (backdrop.ts).
+	const SILL = 0.85;
+	const piers: [number, number][] = [
+		[-6.3, -4.2], // the door, its sign and the badge by it
+		[3.7, 7.4], // the whiteboard and the shelf of binders
+	];
+	const backPlane = (a: number, b: number, y0: number, y1: number, material: Material) => {
+		const mesh = new Mesh(new PlaneGeometry(b - a, y1 - y0), material);
+		mesh.position.set((a + b) / 2, (y0 + y1) / 2, z1);
+		mesh.rotation.y = Math.PI;
+		group.add(mesh);
+		return mesh;
+	};
+	backPlane(x0, x1, 0, SILL, wallMat);
+	for (const [a, b] of piers) backPlane(a, b, SILL, h, wallMat);
+	const glassMat = new MeshStandardMaterial({ color: 0x0b1424, roughness: 0.06, metalness: 0, transparent: true, opacity: 0.14, depthWrite: false });
+	const mullionMat = new MeshStandardMaterial({ color: 0x1b2440, roughness: 0.5, metalness: 0.3 });
+	const edges = [x0, ...piers.flat(), x1];
+	for (let i = 0; i < edges.length; i += 2) {
+		const [a, b] = [edges[i], edges[i + 1]];
+		backPlane(a, b, SILL, h, glassMat);
+		boxAt(group, b - a, 0.06, 0.14, mullionMat, (a + b) / 2, SILL, z1 - 0.06); // the sill
+		boxAt(group, b - a, 0.05, 0.08, mullionMat, (a + b) / 2, h - 0.03, z1 - 0.04); // the head
+	}
+	// Mullions, clear of the long window (it has its own, stations.ts) and of the portraits' middles.
+	for (const x of [-7.4, -3.55, -1.6]) boxAt(group, 0.05, h - SILL, 0.08, mullionMat, x, SILL + (h - SILL) / 2, z1 - 0.04);
+	const backdrop = buildBackdrop(group);
 	wall(depth, x0, (z0 + z1) / 2, Math.PI / 2);
 	wall(depth, x1, (z0 + z1) / 2, -Math.PI / 2);
 	// A skirting line and ceiling light strips: the room's lines, which make the camera's moves readable.
@@ -349,6 +379,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			const { lamp: on, time, near } = state;
 			const dt = Math.max(0, time - lastTime);
 			stations.update(state, dt);
+			backdrop.update();
 			ambience.update(state, dt);
 			props.update(state, dt);
 			lastTime = time;
@@ -381,6 +412,10 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
+			glassMat.color.set(dark ? 0x0b1424 : 0xdfe9f7);
+			glassMat.opacity = dark ? 0.14 : 0.1;
+			mullionMat.color.set(dark ? 0x1b2440 : 0xf2f5fa);
+			backdrop.applyPalette(dark);
 			bookMaterial.color.setScalar(dark ? 0.46 : 0.45);
 			stations.applyPalette(p);
 			ambience.applyPalette(p);
