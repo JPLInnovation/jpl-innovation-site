@@ -217,7 +217,8 @@ export const partGroups: PartGroup[] = [
  */
 export const droneIntro = {
 	camera: 'CAM 1',
-	video: '1080P30',
+	/** The Camera Module 3's own video, into the Pi (not the 4G stream). */
+	video: '720P60',
 	network: '4G',
 	/** "LINK: WEAK" while the 4G link connects, then "LINK: GOOD". */
 	link: 'LINK:',

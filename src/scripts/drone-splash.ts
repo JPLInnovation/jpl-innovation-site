@@ -565,8 +565,8 @@ function feedNumbers(el: HTMLElement) {
 	const two = (n: number) => String(n).padStart(2, "0");
 	return (t: number) => {
 		const live = Math.max(0, t - FEED);
-		const frames = 198 * 30 + Math.floor(live * 30); // starts at 00:03:18:00, 30 frames a second
-		set(tc, `${two(Math.floor(frames / 108000))}:${two(Math.floor(frames / 1800) % 60)}:${two(Math.floor(frames / 30) % 60)}:${two(frames % 30)}`);
+		const frames = 198 * 60 + Math.floor(live * 60); // starts at 00:03:18:00, 60 frames a second (the camera's 720p60)
+		set(tc, `${two(Math.floor(frames / 216000))}:${two(Math.floor(frames / 3600) % 60)}:${two(Math.floor(frames / 60) % 60)}:${two(frames % 60)}`);
 		const level = t < LINK_UP ? 1 : t < LINK_GOOD ? 2 : 3;
 		if (bars && bars.dataset.level !== String(level)) bars.dataset.level = String(level);
 		if (link) set(link, (level === 3 ? link.dataset.good : link.dataset.weak) ?? "");
