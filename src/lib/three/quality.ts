@@ -5,7 +5,8 @@
  * - Soft contact shadows: the model seen from straight below into a small depth texture, blurred twice, on the floor
  *   plane each model already has (contactShadow() in stage.ts). Drawn once, and again only when the model asks
  *   (the drone's exploded view), never every frame.
- * - High tier only: a post-processing chain with 4x MSAA, ground-truth ambient occlusion (GTAO)
+ * - High tier, and only when High is chosen in Settings (or ?quality=high): a post-processing chain with 4x MSAA,
+ *   ground-truth ambient occlusion (GTAO)
  *   and the tone mapping done at the end, on straight (not premultiplied) colour, so the faded parts and the soft
  *   shadow edges come out the same as on the plain renderer.
  */

@@ -10,7 +10,8 @@
  * and a key, fill and rim light that travel with the camera like a photographer's lights, so every angle is lit.
  *
  * Quality tiers (see docs/SHOWCASE.md), picked from the device and then from the frame time it actually achieves:
- *   high    4x MSAA, ambient occlusion (GTAO), soft contact shadows, up to 2x device pixels, the full finishes
+ *   high    soft contact shadows, up to 2x device pixels, the full finishes; 4x MSAA and ambient occlusion (GTAO,
+ *           a full-screen post-process) only when High is chosen in Settings (or ?quality=high)
  *   medium  the canvas's own MSAA, soft contact shadows, up to 1.5x device pixels, the full finishes
  *   low     the plain renderer: round blob shadows, 1.25x device pixels at most, standard materials
  * Frames are timed while something moves. Slower than 19 ms on average, the stage first lowers the resolution a little (in
@@ -447,7 +448,10 @@ export async function mountStage(
 			quality = await import("./quality");
 			shadows = quality.createContactShadows(renderer, scene);
 			shadows.update();
-			if (tier === "high") pipeline = quality.createPipeline(renderer, scene, camera, modelSize * 0.05);
+			// The ambient-occlusion pass is a full-screen post-process: off by default, only when High is chosen in Settings
+			// (or ?quality=high, as the stills script asks).
+			const aoChosen = qualityPref() === "high" || new URLSearchParams(location.search).get("quality") === "high";
+			if (tier === "high" && aoChosen) pipeline = quality.createPipeline(renderer, scene, camera, modelSize * 0.05);
 		} catch (error) {
 			console.warn("3D: higher quality unavailable, using the plain renderer.", error);
 			tier = stats.tier = "low";
