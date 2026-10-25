@@ -37,6 +37,7 @@ import {
 } from "three";
 import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
+import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
@@ -58,6 +59,8 @@ export interface Stations {
 	wall: { screens: Mesh[]; hover(index: number): void };
 	/** The test bench's laptop and phone, whose pages scroll (the room updates them with the monitor). */
 	screens: PageScreen[];
+	/** The drone bench's F450, once it has loaded (the opening hook's desk drone shares its geometry). */
+	drone(): DroneRig | undefined;
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -189,7 +192,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	droneHolder.position.set(droneX, benchTop, -2.55);
 	droneHolder.rotation.y = 0.5;
 	group.add(droneHolder);
-	let drone: { animate(t: number, dt: number): void; model: Group; floor: number } | undefined;
+	let drone: DroneRig | undefined;
 	import("../three/models/drone")
 		.then(({ loadDrone }) => loadDrone())
 		.then((rig) => {
@@ -754,6 +757,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	return {
 		accents,
 		screens: [laptop],
+		drone: () => drone,
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {

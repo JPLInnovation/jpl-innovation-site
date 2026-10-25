@@ -39,6 +39,7 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
 import type { SketchText } from "../../text/studio";
+import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
 import { buildBackdrop } from "./backdrop";
@@ -50,6 +51,8 @@ import { type PageScreen, pageScreen } from "./screens";
 import { buildStations } from "./stations";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
+/** The desk (scenes 0 to 2): its middle and the height of its top; the sketchbook lies open on it at `book`. */
+export const DESK = { x: -6, z: -2.45, top: 0.76, book: { x: -6.32, z: -2.31 } };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 export const asset = (path: string) => `${BASE}${path}`;
 
@@ -159,6 +162,8 @@ export interface Room {
 	screens: PageScreen[];
 	/** The logo on the wall above the desk (the opening page's logo flies onto it). */
 	logo: Mesh;
+	/** The drone bench's F450, once loaded (the opening hook's desk drone shares its geometry). */
+	stationDrone(): DroneRig | undefined;
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -240,9 +245,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	await tick();
 
 	/* ---------- The desk (scene 0 to 2) ---------- */
-	const deskX = -6;
-	const deskZ = -2.45;
-	const deskTop = 0.76;
+	const deskX = DESK.x;
+	const deskZ = DESK.z;
+	const deskTop = DESK.top;
 	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
 	boxAt(group, 2.3, 0.05, 0.9, wood, deskX, deskTop - 0.025, deskZ, 0.012);
@@ -371,6 +376,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		wall: stations.wall,
 		screens,
 		logo,
+		stationDrone: stations.drone,
 		busy: () => busy,
 		finishSketch() {
 			sketchDone = true;
