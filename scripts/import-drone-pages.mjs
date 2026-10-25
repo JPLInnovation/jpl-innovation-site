@@ -8,6 +8,7 @@
 //   - a proper <head>: title, description, canonical address, favicon (the artifact's own <title> sat in the body)
 //   - a "back to the F450 page" link
 //   - every link to one of the three artifacts points at the site's copy instead
+//   - the build guide: two lines say that 720p60 is the camera's, not the 4G stream's
 //   - the 3D layout and the camera mount save their downloads through Claude's runtime (window.claude); on the site a
 //     small shim does the same with an ordinary browser download
 // Every edit must match exactly the expected number of times, so an artifact that has changed shape fails loudly
@@ -77,6 +78,9 @@ const guide = relink(
 				".rail .back:hover{color:var(--pcb);background:none;text-decoration:underline}\n",
 			1,
 		],
+		// 720p60 is the camera's (Camera Module 3 into the Pi), not the 4G stream's: say so where it could read as the stream.
+		["<dd>720p60 · 4G<small>", "<dd>720p60 camera · 4G link<small>", 1],
+		["720p60 with hardware H.264 straight from MediaMTX", "720p60 from the camera, with hardware H.264 straight from MediaMTX", 1],
 	]),
 	"build guide",
 );

@@ -26,7 +26,9 @@ checks the frame rate himself on his laptop before he says OK.
 - **Step 2: not started.** Branch `phase-2-home-polish` exists and is the same as `phase-0-hook` (no commits of its own).
 - **Step 3: not started.**
 - **Open TODO:** venues and cities of the Hawaii and Marmara regionals (src/text/projects/frc.ts).
-- **Open questions for Jayden:** the camera POV HUD's "1080P30" vs 720p at 60 fps; the other FRC facts (Khoa).
+- **Settled 25 Oct:** the camera is 720p at 60 fps (Jayden). The drone intro's HUD now says "720P60"; every mention
+  says it of the camera (Camera Module 3 into the Pi), never of the 4G stream, which has no stated frame rate.
+- **Open questions for Jayden:** the other FRC facts (Khoa).
 
 **To go live with step 1** (only after Jayden says OK): `git checkout main && git merge --ff-only phase-0-hook`,
 `npx astro build` to check, then push `main` to `old-origin`, `origin` and `https://github.com/jpl-innovation/jpl_site2`
@@ -174,8 +176,7 @@ existing showcase, src/components/showcase*). No new facts; estimates stay label
 - **Two checkpoints**, screenshots in both themes at each, then wait for OK:
   1. Beats 1 to 4, with the chapter map and the Classic order.
   2. Beats 5 to 9.
-- Note: the camera POV HUD says "1080P30" while drone.ts says 720p at 60 fps; still an open question for Jayden,
-  don't change it without his answer.
+- Settled 25 Oct (Jayden): the camera is 720p at 60 fps; the intro HUD said "1080P30" and now says "720P60".
 
 Later (not in these steps): Work wall, Cybersecurity and Mini drone chapters, FRC after Khoa's checks, Members,
 About, the drone sub-pages' shell.
