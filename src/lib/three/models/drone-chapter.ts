@@ -10,6 +10,12 @@
  * shadows (the blob under the drone is faked) and no full-screen passes (the stage runs without its effects). The
  * background gradient, glow, vignette and grain are CSS, behind and over the canvas.
  *
+ * Behind it, a backdrop per beat (CSS layers, drawn and blurred offline by scripts/drone-backdrops.mjs): city lights
+ * low on the horizon (beat 1), streaks from the lens (2), a dusk with mountains in fog (3), the teal grid (4), and at
+ * the 4G stop a faint skyline with streaks leaving the 4G stick (the video going out over 4G). The drone reflects a
+ * blurred dusk (Poly Haven's Kiara 9 Dusk, CC0). Streaks only ever stand for the camera's video or the 4G data, and
+ * nothing moves as if the drone were flying.
+ *
  * Every intensity is in LOOK, below, to tune in one place.
  */
 import {
@@ -17,6 +23,7 @@ import {
 	BufferAttribute,
 	BufferGeometry,
 	Color,
+	EquirectangularReflectionMapping,
 	DoubleSide,
 	Float32BufferAttribute,
 	HemisphereLight,
@@ -28,6 +35,9 @@ import {
 	Points,
 	RingGeometry,
 	ShaderMaterial,
+	SRGBColorSpace,
+	type Texture,
+	TextureLoader,
 	Vector3,
 } from "three";
 import { drive } from "../showcase";
@@ -42,8 +52,8 @@ export const LOOK = {
 	light: {
 		prologue: { key: 0.05, fill: 0, rim: 3.2, sky: 0.02, environment: 0.04 },
 		stakes: { key: 0.8, fill: 0.05, rim: 2.4, sky: 0.04, environment: 0.2 },
-		reveal: { key: 2.3, fill: 0.3, rim: 2.6, sky: 0.18, environment: 0.7 },
-		anatomy: { key: 2.2, fill: 0.35, rim: 2.2, sky: 0.2, environment: 0.75 },
+		reveal: { key: 2.3, fill: 0.3, rim: 2.6, sky: 0.18, environment: 1.3 },
+		anatomy: { key: 2.2, fill: 0.35, rim: 2.2, sky: 0.2, environment: 1.4 },
 	} satisfies Record<string, Light>,
 	keyColor: "#fff4e8",
 	/** The site's cyan accent (--accent). */
@@ -67,6 +77,19 @@ export const LOOK = {
 	scrim: 0.7,
 	/** On wide windows, the share of the width the drone is framed in (on the right; the words are on the left). */
 	frame: 0.6,
+	/**
+	 * One backdrop per beat (the images: public/chapter/drone/, scripts/drone-backdrops.mjs). Opacities 0 to 1; `scrim`
+	 * darkens the words' side further on that beat; drift in seconds per loop.
+	 */
+	backdrop: {
+		prologue: { cityOpacity: 0.85, farDrift: 260, nearDrift: 170, scrim: 0 },
+		stakes: { streaksOpacity: 0.85, streaksGrow: 0.75, scrim: 0.05 },
+		reveal: { duskOpacity: 1, parallax: 1, scrim: 0.3 },
+		anatomy: { scrim: 0 }, // the teal grid (grid, gridReach, above)
+		"video-link": { skylineOpacity: 0.16, streaksOpacity: 0.75, streaks: 24, scrim: 0 },
+	},
+	/** The model's reflections: a blurred dusk (Poly Haven, Kiara 9 Dusk, CC0). Its strength per beat is `environment` in `light`. */
+	environment: "/chapter/drone/env.webp",
 };
 
 /** The chapter's stops, in order: beats 1 to 3, then beat 4's six part-by-part stops. */
@@ -227,9 +250,86 @@ export default async function createDroneChapter(ctx: StageContext, options: Cha
 		measureLabel = ctx.label(options.measureLabel, a.clone().lerp(b, 0.5).setY(y + 0.02), "opacity-0 transition-opacity duration-300 data-[on]:opacity-100");
 	}
 
+	/* ---------- The 4G stop: streaks leaving the 4G stick, flowing away from the drone ---------- */
+	// They flow toward the window's right, away from the words on the left (set each frame from the camera).
+	const modem = rig.parts["ZTE MF833 4G stick"];
+	const video = LOOK.backdrop["video-link"];
+	const dataMaterial = new ShaderMaterial({
+		transparent: true,
+		depthWrite: false,
+		blending: AdditiveBlending,
+		uniforms: {
+			uTime: { value: 0 },
+			uOpacity: { value: 0 },
+			uOrigin: { value: new Vector3() },
+			uOut: { value: new Vector3(1, 0, 0) },
+			uSide: { value: new Vector3(0, 0, 1) },
+			uColor: { value: new Color(LOOK.rimColor) },
+		},
+		vertexShader: /* glsl */ `
+			attribute float seed;
+			attribute float head;
+			attribute vec2 lane;
+			uniform float uTime;
+			uniform float uOpacity;
+			uniform vec3 uOrigin;
+			uniform vec3 uOut;
+			uniform vec3 uSide;
+			varying float vAlpha;
+			void main() {
+				float t = fract(uTime * (0.22 + seed * 0.18) + seed);
+				float along = 0.04 + t * 0.95 + head * (0.07 + seed * 0.1);
+				vec3 p = uOrigin + uOut * along + uSide * lane.x + vec3(0.0, lane.y, 0.0);
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+				vAlpha = uOpacity * sin(t * 3.14159) * mix(0.1, 1.0, head);
+			}`,
+		fragmentShader: /* glsl */ `
+			uniform vec3 uColor;
+			varying float vAlpha;
+			void main() {
+				gl_FragColor = vec4(uColor, vAlpha);
+			}`,
+	});
+	let data: LineSegments | undefined;
+	if (modem) {
+		dataMaterial.uniforms.uOrigin.value.set((modem[0] + modem[3]) / 2, (modem[1] + modem[4]) / 2, (modem[2] + modem[5]) / 2);
+		const n = video.streaks;
+		const geometry = new BufferGeometry();
+		const lanes = new Float32Array(n * 4);
+		const seedsOf = new Float32Array(n * 2);
+		const heads = new Float32Array(n * 2);
+		for (let i = 0; i < n; i++) {
+			const side = (Math.random() - 0.5) * 0.22;
+			const up = (Math.random() - 0.5) * 0.12;
+			const s = Math.random();
+			lanes.set([side, up, side, up], i * 4);
+			seedsOf.set([s, s], i * 2);
+			heads.set([0, 1], i * 2);
+		}
+		geometry.setAttribute("position", new Float32BufferAttribute(new Float32Array(n * 6), 3));
+		geometry.setAttribute("lane", new BufferAttribute(lanes, 2));
+		geometry.setAttribute("seed", new BufferAttribute(seedsOf, 1));
+		geometry.setAttribute("head", new BufferAttribute(heads, 1));
+		data = new LineSegments(geometry, dataMaterial);
+		data.frustumCulled = false;
+	}
+
+	/* ---------- The reflections: a blurred dusk instead of the stage's studio ---------- */
+	let environment: Texture | undefined;
+	if (atmosphere)
+		new TextureLoader().load(LOOK.environment, (texture) => {
+			texture.mapping = EquirectangularReflectionMapping;
+			texture.colorSpace = SRGBColorSpace;
+			environment = texture;
+			scene.environment = texture;
+			ctx.wake();
+			ctx.invalidate();
+		});
+
 	if (atmosphere) {
 		ctx.root.add(grid, dust, ring);
 		if (measure) ctx.root.add(measure);
+		if (data) ctx.root.add(data);
 	}
 
 	/* ---------- Framing: on a wide window the drone sits in the right part, clear of the words ---------- */
@@ -250,7 +350,7 @@ export default async function createDroneChapter(ctx: StageContext, options: Cha
 	};
 
 	let clock = 0;
-	const at = { stakes: STOPS.indexOf("stakes"), overview: STOPS.indexOf("overview") };
+	const at = { stakes: STOPS.indexOf("stakes"), overview: STOPS.indexOf("overview"), video: STOPS.indexOf("video-link") };
 	const chapter = {
 		...base,
 		focus(w: ArrayLike<number>, explode: number) {
@@ -260,11 +360,19 @@ export default async function createDroneChapter(ctx: StageContext, options: Cha
 			dustMaterial.uniforms.uOpacity.value = LOOK.dustBrightness * Math.min(1, rimLevel);
 			ringMaterial.opacity = LOOK.lensRing * weights[at.stakes] * (0.8 + 0.2 * Math.sin(clock * 2));
 			measureMaterial.opacity = LOOK.measure * weights[at.overview];
+			dataMaterial.uniforms.uOpacity.value = video.streaksOpacity * weights[at.video];
+			if (weights[at.video] > 0) {
+				// Level, toward the window's right; spread a little toward and away from the camera.
+				const out = dataMaterial.uniforms.uOut.value.set(1, 0, 0).applyQuaternion(camera.quaternion).setY(0);
+				if (out.lengthSq() > 1e-6) out.normalize();
+				dataMaterial.uniforms.uSide.value.set(-out.z, 0, out.x);
+			}
 			measureLabel?.toggleAttribute("data-on", atmosphere && weights[at.overview] > 0.6);
 		},
 		update(t: number, dt: number) {
 			clock += dt;
 			dustMaterial.uniforms.uTime.value = clock;
+			dataMaterial.uniforms.uTime.value = clock;
 			return base.update?.(t, dt);
 		},
 		// The chapter is dark in both themes: the drone's shadow and finish as on the dark page, and the lights as above.
@@ -304,6 +412,7 @@ export default async function createDroneChapter(ctx: StageContext, options: Cha
 		},
 		dispose() {
 			refit.disconnect();
+			environment?.dispose();
 			driven.dispose?.();
 		},
 	};
