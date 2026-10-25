@@ -7,6 +7,8 @@
  *             desk, looking across the dark room to the city through the back wall
  *   line 1    "Then the season ends...": a second after it appears, the drone dissolves top to bottom (3.6 s) into
  *             particles sampled from its surface (hook-dissolve.ts), which hang and drift
+ *   line 2    "What's left is one line on a résumé.": the particles collapse into one glowing line (1.6 s), which
+ *             breathes until the lamp line
  *   the end   the camera hands back to the room's own (the title shot), and the drone stays on the desk until the
  *             camera leaves the title
  *
@@ -15,7 +17,7 @@
  */
 import { Box3, Color, Group, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
 import type { StageContext } from "../three/stage";
-import { type DissolveUniforms, dissolveMaterials, type Particles, surfaceParticles } from "./hook-dissolve";
+import { type DissolveUniforms, dissolveMaterials, lineGlow, type Particles, surfaceParticles } from "./hook-dissolve";
 import { type HookRun, hookState } from "./hook-state";
 import { DESK, type Room } from "./room";
 
@@ -32,6 +34,8 @@ export const HOOK_LOOK = {
 	dark: { key: 0.05, fill: 0, rim: 1.5, rimColor: 0xbfe3ff },
 	/** The dissolve: how long after its line appears it starts (s), how long the cut takes (s), its edge's colour. */
 	dissolve: { after: 1, time: 3.6, edge: 0x6fdcff },
+	/** The collapse into the line: how long (s) from its words, and the glow behind the line at its brightest. */
+	collapse: { time: 1.6, glow: 0.55 },
 	/** How many particles (fewer on the low tier). */
 	particles: 4500,
 	particlesLow: 1500,
@@ -61,6 +65,7 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 	let drone: Object3D | undefined;
 	const cut: DissolveUniforms = { uHookCut: { value: 100 }, uHookEdge: { value: new Color(HOOK_LOOK.dissolve.edge) } };
 	let particles: Particles | undefined;
+	let glow: ReturnType<typeof lineGlow> | undefined;
 	const bounds = new Box3();
 
 	let run: HookRun | undefined; // the run being shown (with the 3D)
@@ -91,6 +96,8 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 		dissolveMaterials(drone, cut);
 		particles = surfaceParticles(drone, ctx.tier === "low" ? HOOK_LOOK.particlesLow : HOOK_LOOK.particles, cut);
 		drone.add(particles.points);
+		glow = lineGlow(particles.line);
+		drone.add(glow.sprite);
 		return true;
 	};
 
@@ -156,7 +163,12 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 			const back = run.still ? 0 : smoother(clamp01((t - lampAt) / 1.2));
 			const gone = run.ended !== undefined ? 1 - w : 1;
 			cut.uHookCut.value = top - (top - bottom) * swept * (1 - back) * gone;
+			// The collapse into one line, and the line's glow, breathing.
+			const collapseAt = (run.lines[1] ?? 0) / 1000;
+			const collapse = run.still ? 0 : clamp01((t - collapseAt) / HOOK_LOOK.collapse.time);
+			if (glow) glow.material.opacity = HOOK_LOOK.collapse.glow * smoother(collapse) * (0.85 + 0.15 * Math.sin(t * 2.2)) * (1 - back) * gone;
 			if (particles) {
+				particles.material.uniforms.uCollapse.value = collapse;
 				particles.material.uniforms.uTime.value = t;
 				particles.material.uniforms.uAfter.value = Math.max(0, t - dissolveAt - HOOK_LOOK.dissolve.time);
 				particles.material.uniforms.uOpacity.value = 0.9 * (1 - back) * gone;
@@ -170,6 +182,7 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 				restoreLights(1);
 				cut.uHookCut.value = top;
 				if (particles) particles.material.uniforms.uOpacity.value = 0;
+				if (glow) glow.material.opacity = 0;
 				run = undefined;
 			}
 		},
