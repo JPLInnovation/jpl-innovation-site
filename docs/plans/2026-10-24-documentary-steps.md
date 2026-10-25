@@ -29,7 +29,12 @@ checks the frame rate himself on his laptop before he says OK.
 - **Settled 25 Oct:** the camera supports 720p at 60 fps and 1080p at 30 fps (Jayden). The drone intro's HUD says
   "720P60 / 1080P30"; every mention says it of the camera (Camera Module 3 into the Pi), never of the 4G stream,
   which has no stated frame rate. Open: how the mode is selected, and whether both were tested on the bench.
-- **Open questions for Jayden:** the other FRC facts (Khoa).
+- **Settled 25 Oct (Jayden):** beat 1 keeps "A drone's video only reaches as far as its radio link." (the drone
+  page's intro speaks of Wi-Fi range; both stay as they are).
+- **Settled 25 Oct (Jayden):** the 450 mm line in the drone chapter is labelled "450 mm frame" (the model's motors
+  are about 455 mm apart, so it names the frame, not a measured distance). The 4G rings are still, not pulsing.
+- **Open questions for Jayden:** the other FRC facts (Khoa); how the camera mode is switched and whether both modes
+  were tested on the bench (TODO in src/text/projects/drone.ts).
 
 **To go live with step 1** (only after Jayden says OK): `git checkout main && git merge --ff-only phase-0-hook`,
 `npx astro build` to check, then push `main` to `old-origin`, `origin` and `https://github.com/jpl-innovation/jpl_site2`

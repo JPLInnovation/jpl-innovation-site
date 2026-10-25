@@ -114,7 +114,7 @@ const lightOf = (id: string): Light => (LOOK.light as Record<string, Light>)[id]
 
 export default async function createDroneChapter(ctx: StageContext, options: ChapterOptions): Promise<Model> {
 	const { camera, scene } = ctx;
-	const base = await createDroneShowcase(ctx, STOPS, { spinAt: "motors", led: false });
+	const base = await createDroneShowcase(ctx, STOPS, { spinAt: "motors", led: false, staticRings: true });
 	const { rig } = base;
 	const atmosphere = !options.capture;
 
