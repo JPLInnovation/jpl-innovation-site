@@ -140,6 +140,8 @@ export interface RoomContent {
 	milestones: { year: string; state: "past" | "now" | "future" }[];
 	/** The lit sign over the door. */
 	sign: string;
+	/** The line under the logo on the wall (src/text/site.ts). */
+	slogan: string;
 	/** The web address drawn in the address bars of the monitor and the laptop (src/text/site.ts). */
 	domain: string;
 	/** The sketchbook: its words (src/text/studio.ts) and where the project is on its roadmap ("done", "current", "upcoming", in order). */
@@ -292,6 +294,26 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const logo = new Mesh(new PlaneGeometry(1.66, 0.6), new MeshBasicMaterial({ map: logoLight, transparent: true, toneMapped: false }));
 	logo.position.set(deskX, 2.15, z0 + 0.02);
 	group.add(logo);
+	// The slogan under it, as on the opening page: white type, tinted for the theme, and only there once the lamp is on.
+	const sloganFace = canvasSurface(1600, 160);
+	const drawSlogan = () => {
+		const { g } = sloganFace;
+		g.clearRect(0, 0, 1600, 160);
+		g.fillStyle = "#ffffff";
+		g.textAlign = "center";
+		g.textBaseline = "middle";
+		g.font = '800 expanded 84px "Archivo Variable", "Archivo", system-ui, sans-serif';
+		g.fillText(content.slogan, 800, 84, 1560);
+		sloganFace.redraw();
+	};
+	drawSlogan();
+	document.fonts?.ready.then(drawSlogan);
+	const slogan = new Mesh(
+		new PlaneGeometry(1.66, 0.166),
+		new MeshBasicMaterial({ map: sloganFace.texture, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }),
+	);
+	slogan.position.set(deskX, 1.76, z0 + 0.02);
+	group.add(slogan);
 
 	await tick();
 
@@ -339,6 +361,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			sky.intensity = (palette?.dark ? 0.35 : 0.9) * (0.25 + 0.75 * level);
 			pool.update(state.focus, level, !!palette?.dark);
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
+			(slogan.material as MeshBasicMaterial).opacity = level;
 
 			// The sketch draws itself once the camera is at the book, over a few seconds (the strokes arrive a few times a
 			// second at most), and stays drawn from then on, wherever the camera goes.
@@ -363,6 +386,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
+			(slogan.material as MeshBasicMaterial).color.set(dark ? 0xe6f6ff : 0x0a1124);
 			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);
 			(ctx.scene.fog as Fog).near = dark ? 7 : 12;
 			(ctx.scene.fog as Fog).far = dark ? 19 : 32;

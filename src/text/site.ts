@@ -61,6 +61,8 @@ export const settings = {
 	},
 	sound: { label: "Sound", off: "Off", on: "On", note: "Sound comes later: room tone and the sounds of the bench, all recorded by us." },
 	quality: { label: "3D quality", auto: "Auto", high: "High", low: "Low", note: "Auto picks the best your device can draw smoothly." },
+	/** Plays the opening page, the logo and the studio's first words again, and asks Classic or 3D again. */
+	replay: "Replay the opening",
 	close: "Close settings",
 };
 

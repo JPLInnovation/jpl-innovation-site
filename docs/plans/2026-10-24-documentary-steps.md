@@ -24,7 +24,10 @@ Done (commit on the branch):
       TODO for the venues and cities. **Every other FRC fact stays as it is** (Jayden is checking them with Khoa).
 - [x] Jayden's bio (src/text/members/jayden.md): "robotics, mechanical design, networking and C++".
 
-To do:
+Built 25 Oct (waiting for Jayden's OK): items 1–5 below. The html class is `hook-on`, not `studio-hook` (that
+clashed with the overlay's own class); the script is src/scripts/studio-hook.ts; on wide screens the words sit on the
+left wall so the logo stays clear.
+
 1. **Hook text** in src/text/home.ts, word for word, as `hook = { heading, lines, lampLine, skip }`:
    - heading: `Most student engineering disappears.`
    - lines (joined with spaces, they are exactly Jayden's paragraph):

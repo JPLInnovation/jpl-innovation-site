@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { srcset } from "@/lib/images";
 // Words: src/text/home.ts (`hero`, `services`)
 import { hero, services } from "@/text/home";
+import { site } from "@/text/site";
 
 const FACE = '"Archivo Variable", sans-serif';
 const FALLBACK = '"Arial Black", Arial, sans-serif';
@@ -61,7 +62,10 @@ export default function HomePortal() {
 				front={
 					<>
 						<p data-jpl-kicker>{kicker}</p>
-						<p data-jpl-support>{support}</p>
+						<p data-jpl-support>
+							<span data-jpl-slogan>{site.slogan}</span>
+							{support}
+						</p>
 						<span data-jpl-scroll>
 							{hero.scrollHint} <ArrowDown className="size-4" aria-hidden="true" />
 						</span>
@@ -149,6 +153,7 @@ function Poster() {
 			>
 				{WORD}
 			</p>
+			<p className="font-semiwide text-xl font-[800]">{site.slogan}</p>
 			<p className="max-w-[40ch] text-lg">{support}</p>
 			<Button asChild variant="signal" size="lg">
 				<a href="/#services">{hero.servicesButton}</a>
@@ -158,7 +163,7 @@ function Poster() {
 }
 
 const portalCss = `
-[data-jpl-portal] [data-gp-caption]{inset:calc(var(--gp-word-bottom,50%) + 6.5rem) 1rem auto;justify-content:center;}
+[data-jpl-portal] [data-gp-caption]{inset:calc(var(--gp-word-bottom,50%) + 8.75rem) 1rem auto;justify-content:center;}
 [data-jpl-portal] [data-gp-hint]{display:none;}
 [data-jpl-portal] [data-gp-enter]{min-height:48px;padding:0 1.25rem;gap:.75rem;border-radius:var(--radius);background:var(--accent);color:var(--accent-foreground);font-size:15px;font-weight:650;transition:background-color .18s;}
 [data-jpl-portal] [data-gp-enter]:hover{background:color-mix(in srgb,var(--accent) 85%,var(--foreground));}
@@ -168,8 +173,9 @@ const portalCss = `
 [data-jpl-portal] [data-gp-content]{padding:6rem clamp(1rem,4vw,2.5rem);font-family:inherit;}
 [data-jpl-kicker]{position:absolute;inset:auto 1rem calc(100% - var(--gp-word-top,35%) + 1.5rem);margin:0;text-align:center;font-size:15px;color:var(--muted-foreground);}
 [data-jpl-support]{position:absolute;inset:calc(var(--gp-word-bottom,50%) + 1.5rem) 1rem auto;margin:0 auto;max-width:40ch;text-align:center;font-size:clamp(1rem,.9rem + .4vw,1.2rem);line-height:1.5;}
+[data-jpl-slogan]{display:block;margin-bottom:.6rem;font-stretch:125%;font-weight:800;font-size:clamp(1.05rem,.9rem + .6vw,1.4rem);letter-spacing:-.01em;}
 [data-jpl-scroll]{position:absolute;inset:auto 1rem 1.75rem;display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:13px;color:var(--muted-foreground);}
 [data-gp-motion=off] [data-jpl-scroll]{display:none;}
 @media(any-pointer:coarse){[data-jpl-scroll]{bottom:5rem;}}
-@media(max-height:560px){[data-jpl-support]{top:calc(var(--gp-word-bottom,50%) + .75rem);}[data-jpl-portal] [data-gp-caption]{top:calc(var(--gp-word-bottom,50%) + 4.5rem);}[data-jpl-scroll]{display:none;}}
+@media(max-height:560px){[data-jpl-support]{top:calc(var(--gp-word-bottom,50%) + .75rem);}[data-jpl-portal] [data-gp-caption]{top:calc(var(--gp-word-bottom,50%) + 6.5rem);}[data-jpl-scroll]{display:none;}}
 `;
