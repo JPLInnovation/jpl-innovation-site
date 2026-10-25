@@ -1,10 +1,11 @@
-// Reduces the F450 3D layout's GLB export (CAD/f450-drone.glb, from the "Download 3D files" button on the 3D layout page)
-// to src/lib/three/models/f450-cad.bin, the file the drone page's 3D model and its intro load.
+// Reduces the F450's GLB to src/lib/three/models/f450-cad.bin, the file the drone page's 3D model and its intro load.
+// The GLB is assets-src/models/f450-drone-web.glb, Blender's export of CAD/f450-drone-web.blend (kept in git, not
+// published). The 3D layout page's own export (CAD/f450-drone.glb, from its "Download 3D files" button) also works.
 //
 //   - the model is moved to metres with its front on +z (the GLB has a 0.001 scale and a half turn on its root node)
 //   - triangles are merged by material, so the whole drone is a few dozen meshes instead of one per part
 //   - the four props (and their motor adapters and nuts) are split off, each around its own motor, so they can spin:
-//     from the four prop_* nodes of Blender's export (public/models/f450-drone-web.glb), or else by height from the
+//     from the four prop_* nodes of Blender's export, or else by height from the
 //     layout's single "Motors and props" part
 //   - positions are 16-bit, normals 8-bit, identical vertices are welded, and the file is gzipped
 //   - the file also says where each part is (a bounding box per part name) and where the camera lens looks from
@@ -12,11 +13,12 @@
 // File layout (before gzip): u32 header length (padded to 4) · header JSON · for each group, in order: 16-bit
 // positions x3, 8-bit normals x3, indices (16-bit, or 32-bit when `w` is 1), each padded to 4 bytes.
 //
-// Run:  node scripts/f450-cad.mjs [CAD/f450-drone.glb] [src/lib/three/models/f450-cad.bin]
+// Run:  node scripts/f450-cad.mjs [assets-src/models/f450-drone-web.glb] [src/lib/three/models/f450-cad.bin]
+//       node scripts/f450-cad.mjs CAD/f450-drone.glb   (the layout page's export)
 import { readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-const [srcPath = "CAD/f450-drone.glb", outPath = "src/lib/three/models/f450-cad.bin"] = process.argv.slice(2);
+const [srcPath = "assets-src/models/f450-drone-web.glb", outPath = "src/lib/three/models/f450-cad.bin"] = process.argv.slice(2);
 
 /* ---------- Read the GLB ---------- */
 const glb = readFileSync(srcPath);
@@ -103,7 +105,7 @@ const centroid = (t) => [0, 1, 2].map((d) => (t.v[0][d] + t.v[1][d] + t.v[2][d])
 const hubs = [];
 const propNodes = parts.filter((n) => /^prop_/.test(n.name));
 if (propNodes.length) {
-	// Blender's split export (public/models/f450-drone-web.glb): a node per prop, with its origin at the hub.
+	// Blender's split export (assets-src/models/f450-drone-web.glb): a node per prop, with its origin at the hub.
 	if (propNodes.length !== 4) throw new Error(`expected 4 prop_ nodes, found ${propNodes.length}`);
 	for (const n of propNodes) {
 		const [x, , z] = rotate(place(n, [0, 0, 0]).map((v) => v * k));
