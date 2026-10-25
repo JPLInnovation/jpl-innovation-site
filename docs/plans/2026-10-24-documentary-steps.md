@@ -16,6 +16,30 @@ checks the frame rate himself on his laptop before he says OK.
 
 ---
 
+## Where things stand (25 Oct 2026, for the next session)
+
+- **Live site** (jpl-innovation.github.io, jpl_site2, backup): commit `7bc102a`, the studio redesign. Nothing below is live.
+- **Step 1: built, waiting for Jayden's OK to go live.** Branch `phase-0-hook` (3 commits on top of `7bc102a`):
+  the plan, the FRC 2027 regionals and kickoff, the bio fix, the hook in both modes, the slogan under the logo
+  (3D wall and Classic), and Settings' "Replay the opening". Tested in both themes, both modes and on a phone; no
+  console errors. Screenshots were shown to Jayden.
+- **Step 2: not started.** Branch `phase-2-home-polish` exists and is the same as `phase-0-hook` (no commits of its own).
+- **Step 3: not started.**
+- **Open TODO:** venues and cities of the Hawaii and Marmara regionals (src/text/projects/frc.ts).
+- **Open questions for Jayden:** the camera POV HUD's "1080P30" vs 720p at 60 fps; the other FRC facts (Khoa).
+
+**To go live with step 1** (only after Jayden says OK): `git checkout main && git merge --ff-only phase-0-hook`,
+`npx astro build` to check, then push `main` to `old-origin`, `origin` and `https://github.com/jpl-innovation/jpl_site2`
+(never force). Watch the deploy (`gh run list -R jpl-innovation/jpl-innovation.github.io`), then open the live site.
+
+**To test locally:** `npx astro build`, then `npx astro preview --port 4321` and open http://localhost:4321/. The
+3D hook plays once per browser; Settings (the gear) → "Replay the opening" plays it again.
+
+**Next:** step 2 on `phase-2-home-polish` (rebase it onto `main` once step 1 is merged). Start with before
+screenshots of every 3D scene and Classic section, then the copy proposal as a before/after list for Jayden.
+
+---
+
 ## Step 1: hook, regionals, slogan, bio (branch `phase-0-hook`)
 
 Done (commit on the branch):
