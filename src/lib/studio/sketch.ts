@@ -276,8 +276,25 @@ function layout(text: SketchText, steps: SketchSteps, g: CanvasRenderingContext2
 				line(cx - 5, y, cx - 1, y + 5, 2.6, "blue");
 				line(cx - 1, y + 5, cx + 7, y - 6, 2.6, "blue");
 			}
-			const w = width(label, 25);
-			write(label, cx - w / 2, y + 38, 25, state === "current" ? "red" : "graphite");
+			const ink: Ink = state === "current" ? "red" : state === "upcoming" ? "pale" : "graphite";
+			// One line, or two when it's wider than its step (split where the two halves come out most even).
+			const words = label.split(" ");
+			let rows = [label];
+			if (words.length > 1 && width(label, 25) > stepX - 12) {
+				let best = 1;
+				for (let k = 1; k < words.length; k++) {
+					const a = width(words.slice(0, k).join(" "), 25);
+					const b = width(words.slice(k).join(" "), 25);
+					const c = width(words.slice(0, best).join(" "), 25) - width(words.slice(best).join(" "), 25);
+					if (Math.abs(a - b) < Math.abs(c)) best = k;
+				}
+				rows = [words.slice(0, best).join(" "), words.slice(best).join(" ")];
+			}
+			// (kept on the page: the last one's right edge stays inside it)
+			const place = (str: string, size: number) => Math.min(cx - width(str, size) / 2, x1 + 5 - width(str, size));
+			rows.forEach((row, r) => write(row, place(row, 25), y + 38 + r * 27, 25, ink));
+			if (state === "upcoming") write(text.planned, place(text.planned, 20), y + 38 + rows.length * 27, 20, "pale");
+			const w = Math.max(...rows.map((row) => width(row, 25)));
 			if (state === "current") {
 				loop(cx, y + 26, w / 2 + 16, 27, "red", 2.2);
 				write(text.here, cx - width(text.here, 24) / 2, y + 76, 24, "red");
