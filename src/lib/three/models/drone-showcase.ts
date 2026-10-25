@@ -45,7 +45,17 @@ const PARTS: Record<string, { look: string[]; also?: string[] }> = {
 		],
 	},
 	motors: {
-		look: ["Motors and props"],
+		look: [
+			"Motors and props",
+			"motor_front_right",
+			"motor_front_left",
+			"motor_rear_right",
+			"motor_rear_left",
+			"prop_front_right",
+			"prop_front_left",
+			"prop_rear_right",
+			"prop_rear_left",
+		],
 		also: ["Arms and ESCs", "ESC power leads", "ESC signal leads", "Motor phase wires"],
 	},
 	power: {

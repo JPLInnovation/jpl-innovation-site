@@ -3,7 +3,9 @@
 //
 //   - the model is moved to metres with its front on +z (the GLB has a 0.001 scale and a half turn on its root node)
 //   - triangles are merged by material, so the whole drone is a few dozen meshes instead of one per part
-//   - the four props (and their motor adapters and nuts) are split off, each around its own motor, so they can spin
+//   - the four props (and their motor adapters and nuts) are split off, each around its own motor, so they can spin:
+//     from the four prop_* nodes of Blender's export (public/models/f450-drone-web.glb), or else by height from the
+//     layout's single "Motors and props" part
 //   - positions are 16-bit, normals 8-bit, identical vertices are welded, and the file is gzipped
 //   - the file also says where each part is (a bounding box per part name) and where the camera lens looks from
 //
@@ -41,16 +43,26 @@ const read = (index) => {
 /* ---------- The root node's transform (scale and a rotation about y), applied to everything ---------- */
 const root = json.nodes[json.scenes[json.scene ?? 0].nodes[0]];
 const parts = root.children.map((i) => json.nodes[i]);
-for (const n of parts) if (n.translation || n.rotation || n.scale || n.matrix) throw new Error(`part "${n.name}" has its own transform`);
+// A part may have its own translation, rotation and scale (Blender's export gives the props one at their hub), but no matrix.
+for (const n of parts) if (n.matrix) throw new Error(`part "${n.name}" has a matrix transform`);
 const k = root.scale ? root.scale[0] : 1;
-const [qx, qy, qz, qw] = root.rotation ?? [0, 0, 0, 1];
-const rotate = ([x, y, z]) => {
+const rotateBy = ([qx, qy, qz, qw], [x, y, z]) => {
 	// v' = v + 2w (q × v) + 2 q × (q × v)
 	const tx = 2 * (qy * z - qz * y);
 	const ty = 2 * (qz * x - qx * z);
 	const tz = 2 * (qx * y - qy * x);
 	return [x + qw * tx + (qy * tz - qz * ty), y + qw * ty + (qz * tx - qx * tz), z + qw * tz + (qx * ty - qy * tx)];
 };
+const rotate = (v) => rotateBy(root.rotation ?? [0, 0, 0, 1], v);
+/** A point in a part's own space, in the root's (still millimetres): scale, rotate, then move. */
+const place = (n, [x, y, z]) => {
+	const [sx, sy, sz] = n.scale ?? [1, 1, 1];
+	const [px, py, pz] = rotateBy(n.rotation ?? [0, 0, 0, 1], [x * sx, y * sy, z * sz]);
+	const [ox, oy, oz] = n.translation ?? [0, 0, 0];
+	return [px + ox, py + oy, pz + oz];
+};
+/** A part's normals turn with its rotation; a uniform scale doesn't change them, and the export's are 1. */
+const turn = (n, v) => rotateBy(n.rotation ?? [0, 0, 0, 1], v);
 
 /* ---------- Triangles by part, in metres ---------- */
 const srgb = (c) => Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055));
@@ -75,8 +87,8 @@ for (const part of parts) {
 		const nor = read(prim.attributes.NORMAL);
 		const idx = read(prim.indices);
 		const mat = useMaterial(prim.material);
-		const vertex = (i) => rotate([pos[i * 3] * k, pos[i * 3 + 1] * k, pos[i * 3 + 2] * k]);
-		const normal = (i) => rotate([nor[i * 3], nor[i * 3 + 1], nor[i * 3 + 2]]);
+		const vertex = (i) => rotate(place(part, [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]]).map((x) => x * k));
+		const normal = (i) => rotate(turn(part, [nor[i * 3], nor[i * 3 + 1], nor[i * 3 + 2]]));
 		for (let t = 0; t < idx.length; t += 3) {
 			const ids = [idx[t], idx[t + 1], idx[t + 2]];
 			tris.push({ mat, part: part.name, v: ids.map(vertex), n: ids.map(normal), hub: -1 });
@@ -84,23 +96,35 @@ for (const part of parts) {
 	}
 }
 
-/* ---------- Props: everything high on the motors, around each motor ---------- */
-const PROP_ABOVE = 0.0635; // metres: above the motor bell (top 63 mm), below the prop adapter's middle
-const motorsAndProps = tris.filter((t) => t.part === "Motors and props" && (t.v[0][1] + t.v[1][1] + t.v[2][1]) / 3 > PROP_ABOVE);
-const quadrant = (t) => {
-	const x = (t.v[0][0] + t.v[1][0] + t.v[2][0]) / 3;
-	const z = (t.v[0][2] + t.v[1][2] + t.v[2][2]) / 3;
-	return (x < 0 ? 0 : 1) + (z < 0 ? 0 : 2);
-};
-const hubs = [0, 1, 2, 3].map((q) => {
-	const own = motorsAndProps.filter((t) => quadrant(t) === q);
-	if (!own.length) throw new Error(`no prop found in quadrant ${q}`);
-	const xs = own.flatMap((t) => t.v.map((v) => v[0]));
-	const zs = own.flatMap((t) => t.v.map((v) => v[2]));
-	const hub = [(Math.min(...xs) + Math.max(...xs)) / 2, 0, (Math.min(...zs) + Math.max(...zs)) / 2];
-	for (const t of own) t.hub = q;
-	return hub;
-});
+/* ---------- Props: one per quadrant, each turning about its own motor ---------- */
+// Quadrants in the order the file has always listed the hubs: -x -z, +x -z, -x +z, +x +z.
+const quadrantOf = (x, z) => (x < 0 ? 0 : 1) + (z < 0 ? 0 : 2);
+const centroid = (t) => [0, 1, 2].map((d) => (t.v[0][d] + t.v[1][d] + t.v[2][d]) / 3);
+const hubs = [];
+const propNodes = parts.filter((n) => /^prop_/.test(n.name));
+if (propNodes.length) {
+	// Blender's split export (public/models/f450-drone-web.glb): a node per prop, with its origin at the hub.
+	if (propNodes.length !== 4) throw new Error(`expected 4 prop_ nodes, found ${propNodes.length}`);
+	for (const n of propNodes) {
+		const [x, , z] = rotate(place(n, [0, 0, 0]).map((v) => v * k));
+		const q = quadrantOf(x, z);
+		if (hubs[q]) throw new Error(`"${n.name}" is in the same quadrant as another prop`);
+		hubs[q] = [x, 0, z];
+		for (const t of tris) if (t.part === n.name) t.hub = q;
+	}
+} else {
+	// The 3D layout page's export (CAD/f450-drone.glb): one "Motors and props" part, so everything high on the motors.
+	const PROP_ABOVE = 0.0635; // metres: above the motor bell (top 63 mm), below the prop adapter's middle
+	const motorsAndProps = tris.filter((t) => t.part === "Motors and props" && centroid(t)[1] > PROP_ABOVE);
+	for (let q = 0; q < 4; q++) {
+		const own = motorsAndProps.filter((t) => quadrantOf(centroid(t)[0], centroid(t)[2]) === q);
+		if (!own.length) throw new Error(`no prop found in quadrant ${q}`);
+		const xs = own.flatMap((t) => t.v.map((v) => v[0]));
+		const zs = own.flatMap((t) => t.v.map((v) => v[2]));
+		hubs[q] = [(Math.min(...xs) + Math.max(...xs)) / 2, 0, (Math.min(...zs) + Math.max(...zs)) / 2];
+		for (const t of own) t.hub = q;
+	}
+}
 
 /* ---------- Quantise, weld and group ---------- */
 const lo = [Infinity, Infinity, Infinity];
@@ -175,7 +199,8 @@ const header = {
 	lens: { p: middle.map(round), d: facing.map((x) => Math.round(x * 1e4) / 1e4) },
 };
 const headerBytes = Buffer.from(JSON.stringify(header));
-const sections = [Buffer.alloc(4), headerBytes, Buffer.alloc(pad4(headerBytes.length) - headerBytes.length)];
+// The header pads with spaces, not zeros: drone.ts parses the whole padded length as JSON, and spaces are JSON whitespace.
+const sections = [Buffer.alloc(4), headerBytes, Buffer.alloc(pad4(headerBytes.length) - headerBytes.length, 0x20)];
 sections[0].writeUInt32LE(pad4(headerBytes.length));
 const section = (typed) => {
 	const bytes = Buffer.from(typed.buffer, typed.byteOffset, typed.byteLength);
