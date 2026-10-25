@@ -112,6 +112,11 @@ export interface StageView {
 	/** Highest device pixel ratio to render at, on any tier (the tiers have their own caps). */
 	pixelRatio?: number;
 	/**
+	 * false: never the higher tiers' extras (the ambient-occlusion pass and the real contact shadows), only the plain
+	 * renderer and the blob shadows, whatever the tier. For a full-window stage that must stay light (the drone chapter).
+	 */
+	effects?: boolean;
+	/**
 	 * Called once when the stage gives up and the page should show its plain version instead: the frame loop threw
 	 * ("error"), the GPU is too slow even on the lowest tier ("slow"; never when the quality was pinned by ?quality= or
 	 * Settings), or the WebGL context was lost and did not come back ("context"). The stage has already stopped drawing;
@@ -437,7 +442,7 @@ export async function mountStage(
 	let quality: Quality | undefined;
 	let shadows: ReturnType<Quality["createContactShadows"]> | undefined;
 	let pipeline: ReturnType<Quality["createPipeline"]> | undefined;
-	if (tier !== "low") {
+	if (tier !== "low" && view.effects !== false) {
 		try {
 			quality = await import("./quality");
 			shadows = quality.createContactShadows(renderer, scene);

@@ -64,14 +64,18 @@ export const dronePage = {
 };
 
 /**
- * The drone chapter: the top of the page as numbered beats (src/pages/work/drone.astro). In 3D they play one screen
- * each over the dark, with the chapter map at the side; in Classic (phones, reduced motion, no WebGL, Classic chosen)
- * the same words are one ordinary page, in the same order. Beats 5 to 9 come later.
- * Only what the page already says: no new facts.
+ * The drone chapter: the top of the page as numbered beats (src/components/DroneChapter.astro). In 3D they play on one
+ * pinned stage that the scroll moves the camera through, with the chapter map at the side; in Classic (phones, reduced
+ * motion, no WebGL, Classic chosen, a GPU too slow or lost) the same words are one ordinary page, in the same order.
+ * Beats 5 to 9 come later. Only what the page already says: no new facts.
  */
 export const droneChapter = {
 	/** Read aloud by screen readers for the dots at the side. */
 	mapLabel: 'Chapters of the drone page',
+	/** A link past the chapter, to the rest of the page. */
+	skip: 'Skip the chapter',
+	/** While the 3D drone loads (only when that takes a moment): "Loading the F450 · 47%". */
+	loading: 'Loading the F450',
 	beats: {
 		prologue: { number: '01', title: 'Prologue' },
 		stakes: { number: '02', title: 'The stakes' },
@@ -86,6 +90,9 @@ export const droneChapter = {
 		timeZone: 'Asia/Ho_Chi_Minh',
 		/** Read aloud before the time: "Local time in Ho Chi Minh City". */
 		timeLabel: 'Local time in',
+		/** The build step now, from the roadmap below: "STEP 5 OF 6 · PRINTED MOUNTS". */
+		stepLabel: 'STEP',
+		ofLabel: 'OF',
 	},
 	prologue: {
 		problem: 'A drone’s video only reaches as far as its radio link.',
