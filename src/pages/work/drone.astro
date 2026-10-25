@@ -118,6 +118,7 @@ const stills = Object.fromEntries(
 				<div class="chapter-stat">
 					<p class="chapter-stat-label">{chapter.stakes.label}</p>
 					<p class="chapter-stat-value font-wide"><span>{chapter.stakes.value}</span> <span class="chapter-stat-unit">{chapter.stakes.unit}</span></p>
+					<p class="chapter-stat-secondary font-wide">{chapter.stakes.secondary}</p>
 					<p class="chapter-stat-source">{chapter.stakes.source}</p>
 				</div>
 				<p class="chapter-aside">{chapter.stakes.link}</p>
@@ -477,6 +478,11 @@ const stills = Object.fromEntries(
 			font-size: 0.32em;
 			font-weight: 760;
 			letter-spacing: 0;
+			color: var(--muted-foreground);
+		}
+		.chapter-stat-secondary {
+			font-size: clamp(1.4rem, 3vw, 2.25rem);
+			font-weight: 780;
 			color: var(--muted-foreground);
 		}
 		.chapter-stat-source {

@@ -66,7 +66,7 @@ export const droneShowcase = {
 			text: 'A Raspberry Pi Camera Module 3 sits at the very front on a printed PETG tilt mount, set anywhere from 0 to 45° down and starting at 15°. A ribbon cable connects it to the Pi, and it weighs 142 g less than the Logitech C920 webcam it replaced.',
 			facts: [
 				{ label: 'Camera', value: 'Camera Module 3, 12 MP autofocus' },
-				{ label: 'Video', value: '720p at 60 fps' },
+				{ label: 'Video', value: '720p at 60 fps or 1080p at 30 fps' },
 				{ label: 'Tilt', value: '0 to 45° down' },
 			],
 		},

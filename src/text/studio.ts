@@ -65,7 +65,7 @@ export const sketchText = {
 	camera: {
 		heading: "Camera",
 		model: "Camera Module 3",
-		specs: "12 MP, autofocus, 720p at 60 fps",
+		specs: "12 MP, autofocus, 720p60 or 1080p30",
 		mount: "printed PETG tilt mount",
 		ribbon: "CSI ribbon to the Pi",
 		level: "0°",
