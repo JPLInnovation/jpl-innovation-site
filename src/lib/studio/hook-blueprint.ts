@@ -75,7 +75,7 @@ export function blueprintLines(boxes: PartBox[], bottom: number, top: number, co
 			varying float vAlpha;
 			void main() {
 				// Drawn in from the bottom up; gone as its part seats.
-				float drawn = smoothstep(order - 0.12, order, uReveal * 1.12);
+				float drawn = smoothstep(order, order + 0.12, uReveal * 1.12); // (nothing at 0, all at 1)
 				float seated = smoothstep(order * 0.7, order * 0.7 + 0.3, uSolid);
 				vAlpha = drawn * (1.0 - seated);
 				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
