@@ -161,6 +161,11 @@ const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
 										{journey.nowTag}
 									</span>
 								)}
+								{m.before && (
+									<span class="rounded-sm border border-foreground/30 px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground [font-stretch:100%]">
+										{journey.beforeTag}
+									</span>
+								)}
 							</p>
 							<h3 class="mt-2 text-base font-semibold">{m.title}</h3>
 							<p class="mt-1 text-sm text-muted-foreground">{m.desc}</p>
