@@ -1,0 +1,93 @@
+---
+/**
+ * Proof, in numbers (labels: src/text/home.ts `proof`). Every number is counted from the site's own data, never typed:
+ * the projects (src/text/projects/*.md), the F450's parts list and its priced total (as its page adds them up), and how
+ * many steps of each drone's roadmap are done. Used by Classic (under "Selected work") and the studio's wall card.
+ */
+import { getProjects } from "@/lib/content";
+import { formatVnd } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { proof } from "@/text/home";
+import { partGroups, roadmap } from "@/text/projects/drone";
+import { roadmap as miniRoadmap } from "@/text/projects/mini-drone";
+
+interface Props {
+	class?: string;
+}
+
+const projects = await getProjects();
+const title = (id: string) => projects.find((p) => p.id === id)?.data.title;
+const parts = partGroups.flatMap((g) => g.parts);
+const done = (steps: readonly { state: string }[]) => `${steps.filter((s) => s.state === "done").length} ${proof.of} ${steps.length}`;
+
+const counts = [
+	{ value: String(projects.length), label: proof.projects },
+	{ value: String(parts.length), label: proof.parts, about: title("drone") },
+	{ value: formatVnd(parts.reduce((sum, p) => sum + (p.price ?? 0), 0)), label: proof.budget, about: title("drone"), note: proof.budgetNote },
+	{ value: done(roadmap), label: proof.steps, about: title("drone") },
+	{ value: done(miniRoadmap), label: proof.steps, about: title("mini-drone") },
+];
+---
+
+<dl aria-label={proof.label} class={cn("proof-counts", Astro.props.class)}>
+	{
+		counts.map((c) => (
+			<div>
+				<dt>
+					{c.label}
+					{c.note && <span class="proof-note"> ({c.note})</span>}
+					{c.about && <span class="proof-about">{c.about}</span>}
+				</dt>
+				<dd>{c.value}</dd>
+			</div>
+		))
+	}
+</dl>
+
+<style>
+	.proof-counts {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+		gap: 0.75rem 1.25rem;
+	}
+	.proof-counts > div {
+		display: flex;
+		flex-direction: column-reverse;
+		justify-content: flex-end;
+		gap: 0.15rem;
+		border-top: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		padding-top: 0.5rem;
+	}
+	dd {
+		font-stretch: 112%;
+		font-weight: 800;
+		font-size: 1.35rem;
+		line-height: 1.1;
+		font-variant-numeric: tabular-nums;
+		color: var(--foreground);
+	}
+	dt {
+		font-size: 0.8rem;
+		line-height: 1.35;
+		color: var(--muted-foreground);
+	}
+	.proof-about {
+		display: block;
+		font-weight: 600;
+	}
+	/* The studio's wall card: three to a row and smaller, so the card still fits a short laptop screen. */
+	.proof-compact {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.5rem 0.9rem;
+	}
+	.proof-compact > div {
+		padding-top: 0.35rem;
+	}
+	.proof-compact dd {
+		font-size: 1.05rem;
+	}
+	.proof-compact dt {
+		font-size: 0.72rem;
+		line-height: 1.3;
+	}
+</style>

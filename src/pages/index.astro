@@ -10,6 +10,7 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import ClassicHome from "@/components/ClassicHome.astro";
+import ProofCounts from "@/components/ProofCounts.astro";
 import Studio from "@/components/Studio.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, getProjects, toBadge } from "@/lib/content";
@@ -139,6 +140,7 @@ const organization = {
 			<img class="studio-still" {...still("wall")} alt="" loading="lazy" width="1600" height="900" />
 			<h2 id="scene-wall">{workSection.heading}</h2>
 			<p>{workSection.intro}</p>
+			<ProofCounts class="proof-compact" />
 			<ul class="studio-list">
 				{
 					projects.map((p) => (
