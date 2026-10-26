@@ -743,6 +743,13 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		background: color-mix(in oklab, var(--foreground) 12%, transparent);
 		color: var(--foreground);
 	}
+	/* The simulated flight's label: it must read as plainly as the words around it. */
+	.studio-sim-chip {
+		display: inline-block;
+		margin-top: 0.25rem;
+		border: 1px solid #b87a00;
+		background: color-mix(in oklab, #ffc20e 18%, transparent);
+	}
 	.studio-chip-now {
 		background: var(--accent);
 		color: var(--accent-foreground);

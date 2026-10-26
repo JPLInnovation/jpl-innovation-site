@@ -1,0 +1,149 @@
+---
+// The studio's simulated flight clip, frame by frame (scripts/sim-flight.py copies this into src/pages to render it, then removes it).
+---
+<html>
+<body style="margin:0;background:#000">
+<canvas id="c" width="960" height="540"></canvas>
+<script>
+import {
+	ACESFilmicToneMapping, Color, DirectionalLight, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial,
+	PerspectiveCamera, PlaneGeometry, PMREMGenerator, Scene, SRGBColorSpace, TextureLoader, WebGLRenderer, CircleGeometry,
+	EquirectangularReflectionMapping, Fog,
+} from "three";
+import { loadDrone } from "@/lib/three/models/drone";
+
+const W = 960, H = 540;
+const canvas = document.getElementById("c") as HTMLCanvasElement;
+const renderer = new WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(W, H, false);
+renderer.outputColorSpace = SRGBColorSpace;
+renderer.toneMapping = ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+const scene = new Scene();
+scene.fog = new Fog(0x4a3a50, 60, 1400);
+const camera = new PerspectiveCamera(38, W / H, 0.2, 4000);
+const loader = new TextureLoader();
+const tex = (u: string) => new Promise<any>((res) => loader.load(u, (t) => { t.colorSpace = SRGBColorSpace; res(t); }));
+
+const env = await tex("/chapter/drone/env.webp");
+env.mapping = EquirectangularReflectionMapping;
+const pmrem = new PMREMGenerator(renderer);
+scene.environment = pmrem.fromEquirectangular(env).texture;
+scene.environmentIntensity = 0.9;
+scene.add(new HemisphereLight(0xc9d6ff, 0x2b2230, 0.8));
+const sun = new DirectionalLight(0xffd2a6, 2.2);
+sun.position.set(-4, 3, -6);
+scene.add(sun);
+const rim = new DirectionalLight(0x9fd3ff, 1.4);
+rim.position.set(3, 2, 4);
+scene.add(rim);
+
+// The sky: a dome with a dusk gradient (the drone chapter's colours), and the chapter's four ridges far away.
+const skyCanvas = document.createElement("canvas");
+skyCanvas.width = 4; skyCanvas.height = 512;
+{
+	const sg = skyCanvas.getContext("2d")!;
+	const gr = sg.createLinearGradient(0, 0, 0, 512);
+	gr.addColorStop(0, "#0d1330"); gr.addColorStop(0.32, "#28305e"); gr.addColorStop(0.44, "#6a4a78");
+	gr.addColorStop(0.5, "#d9876a"); gr.addColorStop(0.53, "#e9a77a"); gr.addColorStop(0.6, "#3a3248"); gr.addColorStop(1, "#141821");
+	sg.fillStyle = gr; sg.fillRect(0, 0, 4, 512);
+}
+const { CanvasTexture: CT, SphereGeometry, BackSide } = await import("three");
+const skyTex = new CT(skyCanvas); skyTex.colorSpace = SRGBColorSpace;
+const dome = new Mesh(new SphereGeometry(1500, 32, 32), new MeshBasicMaterial({ map: skyTex, side: BackSide, fog: false, depthWrite: false, toneMapped: false }));
+scene.add(dome);
+const ridges: Mesh[] = [];
+for (let i = 1; i <= 4; i++) {
+	const t = await tex(`/chapter/drone/dusk-${i}.webp`);
+	const z = -[1000, 700, 480, 320][i - 1];
+	const w = -z * 3.2;
+	const m = new Mesh(new PlaneGeometry(w, w * 0.5625), new MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, fog: false, toneMapped: false }));
+	m.position.set(0, w * 0.5625 * 0.5 - w * 0.5625 * 0.2, z);
+	scene.add(m);
+	ridges.push(m);
+}
+// The ground: fields and roads drawn on one big texture, and a town of plain blocks (a few windows lit at dusk), so
+// the climb reads as height. Seeded: the same every render. Nothing here is a real place.
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const G = 2048, SPAN = 6000;
+const groundCanvas = document.createElement("canvas");
+groundCanvas.width = groundCanvas.height = G;
+{
+	const gg = groundCanvas.getContext("2d")!;
+	gg.fillStyle = "#2b3027"; gg.fillRect(0, 0, G, G);
+	const fields = ["#353b2c", "#3d3a2b", "#2f3a2e", "#41402f", "#2a3328", "#37352a"];
+	for (let y = 0; y < G; y += 12) for (let x = 0; x < G; x += 12 + Math.floor(rnd() * 3) * 6) { gg.fillStyle = fields[Math.floor(rnd() * fields.length)]; gg.fillRect(x, y, 18, 12); }
+	for (let k = 0; k < 9000; k++) { gg.fillStyle = rnd() < 0.5 ? "#1f2a1f" : "#243022"; gg.beginPath(); gg.arc(rnd() * G, rnd() * G, 1 + rnd() * 2.5, 0, 7); gg.fill(); }
+	gg.strokeStyle = "#4a4a4c"; 
+	for (let k = 0; k < 26; k++) { gg.lineWidth = rnd() < 0.3 ? 5 : 2.5; gg.beginPath(); const v = rnd() < 0.5; const c = rnd() * G; if (v) { gg.moveTo(c, 0); gg.lineTo(c + (rnd() - 0.5) * 300, G); } else { gg.moveTo(0, c); gg.lineTo(G, c + (rnd() - 0.5) * 300); } gg.stroke(); }
+	gg.fillStyle = "#3a3d40"; gg.fillRect(G / 2 - 26, G / 2 - 26, 52, 52); // the field the pad sits on
+}
+const { CanvasTexture: CT2, InstancedMesh, BoxGeometry, Object3D, Color: Col } = await import("three");
+const groundTex = new CT2(groundCanvas); groundTex.colorSpace = SRGBColorSpace; groundTex.anisotropy = 8; groundTex.wrapS = groundTex.wrapT = 1000; groundTex.repeat.set(4, 4);
+const ground = new Mesh(new PlaneGeometry(SPAN, SPAN), new MeshStandardMaterial({ map: groundTex, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+const far = new Mesh(new PlaneGeometry(6000, 6000), new MeshStandardMaterial({ color: 0x262a26, roughness: 1 }));
+far.rotation.x = -Math.PI / 2; far.position.y = -0.05;
+// (no second plane: it z-fought with the ground from high up)
+// Town lights far off: small glowing points in clusters (no blocks), like a town seen at dusk.
+const { BufferGeometry, BufferAttribute, Points, PointsMaterial } = await import("three");
+const L = 5000;
+const lp = new Float32Array(L * 3);
+const towns = Array.from({ length: 14 }, () => { const a = rnd() * Math.PI * 2; const r = 300 + rnd() * 1400; return [Math.cos(a) * r, Math.sin(a) * r - 500, 40 + rnd() * 160]; });
+for (let i = 0; i < L; i++) {
+	const t = towns[Math.floor(rnd() * towns.length)];
+	const a = rnd() * Math.PI * 2, r = Math.pow(rnd(), 0.6) * t[2];
+	lp.set([t[0] + Math.cos(a) * r, 0.4, t[1] + Math.sin(a) * r], i * 3);
+}
+const lg = new BufferGeometry(); lg.setAttribute("position", new BufferAttribute(lp, 3));
+scene.add(new Points(lg, new PointsMaterial({ color: 0xffc98a, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.7, fog: false })));
+const padCanvas = document.createElement("canvas");
+padCanvas.width = padCanvas.height = 256;
+const g = padCanvas.getContext("2d")!;
+g.fillStyle = "#20283a"; g.fillRect(0, 0, 256, 256);
+g.strokeStyle = "#ffc20e"; g.lineWidth = 8; g.beginPath(); g.arc(128, 128, 104, 0, Math.PI * 2); g.stroke();
+g.fillStyle = "#ffc20e"; g.font = "800 120px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("H", 128, 136);
+const { CanvasTexture } = await import("three");
+const padTex = new CanvasTexture(padCanvas); padTex.colorSpace = SRGBColorSpace;
+const pad = new Mesh(new CircleGeometry(0.9, 48), new MeshStandardMaterial({ map: padTex, roughness: 0.9 }));
+pad.rotation.x = -Math.PI / 2; pad.position.y = 0.005;
+scene.add(pad);
+
+const rig = await loadDrone();
+const holder = new Group();
+rig.model.position.y = -rig.floor;
+holder.add(rig.model);
+scene.add(holder);
+
+const ease = (x: number) => x * x * (3 - 2 * x);
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+const FRAMES = 150;
+let last = 0;
+/** Frame i of the clip: 0 s on the pad, props spin up, lifts, climbs high; the camera follows, then holds back. */
+(window as any).frame = (i: number) => {
+	const t = i / 30;
+	const dt = i === 0 ? 0 : 1 / 30;
+	const spinUp = clamp01(t / 0.8);
+	const climb = clamp01((t - 0.9) / 4.1);
+	const alt = 120 * ease(climb) ** 1.7 + 0.6 * clamp01((t - 0.9) / 0.6);
+	holder.position.set(Math.sin(t * 1.3) * 0.05 * climb, alt, -0.4 * climb);
+	holder.rotation.set(Math.sin(t * 2.1) * 0.03 * climb - 0.05 * climb, 0.6 + t * 0.12, Math.sin(t * 1.7) * 0.03 * climb);
+	rig.animate(t, dt > 0 ? dt : 0.0001, Math.max(0.05, spinUp));
+	// Camera: a chase camera. Low by the pad at first, looking up; it climbs with the drone, a little behind and to the
+	// side, and tips down as it goes, so the pad and the ground fall away below and the ridges sink under the horizon.
+	const c = climb;
+	const dx = 1.5 - 0.5 * c, dz = 2.6 + 0.9 * c;
+	const below = 0.2 - 0.5 * ease(clamp01(t / 1.4)) + 0.75 * ease(c);
+	camera.position.set(holder.position.x + dx, Math.max(0.35, alt + below), holder.position.z + dz);
+	camera.lookAt(holder.position.x, alt + 0.15 - 0.55 * ease(c), holder.position.z);
+	renderer.render(scene, camera);
+	last = i;
+	return canvas.toDataURL("image/png");
+};
+(window as any).FRAMES = FRAMES;
+(window as any).ready = true;
+</script>
+</body>
+</html>
