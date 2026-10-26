@@ -7,7 +7,8 @@
  *           hook-blueprint.ts), in step with the scroll, and backwards when you scroll back.
  *   Test    the drone sits whole on the bench (its props still: it has only been bench tested). On the wall above it a
  *           screen plays a SIMULATED flight of the 3D model, scrubbed by the scroll: higher the further you go. The
- *           clip says "SIMULATION · 3D model · not flown yet" on every frame (public/studio/sim/, scripts/sim-flight.py),
+ *           clip (rendered at 4K; a 1080p copy for the lower tiers) says "SIMULATION · 3D model · not flown yet" on every frame
+ *           (public/studio/sim/, scripts/sim-flight.py),
  *           and the scene's text says it too.
  *
  * The opening hook's drone stands on this bench too (not on the sketchbook): while it is there, the bench's own drone
@@ -32,9 +33,9 @@ export const BENCH_LOOK = {
 	/** Build: over how much of the scroll before the build scene the drone assembles (in scenes), and when it is whole. */
 	build: { from: -0.75, to: 0.05 },
 	/** Test: the clip runs from this far before the test scene to this far after it (in scenes). */
-	clip: { from: -0.45, to: 0.55, url: "/studio/sim/flight-sim.mp4", poster: "/studio/sim/flight-sim-poster.webp", seconds: 5 },
+	clip: { from: -0.45, to: 0.55, url4k: "/studio/sim/flight-sim-4k.mp4", url: "/studio/sim/flight-sim-1080.mp4", seconds: 5 },
 	/** The screen on the front wall above the bench: middle height and width (16:9). */
-	screen: { y: 1.6, width: 1.3 },
+	screen: { y: 1.5, width: 1.3 },
 	spread: 0.32,
 };
 
@@ -130,7 +131,8 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 		video.playsInline = true;
 		video.preload = "auto";
 		video.crossOrigin = "anonymous";
-		video.src = asset(BENCH_LOOK.clip.url);
+		// 4K on the high quality tier, 1080p otherwise: each scrubbed frame is uploaded to the GPU, and 4K is 4× the pixels.
+		video.src = asset(ctx.tier === "high" ? BENCH_LOOK.clip.url4k : BENCH_LOOK.clip.url);
 		video.addEventListener("loadeddata", () => {
 			ready = true;
 			videoTexture = new VideoTexture(video!);

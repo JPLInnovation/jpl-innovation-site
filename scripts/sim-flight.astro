@@ -3,7 +3,7 @@
 ---
 <html>
 <body style="margin:0;background:#000">
-<canvas id="c" width="960" height="540"></canvas>
+<canvas id="c"></canvas>
 <script>
 import {
 	ACESFilmicToneMapping, Color, DirectionalLight, Group, HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial,
@@ -12,9 +12,13 @@ import {
 } from "three";
 import { loadDrone } from "@/lib/three/models/drone";
 
-const W = 960, H = 540;
+// ?w=&h= sets the size (the clip ships at 3840 × 2160 and 1920 × 1080).
+const size = new URLSearchParams(location.search);
+const W = Number(size.get("w") ?? 3840), H = Number(size.get("h") ?? 2160);
+const PX = H / 540; // the town lights are sized in pixels: scaled with the frame
 const canvas = document.getElementById("c") as HTMLCanvasElement;
 const renderer = new WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+canvas.width = W; canvas.height = H;
 renderer.setSize(W, H, false);
 renderer.outputColorSpace = SRGBColorSpace;
 renderer.toneMapping = ACESFilmicToneMapping;
@@ -80,7 +84,7 @@ groundCanvas.width = groundCanvas.height = G;
 	gg.fillStyle = "#3a3d40"; gg.fillRect(G / 2 - 26, G / 2 - 26, 52, 52); // the field the pad sits on
 }
 const { CanvasTexture: CT2, InstancedMesh, BoxGeometry, Object3D, Color: Col } = await import("three");
-const groundTex = new CT2(groundCanvas); groundTex.colorSpace = SRGBColorSpace; groundTex.anisotropy = 8; groundTex.wrapS = groundTex.wrapT = 1000; groundTex.repeat.set(4, 4);
+const groundTex = new CT2(groundCanvas); groundTex.colorSpace = SRGBColorSpace; groundTex.anisotropy = 16; groundTex.wrapS = groundTex.wrapT = 1000; groundTex.repeat.set(4, 4);
 const ground = new Mesh(new PlaneGeometry(SPAN, SPAN), new MeshStandardMaterial({ map: groundTex, roughness: 1 }));
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
@@ -98,7 +102,7 @@ for (let i = 0; i < L; i++) {
 	lp.set([t[0] + Math.cos(a) * r, 0.4, t[1] + Math.sin(a) * r], i * 3);
 }
 const lg = new BufferGeometry(); lg.setAttribute("position", new BufferAttribute(lp, 3));
-scene.add(new Points(lg, new PointsMaterial({ color: 0xffc98a, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0.7, fog: false })));
+scene.add(new Points(lg, new PointsMaterial({ color: 0xffc98a, size: 1.6 * PX, sizeAttenuation: false, transparent: true, opacity: 0.7, fog: false })));
 const padCanvas = document.createElement("canvas");
 padCanvas.width = padCanvas.height = 256;
 const g = padCanvas.getContext("2d")!;

@@ -1,7 +1,7 @@
 """
 The studio's simulated flight clip (the "test" scene's wall screen, src/lib/studio/build-bench.ts):
-public/studio/sim/flight-sim.mp4 (960 x 540, 5 s, 30 fps, a keyframe every 6 frames so the scroll can scrub it) and
-flight-sim-poster.webp. It is a SIMULATION of the 3D model, not footage: the drone has not flown. Every frame carries
+public/studio/sim/flight-sim-4k.mp4 (3840 x 2160, for the high quality tier) and flight-sim-1080.mp4 (1920 x 1080, the
+other tiers): 5 s at 30 fps, a keyframe every 6 frames so the scroll can scrub it. It is a SIMULATION of the 3D model, not footage: the drone has not flown. Every frame carries
 "SIMULATION · 3D model · not flown yet".
 
 How: scripts/sim-flight.astro is copied into src/pages for the run (and removed after), the dev server serves it, and
@@ -41,15 +41,19 @@ def font(bold: bool, size: int):
     return ImageFont.load_default()
 
 
+W, H = 3840, 2160
+
+
 def label(frame: Image.Image) -> Image.Image:
     image = frame.convert("RGBA")
+    k = image.width / 960  # laid out on a 960-wide frame, scaled up
     overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(overlay)
-    d.rounded_rectangle((22, 20, 394, 82), 8, fill=(8, 12, 24, 170), outline=(255, 194, 14, 230), width=2)
-    d.ellipse((36, 38, 48, 50), fill=(255, 194, 14, 255))
-    d.text((58, 30), LABEL, font=font(True, 22), fill=(255, 214, 90, 255))
-    d.text((58, 57), SUB, font=font(False, 15), fill=(225, 232, 245, 235))
-    d.text((image.width - 22, image.height - 22), CORNER, font=font(False, 15), fill=(225, 232, 245, 200), anchor="rs")
+    d.rounded_rectangle((22 * k, 20 * k, 394 * k, 82 * k), round(8 * k), fill=(8, 12, 24, 170), outline=(255, 194, 14, 230), width=round(2 * k))
+    d.ellipse((36 * k, 38 * k, 48 * k, 50 * k), fill=(255, 194, 14, 255))
+    d.text((58 * k, 30 * k), LABEL, font=font(True, round(22 * k)), fill=(255, 214, 90, 255))
+    d.text((58 * k, 57 * k), SUB, font=font(False, round(15 * k)), fill=(225, 232, 245, 235))
+    d.text((image.width - 22 * k, image.height - 22 * k), CORNER, font=font(False, round(15 * k)), fill=(225, 232, 245, 200), anchor="rs")
     return Image.alpha_composite(image, overlay).convert("RGB")
 
 
@@ -61,7 +65,8 @@ def main() -> None:
             frames = pathlib.Path(tmp)
             browser = p.chromium.launch(args=GL_ARGS)
             page = browser.new_page(viewport={"width": 960, "height": 540})
-            page.goto("http://localhost:4400/dev-sim", wait_until="load")
+            page.set_default_timeout(600000)
+            page.goto(f"http://localhost:4400/dev-sim?w={W}&h={H}", wait_until="load")
             page.wait_for_function("window.ready", timeout=180000)
             for i in range(page.evaluate("window.FRAMES")):
                 data = page.evaluate(f"window.frame({i})")
@@ -69,17 +74,16 @@ def main() -> None:
                 raw.write_bytes(base64.b64decode(data.split(",")[1]))
                 labelled = label(Image.open(raw))
                 labelled.save(frames / f"f{i:04d}.png")
-                if i == 0:
-                    labelled.save(OUT / "flight-sim-poster.webp", quality=72)
             browser.close()
-            subprocess.run(
-                ["ffmpeg", "-y", "-loglevel", "error", "-framerate", "30", "-i", str(frames / "f%04d.png"), "-c:v", "libx264", "-preset", "slow",
-                 "-crf", "26", "-g", "6", "-keyint_min", "6", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(OUT / "flight-sim.mp4")],
-                check=True,
-            )
+            for name, crf, scale in (("flight-sim-4k.mp4", "24", None), ("flight-sim-1080.mp4", "23", "1920:1080")):
+                args = ["ffmpeg", "-y", "-loglevel", "error", "-framerate", "30", "-i", str(frames / "f%04d.png")]
+                if scale:
+                    args += ["-vf", f"scale={scale}:flags=lanczos"]
+                args += ["-c:v", "libx264", "-preset", "slow", "-crf", crf, "-g", "6", "-keyint_min", "6", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(OUT / name)]
+                subprocess.run(args, check=True)
     finally:
         PAGE.unlink(missing_ok=True)
-    print("Wrote", OUT / "flight-sim.mp4", "and", OUT / "flight-sim-poster.webp")
+    print("Wrote", OUT / "flight-sim-4k.mp4", "and", OUT / "flight-sim-1080.mp4")
 
 
 if __name__ == "__main__":
