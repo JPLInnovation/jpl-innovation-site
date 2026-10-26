@@ -5,7 +5,7 @@ import { CountUp, Grow, Reveal } from "@/components/motion-primitives";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
-import { frcPhotos, rookieText, season2026, season2027, season2027More, seasonsText, type FrcPhoto } from "@/text/projects/frc";
+import { rookieText, season2026, season2027, season2027More, seasonsText } from "@/text/projects/frc";
 import { BuildStrips, Countdown, EventSheets, PhotoMosaic, WeekPosts } from "@/components/frc-photos";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
@@ -491,7 +491,6 @@ const Season2026 = memo(function Season2026() {
 					</ul>
 				</figure>
 
-				<SwerveStory />
 
 				<div className="flex flex-col gap-6">
 					<div className="flex flex-col gap-2">
@@ -535,30 +534,6 @@ const Season2026 = memo(function Season2026() {
 		</div>
 	);
 });
-
-/** The swerve chassis built in 2026: it didn't compete, and it is the drivebase for 2027. */
-function SwerveStory() {
-	const photo = frcPhotos[rookieText.swervePhoto] as FrcPhoto;
-	return (
-		<Reveal className="grid items-center gap-8 overflow-hidden rounded-2xl border surface md:grid-cols-[1.2fr_1fr]">
-			<img
-				src={`/assets/frc/${photo.id}-640.webp`}
-				srcSet={`/assets/frc/${photo.id}-640.webp 640w, /assets/frc/${photo.id}.webp ${photo.w}w`}
-				sizes="(min-width: 768px) 55vw, 100vw"
-				alt={photo.alt}
-				width={photo.w}
-				height={photo.h}
-				loading="lazy"
-				decoding="async"
-				className="aspect-[4/3] size-full object-cover"
-			/>
-			<div className="flex flex-col gap-3 p-6 md:p-8">
-				<h3 className="font-wide text-2xl font-[850] md:text-3xl">{rookieText.swerveHeading}</h3>
-				<p className="text-muted-foreground">{rookieText.swerveText}</p>
-			</div>
-		</Reveal>
-	);
-}
 
 function LiveTag({ children }: { children: ReactNode }) {
 	return (
