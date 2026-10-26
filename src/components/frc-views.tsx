@@ -3,8 +3,8 @@
  * detail a click away (a drawer, a picker, a tab). Words: src/text/projects/frc.ts.
  *
  *   2026      SeasonGame, SeasonTimeline (with the build season strips and what the season delivered), Filmstrip
- *   Robot     KitBotView (the 2026 robot; its specs and test results in a drawer), PartsView (part by part, the CAD
- *             render of each, and the model in 3D on request), HardwareView (motors, control, vision)
+ *   Robot     KitBotView (the 2026 robot; its specs and test results in a drawer), HardwareView (motors, control, vision)
+ *             (the robot part by part, in 3D: src/components/FrcChapter.astro)
  *   2027      Overview2027, Road2027, Goals2027
  */
 import { useEffect, useRef, useState } from "react";
@@ -12,7 +12,6 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { ArrowRight, ArrowUpRight, Clock, Flag, Mail, Quote, Trophy, X } from "lucide-react";
 import { Grow } from "@/components/motion-primitives";
 import { BuildStrips, Countdown } from "@/components/frc-photos";
-import ModelViewer from "@/components/model-viewer";
 import { buttonVariants } from "@/components/ui/button";
 import {
 	board,
@@ -31,7 +30,6 @@ import {
 	type FrcPhotoId,
 	type HardwareItem,
 } from "@/text/projects/frc";
-import { robotShowcase } from "@/text/showcase/robot";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
 import { cn } from "@/lib/utils";
@@ -39,7 +37,6 @@ import { cn } from "@/lib/utils";
 const t26 = seasonsText.s2026;
 const t27 = seasonsText.s2027;
 const small = (id: string) => `/assets/frc/${id}-640.webp`;
-const frcSrcSet = (p: FrcPhoto) => `${small(p.id)} 640w, /assets/frc/${p.id}.webp ${p.w}w`;
 const title = "font-wide text-[clamp(1.6rem,2.6vw,2.25rem)] font-[880] leading-[1.05]";
 
 /* ------------------------------------------------------------------ */
@@ -353,87 +350,6 @@ export function KitBotView() {
 				</div>
 			</dialog>
 		</div>
-	);
-}
-
-/** The KitBot part by part: pick a part to see its CAD render, what it does and its facts; or turn the model in 3D. */
-export function PartsView({ stills }: { stills: Record<string, string> }) {
-	const t = robotShowcase;
-	const [on, setOn] = useState(0);
-	const [spin, setSpin] = useState(false);
-	useEffect(() => {
-		// /work/frc/#intake opens that part.
-		const i = t.features.findIndex((f) => `#${f.id}` === location.hash);
-		if (i >= 0) setOn(i);
-	}, [t.features]);
-	const part = t.features[on];
-	const still = stills[part.id];
-	return (
-		<MotionConfig reducedMotion="user">
-			<div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-				<div className="flex flex-col gap-3">
-					<div className="relative aspect-[16/10] overflow-hidden rounded-xl border bg-[#0b111c]">
-						{spin ? (
-							<ModelViewer model="frc-robot" label={t.modelLabel} className="size-full">
-								{still && <img src={`${still}-800.webp`} alt="" className="size-full object-cover" />}
-							</ModelViewer>
-						) : (
-							<AnimatePresence initial={false}>
-								{still ? (
-									<motion.img
-										key={part.id}
-										src={`${still}-800.webp`}
-										srcSet={`${still}-800.webp 800w, ${still}.webp 1600w`}
-										sizes="(min-width: 1024px) 50vw, 100vw"
-										alt={`${part.title}: ${part.text}`}
-										className="absolute inset-0 size-full object-cover"
-										initial={{ opacity: 0, scale: 1.04 }}
-										animate={{ opacity: 1, scale: 1 }}
-										exit={{ opacity: 0 }}
-										transition={{ duration: 0.45 }}
-									/>
-								) : (
-									<p className="absolute inset-0 grid place-items-center p-6 text-center text-white/80">{part.title}</p>
-								)}
-							</AnimatePresence>
-						)}
-					</div>
-					<div className="flex flex-wrap items-center justify-between gap-2">
-						<p className="text-sm text-muted-foreground">{t.note}</p>
-						<button type="button" onClick={() => setSpin((s) => !s)} aria-pressed={spin} className={cn("frc-chip-btn px-4", spin && "is-on")}>
-							{spin ? board.parts.still : board.parts.spin}
-						</button>
-					</div>
-				</div>
-				<div className="flex flex-col gap-4">
-					<ul className="flex flex-wrap gap-1.5" aria-label={board.parts.partsLabel}>
-						{t.features.map((f, i) => (
-							<li key={f.id}>
-								<button type="button" id={f.id} onClick={() => setOn(i)} onMouseEnter={() => setOn(i)} aria-pressed={on === i} className={cn("frc-pick rounded-full border px-3.5 text-sm font-semibold", on === i && "is-on")}>
-									{f.title}
-								</button>
-							</li>
-						))}
-					</ul>
-					<div aria-live="polite" className="min-h-[14rem]">
-						<AnimatePresence mode="wait" initial={false}>
-							<motion.div key={part.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }} className="flex flex-col gap-3">
-								<h4 className={title}>{part.title}</h4>
-								<p className="text-muted-foreground">{part.text}</p>
-								<dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border">
-									{part.facts.map((f) => (
-										<div key={f.label} className="flex flex-col gap-0.5 bg-card p-3">
-											<dt className="text-xs text-muted-foreground">{f.label}</dt>
-											<dd className="font-semibold">{f.value}</dd>
-										</div>
-									))}
-								</dl>
-							</motion.div>
-						</AnimatePresence>
-					</div>
-				</div>
-			</div>
-		</MotionConfig>
 	);
 }
 
