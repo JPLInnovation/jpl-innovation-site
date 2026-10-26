@@ -413,13 +413,14 @@ export const frcDeck = {
 };
 
 /**
- * The rookie season as a story told by scrolling: the page holds still while the scenes change. `photo`: an id in
+ * The rookie season as a story in eight scenes, one at a time (it plays by itself until the visitor steps through it). `photo`: an id in
  * `frcPhotos`; `big`/`small`: the large figure and its label; `route`: how far the flight path on the map has got
  * (0 Ho Chi Minh City, 1 Vancouver, 2 Istanbul, 3 Honolulu). Every figure is from the season data above.
  */
 export const seasonStory = {
 	heading: 'The rookie season, in eight scenes',
-	hint: 'Keep scrolling',
+	prev: 'Previous scene',
+	next: 'Next scene',
 	mapLabel: 'Where the season took us',
 	cities: ['Ho Chi Minh City', 'Vancouver', 'Istanbul', 'Honolulu'],
 	scenes: [
@@ -464,6 +465,58 @@ export const swerveSim = {
 		battery: { name: 'Battery', text: 'The 12 V battery that powers every motor and controller on the robot.' },
 		controller: { name: 'Robot controller', text: 'The robot’s main computer. It runs the team’s code and tells each module where to point.' },
 	},
+};
+
+/**
+ * The pit board: everything below the header, in one screen. Pick a chapter on the side (on phones, along the top),
+ * then a view inside it. `figure`: the one fact on the chapter's button. Links like /work/frc/#2026-results open a
+ * chapter and view directly (/work/frc/#intake opens a part of the robot).
+ */
+export const board = {
+	label: 'Chapters',
+	viewsLabel: 'Views',
+	nextLabel: 'Next:',
+	chapters: [
+		{ id: '2026', name: 'Rookie season', figure: '2026 · two regionals', views: [
+			{ id: 'story', name: 'The story' },
+			{ id: 'results', name: 'Results' },
+			{ id: 'game', name: 'The game' },
+			{ id: 'timeline', name: 'Timeline' },
+			{ id: 'photos', name: 'Photos' },
+		] },
+		{ id: 'robot', name: 'The robot', figure: 'KitBot · swerve · 3D', views: [
+			{ id: 'kitbot', name: '2026 robot' },
+			{ id: 'parts', name: 'Part by part' },
+			{ id: 'swerve', name: 'Drive our swerve' },
+			{ id: 'hardware', name: 'Hardware' },
+		] },
+		{ id: '2027', name: 'Season two', figure: '2027 · Hawaii & Marmara', views: [
+			{ id: 'overview', name: 'Overview' },
+			{ id: 'road', name: 'Road to 2027' },
+			{ id: 'goals', name: 'Goals' },
+			{ id: 'weekly', name: 'Week by week' },
+		] },
+		{ id: 'team', name: 'The team', figure: '7 sub-teams', views: [
+			{ id: 'about', name: 'Who we are' },
+			{ id: 'subteams', name: 'Sub-teams' },
+			{ id: 'values', name: 'Values' },
+			{ id: 'leadership', name: 'Leadership' },
+		] },
+		{ id: 'workshop', name: 'Workshop', figure: '6 steps to certified', views: [
+			{ id: 'path', name: 'Certification' },
+			{ id: 'rules', name: 'Rules' },
+			{ id: 'conduct', name: 'Conduct' },
+			{ id: 'photos', name: 'Photos' },
+		] },
+		{ id: 'outreach', name: 'Outreach', figure: '4 programs', views: [
+			{ id: 'programs', name: 'Programs' },
+			{ id: 'robokids', name: 'RoboKids' },
+		] },
+		{ id: 'partner', name: 'Partner', figure: 'Gifts in kind', views: [{ id: 'support', name: 'Support us' }] },
+	],
+	kitbot: { specsButton: 'Specs and test results', close: 'Close', photosLabel: 'Photos of our 2026 KitBot' },
+	parts: { spin: 'Turn it in 3D', still: 'Back to the picture', partsLabel: 'Parts of the robot' },
+	hardware: { tabs: { motors: 'Motors', control: 'Control', vision: 'Vision' } },
 };
 
 /** The photo viewer's buttons. */
