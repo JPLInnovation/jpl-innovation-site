@@ -38,7 +38,7 @@ import {
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
-import type { SketchText } from "../../text/studio";
+import { deskSheets, type SketchText } from "../../text/studio";
 import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
@@ -46,9 +46,11 @@ import { buildBackdrop } from "./backdrop";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
+import { BLANK, buildDeskSheets, type SheetPlace } from "./desk-sheets";
 import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { type PageScreen, pageScreen } from "./screens";
 import { buildStations } from "./stations";
+import { buildBench, type BuildBench } from "./build-bench";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
 /** The desk (scenes 0 to 2): its middle and the height of its top; the sketchbook lies open on it at `book`. */
@@ -132,6 +134,8 @@ export interface RoomState {
 	near: Record<string, number>;
 	/** How much the camera is on each scene, by scene id, summing to 1 (follows the camera's own easing). */
 	focus: Record<string, number>;
+	/** The scenes' ids, in the order the camera visits them. */
+	ids: readonly string[];
 }
 
 /** What the room shows, from the site's own content (the page passes it in; src/components/Studio.astro). */
@@ -164,6 +168,8 @@ export interface Room {
 	logo: Mesh;
 	/** The drone bench's F450, once loaded (the opening hook's desk drone shares its geometry). */
 	stationDrone(): DroneRig | undefined;
+	/** The build bench (build-bench.ts): the opening hook's drone stands on it, and says so with `occupied`. */
+	bench: BuildBench;
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -282,6 +288,34 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	pencil.position.set(deskX + 0.16, deskTop + 0.006, deskZ + 0.26);
 	group.add(pencil);
 
+	// The loose sheets around the book (never on it) and the corkboard of pinned pages between the shelving and the logo (desk-sheets.ts).
+	const B = BLANK;
+	const sheetPlaces: SheetPlace[] = [
+		// The desk, left of the book: the parts list (with the coffee ring), on a pile.
+		{ slot: B, on: "desk", x: -7.0, y: -2.29, turn: 0.3 },
+		{ slot: B, on: "desk", x: -6.99, y: -2.27, turn: 0.17, layer: 1 },
+		{ slot: 7, on: "desk", x: -7.0, y: -2.27, turn: 0.22, layer: 2, lift: 0.012 },
+		// Behind the book: power, the top view (on two blanks), the flight controller.
+		{ slot: 1, on: "desk", x: -6.5, y: -2.66, turn: -0.12 },
+		{ slot: B, on: "desk", x: -6.14, y: -2.67, turn: 0.2, layer: 1 },
+		{ slot: 0, on: "desk", x: -6.15, y: -2.66, turn: 0.1, layer: 2 },
+		{ slot: 5, on: "desk", x: -5.78, y: -2.63, turn: -0.25, layer: 3 },
+		// Right of the book: the battery under the tilt mount (its corner lifting), by the pencil.
+		{ slot: 9, on: "desk", x: -5.67, y: -2.33, turn: 0.08 },
+		{ slot: 4, on: "desk", x: -5.62, y: -2.26, turn: 0.35, layer: 1, lift: 0.016 },
+		// In front of the keyboard: the props.
+		{ slot: 6, on: "desk", x: -4.99, y: -2.12, turn: -0.3, layer: 1, lift: 0.01 },
+		// The corkboard, between the shelving and the logo: the video and control paths, the legs, the 4G stick, the ideas.
+		{ slot: 2, on: "wall", x: -7.35, y: 2.12, turn: 0.04, lift: 0.004 },
+		{ slot: 3, on: "wall", x: -7.03, y: 2.13, turn: -0.03, lift: 0.004 },
+		{ slot: 8, on: "wall", x: -7.34, y: 1.78, turn: 0.05, lift: 0.004, layer: 1 },
+		{ slot: 10, on: "wall", x: -7.02, y: 1.76, turn: -0.06, lift: 0.004, layer: 1 },
+		{ slot: B, on: "wall", x: -7.33, y: 1.49, turn: -0.08 },
+		{ slot: 11, on: "wall", x: -7.17, y: 1.47, turn: 0.03, lift: 0.004, layer: 2 },
+	];
+	const deskSheetSet = buildDeskSheets(deskSheets, sheetPlaces, deskTop, z0, { x: -7.19, y: 1.81, w: 0.64, h: 1.0 });
+	group.add(deskSheetSet.group);
+
 	// The monitor: the build guide on screen. It drifts while you look at it, and scrolls with the mouse wheel (screens.ts).
 	const monitorX = deskX + 0.88;
 	boxAt(group, 0.84, 0.52, 0.03, new MeshStandardMaterial({ color: 0x11141c, roughness: 0.4 }), monitorX, deskTop + 0.36, deskZ - 0.24, 0.01);
@@ -354,9 +388,10 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 
 	/* ---------- The stations, the project wall and the back wall ---------- */
 	const stations = await buildStations(ctx, group, content);
+	const bench = buildBench(ctx, group);
 	await tick();
 	// The pooled point lights: the glow of what the camera is on, and a ceiling light above the camera.
-	const accents: Record<string, LightSpec> = { ...stations.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
+	const accents: Record<string, LightSpec> = { ...stations.accents, ...bench.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
 	const overhead: Record<string, LightSpec> = {};
 	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
 	const pool = createLightPool(group, accents, overhead);
@@ -377,7 +412,8 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		screens,
 		logo,
 		stationDrone: stations.drone,
-		busy: () => busy,
+		bench,
+		busy: () => busy || bench.busy(),
 		finishSketch() {
 			sketchDone = true;
 		},
@@ -385,6 +421,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			const { lamp: on, time, near } = state;
 			const dt = Math.max(0, time - lastTime);
 			stations.update(state, dt);
+			bench.update(state, state.ids, stations.drone());
 			backdrop.update();
 			ambience.update(state, dt);
 			props.update(state, dt);
@@ -423,7 +460,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			mullionMat.color.set(dark ? 0x1b2440 : 0xf2f5fa);
 			backdrop.applyPalette(dark);
 			bookMaterial.color.setScalar(dark ? 0.46 : 0.45);
+			deskSheetSet.applyPalette(dark);
 			stations.applyPalette(p);
+			bench.applyPalette(dark);
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;

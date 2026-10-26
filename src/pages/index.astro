@@ -1,6 +1,6 @@
 ---
 /**
- * The home page: the studio (src/components/Studio.astro). One room, twelve camera stops, and the loop back to the
+ * The home page: the studio (src/components/Studio.astro). One room, fourteen camera stops, and the loop back to the
  * desk. Phones, reduced motion and read mode get the same text as one ordinary page, with a picture of each scene.
  *
  * All the words: src/text/home.ts and src/text/site.ts (the studio's own: src/text/studio.ts). The projects on the
@@ -20,7 +20,7 @@ import { HOME } from "@/lib/studio/scenes";
 import { hero, hook, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
 import { roadmap } from "@/text/projects/drone";
 import { contact, displayDomain, footer, site, talk } from "@/text/site";
-import { sketchText, studio } from "@/text/studio";
+import { benchBoard, buildStory, sketchText, studio } from "@/text/studio";
 
 const projects = await getProjects();
 const members = await getMembers();
@@ -105,6 +105,27 @@ const organization = {
 			<p class="studio-tag">{mission.stepLabel} 02 · {build.title}</p>
 			<h2 id="scene-research">{mission.processHeading}</h2>
 			<p>{build.desc}</p>
+		</section>
+
+		<!-- 2b Build: the F450 goes together on the bench, piece by piece -->
+		<section data-scene="build" class="studio-scene studio-card" aria-labelledby="scene-build">
+			<img class="studio-still" {...still("build")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{buildStory.build.tag}</p>
+			<h2 id="scene-build">{buildStory.build.heading}</h2>
+			<p>{buildStory.build.body}</p>
+		</section>
+
+		<!-- 2c Test: the bench test, and the simulated flight on the screen (labelled as one) -->
+		<section data-scene="test" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-test">
+			<img class="studio-still" {...still("test")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{buildStory.test.tag}</p>
+			<h2 id="scene-test">{buildStory.test.heading}</h2>
+			<p>{buildStory.test.bench}</p>
+			<ul class="studio-checks">
+				{benchBoard.passed.map((item) => <li>{item}</li>)}
+			</ul>
+			<p>{buildStory.test.body}</p>
+			<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
 		</section>
 
 		<!-- 3 The four stations: one service each -->
