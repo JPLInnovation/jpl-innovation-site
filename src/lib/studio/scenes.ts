@@ -25,6 +25,10 @@ export const SHOTS: Record<string, SceneShot> = {
 	sketch: { id: "sketch", camera: [-6.395, 1.572, -1.97], target: [-6.395, 0.6915, -2.444] },
 	/** 2 Research: slid right to the monitor. */
 	research: { id: "research", camera: [-5.12, 1.2, -1.32], target: [-5.12, 1.11, -2.7] },
+	/** Build: the bench between the desk and the robot cart; the drone right of centre, the words on the left. */
+	build: { id: "build", camera: [-4.4, 1.34, -1.2], target: [-4.4, 0.92, -2.42] },
+	/** Test: back a little and up, so the bench and the screen above it share the frame, left of centre (the words on the right). */
+	test: { id: "test", camera: [-3.72, 1.44, -0.72], target: [-3.72, 1.3, -3.0] },
 	/**
 	 * 3 Stations: the four work areas, one after another. Each subject sits on the side of the frame away from its text
 	 * (text on the left: the subject to the right, and the other way round).
@@ -50,4 +54,4 @@ export const SHOTS: Record<string, SceneShot> = {
 };
 
 /** The home page's scenes, in order. */
-export const HOME = ["title", "sketch", "research", "robotics", "drones", "networks", "web", "wall", "standards", "timeline", "crew", "contact"];
+export const HOME = ["title", "sketch", "research", "build", "test", "robotics", "drones", "networks", "web", "wall", "standards", "timeline", "crew", "contact"];

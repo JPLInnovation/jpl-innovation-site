@@ -148,7 +148,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 	let leaveDone: (() => void) | undefined;
 	const near: Record<string, number> = {};
 	const focus: Record<string, number> = {};
-	const state: RoomState = { position: 0, lamp, time: 0, near, focus };
+	const state: RoomState = { position: 0, lamp, time: 0, near, focus, ids: shots.map((shot) => shot.id) };
 
 	const place = () => {
 		// The curve's parameter follows the scroll between two scenes, softened at each end.
