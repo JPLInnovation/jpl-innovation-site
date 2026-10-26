@@ -1,9 +1,9 @@
 /**
  * The FRC page's interactive storytelling (words: src/text/projects/frc.ts):
  *
- *   - SeasonStory      the rookie season in eight scenes. The text scrolls by on one side while the stage beside it
- *                      holds still: the photo crossfades and slowly settles, the big figure counts up, and the flight
- *                      path on the map draws to the next city. Without JavaScript every scene is plain text.
+ *   - SeasonSlides     the rookie season in eight scenes, one at a time: the photo crossfades and slowly settles, the
+ *                      big figure counts up, and the flight path on the map draws to the next city. It plays by itself
+ *                      while on screen until the visitor steps through it (arrows, the progress bars, arrow keys).
  *   - SwerveLab        a top-view swerve drive simulator you can drive (point or tap, W A S D, Q and E), next to the
  *                      real chassis photo; a marker on the photo lights the matching module in the simulator.
  *   - SubTeamPicker    point at, focus or tap a sub-team to see what it owns and its first jobs this season.
@@ -38,67 +38,92 @@ const arc = (to: { x: number; y: number }) => {
 	return `M${a.x},${a.y} Q${mx},${my} ${to.x},${to.y}`;
 };
 
-export function SeasonStory() {
+/** How long a scene stays before the next, when nobody is driving the slides (ms). */
+const DWELL = 6500;
+
+export function SeasonSlides() {
 	const t = seasonStory;
+	const n = t.scenes.length;
 	const [active, setActive] = useState(0);
-	const cards = useRef<(HTMLElement | null)[]>([]);
+	// Plays by itself while on screen, until the visitor takes over (never with reduced motion).
+	const [playing, setPlaying] = useState(false);
+	const box = useRef<HTMLDivElement>(null);
+	const reduce = useReducedMotion();
 	useEffect(() => {
-		// The scene whose text crosses the middle of the screen is the one on the stage.
-		const io = new IntersectionObserver(
-			(entries) => {
-				for (const e of entries) if (e.isIntersecting) setActive(Number((e.target as HTMLElement).dataset.k));
-			},
-			// Phones: the stage covers the top half, so the line is lower down.
-			{ rootMargin: matchMedia("(min-width: 768px)").matches ? "-45% 0px -45% 0px" : "-72% 0px -22% 0px" },
-		);
-		cards.current.forEach((el) => el && io.observe(el));
+		if (reduce || !box.current) return;
+		const io = new IntersectionObserver(([e]) => setPlaying((p) => (e.isIntersecting ? p || !box.current?.dataset.taken : false)));
+		io.observe(box.current);
 		return () => io.disconnect();
-	}, []);
+	}, [reduce]);
+	useEffect(() => {
+		if (!playing) return;
+		const id = window.setTimeout(() => setActive((k) => (k + 1) % n), DWELL);
+		return () => clearTimeout(id);
+	}, [playing, active, n]);
+	const take = (k: number) => {
+		if (box.current) box.current.dataset.taken = "1";
+		setPlaying(false);
+		setActive(((k % n) + n) % n);
+	};
 	const scene = t.scenes[active];
 	return (
 		<MotionConfig reducedMotion="user">
-			{/* Phones: plain flow, the stage sticks on top while the text scrolls under it. Wider: text left, stage right. */}
-			<div className="md:grid md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-x-12">
-				<div className="sticky top-[4.5rem] z-10 -mx-4 h-[40svh] bg-background px-4 pb-3 pt-2 md:order-2 md:mx-0 md:h-[calc(100svh-6.5rem)] md:self-start md:bg-transparent md:px-0 md:py-6">
-					<Stage active={active} />
+			<div
+				ref={box}
+				className="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+				aria-roledescription="carousel"
+				aria-label={t.heading}
+				onKeyDown={(e) => {
+					if (e.key === "ArrowRight") take(active + 1);
+					if (e.key === "ArrowLeft") take(active - 1);
+				}}
+			>
+				<div className="h-[min(30rem,46svh)] min-h-[17rem]">
+					<Stage active={active} playing={playing} />
 				</div>
-				<ol className="relative md:order-1">
-					{t.scenes.map((s, k) => (
-						<li
-							key={s.when + k}
-							ref={(el) => {
-								cards.current[k] = el;
-							}}
-							data-k={k}
-							className="flex min-h-[70svh] items-center py-10 md:min-h-[88svh]"
-						>
-							<div className={cn("flex flex-col gap-3 rounded-2xl border bg-card/85 p-6 backdrop-blur-sm transition-opacity duration-500 md:p-8", active === k ? "opacity-100" : "md:opacity-35")}>
-								<p className="flex items-center gap-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-									<span className="tabular-nums">
-										{String(k + 1).padStart(2, "0")} / {String(t.scenes.length).padStart(2, "0")}
-									</span>
-									<span aria-hidden="true" className="h-px w-8 bg-foreground/30" />
-									{s.when}
+				<div className="flex flex-col justify-between gap-5">
+					<div aria-live={playing ? "off" : "polite"}>
+						<AnimatePresence mode="wait" initial={false}>
+							<motion.div key={active} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="flex flex-col gap-3">
+								<p className="text-sm text-muted-foreground">{scene.when}</p>
+								<h4 className="font-wide text-[clamp(1.75rem,3vw,2.6rem)] font-[880] leading-[1.02]">{scene.title}</h4>
+								<p className="text-lg text-muted-foreground">{scene.text}</p>
+								<p className="flex items-baseline gap-3 lg:hidden">
+									<span className="font-wide text-3xl font-[900] tabular-nums">{scene.big}</span>
+									<span className="text-sm text-muted-foreground">{scene.small}</span>
 								</p>
-								<h3 className="font-wide text-[clamp(1.75rem,3.4vw,2.75rem)] font-[880] leading-[1.02]">{s.title}</h3>
-								<p className="text-lg text-muted-foreground">{s.text}</p>
-								<p className="mt-2 flex items-baseline gap-3 md:hidden">
-									<span className="font-wide text-3xl font-[900] tabular-nums">{s.big}</span>
-									<span className="text-sm text-muted-foreground">{s.small}</span>
-								</p>
-							</div>
-						</li>
-					))}
-				</ol>
+							</motion.div>
+						</AnimatePresence>
+					</div>
+					<div className="flex flex-col gap-3">
+						<ol className="flex gap-1.5" aria-label={t.heading}>
+							{t.scenes.map((s, k) => (
+								<li key={k} className="flex-1">
+									<button type="button" onClick={() => take(k)} aria-current={active === k ? "step" : undefined} aria-label={`${s.when}: ${s.title}`} className="group block w-full py-3">
+										<span className={cn("block h-1.5 rounded-full transition-colors", k === active ? "bg-foreground" : "bg-foreground/20 group-hover:bg-foreground/45")} />
+									</button>
+								</li>
+							))}
+						</ol>
+						<div className="flex items-center gap-2">
+							<button type="button" className="frc-chip-btn" onClick={() => take(active - 1)} aria-label={t.prev}>
+								<ArrowLeft className="size-4" aria-hidden="true" />
+							</button>
+							<button type="button" className="frc-chip-btn" onClick={() => take(active + 1)} aria-label={t.next}>
+								<ArrowRight className="size-4" aria-hidden="true" />
+							</button>
+							<p className="ml-2 text-sm tabular-nums text-muted-foreground">
+								{active + 1} / {n}
+							</p>
+						</div>
+					</div>
+				</div>
 			</div>
-			<p className="sr-only" aria-live="polite">
-				{scene.when}: {scene.title}
-			</p>
 		</MotionConfig>
 	);
 }
 
-function Stage({ active }: { active: number }) {
+function Stage({ active, playing }: { active: number; playing: boolean }) {
 	const t = seasonStory;
 	const scene = t.scenes[active];
 	const photo = frcPhotos[scene.photo] as FrcPhoto;
@@ -123,7 +148,11 @@ function Stage({ active }: { active: number }) {
 			<div aria-hidden="true" className="absolute inset-x-5 top-5 flex gap-1.5">
 				{t.scenes.map((_, k) => (
 					<span key={k} className="h-1 flex-1 overflow-hidden rounded-full bg-white/25">
-						<motion.span className="block h-full rounded-full bg-white" initial={false} animate={{ width: k <= active ? "100%" : "0%" }} transition={{ duration: reduce ? 0 : 0.5 }} />
+						{k === active && playing ? (
+							<motion.span key={`p${active}`} className="block h-full rounded-full bg-white" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: DWELL / 1000, ease: "linear" }} />
+						) : (
+							<motion.span className="block h-full rounded-full bg-white" initial={false} animate={{ width: k <= active ? "100%" : "0%" }} transition={{ duration: reduce ? 0 : 0.4 }} />
+						)}
 					</span>
 				))}
 			</div>
@@ -583,37 +612,33 @@ export function SubTeamPicker() {
 	const team = t.subTeams[on];
 	return (
 		<MotionConfig reducedMotion="user">
-			<div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-				<div className="flex flex-col gap-3">
-					<p className="text-sm text-muted-foreground">{t.pickHint}</p>
-					<ul className="flex flex-col gap-1.5">
-						{t.subTeams.map((s, i) => (
-							<li key={s.name}>
-								<button
-									type="button"
-									aria-pressed={on === i}
-									onMouseEnter={() => setOn(i)}
-									onFocus={() => setOn(i)}
-									onClick={() => setOn(i)}
-									className={cn("frc-pick group flex w-full items-center gap-4 rounded-xl border px-4 py-3 text-left", on === i && "is-on")}
-								>
-									<span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
-									<span className="font-semiwide text-lg font-[760]">{s.name}</span>
-									<span className="ml-auto font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t.tracks[s.track as keyof typeof t.tracks]}</span>
-								</button>
-							</li>
-						))}
-					</ul>
-				</div>
-				<div className="relative min-h-[22rem] overflow-hidden rounded-2xl border surface p-6 md:p-8" aria-live="polite">
+			<div className="flex flex-col gap-4">
+				<ul className="flex flex-wrap gap-1.5" aria-label={t.pickHint}>
+					{t.subTeams.map((s, i) => (
+						<li key={s.name}>
+							<button
+								type="button"
+								aria-pressed={on === i}
+								onMouseEnter={() => setOn(i)}
+								onFocus={() => setOn(i)}
+								onClick={() => setOn(i)}
+								className={cn("frc-pick rounded-full border px-4 text-sm font-semibold", on === i && "is-on")}
+							>
+								{s.name}
+							</button>
+						</li>
+					))}
+				</ul>
+				<div className="relative overflow-hidden rounded-2xl border surface p-5 md:p-6" aria-live="polite">
 					<AnimatePresence mode="wait" initial={false}>
-						<motion.div key={team.name} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.28 }} className="flex flex-col gap-4">
-							<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-								{String(on + 1).padStart(2, "0")} · {t.tracks[team.track as keyof typeof t.tracks]}
-							</p>
-							<h4 className="font-wide text-[clamp(1.75rem,3vw,2.5rem)] font-[880] leading-tight">{team.name}</h4>
-							<p className="text-lg text-muted-foreground">{team.role}</p>
-							<h5 className="mt-2 text-sm font-semibold">{t.jobsHeading}</h5>
+						<motion.div key={team.name} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.28 }} className="grid gap-x-8 gap-y-3 md:grid-cols-2">
+							<div className="flex flex-col gap-2">
+								<p className="text-sm text-muted-foreground">{t.tracks[team.track as keyof typeof t.tracks]}</p>
+								<h4 className="font-wide text-[clamp(1.6rem,2.6vw,2.25rem)] font-[880] leading-tight">{team.name}</h4>
+								<p className="text-lg text-muted-foreground">{team.role}</p>
+							</div>
+							<div className="flex flex-col gap-2">
+							<h5 className="text-sm font-semibold">{t.jobsHeading}</h5>
 							<ul className="flex flex-col gap-2">
 								{team.jobs.map((j, k) => (
 									<motion.li key={j} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.06 * k + 0.1 }} className="flex gap-3">
@@ -624,6 +649,7 @@ export function SubTeamPicker() {
 									</motion.li>
 								))}
 							</ul>
+							</div>
 						</motion.div>
 					</AnimatePresence>
 				</div>
@@ -740,15 +766,14 @@ export function SupportPicker() {
 	const kind = t.kinds[on];
 	return (
 		<MotionConfig reducedMotion="user">
-			<div className="grid gap-6 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-				<div className="flex flex-col gap-3">
+			<div className="flex flex-col gap-4">
+				<div className="flex flex-col gap-2">
 					<p className="text-sm font-semibold">{t.pickLabel}</p>
-					<ul className="flex flex-col gap-1.5">
+					<ul className="flex flex-wrap gap-1.5">
 						{t.kinds.map((k, i) => (
 							<li key={k.name}>
-								<button type="button" aria-pressed={on === i} onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onClick={() => setOn(i)} className={cn("frc-pick flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left font-semibold", on === i && "is-on")}>
+								<button type="button" aria-pressed={on === i} onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onClick={() => setOn(i)} className={cn("frc-pick rounded-full border px-4 text-sm font-semibold", on === i && "is-on")}>
 									{k.name}
-									<ArrowRight className="size-4 opacity-60" aria-hidden="true" />
 								</button>
 							</li>
 						))}

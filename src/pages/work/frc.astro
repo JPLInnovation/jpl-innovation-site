@@ -4,22 +4,19 @@ import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
-import FrcRobotReveal from "@/components/frc-robot-reveal";
 import FrcLockup from "@/components/FrcLockup.astro";
-import FrcSeasons from "@/components/frc-seasons";
-import HardwareStack from "@/components/HardwareStack.astro";
 import Leadership from "@/components/Leadership.astro";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
-import Showcase from "@/components/showcase";
 import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
-// and the 3D robot's part by part text: src/text/showcase/robot.ts
-import { frcDeck, frcPhotos, frcPage, outreach, partner, seasonStory, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
-import { PhotoDeck, PhotoMosaic } from "@/components/frc-photos";
-import { CertPipeline, SeasonStory, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
+// and the robot's part by part text: src/text/showcase/robot.ts
+import { board, frcDeck, frcPhotos, frcPage, outreach, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
+import { EventSheets, PhotoDeck, WeekPosts } from "@/components/frc-photos";
+import { CertPipeline, SeasonSlides, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
+import { Filmstrip, Goals2027, HardwareView, KitBotView, Overview2027, PartsView, Road2027, SeasonGame, SeasonTimeline } from "@/components/frc-views";
 import { robotShowcase } from "@/text/showcase/robot";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
@@ -39,12 +36,14 @@ const facts = [
 	{ label: f.nextSeasonLabel, value: f.nextSeason },
 ];
 
-// The showcase's pictures for phones (scripts/showcase-stills.py --page robot). A feature without one shows its text only.
+// The CAD render of each part of the robot (scripts/showcase-stills.py --page robot). A part without one shows its name.
 const stills = Object.fromEntries(
 	robotShowcase.features
 		.filter((f) => existsSync(`public/showcase/robot/${f.id}-800.webp`))
 		.map((f) => [f.id, `/showcase/robot/${f.id}`]),
 );
+const chapter = (id: string) => board.chapters.find((c) => c.id === id)!;
+const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c.id === id) + 1) % board.chapters.length];
 ---
 
 <BaseLayout title={frcPage.seoTitle} description={entry.data.description}>
@@ -74,278 +73,438 @@ const stills = Object.fromEntries(
 		</dl>
 	</header>
 
-	<!-- The season in six prints: drag or flick the top one away, tap one to see it large (src/components/frc-photos.tsx). -->
-	<section class="wrapper grid items-center gap-12 pb-24 md:pb-32 lg:grid-cols-[1fr_1.1fr]" aria-labelledby="deck-heading">
-		<div class="flex flex-col gap-5" data-reveal>
-			<h2 id="deck-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]">{frcDeck.heading}</h2>
-			<p class="max-w-[52ch] text-lg text-muted-foreground">{frcDeck.text}</p>
-		</div>
-		<PhotoDeck client:visible />
-	</section>
-
-	<!-- The rookie season told by scrolling: the stage holds still while the scenes pass (src/components/frc-story.tsx). -->
-	<section class="wrapper pb-16 md:pb-24" aria-labelledby="story-heading">
-		<h2 id="story-heading" class="max-w-3xl font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]" data-reveal>{seasonStory.heading}</h2>
-		<p class="mt-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">{seasonStory.hint} ↓</p>
-		<SeasonStory client:visible={{ rootMargin: "600px" }} />
-	</section>
-
-	<FrcRobotReveal client:load src={entry.data.img} alt={entry.data.img_alt ?? ""} />
-
-	<!-- The 2026 robot in 3D, part by part: the robot turns to each part as its text scrolls past (src/components/showcase.tsx).
-	     The photo is the stage's picture until the 3D loads, without JavaScript, and when WebGL is unavailable. -->
-	<Showcase client:visible={{ rootMargin: "200px" }} model="robot" text={robotShowcase} stills={stills} className="pt-20 md:pt-28">
-		<img
-			src="/assets/FRCnew.jpg"
-			srcset={srcset("/assets/FRCnew.jpg")}
-			sizes="(min-width: 1024px) 55vw, 100vw"
-			alt={frcPage.model3d.fallbackAlt}
-			class="size-full rounded-xl object-cover object-[32%_68%]"
-			loading="lazy"
-		/>
-	</Showcase>
-
-	<div class="wrapper py-24 md:py-32">
-		<!-- Hydrates once the page is idle: it's below the fold, and #2026 deep links still work. -->
-		<FrcSeasons client:idle />
-	</div>
-
-	<!-- The swerve: drive the simulator, or point at the real chassis to light up its parts. -->
-	<section class="border-y bg-card/70" aria-labelledby="swerve-heading">
-		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
-			<div class="flex max-w-3xl flex-col gap-3" data-reveal>
-				<h2 id="swerve-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]">{swerveSim.heading}</h2>
-				<p class="text-lg text-muted-foreground" data-words>{swerveSim.text}</p>
-			</div>
-			<SwerveLab client:visible />
-		</div>
-	</section>
-
-	<HardwareStack />
-
-	<section class="border-t bg-card/70" aria-labelledby="team-heading">
-		<div class="wrapper flex flex-col gap-8 py-20 md:py-24">
-			<div class="flex max-w-2xl items-center gap-5" data-reveal>
-				<img
-					src={team.logo}
-					srcset={srcset(team.logo)}
-					sizes="80px"
-					alt=""
-					width="764"
-					height="764"
-					loading="lazy"
-					class="size-16 shrink-0 rounded-full object-cover ring-1 ring-border md:size-20"
-				/>
-				<div class="flex flex-col gap-2">
-					<h2 id="team-heading" class="font-wide text-3xl font-[850] md:text-4xl">{frcPage.about.headingPrefix} {team.number}</h2>
-					<p class="text-lg text-muted-foreground">{team.name}, {team.school}. {team.mission}.</p>
+	<!-- The pit board: everything about the team in one screen. A chapter on the side (on phones, along the top), a view
+	     inside it, and the detail a click away. Without JavaScript every chapter and view shows, one after another. -->
+	<section id="board" class="frc-board" aria-labelledby="board-heading" data-board>
+		<div class="wrapper py-8 md:py-10">
+			<div class="frc-board-grid">
+				<div class="frc-board-intro">
+					<h2 id="board-heading" class="font-wide text-[clamp(1.5rem,1.9vw,1.6rem)] font-[880] leading-[1.02]">{frcDeck.heading}</h2>
+					<p class="text-sm text-muted-foreground">{frcDeck.text}</p>
 				</div>
-			</div>
-			<ul class="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
-				{
-					team.focus.map((f) => (
-						<li class="flex flex-col gap-2 border-t py-6">
-							<DataIcon name={f.icon} className="size-6" strokeWidth={1.75} />
-							<h3 class="font-semiwide text-lg font-[760]">{f.title}</h3>
-							<p class="text-muted-foreground">{f.desc}</p>
-						</li>
-					))
-				}
-			</ul>
-			<figure class="m-0 flex flex-col gap-2 overflow-hidden" data-parallax>
-				<img
-					src={`/assets/frc/${teamPhoto.id}-640.webp`}
-					srcset={frcSrcset(teamPhoto)}
-					sizes="(min-width: 1280px) 1200px, 100vw"
-					alt={teamPhoto.alt}
-					width={teamPhoto.w}
-					height={teamPhoto.h}
-					loading="lazy"
-					decoding="async"
-					class="h-auto w-full rounded-2xl border"
-				/>
-				<figcaption class="flex justify-between font-mono text-xs uppercase tracking-wider text-muted-foreground">
-					<span>{teamPhoto.caption}</span><span>{teamPhoto.meta}</span>
-				</figcaption>
-			</figure>
-			<div class="mt-6 flex flex-col gap-8 border-t pt-12">
-				<div class="flex max-w-3xl flex-col gap-2" data-reveal>
-					<h3 class="font-wide text-2xl font-[850] md:text-3xl">{teamMore.subTeamsHeading}</h3>
-					<p class="text-lg text-muted-foreground" data-words>{teamMore.subTeamsIntro}</p>
-				</div>
-				<SubTeamPicker client:visible />
-				<div class="flex flex-col gap-4">
-					<div class="flex flex-wrap items-baseline justify-between gap-2">
-						<h4 class="font-semiwide text-xl font-[780]">{teamMore.joinHeading}</h4>
-						<p class="text-sm text-muted-foreground">{teamMore.meets}</p>
+				<nav class="frc-rail" aria-label={board.label}>
+					<div role="tablist" aria-orientation="vertical" aria-label={board.label}>
+						{board.chapters.map((c) => (
+							<button type="button" role="tab" id={`ct-${c.id}`} aria-controls={`ch-${c.id}`} data-chapter-tab={c.id}>
+								<span class="frc-rail-name">{c.name}</span>
+								<span class="frc-rail-figure">{c.figure}</span>
+							</button>
+						))}
 					</div>
-					<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
-						{
-							teamMore.join.map((j) => (
-								<li class="flex flex-col gap-2 border-t py-6">
-									<h5 class="font-semiwide text-lg font-[760]">{j.title}</h5>
-									<p class="text-muted-foreground">{j.text}</p>
-								</li>
-							))
-						}
-					</ul>
-					<p class="text-sm text-muted-foreground">{teamMore.joinNote}</p>
-				</div>
-			</div>
-			<!-- The values: each card reveals what it means when you point at it (always shown on touch screens). -->
-			<div class="mt-6 flex flex-col gap-8 border-t pt-12">
-				<h3 class="font-wide text-2xl font-[850] md:text-3xl" data-reveal>{teamMore.valuesHeading}</h3>
-				<ul class="grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
-					{
-						teamMore.values.map((v) => (
-							<li class="frc-value" tabindex="0" style={`--value:${v.colour}`}>
-								<h4 class="font-wide text-2xl font-[850]">{v.name}</h4>
-								<p>{v.text}</p>
-							</li>
-						))
-					}
-				</ul>
-				<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
-					{
-						teamMore.firstValues.map((v) => (
-							<li class="flex flex-col gap-3 rounded-2xl border surface p-6 md:p-8">
-								<p class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{teamMore.firstValueTag}</p>
-								<h4 class="font-wide text-[clamp(1.5rem,2.6vw,2rem)] font-[880] leading-tight">{v.name}</h4>
-								<p class="text-muted-foreground">{v.text}</p>
-							</li>
-						))
-					}
-				</ul>
-				<div class="flex flex-col gap-3">
-					<h4 class="font-semiwide text-xl font-[780]">{teamMore.conductHeading}</h4>
-					<ul class="flex flex-col">
-						{
-							teamMore.conduct.map((c) => (
-								<li class="frc-conduct" tabindex="0">
-									<span class="font-semibold">{c.ideal}</span>
-									<span class="frc-conduct-arrow" aria-hidden="true"></span>
-									<span class="frc-conduct-means">{c.means}</span>
-								</li>
-							))
-						}
-					</ul>
-				</div>
-			</div>
-			<div class="mt-6 border-t pt-12">
-				<Leadership
-					lead="frc"
-					heading={frcPage.about.leadershipHeading}
-					headingLevel="h3"
-					id="frc-leadership"
-					intro={frcPage.about.leadershipIntro}
-				/>
-			</div>
-		</div>
-	</section>
-
-	<!-- The workshop: how a student is certified on a machine, and the rules before anyone starts. -->
-	<section class="wrapper flex flex-col gap-12 py-20 md:py-28" aria-labelledby="workshop-heading">
-		<div class="grid items-end gap-8 lg:grid-cols-[1.2fr_1fr]">
-			<div class="flex flex-col gap-3" data-reveal>
-				<h2 id="workshop-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{workshop.heading}</h2>
-				<p class="text-lg text-muted-foreground">{workshop.intro}</p>
-			</div>
-			<figure class="m-0 flex flex-col gap-2 overflow-hidden" data-parallax>
-				<img
-					src={`/assets/frc/${workshopPhoto.id}-640.webp`}
-					srcset={frcSrcset(workshopPhoto)}
-					sizes="(min-width: 1024px) 40vw, 100vw"
-					alt={workshopPhoto.alt}
-					width={workshopPhoto.w}
-					height={workshopPhoto.h}
-					loading="lazy"
-					decoding="async"
-					class="aspect-[4/3] w-full rounded-2xl border object-cover"
-				/>
-				<figcaption class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{workshopPhoto.caption} · {workshopPhoto.meta}</figcaption>
-			</figure>
-		</div>
-		<CertPipeline client:visible />
-		<div class="flex flex-col gap-4">
-			<h3 class="font-semiwide text-xl font-[780]">{workshop.rulesHeading}</h3>
-			<dl class="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
-				{
-					workshop.rules.map((r) => (
-						<div class="flex flex-col gap-1 border-t py-4">
-							<dt class="font-semibold">{r.title}</dt>
-							<dd class="text-sm text-muted-foreground">{r.text}</dd>
+				</nav>
+				<div class="frc-panels">
+				<section class="frc-chapter" id="ch-2026" data-chapter="2026" role="tabpanel" aria-labelledby="ct-2026">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("2026").name}</h3>
+						{chapter("2026").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("2026").views.map((v) => (
+									<button type="button" role="tab" id={`vt-2026-${v.id}`} aria-controls={`v-2026-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-2026-story" data-view="story" role="tabpanel" aria-labelledby="vt-2026-story">
+						<SeasonSlides client:visible />
+					</div>
+					<div class="frc-view" id="v-2026-results" data-view="results" role="tabpanel" aria-labelledby="vt-2026-results">
+						<EventSheets client:visible />
+					</div>
+					<div class="frc-view" id="v-2026-game" data-view="game" role="tabpanel" aria-labelledby="vt-2026-game">
+						<SeasonGame client:visible />
+					</div>
+					<div class="frc-view" id="v-2026-timeline" data-view="timeline" role="tabpanel" aria-labelledby="vt-2026-timeline">
+						<SeasonTimeline client:visible />
+					</div>
+					<div class="frc-view" id="v-2026-photos" data-view="photos" role="tabpanel" aria-labelledby="vt-2026-photos">
+						<div class="grid items-start gap-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+							<PhotoDeck client:visible />
+							<div class="flex min-w-0 flex-col gap-3">
+								<h4 class="font-semiwide text-xl font-[780]">{rookieText.pitsHeading}</h4>
+								<Filmstrip client:visible ids={rookieText.pits} label={rookieText.pitsHeading} />
+							</div>
 						</div>
-					))
-				}
-			</dl>
-		</div>
-		<PhotoMosaic client:visible ids={workshop.photos} label={workshop.photosLabel} columns={4} />
-	</section>
-
-	<!-- Outreach: the team's programs beyond the field. -->
-	<section class="border-t bg-card/70" aria-labelledby="outreach-heading">
-		<div class="wrapper flex flex-col gap-12 py-20 md:py-28">
-			<div class="flex max-w-3xl flex-col gap-3" data-reveal>
-				<h2 id="outreach-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{outreach.heading}</h2>
-				<p class="text-lg text-muted-foreground">{outreach.intro}</p>
-			</div>
-			<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
-				{
-					outreach.programs.map((o) => (
-						<li class="frc-prog flex flex-col gap-2 rounded-xl border surface p-6 md:p-8" tabindex={o.more ? "0" : undefined}>
-							<p class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{o.tag}</p>
-							<h3 class="font-semiwide text-2xl font-[780]">{o.name}</h3>
-							<p class="text-muted-foreground">{o.text}</p>
-							{o.detail && <p class="text-sm">{o.detail}</p>}
-							{o.more && (
-								<>
-									<p class="frc-prog-hint font-mono text-xs uppercase tracking-wider text-muted-foreground" aria-hidden="true">{outreach.moreHint} +</p>
-									<dl class="frc-prog-more">
-										<div class="flex flex-col gap-2 pt-2">
-											{o.more.map((m) => (
-												<div class="grid gap-1 border-t pt-2 sm:grid-cols-[9rem_1fr]">
-													<dt class="text-sm font-semibold">{m.k}</dt>
-													<dd class="text-sm text-muted-foreground">{m.v}</dd>
-												</div>
-											))}
-										</div>
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("2026").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("2026").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-2027" data-chapter="2027" role="tabpanel" aria-labelledby="ct-2027">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("2027").name}</h3>
+						{chapter("2027").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("2027").views.map((v) => (
+									<button type="button" role="tab" id={`vt-2027-${v.id}`} aria-controls={`v-2027-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-2027-overview" data-view="overview" role="tabpanel" aria-labelledby="vt-2027-overview">
+						<Overview2027 client:visible />
+					</div>
+					<div class="frc-view" id="v-2027-road" data-view="road" role="tabpanel" aria-labelledby="vt-2027-road">
+						<Road2027 client:visible />
+					</div>
+					<div class="frc-view" id="v-2027-goals" data-view="goals" role="tabpanel" aria-labelledby="vt-2027-goals">
+						<Goals2027 client:visible />
+					</div>
+					<div class="frc-view" id="v-2027-weekly" data-view="weekly" role="tabpanel" aria-labelledby="vt-2027-weekly">
+						<div class="flex flex-col gap-3">
+							<p class="text-muted-foreground">{season2027More.weeksIntro}</p>
+							<WeekPosts client:visible />
+						</div>
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("2027").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("2027").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-robot" data-chapter="robot" role="tabpanel" aria-labelledby="ct-robot">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("robot").name}</h3>
+						{chapter("robot").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("robot").views.map((v) => (
+									<button type="button" role="tab" id={`vt-robot-${v.id}`} aria-controls={`v-robot-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-robot-kitbot" data-view="kitbot" role="tabpanel" aria-labelledby="vt-robot-kitbot">
+						<KitBotView client:visible />
+					</div>
+					<div class="frc-view" id="v-robot-parts" data-view="parts" role="tabpanel" aria-labelledby="vt-robot-parts">
+						<PartsView client:visible stills={stills} />
+					</div>
+					<div class="frc-view" id="v-robot-swerve" data-view="swerve" role="tabpanel" aria-labelledby="vt-robot-swerve">
+						<div class="flex flex-col gap-4">
+							<p class="max-w-3xl text-muted-foreground">{swerveSim.text}</p>
+							<SwerveLab client:visible />
+						</div>
+					</div>
+					<div class="frc-view" id="v-robot-hardware" data-view="hardware" role="tabpanel" aria-labelledby="vt-robot-hardware">
+						<HardwareView client:visible />
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("robot").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("robot").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-team" data-chapter="team" role="tabpanel" aria-labelledby="ct-team">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("team").name}</h3>
+						{chapter("team").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("team").views.map((v) => (
+									<button type="button" role="tab" id={`vt-team-${v.id}`} aria-controls={`v-team-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-team-about" data-view="about" role="tabpanel" aria-labelledby="vt-team-about">
+						<div class="grid items-center gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+							<div class="flex flex-col gap-4">
+								<div class="flex items-center gap-4">
+									<img src={team.logo} srcset={srcset(team.logo)} sizes="64px" alt="" width="764" height="764" loading="lazy" class="size-14 shrink-0 rounded-full object-cover ring-1 ring-border" />
+									<h4 class="font-wide text-[clamp(1.6rem,2.6vw,2.25rem)] font-[880] leading-tight">{frcPage.about.headingPrefix} {team.number}</h4>
+								</div>
+								<p>{team.name}, {team.school}. {team.mission}.</p>
+								<ul class="grid gap-x-5 sm:grid-cols-2">
+									{team.focus.map((x) => (
+										<li class="flex gap-3 border-t py-3">
+											<DataIcon name={x.icon} className="mt-0.5 size-5 shrink-0" strokeWidth={1.75} />
+											<span class="text-sm"><span class="font-semibold">{x.title}.</span> <span class="text-muted-foreground">{x.desc}</span></span>
+										</li>
+									))}
+								</ul>
+							</div>
+							<figure class="m-0 flex flex-col gap-2">
+								<img src={`/assets/frc/${teamPhoto.id}-640.webp`} srcset={frcSrcset(teamPhoto)} sizes="(min-width: 1024px) 50vw, 100vw" alt={teamPhoto.alt} width={teamPhoto.w} height={teamPhoto.h} loading="lazy" decoding="async" class="h-auto w-full rounded-xl" />
+								<figcaption class="text-sm text-muted-foreground">{teamPhoto.caption} · {teamPhoto.meta}</figcaption>
+							</figure>
+						</div>
+					</div>
+					<div class="frc-view" id="v-team-subteams" data-view="subteams" role="tabpanel" aria-labelledby="vt-team-subteams">
+						<div class="flex flex-col gap-5">
+							<p class="max-w-3xl text-muted-foreground">{teamMore.subTeamsIntro}</p>
+							<SubTeamPicker client:visible />
+							<div class="grid gap-x-6 md:grid-cols-[auto_1fr_1fr]">
+								<p class="border-t py-3 font-semibold">{teamMore.joinHeading}<span class="block text-sm font-normal text-muted-foreground">{teamMore.meets}</span></p>
+								{teamMore.join.map((j) => (
+									<p class="border-t py-3 text-sm"><span class="font-semibold">{j.title}.</span> <span class="text-muted-foreground">{j.text}</span></p>
+								))}
+							</div>
+							<p class="text-sm text-muted-foreground">{teamMore.joinNote}</p>
+						</div>
+					</div>
+					<div class="frc-view" id="v-team-values" data-view="values" role="tabpanel" aria-labelledby="vt-team-values">
+						<div class="flex flex-col gap-5">
+							<ul class="grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-3">
+								{teamMore.values.map((v) => (
+									<li class="frc-value" tabindex="0" style={`--value:${v.colour}`}>
+										<h5 class="font-wide text-2xl font-[850]">{v.name}</h5>
+										<p>{v.text}</p>
+									</li>
+								))}
+							</ul>
+							<ul class="grid gap-4 md:grid-cols-2">
+								{teamMore.firstValues.map((v) => (
+									<li class="flex flex-col gap-1.5 rounded-xl border surface p-5">
+										<p class="text-sm text-muted-foreground">{teamMore.firstValueTag}</p>
+										<h5 class="font-wide text-xl font-[850]">{v.name}</h5>
+										<p class="text-sm text-muted-foreground">{v.text}</p>
+									</li>
+								))}
+							</ul>
+						</div>
+					</div>
+					<div class="frc-view" id="v-team-leadership" data-view="leadership" role="tabpanel" aria-labelledby="vt-team-leadership">
+						<Leadership lead="frc" heading={frcPage.about.leadershipHeading} headingLevel="h4" id="frc-leadership" intro={frcPage.about.leadershipIntro} />
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("team").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("team").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-workshop" data-chapter="workshop" role="tabpanel" aria-labelledby="ct-workshop">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("workshop").name}</h3>
+						{chapter("workshop").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("workshop").views.map((v) => (
+									<button type="button" role="tab" id={`vt-workshop-${v.id}`} aria-controls={`v-workshop-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-workshop-path" data-view="path" role="tabpanel" aria-labelledby="vt-workshop-path">
+						<div class="flex flex-col gap-4">
+							<p class="max-w-3xl text-muted-foreground">{workshop.intro}</p>
+							<CertPipeline client:visible />
+						</div>
+					</div>
+					<div class="frc-view" id="v-workshop-rules" data-view="rules" role="tabpanel" aria-labelledby="vt-workshop-rules">
+						<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
+							<figure class="m-0 flex flex-col gap-2">
+								<img src={`/assets/frc/${workshopPhoto.id}-640.webp`} srcset={frcSrcset(workshopPhoto)} sizes="(min-width: 1024px) 40vw, 100vw" alt={workshopPhoto.alt} width={workshopPhoto.w} height={workshopPhoto.h} loading="lazy" decoding="async" class="aspect-[4/3] w-full rounded-xl object-cover" />
+								<figcaption class="text-sm text-muted-foreground">{workshopPhoto.caption} · {workshopPhoto.meta}</figcaption>
+							</figure>
+							<div class="flex flex-col gap-5">
+								<div class="flex flex-col gap-2">
+									<h4 class="font-semiwide text-xl font-[780]">{workshop.rulesHeading}</h4>
+									<dl class="grid gap-x-6 sm:grid-cols-2">
+										{workshop.rules.map((r) => (
+											<div class="flex flex-col gap-0.5 border-t py-3">
+												<dt class="font-semibold">{r.title}</dt>
+												<dd class="text-sm text-muted-foreground">{r.text}</dd>
+											</div>
+										))}
 									</dl>
-								</>
-							)}
-						</li>
-					))
-				}
-			</ul>
-			<div class="flex flex-col gap-4">
-				<h3 class="font-semiwide text-xl font-[780]">{outreach.photosLabel}</h3>
-				<PhotoMosaic client:visible ids={outreach.photos} label={outreach.photosLabel} />
-				<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="frc-view" id="v-workshop-conduct" data-view="conduct" role="tabpanel" aria-labelledby="vt-workshop-conduct">
+						<ul class="flex flex-col">
+							{teamMore.conduct.map((c) => (
+								<li class="frc-conduct" tabindex="0">
+									<span class="font-wide text-lg font-[820]">{c.ideal}</span>
+									<span class="frc-conduct-arrow" aria-hidden="true"></span>
+									<span class="frc-conduct-means text-lg">{c.means}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+					<div class="frc-view" id="v-workshop-photos" data-view="photos" role="tabpanel" aria-labelledby="vt-workshop-photos">
+						<Filmstrip client:visible ids={workshop.photos} label={workshop.photosLabel} />
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("workshop").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("workshop").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-outreach" data-chapter="outreach" role="tabpanel" aria-labelledby="ct-outreach">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("outreach").name}</h3>
+						{chapter("outreach").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("outreach").views.map((v) => (
+									<button type="button" role="tab" id={`vt-outreach-${v.id}`} aria-controls={`v-outreach-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-outreach-programs" data-view="programs" role="tabpanel" aria-labelledby="vt-outreach-programs">
+						<div class="flex flex-col gap-4">
+							<p class="max-w-3xl text-muted-foreground">{outreach.intro}</p>
+							<ul class="grid gap-4 md:grid-cols-2">
+								{outreach.programs.map((o) => (
+									<li class="frc-prog flex flex-col gap-1.5 rounded-xl border surface p-5" tabindex={o.more ? "0" : undefined}>
+										<p class="text-sm text-muted-foreground">{o.tag}</p>
+										<h5 class="font-semiwide text-xl font-[780]">{o.name}</h5>
+										<p class="text-sm text-muted-foreground">{o.text}</p>
+										{o.detail && <p class="text-sm">{o.detail}</p>}
+										{o.more && (
+											<>
+												<p class="frc-prog-hint text-sm font-semibold" aria-hidden="true">{outreach.moreHint} +</p>
+												<dl class="frc-prog-more">
+													<div class="flex flex-col gap-1.5 pt-1">
+														{o.more.map((m) => (
+															<div class="grid gap-1 border-t pt-1.5 sm:grid-cols-[8.5rem_1fr]">
+																<dt class="text-sm font-semibold">{m.k}</dt>
+																<dd class="text-sm text-muted-foreground">{m.v}</dd>
+															</div>
+														))}
+													</div>
+												</dl>
+											</>
+										)}
+									</li>
+								))}
+							</ul>
+						</div>
+					</div>
+					<div class="frc-view" id="v-outreach-robokids" data-view="robokids" role="tabpanel" aria-labelledby="vt-outreach-robokids">
+						<div class="flex flex-col gap-3">
+							<Filmstrip client:visible ids={outreach.photos} label={outreach.photosLabel} />
+							<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
+						</div>
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("outreach").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("outreach").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				<section class="frc-chapter" id="ch-partner" data-chapter="partner" role="tabpanel" aria-labelledby="ct-partner">
+					<header class="frc-chapter-head">
+						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("partner").name}</h3>
+						{chapter("partner").views.length > 1 && (
+							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
+								{chapter("partner").views.map((v) => (
+									<button type="button" role="tab" id={`vt-partner-${v.id}`} aria-controls={`v-partner-${v.id}`} data-view-tab={v.id}>{v.name}</button>
+								))}
+							</div>
+						)}
+					</header>
+					<div class="frc-view" id="v-partner-support" data-view="support" role="tabpanel" aria-labelledby="vt-partner-support">
+						<div class="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+							<div class="flex flex-col items-start gap-4">
+								<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
+									<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{partner.tag}
+								</span>
+								<h4 class="font-wide text-[clamp(1.75rem,3vw,2.5rem)] font-[880] leading-[1.02]">{partner.heading}</h4>
+								<p class="text-muted-foreground">{partner.text}</p>
+								<h5 class="mt-2 font-semibold">{partner.backHeading}</h5>
+								<ul class="flex w-full flex-col">
+									{partner.back.map((b) => <li class="frc-check border-t py-2 text-sm">{b}</li>)}
+								</ul>
+								<button type="button" data-email-open data-subject={partner.emailSubject} class={buttonVariants({ variant: "signal", size: "lg" })}>{partner.button}</button>
+							</div>
+							<SupportPicker client:visible />
+						</div>
+					</div>
+					<footer class="frc-chapter-foot">
+						<a href={`#${nextOf("partner").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("partner").name}</span> <span aria-hidden="true">→</span></a>
+					</footer>
+				</section>
+				</div>
 			</div>
 		</div>
 	</section>
 
-	<!-- Partnering with the team: gifts in kind only. -->
-	<section class="wrapper flex flex-col gap-10 py-20 md:py-28" aria-labelledby="partner-heading">
-		<div class="flex max-w-3xl flex-col items-start gap-4" data-reveal>
-			<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
-				<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{partner.tag}
-			</span>
-			<h2 id="partner-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{partner.heading}</h2>
-			<p class="text-lg text-muted-foreground">{partner.text}</p>
-		</div>
-		<SupportPicker client:visible />
-		<div class="grid items-start gap-8 md:grid-cols-[1fr_auto]">
-			<div class="flex flex-col gap-3">
-				<h3 class="font-semiwide text-xl font-[780]">{partner.backHeading}</h3>
-				<ul class="grid gap-x-8 sm:grid-cols-2">
-					{partner.back.map((b) => <li class="frc-check border-t py-3">{b}</li>)}
-				</ul>
-			</div>
-			<button type="button" data-email-open data-subject={partner.emailSubject} class={buttonVariants({ variant: "signal", size: "lg" })}>
-				{partner.button}
-			</button>
-		</div>
-	</section>
+	<script>
+		// The pit board: shows one chapter and one view at a time, follows the address (#2026, #2026-results, #robot,
+		// a part of the robot like #intake), and is driven by mouse, touch and keyboard (arrow keys, Home, End).
+		const PARTS = ["overview", "intake", "hopper", "shooter", "drivetrain", "electronics"];
+		function initBoard() {
+			const root = document.querySelector<HTMLElement>("[data-board]");
+			if (!root || root.dataset.ready) return;
+			root.dataset.ready = "1";
+			const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-chapter-tab]")];
+			const chapters = [...root.querySelectorAll<HTMLElement>("[data-chapter]")];
+			const viewOf: Record<string, string> = {};
+			for (const ch of chapters) viewOf[ch.dataset.chapter!] = ch.querySelector<HTMLElement>("[data-view]")!.dataset.view!;
+			let current = chapters[0].dataset.chapter!;
+
+			const show = (id: string, view?: string, opts: { focus?: HTMLElement | null; scroll?: boolean; write?: boolean } = {}) => {
+				const ch = chapters.find((c) => c.dataset.chapter === id);
+				if (!ch) return;
+				if (view && ch.querySelector(`[data-view="${view}"]`)) viewOf[id] = view;
+				const changed = id !== current;
+				current = id;
+				for (const t of tabs) {
+					const on = t.dataset.chapterTab === id;
+					t.setAttribute("aria-selected", String(on));
+					t.tabIndex = on ? 0 : -1;
+				}
+				for (const c of chapters) c.hidden = c !== ch;
+				for (const v of ch.querySelectorAll<HTMLElement>("[data-view]")) v.hidden = v.dataset.view !== viewOf[id];
+				for (const vt of ch.querySelectorAll<HTMLButtonElement>("[data-view-tab]")) {
+					const on = vt.dataset.viewTab === viewOf[id];
+					vt.setAttribute("aria-selected", String(on));
+					vt.tabIndex = on ? 0 : -1;
+				}
+				if (changed) ch.dataset.enter = String(Date.now());
+				opts.focus?.focus();
+				if (opts.write !== false) {
+					const first = ch.querySelector<HTMLElement>("[data-view]")!.dataset.view;
+					history.replaceState(null, "", `#${viewOf[id] === first ? id : `${id}-${viewOf[id]}`}`);
+				}
+				// On a phone the board is taller than the screen: bring the chapter's top into view.
+				if (opts.scroll) {
+					const top = ch.getBoundingClientRect().top;
+					if (top < 0 || top > innerHeight * 0.6) ch.scrollIntoView({ block: "start", behavior: document.documentElement.classList.contains("motion") ? "smooth" : "auto" });
+				}
+			};
+
+			const fromHash = (scroll: boolean) => {
+				const h = decodeURIComponent(location.hash.slice(1));
+				if (!h) return false;
+				if (PARTS.includes(h)) return show("robot", "parts", { scroll, write: false }), true;
+				for (const ch of chapters) {
+					const id = ch.dataset.chapter!;
+					if (h === id) return show(id, undefined, { scroll }), true;
+					if (h.startsWith(id + "-")) return show(id, h.slice(id.length + 1), { scroll }), true;
+				}
+				return false;
+			};
+
+			root.classList.add("is-live");
+			const deep = fromHash(false);
+			if (!deep) show(current, undefined, { write: false });
+			else requestAnimationFrame(() => root.scrollIntoView({ block: "start" }));
+			addEventListener("hashchange", () => fromHash(true));
+
+			const move = (list: HTMLButtonElement[], i: number, key: string, vertical: boolean) => {
+				const back = vertical ? ["ArrowUp", "ArrowLeft"] : ["ArrowLeft"];
+				const fwd = vertical ? ["ArrowDown", "ArrowRight"] : ["ArrowRight"];
+				if (back.includes(key)) return (i - 1 + list.length) % list.length;
+				if (fwd.includes(key)) return (i + 1) % list.length;
+				if (key === "Home") return 0;
+				if (key === "End") return list.length - 1;
+				return -1;
+			};
+			tabs.forEach((t, i) => {
+				t.addEventListener("click", () => show(t.dataset.chapterTab!, undefined, { scroll: innerWidth < 1024 }));
+				t.addEventListener("keydown", (e) => {
+					const j = move(tabs, i, e.key, true);
+					if (j < 0) return;
+					e.preventDefault();
+					show(tabs[j].dataset.chapterTab!, undefined, { focus: tabs[j] });
+				});
+			});
+			for (const ch of chapters) {
+				const vts = [...ch.querySelectorAll<HTMLButtonElement>("[data-view-tab]")];
+				vts.forEach((vt, i) => {
+					vt.addEventListener("click", () => show(ch.dataset.chapter!, vt.dataset.viewTab));
+					vt.addEventListener("keydown", (e) => {
+						const j = move(vts, i, e.key, false);
+						if (j < 0) return;
+						e.preventDefault();
+						show(ch.dataset.chapter!, vts[j].dataset.viewTab, { focus: vts[j] });
+					});
+				});
+			}
+		}
+		initBoard();
+		document.addEventListener("astro:page-load", initBoard);
+	</script>
 
 	<NextChapter current={"frc"} />
 	<ContactSection />
@@ -426,15 +585,6 @@ const stills = Object.fromEntries(
 		color: #fff;
 		pointer-events: none;
 	}
-	/* The mosaic: each print a little crooked (--tilt), straight and lifted on hover or focus. */
-	.frc-mosaic .frc-pin {
-		transform: rotate(var(--tilt, 0deg));
-		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-	}
-	.frc-mosaic .frc-pin:hover,
-	.frc-mosaic .frc-pin:focus-within {
-		transform: rotate(0deg) translateY(-4px) scale(1.02);
-	}
 	/* The build season strips: side by side, the open one wide; stacked on phones. */
 	.frc-strips {
 		display: flex;
@@ -483,7 +633,7 @@ const stills = Object.fromEntries(
 	.frc-posts {
 		display: grid;
 		grid-auto-flow: column;
-		grid-auto-columns: min(20rem, 82%);
+		grid-auto-columns: min(15.5rem, 78%);
 		gap: 1.25rem;
 		overflow-x: auto;
 		scroll-snap-type: x mandatory;
@@ -497,6 +647,273 @@ const stills = Object.fromEntries(
 		border: 1px solid var(--border);
 		background: var(--card);
 	}
+	/* ---------- The pit board ---------- */
+	.frc-board {
+		border-block: 1px solid var(--border);
+		background: color-mix(in oklab, var(--card) 60%, transparent);
+	}
+	.frc-board-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 1rem;
+	}
+	.frc-board-intro {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	@media (min-width: 1024px) {
+		.frc-board-grid {
+			grid-template-columns: 15.5rem minmax(0, 1fr);
+			grid-template-rows: auto 1fr;
+			column-gap: 1.75rem;
+			row-gap: 1.25rem;
+			align-items: start;
+		}
+		.frc-board-intro {
+			grid-column: 1;
+			grid-row: 1;
+		}
+		.frc-rail {
+			grid-column: 1;
+			grid-row: 2;
+		}
+		.frc-panels {
+			grid-column: 2;
+			grid-row: 1 / span 2;
+		}
+	}
+	/* The rail: a column of chapters on wide screens; a row that swipes, stuck under the header, on phones. */
+	.frc-rail {
+		position: sticky;
+		top: 4.5rem;
+		z-index: 20;
+		margin-inline: -1rem;
+		padding: 0.5rem 1rem;
+		background: var(--background);
+	}
+	.frc-rail [role="tablist"] {
+		display: flex;
+		gap: 0.5rem;
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+	@media (min-width: 1024px) {
+		.frc-rail {
+			top: 6rem;
+			margin: 0;
+			padding: 0;
+			background: none;
+		}
+		.frc-rail [role="tablist"] {
+			flex-direction: column;
+			overflow: visible;
+		}
+	}
+	.frc-rail button {
+		flex: none;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.1rem;
+		min-height: 44px;
+		padding: 0.6rem 1rem;
+		border: 1px solid var(--border);
+		border-radius: 0.9rem;
+		background: var(--card);
+		text-align: left;
+		transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s, color 0.2s, border-color 0.2s;
+	}
+	.frc-rail-name {
+		font-weight: 760;
+		font-stretch: 112%;
+		font-size: 1rem;
+		line-height: 1.2;
+	}
+	.frc-rail-figure {
+		font-size: 0.8rem;
+		color: var(--muted-foreground);
+	}
+	@media (min-width: 1024px) {
+		.frc-rail [role="tablist"] {
+			gap: 0.4rem;
+		}
+		.frc-rail button {
+			padding: 0.55rem 1rem;
+		}
+		.frc-rail-name {
+			font-size: 1.05rem;
+		}
+		.frc-rail button:hover:not([aria-selected="true"]) {
+			transform: translateX(5px);
+			border-color: color-mix(in oklab, var(--foreground) 40%, transparent);
+		}
+	}
+	.frc-rail button[aria-selected="true"] {
+		background: var(--foreground);
+		border-color: var(--foreground);
+		color: var(--background);
+	}
+	.frc-rail button[aria-selected="true"] .frc-rail-figure {
+		color: color-mix(in oklab, var(--background) 78%, transparent);
+	}
+	/* A chapter: its name and its views on top, the view, and the way on to the next chapter. */
+	.frc-chapter {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		border: 1px solid var(--border);
+		border-radius: 1.25rem;
+		background: var(--card);
+		padding: 1.25rem;
+	}
+	@media (min-width: 1024px) {
+		.frc-chapter {
+			min-height: min(46rem, calc(100svh - 8.5rem));
+			padding: 1.75rem 2rem;
+		}
+	}
+	.frc-chapter[hidden],
+	.frc-view[hidden] {
+		display: none !important;
+	}
+	.frc-chapter-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1.5rem;
+	}
+	.frc-views {
+		display: flex;
+		gap: 0.25rem;
+		max-width: 100%;
+		overflow-x: auto;
+		padding: 0.25rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--foreground) 7%, transparent);
+		scrollbar-width: none;
+	}
+	.frc-views button {
+		flex: none;
+		min-height: 40px;
+		padding: 0 1rem;
+		border-radius: 999px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		color: color-mix(in oklab, var(--foreground) 78%, transparent);
+		transition: background 0.2s, color 0.2s;
+	}
+	.frc-views button:hover {
+		color: var(--foreground);
+	}
+	.frc-views button[aria-selected="true"] {
+		background: var(--foreground);
+		color: var(--background);
+	}
+	.frc-chapter-foot {
+		margin-top: auto;
+		display: flex;
+		justify-content: flex-end;
+		border-top: 1px solid var(--border);
+		padding-top: 0.75rem;
+	}
+	.frc-next {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
+		color: var(--muted-foreground);
+	}
+	.frc-next span:not([aria-hidden]) {
+		font-weight: 700;
+		color: var(--foreground);
+	}
+	.frc-next span[aria-hidden] {
+		transition: transform 0.25s;
+	}
+	.frc-next:hover span[aria-hidden] {
+		transform: translateX(4px);
+	}
+	/* Before the script runs (or without it) every chapter and view is shown in turn; the tabs would do nothing. */
+	.frc-board:not(.is-live) :is(.frc-rail, .frc-views) {
+		display: none;
+	}
+	.frc-board:not(.is-live) .frc-panels {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+	/* A chapter or view coming in rises into place. */
+	.frc-board.is-live .frc-chapter:not([hidden]),
+	.frc-board.is-live .frc-view:not([hidden]) {
+		animation: frc-enter 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	@keyframes frc-enter {
+		from {
+			opacity: 0;
+			transform: translateY(12px);
+		}
+	}
+	.frc-board .frc-strips {
+		height: clamp(11rem, 18vw, 15rem);
+	}
+	/* A row of prints that scrolls sideways (src/components/frc-views.tsx Filmstrip). */
+	.frc-film {
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: min(16rem, 72%);
+		gap: 1rem;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		padding-bottom: 0.5rem;
+		scrollbar-width: thin;
+	}
+	.frc-film > li {
+		height: clamp(16rem, 30vw, 25rem);
+		scroll-snap-align: start;
+	}
+	/* The drawer: a sheet from the right (the browser's own <dialog>). */
+	.frc-drawer {
+		position: fixed;
+		inset: 0 0 0 auto;
+		width: min(34rem, 100vw);
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 1.5rem;
+		overflow-y: auto;
+		border: 0;
+		border-left: 1px solid var(--border);
+		background: var(--card);
+		color: var(--foreground);
+	}
+	.frc-drawer[open] {
+		animation: frc-drawer-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-drawer::backdrop {
+		background: rgb(4 7 14 / 0.55);
+	}
+	@keyframes frc-drawer-in {
+		from {
+			transform: translateX(40px);
+			opacity: 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.frc-board.is-live .frc-chapter:not([hidden]),
+		.frc-board.is-live .frc-view:not([hidden]),
+		.frc-drawer[open] {
+			animation: none;
+		}
+	}
+	html.reduce-motion .frc-board.is-live .frc-chapter:not([hidden]),
+	html.reduce-motion .frc-board.is-live .frc-view:not([hidden]),
+	html.reduce-motion .frc-drawer[open] {
+		animation: none;
+	}
+
 	/* Small round or pill buttons (src/components/frc-story.tsx). */
 	.frc-chip-btn {
 		display: inline-grid;
@@ -581,9 +998,9 @@ const stills = Object.fromEntries(
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		gap: 2.5rem;
-		min-height: 11rem;
-		padding: 1.5rem;
+		gap: 1.25rem;
+		min-height: 8rem;
+		padding: 1.25rem;
 		background: var(--card);
 		outline-offset: -3px;
 		transition: background 0.3s;
@@ -709,7 +1126,6 @@ const stills = Object.fromEntries(
 		color: #4ade80;
 	}
 	@media (prefers-reduced-motion: reduce) {
-		.frc-mosaic .frc-pin,
 		.frc-strips > li,
 		.frc-pick,
 		.frc-value::before,
@@ -722,7 +1138,6 @@ const stills = Object.fromEntries(
 			animation: none;
 		}
 	}
-	html.reduce-motion .frc-mosaic .frc-pin,
 	html.reduce-motion .frc-strips > li,
 	html.reduce-motion .frc-pick,
 	html.reduce-motion .frc-value::before,
