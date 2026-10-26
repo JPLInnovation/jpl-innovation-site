@@ -107,6 +107,23 @@ export const workSection = {
 	allWorkLink: "All work",
 };
 
+/**
+ * Proof, in numbers: under "Selected work" (Classic) and on the wall of projects (3D). Only the labels are here: every
+ * number is counted from the site's own data (src/components/ProofCounts.astro), so it can never be out of date.
+ * Under each drone's numbers is its project title (src/text/projects/*.md).
+ */
+export const proof = {
+	/** Read by screen readers before the numbers. */
+	label: "In numbers",
+	projects: "projects documented",
+	parts: "drone parts",
+	budget: "drone budget",
+	budgetNote: "estimate, parts not yet priced excluded",
+	steps: "build steps done",
+	/** Between the two numbers: "4 of 6". */
+	of: "of",
+};
+
 /** "Our mission", the standards list, and "How we work". */
 export const mission = {
 	label: "Our mission",
