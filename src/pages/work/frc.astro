@@ -17,8 +17,9 @@ import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
 // and the 3D robot's part by part text: src/text/showcase/robot.ts
-import { frcDeck, frcPhotos, frcPage, outreach, partner, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
+import { frcDeck, frcPhotos, frcPage, outreach, partner, seasonStory, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
 import { PhotoDeck, PhotoMosaic } from "@/components/frc-photos";
+import { CertPipeline, SeasonStory, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
 import { robotShowcase } from "@/text/showcase/robot";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
@@ -82,6 +83,13 @@ const stills = Object.fromEntries(
 		<PhotoDeck client:visible />
 	</section>
 
+	<!-- The rookie season told by scrolling: the stage holds still while the scenes pass (src/components/frc-story.tsx). -->
+	<section class="wrapper pb-16 md:pb-24" aria-labelledby="story-heading">
+		<h2 id="story-heading" class="max-w-3xl font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]" data-reveal>{seasonStory.heading}</h2>
+		<p class="mt-3 font-mono text-xs uppercase tracking-wider text-muted-foreground">{seasonStory.hint} ↓</p>
+		<SeasonStory client:visible={{ rootMargin: "600px" }} />
+	</section>
+
 	<FrcRobotReveal client:load src={entry.data.img} alt={entry.data.img_alt ?? ""} />
 
 	<!-- The 2026 robot in 3D, part by part: the robot turns to each part as its text scrolls past (src/components/showcase.tsx).
@@ -101,6 +109,17 @@ const stills = Object.fromEntries(
 		<!-- Hydrates once the page is idle: it's below the fold, and #2026 deep links still work. -->
 		<FrcSeasons client:idle />
 	</div>
+
+	<!-- The swerve: drive the simulator, or point at the real chassis to light up its parts. -->
+	<section class="border-y bg-card/70" aria-labelledby="swerve-heading">
+		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
+			<div class="flex max-w-3xl flex-col gap-3" data-reveal>
+				<h2 id="swerve-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]">{swerveSim.heading}</h2>
+				<p class="text-lg text-muted-foreground" data-words>{swerveSim.text}</p>
+			</div>
+			<SwerveLab client:visible />
+		</div>
+	</section>
 
 	<HardwareStack />
 
@@ -133,7 +152,7 @@ const stills = Object.fromEntries(
 					))
 				}
 			</ul>
-			<figure class="m-0 flex flex-col gap-2" data-reveal>
+			<figure class="m-0 flex flex-col gap-2 overflow-hidden" data-parallax>
 				<img
 					src={`/assets/frc/${teamPhoto.id}-640.webp`}
 					srcset={frcSrcset(teamPhoto)}
@@ -152,34 +171,65 @@ const stills = Object.fromEntries(
 			<div class="mt-6 flex flex-col gap-8 border-t pt-12">
 				<div class="flex max-w-3xl flex-col gap-2" data-reveal>
 					<h3 class="font-wide text-2xl font-[850] md:text-3xl">{teamMore.subTeamsHeading}</h3>
-					<p class="text-lg text-muted-foreground">{teamMore.subTeamsIntro}</p>
+					<p class="text-lg text-muted-foreground" data-words>{teamMore.subTeamsIntro}</p>
 				</div>
-				<ol class="frc-subteams grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
-					{
-						teamMore.subTeams.map((s, i) => (
-							<li class="flex flex-col gap-2 bg-card p-6">
-								<span class="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
-								<h4 class="font-semiwide text-lg font-[760]">{s.name}</h4>
-								<p class="text-muted-foreground">{s.role}</p>
-							</li>
-						))
-					}
-					<li class="flex flex-col justify-end gap-3 bg-card p-6">
-						<h4 class="font-semiwide text-lg font-[760]">{teamMore.joinHeading}</h4>
+				<SubTeamPicker client:visible />
+				<div class="flex flex-col gap-4">
+					<div class="flex flex-wrap items-baseline justify-between gap-2">
+						<h4 class="font-semiwide text-xl font-[780]">{teamMore.joinHeading}</h4>
 						<p class="text-sm text-muted-foreground">{teamMore.meets}</p>
-					</li>
-				</ol>
-				<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
+					</div>
+					<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
+						{
+							teamMore.join.map((j) => (
+								<li class="flex flex-col gap-2 border-t py-6">
+									<h5 class="font-semiwide text-lg font-[760]">{j.title}</h5>
+									<p class="text-muted-foreground">{j.text}</p>
+								</li>
+							))
+						}
+					</ul>
+					<p class="text-sm text-muted-foreground">{teamMore.joinNote}</p>
+				</div>
+			</div>
+			<!-- The values: each card reveals what it means when you point at it (always shown on touch screens). -->
+			<div class="mt-6 flex flex-col gap-8 border-t pt-12">
+				<h3 class="font-wide text-2xl font-[850] md:text-3xl" data-reveal>{teamMore.valuesHeading}</h3>
+				<ul class="grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
 					{
-						teamMore.join.map((j) => (
-							<li class="flex flex-col gap-2 border-t py-6">
-								<h4 class="font-semiwide text-lg font-[760]">{j.title}</h4>
-								<p class="text-muted-foreground">{j.text}</p>
+						teamMore.values.map((v) => (
+							<li class="frc-value" tabindex="0" style={`--value:${v.colour}`}>
+								<h4 class="font-wide text-2xl font-[850]">{v.name}</h4>
+								<p>{v.text}</p>
 							</li>
 						))
 					}
 				</ul>
-				<p class="text-sm text-muted-foreground">{teamMore.joinNote}</p>
+				<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
+					{
+						teamMore.firstValues.map((v) => (
+							<li class="flex flex-col gap-3 rounded-2xl border surface p-6 md:p-8">
+								<p class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{teamMore.firstValueTag}</p>
+								<h4 class="font-wide text-[clamp(1.5rem,2.6vw,2rem)] font-[880] leading-tight">{v.name}</h4>
+								<p class="text-muted-foreground">{v.text}</p>
+							</li>
+						))
+					}
+				</ul>
+				<div class="flex flex-col gap-3">
+					<h4 class="font-semiwide text-xl font-[780]">{teamMore.conductHeading}</h4>
+					<ul class="flex flex-col">
+						{
+							teamMore.conduct.map((c) => (
+								<li class="frc-conduct" tabindex="0">
+									<span class="font-semibold">{c.ideal}</span>
+									<span class="frc-conduct-arrow" aria-hidden="true"></span>
+									<span class="frc-conduct-means">{c.means}</span>
+								</li>
+							))
+						}
+					</ul>
+				</div>
 			</div>
 			<div class="mt-6 border-t pt-12">
 				<Leadership
@@ -200,7 +250,7 @@ const stills = Object.fromEntries(
 				<h2 id="workshop-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{workshop.heading}</h2>
 				<p class="text-lg text-muted-foreground">{workshop.intro}</p>
 			</div>
-			<figure class="m-0 flex flex-col gap-2" data-reveal>
+			<figure class="m-0 flex flex-col gap-2 overflow-hidden" data-parallax>
 				<img
 					src={`/assets/frc/${workshopPhoto.id}-640.webp`}
 					srcset={frcSrcset(workshopPhoto)}
@@ -215,40 +265,19 @@ const stills = Object.fromEntries(
 				<figcaption class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{workshopPhoto.caption} · {workshopPhoto.meta}</figcaption>
 			</figure>
 		</div>
-		<div class="flex flex-col gap-6">
-			<h3 class="font-semiwide text-xl font-[780]">{workshop.stepsHeading}</h3>
-			<ol class="frc-path" data-reveal-group>
+		<CertPipeline client:visible />
+		<div class="flex flex-col gap-4">
+			<h3 class="font-semiwide text-xl font-[780]">{workshop.rulesHeading}</h3>
+			<dl class="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
 				{
-					workshop.steps.map((s, i) => (
-						<li>
-							<span class="frc-path-dot" aria-hidden="true">{i + 1}</span>
-							<h4 class="font-semibold">{s.title}</h4>
-							<p class="text-sm text-muted-foreground">{s.text}</p>
-						</li>
+					workshop.rules.map((r) => (
+						<div class="flex flex-col gap-1 border-t py-4">
+							<dt class="font-semibold">{r.title}</dt>
+							<dd class="text-sm text-muted-foreground">{r.text}</dd>
+						</div>
 					))
 				}
-			</ol>
-		</div>
-		<div class="grid gap-10 lg:grid-cols-2">
-			<div class="flex flex-col gap-4">
-				<h3 class="font-semiwide text-xl font-[780]">{workshop.rulesHeading}</h3>
-				<dl class="grid gap-x-8 sm:grid-cols-2">
-					{
-						workshop.rules.map((r) => (
-							<div class="flex flex-col gap-1 border-t py-4">
-								<dt class="font-semibold">{r.title}</dt>
-								<dd class="text-sm text-muted-foreground">{r.text}</dd>
-							</div>
-						))
-					}
-				</dl>
-			</div>
-			<div class="flex flex-col gap-4">
-				<h3 class="font-semiwide text-xl font-[780]">{workshop.checklistHeading}</h3>
-				<ul class="flex flex-col">
-					{workshop.checklist.map((c) => <li class="frc-check border-t py-3">{c}</li>)}
-				</ul>
-			</div>
+			</dl>
 		</div>
 		<PhotoMosaic client:visible ids={workshop.photos} label={workshop.photosLabel} columns={4} />
 	</section>
@@ -263,11 +292,26 @@ const stills = Object.fromEntries(
 			<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
 				{
 					outreach.programs.map((o) => (
-						<li class="flex flex-col gap-2 rounded-xl border surface p-6 md:p-8">
+						<li class="frc-prog flex flex-col gap-2 rounded-xl border surface p-6 md:p-8" tabindex={o.more ? "0" : undefined}>
 							<p class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{o.tag}</p>
 							<h3 class="font-semiwide text-2xl font-[780]">{o.name}</h3>
 							<p class="text-muted-foreground">{o.text}</p>
 							{o.detail && <p class="text-sm">{o.detail}</p>}
+							{o.more && (
+								<>
+									<p class="frc-prog-hint font-mono text-xs uppercase tracking-wider text-muted-foreground" aria-hidden="true">{outreach.moreHint} +</p>
+									<dl class="frc-prog-more">
+										<div class="flex flex-col gap-2 pt-2">
+											{o.more.map((m) => (
+												<div class="grid gap-1 border-t pt-2 sm:grid-cols-[9rem_1fr]">
+													<dt class="text-sm font-semibold">{m.k}</dt>
+													<dd class="text-sm text-muted-foreground">{m.v}</dd>
+												</div>
+											))}
+										</div>
+									</dl>
+								</>
+							)}
 						</li>
 					))
 				}
@@ -289,18 +333,7 @@ const stills = Object.fromEntries(
 			<h2 id="partner-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{partner.heading}</h2>
 			<p class="text-lg text-muted-foreground">{partner.text}</p>
 		</div>
-		<ul class="grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-5" data-reveal-group>
-			{
-				partner.kinds.map((k) => (
-					<li class="flex flex-col gap-3 bg-card p-6">
-						<h3 class="font-semiwide text-lg font-[760]">{k.name}</h3>
-						<ul class="flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground marker:text-foreground/40">
-							{k.items.map((item) => <li>{item}</li>)}
-						</ul>
-					</li>
-				))
-			}
-		</ul>
+		<SupportPicker client:visible />
 		<div class="grid items-start gap-8 md:grid-cols-[1fr_auto]">
 			<div class="flex flex-col gap-3">
 				<h3 class="font-semiwide text-xl font-[780]">{partner.backHeading}</h3>
@@ -464,46 +497,202 @@ const stills = Object.fromEntries(
 		border: 1px solid var(--border);
 		background: var(--card);
 	}
-	/* The certification path: six numbered steps along one line. */
-	.frc-path {
+	/* Small round or pill buttons (src/components/frc-story.tsx). */
+	.frc-chip-btn {
+		display: inline-grid;
+		place-items: center;
+		min-width: 44px;
+		height: 44px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		font-size: 0.875rem;
+		font-weight: 600;
+		transition: border-color 0.2s, background 0.2s;
+	}
+	.frc-chip-btn:hover:not(:disabled),
+	.frc-chip-btn.is-on {
+		border-color: var(--foreground);
+	}
+	.frc-chip-btn.is-on {
+		background: var(--foreground);
+		color: var(--background);
+	}
+	.frc-chip-btn:disabled {
+		opacity: 0.4;
+	}
+	/* A pick list (sub-teams, kinds of support): the one picked is filled, the one pointed at nudges right. */
+	.frc-pick {
+		min-height: 48px;
+		background: var(--card);
+		transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s, background 0.2s, color 0.2s;
+	}
+	.frc-pick:hover {
+		transform: translateX(4px);
+		border-color: color-mix(in oklab, var(--foreground) 40%, transparent);
+	}
+	.frc-pick.is-on {
+		background: var(--foreground);
+		color: var(--background);
+		border-color: var(--foreground);
+	}
+	.frc-pick.is-on span {
+		color: inherit;
+	}
+	/* Markers on the chassis photo: a ring that grows when pointed at or picked. */
+	.frc-hotspot {
+		position: absolute;
+		width: 44px;
+		height: 44px;
+		transform: translate(-50%, -50%);
 		display: grid;
-		gap: 1.5rem;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		place-items: center;
 	}
-	@media (min-width: 640px) {
-		.frc-path {
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-			row-gap: 2.5rem;
+	.frc-hotspot i {
+		width: 18px;
+		height: 18px;
+		border-radius: 999px;
+		background: #5ce1ff;
+		box-shadow: 0 0 0 4px rgb(92 225 255 / 0.35), 0 2px 8px rgb(0 0 0 / 0.5);
+		transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+		animation: frc-ping 2.4s ease-out infinite;
+	}
+	.frc-hotspot-alt i {
+		background: #f4b62a;
+		box-shadow: 0 0 0 4px rgb(244 182 42 / 0.35), 0 2px 8px rgb(0 0 0 / 0.5);
+	}
+	.frc-hotspot:hover i,
+	.frc-hotspot:focus-visible i,
+	.frc-hotspot.is-on i {
+		transform: scale(1.4);
+	}
+	@keyframes frc-ping {
+		0% {
+			box-shadow: 0 0 0 0 rgb(92 225 255 / 0.55), 0 2px 8px rgb(0 0 0 / 0.5);
+		}
+		70%,
+		100% {
+			box-shadow: 0 0 0 14px rgb(92 225 255 / 0), 0 2px 8px rgb(0 0 0 / 0.5);
 		}
 	}
-	@media (min-width: 1024px) {
-		.frc-path {
-			grid-template-columns: repeat(6, minmax(0, 1fr));
-		}
-	}
-	.frc-path > li {
+	/* The values: a colour bar sweeps in and the meaning rises into view when pointed at (always shown on touch). */
+	.frc-value {
 		position: relative;
 		display: flex;
 		flex-direction: column;
-		gap: 0.35rem;
-		border-top: 2px solid var(--foreground);
-		padding-top: 1.25rem;
+		justify-content: space-between;
+		gap: 2.5rem;
+		min-height: 11rem;
+		padding: 1.5rem;
+		background: var(--card);
+		outline-offset: -3px;
+		transition: background 0.3s;
 	}
-	.frc-path > li:last-child {
-		border-top-color: var(--accent);
-	}
-	.frc-path-dot {
+	.frc-value::before {
+		content: "";
 		position: absolute;
-		top: -0.95rem;
-		left: 0;
+		inset: 0 0 auto;
+		height: 4px;
+		background: var(--value);
+		transform: scaleX(0.12);
+		transform-origin: left;
+		transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-value p {
+		color: var(--muted-foreground);
+		transition: opacity 0.35s, transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-value:hover,
+	.frc-value:focus-visible {
+		background: color-mix(in oklab, var(--value) 10%, var(--card));
+	}
+	.frc-value:hover::before,
+	.frc-value:focus-visible::before {
+		transform: scaleX(1);
+	}
+	@media (hover: hover) {
+		.frc-value p {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		.frc-value:hover p,
+		.frc-value:focus-visible p {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	/* The conduct rows: the ideal, an arrow that draws across, and what it means in practice. */
+	.frc-conduct {
 		display: grid;
-		place-items: center;
-		width: 1.75rem;
-		height: 1.75rem;
-		border-radius: 999px;
+		gap: 0.25rem 1.5rem;
+		align-items: center;
+		border-top: 1px solid var(--border);
+		padding: 1rem 0.5rem;
+		outline-offset: -3px;
+		transition: background 0.25s;
+	}
+	@media (min-width: 768px) {
+		.frc-conduct {
+			grid-template-columns: minmax(0, 1fr) 6rem minmax(0, 1fr);
+		}
+	}
+	.frc-conduct-arrow {
+		position: relative;
+		height: 2px;
+		background: color-mix(in oklab, var(--foreground) 15%, transparent);
+	}
+	.frc-conduct-arrow::before {
+		content: "";
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 0;
 		background: var(--foreground);
-		color: var(--background);
-		font: 700 0.8rem/1 ui-monospace, monospace;
+		transition: width 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-conduct-means {
+		color: var(--muted-foreground);
+		transition: color 0.25s;
+	}
+	.frc-conduct:hover,
+	.frc-conduct:focus-visible {
+		background: color-mix(in oklab, var(--foreground) 4%, transparent);
+	}
+	.frc-conduct:hover .frc-conduct-arrow::before,
+	.frc-conduct:focus-visible .frc-conduct-arrow::before {
+		width: 100%;
+	}
+	.frc-conduct:hover .frc-conduct-means,
+	.frc-conduct:focus-visible .frc-conduct-means {
+		color: var(--foreground);
+	}
+	@media (max-width: 767px) {
+		.frc-conduct-arrow {
+			display: none;
+		}
+	}
+	/* Outreach programs with more to say: the extra rows open when pointed at, focused or tapped. */
+	.frc-prog {
+		transition: border-color 0.25s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-prog-more {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-prog-more > div {
+		overflow: hidden;
+	}
+	.frc-prog:hover,
+	.frc-prog:focus-within {
+		border-color: color-mix(in oklab, var(--foreground) 35%, transparent);
+	}
+	.frc-prog:hover .frc-prog-more,
+	.frc-prog:focus-within .frc-prog-more {
+		grid-template-rows: 1fr;
+	}
+	.frc-prog:hover .frc-prog-hint,
+	.frc-prog:focus-within .frc-prog-hint {
+		opacity: 0;
 	}
 	.frc-check {
 		position: relative;
@@ -521,12 +710,28 @@ const stills = Object.fromEntries(
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.frc-mosaic .frc-pin,
-		.frc-strips > li {
+		.frc-strips > li,
+		.frc-pick,
+		.frc-value::before,
+		.frc-value p,
+		.frc-conduct-arrow::before,
+		.frc-prog-more {
 			transition: none;
+		}
+		.frc-hotspot i {
+			animation: none;
 		}
 	}
 	html.reduce-motion .frc-mosaic .frc-pin,
-	html.reduce-motion .frc-strips > li {
+	html.reduce-motion .frc-strips > li,
+	html.reduce-motion .frc-pick,
+	html.reduce-motion .frc-value::before,
+	html.reduce-motion .frc-value p,
+	html.reduce-motion .frc-conduct-arrow::before,
+	html.reduce-motion .frc-prog-more {
 		transition: none;
+	}
+	html.reduce-motion .frc-hotspot i {
+		animation: none;
 	}
 </style>
