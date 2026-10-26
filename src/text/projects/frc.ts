@@ -473,21 +473,20 @@ export const swerveSim = {
  * chapter and view directly (/work/frc/#intake opens a part of the robot).
  */
 export const board = {
+	/** Over the board. */
+	heading: 'Inside Team 10951',
+	intro: 'The season, the robot’s specs, the team, the workshop and our outreach: pick a chapter.',
 	label: 'Chapters',
 	viewsLabel: 'Views',
 	nextLabel: 'Next:',
 	chapters: [
 		{ id: '2026', name: 'Rookie season', figure: '2026 · two regionals', views: [
-			{ id: 'story', name: 'The story' },
-			{ id: 'results', name: 'Results' },
 			{ id: 'game', name: 'The game' },
 			{ id: 'timeline', name: 'Timeline' },
 			{ id: 'photos', name: 'Photos' },
 		] },
-		{ id: 'robot', name: 'The robot', figure: 'KitBot · swerve · 3D', views: [
+		{ id: 'robot', name: 'Robot specs', figure: 'KitBot · hardware', views: [
 			{ id: 'kitbot', name: '2026 robot' },
-			{ id: 'parts', name: 'Part by part' },
-			{ id: 'swerve', name: 'Drive our swerve' },
 			{ id: 'hardware', name: 'Hardware' },
 		] },
 		{ id: '2027', name: 'Season two', figure: '2027 · Hawaii & Marmara', views: [
@@ -512,12 +511,65 @@ export const board = {
 			{ id: 'programs', name: 'Programs' },
 			{ id: 'robokids', name: 'RoboKids' },
 		] },
-		{ id: 'partner', name: 'Partner', figure: 'Gifts in kind', views: [{ id: 'support', name: 'Support us' }] },
 	],
 	kitbot: { specsButton: 'Specs and test results', close: 'Close', photosLabel: 'Photos of our 2026 KitBot' },
-	parts: { spin: 'Turn it in 3D', still: 'Back to the picture', partsLabel: 'Parts of the robot' },
 	hardware: { tabs: { motors: 'Motors', control: 'Control', vision: 'Vision' } },
 };
+
+/**
+ * The KitBot chapter (src/components/FrcChapter.astro): the 2026 robot in 3D, scrolled through like the drone's
+ * chapter. Beats 1 to 3 open it; beat 4 is the part-by-part stops (their words: src/text/showcase/robot.ts). Every
+ * figure is from the season data above (the robot's stats and its test results).
+ */
+export const robotChapter = {
+	mapLabel: 'Chapters of the KitBot',
+	skip: 'Skip the robot',
+	loading: 'Loading the KitBot',
+	beats: {
+		prologue: { number: '01', title: 'Prologue' },
+		stakes: { number: '02', title: 'The stakes' },
+		reveal: { number: '03', title: 'The reveal' },
+		anatomy: { number: '04', title: 'Anatomy' },
+	},
+	/** The status strip at the top: the robot's real story, the team's city and its live local time. */
+	hud: {
+		state: 'ROOKIE ROBOT · 2026 SEASON',
+		detail: 'COMPETED AT 2 REGIONALS',
+		city: 'Ho Chi Minh City',
+		timeZone: 'Asia/Ho_Chi_Minh',
+		timeLabel: 'Local time in',
+	},
+	/** Beat 1: the robot in the dark, and the line it stands for. */
+	prologue: { statement: 'Designed, built and programmed by students.' },
+	/** Beat 2: the number the robot was tuned for (season2026.robot.metrics). */
+	stakes: {
+		label: 'Autonomous routine',
+		value: '95%',
+		unit: 'repeatable',
+		secondary: 'over 50+ trials',
+		source: 'Tuned until the 15-second autonomous routine worked 95% of the time.',
+		aside: 'Reliability first: a robot that scores 80% reliably beats one that scores 95% once and fails the next.',
+	},
+	/** Beat 3: the name, what it is, its numbers and where it raced. */
+	reveal: {
+		status: 'Competed in Vancouver and Istanbul',
+		kicker: 'Team 10951’s 2026 robot',
+		name: 'The KitBot',
+		intro: 'The standard KitBot platform, modified and tuned by our team. Follow a ball of FUEL as you scroll: the intake pulls it off the floor, the hopper holds it, the feeder and launcher send it up the hood and out.',
+		facts: [
+			{ icon: 'cpu', label: 'Total mass', value: '140 lb' },
+			{ icon: 'lightning', label: 'Top speed', value: '12 ft/s' },
+			{ icon: 'target', label: 'Pushing force', value: '180 lb' },
+			{ icon: 'calendar', label: 'Avg. cycle time', value: '2.3 s' },
+		],
+		specsLink: 'Specs and test results',
+		specsHref: '#robot',
+		resultsLink: 'How it did',
+		resultsHref: '#results',
+	},
+	/** Beat 4's opening figure. */
+	anatomy: { value: '6', label: 'wheels, one KitBot' },
+} as const;
 
 /** The photo viewer's buttons. */
 export const lightboxText = { close: 'Close', prev: 'Previous', next: 'Next', open: 'Open photo:' };
