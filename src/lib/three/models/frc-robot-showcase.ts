@@ -36,7 +36,12 @@ const ORANGE = "#f88701"; // the signal light
  * it sits is worked out for the stage, so the whole robot always fits and no part is cut off
  * (src/lib/three/showcase.ts).
  */
-const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
+const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number }> = {
+	// The FRC chapter's opening beats (src/components/FrcChapter.astro, ./frc-chapter.ts): low at the front in the dark,
+	// close on the launcher and its hood, then the other three-quarter view as the lights come up.
+	prologue: { at: [0, -0.25, 0.2], from: [0.42, 0.1, 1.5], label: [0, 1.2, 0] },
+	stakes: { at: [0, 0.2, 0.3], from: [0.75, 0.38, 0.9], label: [0.6, 1.25, 0.4], distance: 0.95 },
+	reveal: { at: [0, -0.1, 0], from: [-1.25, 0.7, 1.3], label: [-0.55, 1.1, 0.6] },
 	overview: { at: [0, -0.15, 0], from: [1.18, 0.78, 1.3], label: [0.55, 1.1, -0.6] }, // the 3D viewer's three-quarter view
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
 	hopper: { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] }, // high at the back, looking down into it
@@ -51,7 +56,9 @@ const LABEL_GAP = 0.02; // metres outside a face, for label coordinates of ±1
 export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0], fov: 34, orbit: false };
 
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
-const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, shooter: 2.65 };
+const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, shooter: 2.65, stakes: 2.65, reveal: 2 };
+/** Stops that frame another stop's parts (the chapter's stakes look at the launcher). */
+const LOOKS_AT: Record<string, string> = { stakes: "shooter" };
 
 const inside = (p: RobotPart, lo: V3, hi: V3) => [0, 1, 2].every((d) => p.lo[d] >= lo[d] && p.hi[d] <= hi[d]);
 const touches = (a: RobotPart, b: RobotPart, gap: number) =>
@@ -99,13 +106,14 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 
 	const stops: ShowcaseStop[] = ids.map((id) => {
 		const framing = FRAMING[id] ?? FRAMING.overview;
-		const own = id === "overview" ? undefined : groups.get(id);
+		const own = id === "overview" ? undefined : groups.get(LOOKS_AT[id] ?? id);
 		const box = around(own?.length ? own : all);
 		const target = point(box, framing.at ?? [0, 0, 0]);
 		return {
 			target,
 			camera: target.map((v, d) => v + framing.from[d]) as V3,
 			label: point(box, framing.label, LABEL_GAP),
+			distance: framing.distance,
 		};
 	});
 
@@ -118,7 +126,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	].filter((g) => g.stop >= 0);
 	for (const g of ghosts) for (const m of g.materials) m.transparent = true;
 	// FUEL belongs to the intake, the hopper and the shooter: it leaves the picture for the drivetrain and electronics.
-	const fuelStops = ["overview", "intake", "hopper", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
+	const fuelStops = ["stakes", "reveal", "overview", "intake", "hopper", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
 	let fuel = true;
 	// The opening beat: one ball of FUEL rides the whole way through as the section scrolls into place (off the floor,
 	// up the intake, into the hopper, through the feeder and launcher, up the hood and out), then the loop takes over.

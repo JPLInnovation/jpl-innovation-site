@@ -1,0 +1,1169 @@
+---
+/**
+ * The KitBot chapter on the FRC page, built like the drone chapter (src/components/DroneChapter.astro): one pinned,
+ * full-window 3D stage that the page's own scroll moves the camera through (src/lib/three/models/frc-chapter.ts), with
+ * each beat's words as real HTML over it. The stage stays put for about nine and a half screens of scroll, then lets go
+ * into the rest of the page.
+ *
+ *   01 Prologue   the KitBot low in the dark, lit from behind; what it stands for
+ *   02 Stakes     the camera closes in on the launcher: the autonomous routine, 95% repeatable
+ *   03 Reveal     the lights come up: the name, what it is, its numbers, where it raced
+ *   04 Anatomy    the part-by-part stops, the rest of the robot fading back
+ *
+ * Every stop is one screen of native scroll (nothing is hijacked). Keyboard: arrows and Page Up/Down move one stop while
+ * the chapter is on screen; "Skip the robot" goes past it. The chapter map at the side has a dot per beat and a tick per
+ * part-by-part stop.
+ *
+ * Classic (data-read, decided before the first paint): the same words as one ordinary page in the same order, the
+ * first three beats on a still dark picture, the parts as cards with renders of the real model (public/showcase/robot/,
+ * scripts/showcase-stills.py). Used on phones (under 768 px), with reduced motion, without WebGL, when Classic is
+ * chosen, and when the 3D gives up (too slow, a lost GPU, an error, or not up within 30 s).
+ *
+ * All the words: src/text/projects/frc.ts (robotChapter) and src/text/showcase/robot.ts.
+ */
+// @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
+import { existsSync } from "node:fs";
+import BeatLabel from "@/components/BeatLabel.astro";
+import StatusTag from "@/components/StatusTag.astro";
+import { buttonVariants } from "@/components/ui/button";
+import { DataIcon } from "@/lib/icons";
+import { robotChapter as chapter } from "@/text/projects/frc";
+import { robotShowcase as parts } from "@/text/showcase/robot";
+
+const beats = chapter.beats;
+const [first, ...rest] = parts.features;
+/** The stops in order (the camera's, src/lib/three/models/frc-chapter.ts STOPS): beats 1 to 3, then the parts. */
+const stops = ["prologue", "stakes", "reveal", ...parts.features.map((f) => f.id)];
+/** The small label in the 3D view on each stop: none on beats 1 to 3. */
+const titles = ["", "", "", ...parts.features.map((f) => f.title)];
+const beatList = [beats.prologue, beats.stakes, beats.reveal, beats.anatomy];
+/** Classic's picture of a stop, from the real model (scripts/showcase-stills.py), when there is one. */
+const still = (id: string) =>
+	existsSync(`public/showcase/robot/${id}-800.webp`)
+		? { src: `/showcase/robot/${id}-800.webp`, srcset: `/showcase/robot/${id}-800.webp 800w, /showcase/robot/${id}.webp 1600w` }
+		: undefined;
+const overviewStill = still("overview");
+---
+
+<div id="kitbot" class="kch showcase" data-kch data-read data-stops={JSON.stringify(stops)} data-titles={JSON.stringify(titles)} style={`--stops: ${stops.length}`}>
+	<script is:inline data-astro-rerun>
+		// Before the first paint: the 3D chapter unless Classic was chosen, the window is under 768 px, motion is reduced
+		// or there is no WebGL. In 3D the whole chapter has the dark theme's colours, in both themes.
+		(() => {
+			const el = document.currentScript.parentElement;
+			const root = document.documentElement;
+			const capture = new URLSearchParams(location.search).get("showcase") === "capture";
+			const read =
+				!capture &&
+				(root.classList.contains("read-mode") ||
+					root.classList.contains("reduce-motion") ||
+					matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches);
+			if (read) return;
+			const gl = document.createElement("canvas").getContext("webgl2") || document.createElement("canvas").getContext("webgl");
+			if (!gl) return;
+			gl.getExtension("WEBGL_lose_context")?.loseContext();
+			el.removeAttribute("data-read");
+			el.classList.add("dark");
+			if (capture) el.setAttribute("data-capture", "");
+			setTimeout(() => {
+				if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
+					el.setAttribute("data-read", "");
+					el.classList.remove("dark");
+					console.warn("KitBot chapter: the 3D did not start in time, showing the plain page.");
+				}
+			}, 30000);
+		})();
+	</script>
+	<a class="kch-skip" href="#after-kitbot">{chapter.skip}</a>
+
+	<div class="kch-track">
+		<div class="kch-pin">
+			<div class="kch-bg" aria-hidden="true">
+				<div class="kch-bd kch-bd-arena"></div>
+				<div class="kch-bd kch-bd-field"></div>
+				<div class="kch-bd kch-bd-pits"></div>
+			</div>
+			<div class="kch-stage" data-kch-stage>
+				<canvas role="img" aria-label={parts.modelLabel}></canvas>
+			</div>
+			<div class="kch-veil" aria-hidden="true"></div>
+			<div class="kch-frame" aria-hidden="true">
+				<span class="kch-corner kch-tl"></span><span class="kch-corner kch-tr"></span><span class="kch-corner kch-bl"></span><span class="kch-corner kch-br"></span>
+			</div>
+			<div class="kch-frame kch-aim" aria-hidden="true">
+				<svg class="kch-cross" viewBox="-20 -20 40 40"><path d="M0-20v12M0 8v12M-20 0h12M8 0h12" fill="none" stroke="currentColor" stroke-width="1.6"></path><circle r="11" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"></circle></svg>
+			</div>
+
+			<div class="kch-hud" aria-hidden="true">
+				<p class="kch-hud-left">
+					<span class="kch-hud-state"><span class="kch-hud-dot"></span>{chapter.hud.state}</span>
+					<span class="kch-hud-step">{chapter.hud.detail}</span>
+				</p>
+				<p class="kch-hud-right">
+					<span>{chapter.hud.city} <time class="kch-hud-time" data-kch-clock={chapter.hud.timeZone}>--:--:--</time></span>
+					<span class="kch-hud-count"><span data-kch-count>01</span> / {beatList.length.toString().padStart(2, "0")}</span>
+				</p>
+			</div>
+
+			<nav class="kch-map" aria-label={chapter.mapLabel}>
+				<ol>
+					{
+						beatList.map((beat, b) => (
+							<li>
+								<a href={`#${stops[b]}`} data-goto={b} data-beat={b}>
+									<span class="kch-map-dot" aria-hidden="true" />
+									<span class="kch-map-n">{beat.number}</span>
+									<span class="kch-map-title">{beat.title}</span>
+								</a>
+								{b === 3 && (
+									<ol class="kch-ticks">
+										{parts.features.map((f, i) => (
+											<li>
+												<a href={`#${f.id}`} data-goto={3 + i} aria-label={`${beat.number} ${beat.title}: ${f.title}`}>
+													<span class="kch-map-title" aria-hidden="true">{f.title}</span>
+												</a>
+											</li>
+										))}
+									</ol>
+								)}
+							</li>
+						))
+					}
+				</ol>
+			</nav>
+
+			<div class="kch-gate" data-kch-gate hidden>
+				<p class="kch-gate-label">{chapter.loading}</p>
+				<div class="kch-gate-bar" aria-hidden="true"><span></span></div>
+			</div>
+
+			<div class="kch-panels">
+				<div class="kch-band dark">
+					<!-- 01 Prologue -->
+					<section id="prologue" class="kch-panel" data-stop="0" aria-labelledby="kitbot-prologue-label">
+						<BeatLabel id="kitbot-prologue-label" beat={beats.prologue} />
+						<p class="kch-classic-hud">
+							<span class="kch-hud-state"><span class="kch-hud-dot" aria-hidden="true"></span>{chapter.hud.state}</span>
+							<span>{chapter.hud.detail}</span>
+							<span>
+								<span aria-hidden="true">{chapter.hud.city}</span>
+								<span class="sr-only">{chapter.hud.timeLabel} {chapter.hud.city}:</span>
+								<time class="kch-hud-time" data-kch-clock={chapter.hud.timeZone}>--:--:--</time>
+							</span>
+						</p>
+						<p class="kch-statement font-wide">{chapter.prologue.statement}</p>
+					</section>
+
+					<!-- 02 The stakes -->
+					<section id="stakes" class="kch-panel" data-stop="1" aria-labelledby="kitbot-stakes-label">
+						<BeatLabel id="kitbot-stakes-label" beat={beats.stakes} />
+						<p class="kch-stat-label">{chapter.stakes.label}</p>
+						<p class="kch-stat font-wide"><span>{chapter.stakes.value}</span> <span class="kch-stat-unit">{chapter.stakes.unit}</span></p>
+						<p class="kch-stat-secondary font-wide">{chapter.stakes.secondary}</p>
+						<p class="kch-stat-source">{chapter.stakes.source}</p>
+						<p class="kch-aside">{chapter.stakes.aside}</p>
+					</section>
+
+					<!-- 03 The reveal -->
+					<header id="reveal" class="kch-panel kch-reveal" data-stop="2" aria-labelledby="kitbot-reveal-label">
+						<BeatLabel id="kitbot-reveal-label" beat={beats.reveal} />
+						<div><StatusTag>{chapter.reveal.status}</StatusTag></div>
+						<h2 class="font-wide"><span class="kch-kicker">{chapter.reveal.kicker}</span> {chapter.reveal.name}</h2>
+						<p class="kch-intro">{chapter.reveal.intro}</p>
+						<dl class="kch-facts">
+							{
+								chapter.reveal.facts.map((f) => (
+									<div>
+										<dt>
+											<DataIcon name={f.icon} className="size-4" />
+											{f.label}
+										</dt>
+										<dd>{f.value}</dd>
+									</div>
+								))
+							}
+						</dl>
+						<div class="kch-actions">
+							<a href={chapter.reveal.specsHref} class={buttonVariants({ variant: "signal", size: "lg" })}>{chapter.reveal.specsLink}</a>
+							<a href={chapter.reveal.resultsHref} class={buttonVariants({ variant: "outline", size: "lg" })}>{chapter.reveal.resultsLink}</a>
+						</div>
+						<p class="kch-note">{parts.note}</p>
+						{overviewStill && <img class="kch-still" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />}
+					</header>
+				</div>
+
+				<!-- 04 Anatomy: the parts (Classic: cards with renders of the real model) -->
+				<div class="kch-parts">
+					<section id={first.id} class="kch-panel showcase-feature" data-stop="3" aria-labelledby="kitbot-anatomy-label">
+						<BeatLabel id="kitbot-anatomy-label" beat={beats.anatomy} />
+						<p class="kch-stat kch-stat-small font-wide"><span>{chapter.anatomy.value}</span> <span class="kch-stat-unit">{chapter.anatomy.label}</span></p>
+						<h3 class="kch-parts-heading font-wide">{parts.heading}</h3>
+						<h4 class="kch-part-title font-semiwide">{first.title}</h4>
+						<p>{first.text}</p>
+						<dl class="kch-part-facts">
+							{first.facts.map((f) => <div><dt>{f.label}</dt><dd>{f.value}</dd></div>)}
+						</dl>
+					</section>
+					{
+						rest.map((f, i) => {
+							const s = still(f.id);
+							return (
+								<section id={f.id} class="kch-panel showcase-feature" data-stop={4 + i} aria-labelledby={`kitbot-part-${f.id}`}>
+									<h4 id={`kitbot-part-${f.id}`} class="kch-part-title font-semiwide">{f.title}</h4>
+									<p>{f.text}</p>
+									<dl class="kch-part-facts">
+										{f.facts.map((x) => <div><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
+									</dl>
+									{s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />}
+								</section>
+							);
+						})
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+	<p class="sr-only" aria-live="polite" data-kch-live></p>
+</div>
+<div id="after-kitbot" class="kch-after" tabindex="-1"></div>
+
+<style is:global>
+	/* ---------- Both modes ---------- */
+	.kch .chapter-label {
+		font: 600 0.8rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+	.kch .chapter-label-n {
+		color: var(--foreground);
+		margin-right: 0.6em;
+	}
+	.kch-panel {
+		color: var(--foreground);
+		scroll-margin-top: 5rem;
+	}
+	.kch-hud-state {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.kch-hud-dot {
+		width: 0.55em;
+		height: 0.55em;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 80%, transparent);
+	}
+	.kch-hud-time {
+		display: inline-block;
+		min-width: 8ch;
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	.kch-statement {
+		max-width: 16ch;
+		font-weight: 860;
+		font-size: clamp(2rem, 5vw, 3.5rem);
+		line-height: 1.02;
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+	}
+	.kch-stat-label {
+		font: 600 0.85rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+	.kch-stat {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 0.3em;
+		font-weight: 900;
+		font-size: clamp(4rem, 15vw, 9rem);
+		line-height: 0.86;
+		letter-spacing: -0.03em;
+		font-variant-numeric: tabular-nums;
+	}
+	.kch-stat > span:first-child {
+		white-space: nowrap;
+	}
+	.kch-stat-small {
+		font-size: clamp(2.75rem, 8vw, 5rem);
+	}
+	.kch-stat-unit {
+		font-size: 0.32em;
+		font-weight: 760;
+		letter-spacing: 0;
+		color: var(--muted-foreground);
+	}
+	.kch-stat-secondary {
+		font-size: clamp(1.4rem, 3vw, 2.25rem);
+		font-weight: 780;
+		color: var(--muted-foreground);
+	}
+	.kch-stat-source,
+	.kch-aside {
+		max-width: 46ch;
+		font-size: 1.125rem;
+	}
+	.kch-stat-source {
+		color: var(--muted-foreground);
+	}
+	.kch-reveal h2 {
+		font-size: clamp(2.8rem, 8vw, 6.25rem);
+		font-weight: 900;
+		line-height: 0.94;
+	}
+	.kch-kicker {
+		display: block;
+		margin-bottom: 0.15em;
+		font-size: 0.36em;
+		font-weight: 720;
+		color: var(--muted-foreground);
+	}
+	.kch-intro {
+		max-width: 56ch;
+		font-size: 1.125rem;
+	}
+	.kch-facts {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.25rem 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--border);
+	}
+	@media (min-width: 40rem) {
+		.kch-facts {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+	.kch-facts dt {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.kch-facts dd {
+		font-weight: 600;
+	}
+	.kch-team {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.25rem;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.kch-team a {
+		font-weight: 500;
+		color: var(--foreground);
+	}
+	.kch-team a:hover {
+		text-decoration: underline;
+	}
+	.kch-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+	}
+	.kch-note,
+	.kch-legend {
+		max-width: 48ch;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.kch-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.25rem;
+	}
+	.kch-legend > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.kch-swatch {
+		width: 1.25rem;
+		height: 0.375rem;
+		border-radius: 999px;
+	}
+	.kch-parts-heading {
+		font-size: clamp(2rem, 4.5vw, 3.25rem);
+		font-weight: 850;
+	}
+	.kch-parts-intro {
+		max-width: 56ch;
+		font-size: 1.125rem;
+		color: var(--muted-foreground);
+	}
+	.kch-part-title {
+		font-size: 1.5rem;
+		font-weight: 780;
+	}
+	.kch-part-facts {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem 1.5rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--border);
+	}
+	.kch-part-facts dt {
+		font-size: 0.8rem;
+		color: var(--muted-foreground);
+	}
+	.kch-part-facts dd {
+		font-weight: 600;
+	}
+	.kch-skip {
+		position: absolute;
+		left: 1rem;
+		z-index: 60;
+		translate: 0 -200%;
+		padding: 0.6rem 1rem;
+		border-radius: 999px;
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: 600;
+	}
+	.kch-skip:focus-visible {
+		translate: 0 0.5rem;
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	/* ---------- Classic: an ordinary page, in the same order ---------- */
+	.kch[data-read] :is(.kch-bg, .kch-stage, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate) {
+		display: none;
+	}
+	.kch[data-read] .kch-band {
+		padding-bottom: 10rem;
+		/* The still gradient: the 3D's colours, fading into the page. */
+		background:
+			linear-gradient(to bottom, rgb(3 10 16 / 0.35), rgb(3 10 16 / 0.6) 60%, #030a10 calc(100% - 10rem), transparent),
+			url("/chapter/frc/classic.webp") center 35% / cover no-repeat,
+			#071822;
+	}
+	.kch[data-read] .kch-back {
+		padding-top: 1.5rem;
+	}
+	.kch[data-read] .kch-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		width: 100%;
+		max-width: 76rem;
+		margin-inline: auto;
+		padding: 2.5rem clamp(1rem, 4vw, 2.5rem);
+	}
+	.kch-classic-hud {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.5rem 2rem;
+		padding-block: 0.75rem;
+		border-block: 1px solid var(--border);
+		font: 500 0.85rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.kch-classic-hud > span:last-child {
+		display: inline-flex;
+		gap: 1em;
+		color: var(--muted-foreground);
+	}
+	.kch-still {
+		width: 100%;
+		max-width: 40rem;
+		height: auto;
+		border-radius: 0.75rem;
+	}
+	.kch[data-read] .kch-parts {
+		display: grid;
+		max-width: 76rem;
+		margin-inline: auto;
+	}
+	@media (min-width: 48rem) {
+		.kch[data-read] .kch-parts {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.kch[data-read] .kch-parts > :first-child {
+			grid-column: 1 / -1;
+		}
+		.kch[data-read] .kch-parts > :first-child .kch-still {
+			max-width: 36rem;
+		}
+	}
+	.kch[data-read] .kch-parts .kch-still {
+		order: -1;
+		background: var(--card);
+		border: 1px solid var(--border);
+	}
+	.kch[data-read] .kch-parts > :first-child .kch-still {
+		order: 0;
+	}
+
+	/* ---------- 3D: the pinned stage ---------- */
+	.kch:not([data-read]) {
+		margin-top: 0;
+	}
+	.kch:not([data-read]) .kch-track {
+		position: relative;
+		/* A screen per stop after the first, and a half screen to let go. */
+		height: calc((var(--stops) + 0.5) * 100svh);
+	}
+	.kch:not([data-read]) .kch-pin {
+		position: sticky;
+		top: 0;
+		height: 100svh;
+		overflow: hidden;
+		isolation: isolate;
+		--edge: clamp(1rem, 4vw, 2.5rem);
+		--left: max(var(--edge), calc((100vw - 76rem) / 2 + var(--edge)));
+		--focus-x: 70%;
+	}
+	@media (max-aspect-ratio: 6/5) {
+		.kch:not([data-read]) .kch-pin {
+			--focus-x: 50%;
+		}
+	}
+	/* The backdrop: a very dark teal-blue gradient and a glow behind the drone (no pure black). */
+	.kch-bg {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		background:
+			radial-gradient(42% 52% at var(--focus-x) 50%, rgb(34 211 238 / calc(var(--look-glow, 0.24) * var(--glow-level, 1))), transparent 72%),
+			radial-gradient(120% 90% at 50% 10%, #0b2130, transparent 70%),
+			linear-gradient(to bottom, #071822, #030a10);
+	}
+	/* The backdrop layers: their images only once the 3D is up (data-images: beat 1's first, then the rest), each shown
+	   by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). Moved with transform and opacity only. */
+	.kch-bd {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.kch-bd[data-off] {
+		visibility: hidden;
+	}
+	/* The team's own event photos, blurred (public/chapter/frc/): the arena (beat 1), the field being set up (2), the
+	   pits under our flag (3). Each shown by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). */
+	.kch-bd {
+		background: center / cover no-repeat;
+		transition: none;
+	}
+	.kch-bd-arena {
+		opacity: calc(var(--bd-arena, 0) * var(--look-arena, 0.75));
+		scale: calc(1.08 - var(--bd-arena, 0) * 0.08);
+	}
+	.kch-bd-field {
+		opacity: calc(var(--bd-field, 0) * var(--look-field, 0.7));
+		scale: calc(1 + var(--bd-push, 0) * 0.06);
+	}
+	.kch-bd-pits {
+		opacity: calc(var(--bd-pits, 0) * var(--look-pits, 0.6));
+		translate: calc(var(--bd-swing, 0) * -1.5%) 0;
+	}
+	.kch-pin[data-images] .kch-bd-arena { background-image: url("/chapter/frc/arena.webp"); }
+	.kch-pin[data-images="all"] .kch-bd-field { background-image: url("/chapter/frc/field.webp"); }
+	.kch-pin[data-images="all"] .kch-bd-pits { background-image: url("/chapter/frc/pits.webp"); }
+	.kch-stage {
+		position: absolute;
+		inset: 0;
+	}
+	.kch-stage canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		transition: opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+	}
+	.kch[data-live] .kch-stage canvas {
+		opacity: 1;
+	}
+	/* Over the canvas: the vignette, a scrim behind the words on the left (wide windows), and a light film grain (it
+	   keeps the dark gradient from banding). */
+	.kch-veil {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			linear-gradient(to right, rgb(3 10 16 / var(--bd-scrim, 0.7)), rgb(3 10 16 / calc(var(--bd-scrim, 0.7) * 0.75)) 36%, transparent 60%),
+			radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+	}
+	@media (max-aspect-ratio: 6/5) {
+		.kch-veil {
+			background: radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+		}
+	}
+	.kch-veil::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		opacity: var(--look-grain, 0.06);
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+		mix-blend-mode: overlay;
+	}
+	/* Corner brackets, and the crosshair on the lens on the stakes (where the camera looks). */
+	.kch-frame {
+		position: absolute;
+		inset: 5.75rem 1.5rem 1.5rem;
+		pointer-events: none;
+		color: rgb(230 236 236 / 0.5);
+	}
+	.kch-corner {
+		position: absolute;
+		width: 1.25rem;
+		height: 1.25rem;
+		border-color: currentColor;
+		border-style: solid;
+		border-width: 0;
+	}
+	.kch-tl { left: 0; top: 0; border-left-width: 1.5px; border-top-width: 1.5px; }
+	.kch-tr { right: 0; top: 0; border-right-width: 1.5px; border-top-width: 1.5px; }
+	.kch-bl { left: 0; bottom: 0; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+	.kch-br { right: 0; bottom: 0; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+	/* (on the whole pin, so its middle is where the camera looks: the lens, on the stakes) */
+	.kch-aim {
+		inset: 0;
+	}
+	.kch-cross {
+		position: absolute;
+		left: var(--focus-x);
+		top: 50%;
+		width: 3rem;
+		translate: -50% -50%;
+		color: var(--accent);
+		opacity: var(--w-stakes, 0);
+	}
+	.kch-hud {
+		position: absolute;
+		inset: 5.25rem 0 auto;
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem 2rem;
+		padding-inline: var(--left);
+		font: 500 0.78rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+		pointer-events: none;
+	}
+	.kch-hud p {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.5rem;
+	}
+	.kch-hud-left .kch-hud-state {
+		color: var(--foreground);
+	}
+	.kch-hud-count {
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	/* In 3D the prologue's own status line is the HUD's, so it is for screen readers only. */
+	.kch:not([data-read]) .kch-classic-hud {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.kch:not([data-read]) .kch-band,
+	.kch:not([data-read]) .kch-parts {
+		display: contents;
+	}
+	.kch:not([data-read]) .kch-still {
+		display: none;
+	}
+
+	/* Each stop's words, over the stage on the left; the current one showing. --on (0 to 1) follows the camera, and the
+	   lines come in one after another as it rises (src/components/DroneChapter.astro's script). */
+	.kch:not([data-read]) .kch-panel {
+		position: absolute;
+		left: var(--left);
+		top: 50%;
+		width: min(36rem, 40vw);
+		max-height: calc(100svh - 11rem);
+		display: flex;
+		flex-direction: column;
+		gap: 1.1rem;
+		translate: 0 -46%;
+		pointer-events: none;
+		opacity: var(--on, 0);
+	}
+	.kch:not([data-read]) .kch-panel[data-shown] {
+		pointer-events: auto;
+	}
+	.kch:not([data-read]):not([data-live]) .kch-panel[data-stop="0"] {
+		--on: 1;
+	}
+	.kch:not([data-read]) .kch-panel > * {
+		opacity: clamp(0, calc(var(--on, 0) * 1.6 - var(--i, 0) * 0.1), 1);
+		translate: 0 calc((1 - var(--on, 0)) * (18px + var(--i, 0) * 7px));
+	}
+	.kch-panel > :nth-child(2) { --i: 1; }
+	.kch-panel > :nth-child(3) { --i: 2; }
+	.kch-panel > :nth-child(4) { --i: 3; }
+	.kch-panel > :nth-child(5) { --i: 4; }
+	.kch-panel > :nth-child(6) { --i: 5; }
+	.kch-panel > :nth-child(n + 7) { --i: 6; }
+	.kch:not([data-read]) .kch-statement {
+		font-size: clamp(2.6rem, 5.2vw, 5.25rem);
+		max-width: 14ch;
+	}
+	.kch:not([data-read]) #stakes .kch-stat {
+		font-size: clamp(6rem, 15vw, 14rem);
+	}
+	.kch:not([data-read]) .kch-reveal {
+		width: min(38rem, 44vw);
+		gap: 0.9rem;
+	}
+	.kch:not([data-read]) .kch-reveal h2 {
+		font-size: clamp(2.6rem, 5vw, 4.75rem);
+	}
+	.kch:not([data-read]) .kch-reveal .kch-facts {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.kch:not([data-read]) .kch-reveal .kch-intro,
+	.kch:not([data-read]) .kch-parts-intro {
+		font-size: 1rem;
+	}
+	/* Narrower windows (the drone in the middle): the words at the bottom, over a scrim. */
+	@media (max-aspect-ratio: 6/5) {
+		.kch:not([data-read]) .kch-panel {
+			top: auto;
+			bottom: 2rem;
+			width: auto;
+			right: var(--left);
+			translate: 0 0;
+			padding: 1.25rem;
+			border-radius: 1rem;
+			background: rgb(3 10 16 / 0.72);
+			-webkit-backdrop-filter: blur(8px);
+			backdrop-filter: blur(8px);
+		}		.kch:not([data-read]) #stakes .kch-stat {
+			font-size: clamp(4rem, 10vw, 6.5rem);
+		}
+		.kch:not([data-read]) .kch-panel {
+			max-height: 46svh;
+			gap: 0.6rem;
+		}
+	}
+
+	/* The chapter map: a dot per beat at the right edge, a tick per part-by-part stop under beat 4; each is a link. */
+	.kch-map {
+		position: absolute;
+		right: max(0.75rem, env(safe-area-inset-right));
+		top: 50%;
+		z-index: 3;
+		translate: 0 -50%;
+		padding: 0.5rem 0.3rem;
+		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--background) 60%, transparent);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
+	.kch-map ol {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.1rem;
+	}
+	.kch-map a {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.2rem;
+		padding: 0.4rem 0.35rem;
+		border-radius: 999px;
+		color: var(--muted-foreground);
+		font: 600 0.68rem/1 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+	}
+	.kch-map a:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	.kch-map-dot {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 50%;
+		border: 1.5px solid currentColor;
+		transition: background 0.3s, scale 0.3s;
+	}
+	.kch-map a[aria-current] {
+		color: var(--foreground);
+	}
+	.kch-map a[aria-current] .kch-map-dot {
+		border-color: var(--accent);
+		background: var(--accent);
+		scale: 1.25;
+	}
+	.kch-ticks {
+		padding-block: 0.15rem;
+	}
+	.kch-ticks a {
+		padding: 0.22rem 0.5rem;
+	}
+	.kch-ticks a::before {
+		content: "";
+		display: block;
+		width: 0.6rem;
+		height: 2px;
+		border-radius: 1px;
+		background: currentColor;
+		opacity: 0.55;
+		transition: width 0.25s, opacity 0.25s;
+	}
+	.kch-ticks a[aria-current]::before {
+		width: 0.9rem;
+		opacity: 1;
+		background: var(--accent);
+	}
+	.kch-map-title {
+		position: absolute;
+		right: calc(100% + 0.6rem);
+		top: 50%;
+		translate: 6px -50%;
+		padding: 0.4rem 0.65rem;
+		border-radius: 999px;
+		white-space: nowrap;
+		background: color-mix(in oklab, var(--background) 86%, transparent);
+		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		color: var(--foreground);
+		font: 600 0.75rem/1 var(--font-sans, inherit);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.25s, translate 0.25s;
+	}
+	.kch-map a:is(:hover, :focus-visible) > .kch-map-title {
+		opacity: 1;
+		translate: 0 -50%;
+	}
+	/* The loading gate: only if the model takes a moment (more than about 300 ms). */
+	.kch-gate {
+		position: absolute;
+		inset: 0;
+		z-index: 4;
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		gap: 0.9rem;
+		background: linear-gradient(to bottom, #071822, #030a10);
+		font: 500 0.8rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+		transition: opacity 0.6s;
+	}
+	.kch-gate[hidden] {
+		display: none;
+	}
+	.kch-gate[data-leaving] {
+		opacity: 0;
+	}
+	.kch-gate-bar {
+		width: min(16rem, 60vw);
+		height: 2px;
+		background: color-mix(in oklab, var(--foreground) 15%, transparent);
+	}
+	.kch-gate-bar {
+		overflow: hidden;
+	}
+	.kch-gate-bar > span {
+		display: block;
+		height: 100%;
+		width: 35%;
+		background: var(--accent);
+		animation: kch-sweep 1.2s ease-in-out infinite;
+	}
+	@keyframes kch-sweep {
+		from {
+			translate: -100% 0;
+		}
+		to {
+			translate: 290% 0;
+		}
+	}
+	.kch-gate-n {
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	/* After the chapter: its dark fades gradually into the page's own colour (both themes). */
+	.kch:not([data-read]) + .kch-after {
+		height: 40vh;
+		background: linear-gradient(to bottom, #030a10, color-mix(in oklab, #030a10 40%, transparent) 45%, transparent);
+		pointer-events: none;
+	}
+	.kch-after:focus {
+		outline: none;
+	}
+	/* While the chapter is in 3D, the page's own backdrop footage is covered anyway: don't show it. */
+	html:has(.kch:not([data-read])) .chapter-backdrop {
+		display: none;
+	}
+	/* ?showcase=capture: the robot alone, on a transparent background (scripts/showcase-stills.py). */
+	.kch[data-capture] :is(.kch-bg, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-panels, .kch-skip) {
+		display: none;
+	}
+	.kch[data-capture] .kch-pin {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		height: auto;
+	}
+</style>
+
+<script>
+	import { afterIntro } from "@/lib/splash";
+
+	const LIVE_GATE = 300; // ms: the loading gate shows only if the 3D isn't up by then
+	let cleanup: (() => void) | undefined;
+
+	function initKitbot() {
+		cleanup?.();
+		cleanup = undefined;
+		const root = document.querySelector<HTMLElement>("[data-kch]");
+		if (!root) return;
+		const cleanups: Array<() => void> = [];
+		cleanup = () => cleanups.forEach((c) => c());
+
+		// The live local time in Ho Chi Minh City, in both modes.
+		const clocks = [...root.querySelectorAll<HTMLTimeElement>("[data-kch-clock]")];
+		const formats = clocks.map(
+			(c) => new Intl.DateTimeFormat("en-GB", { timeZone: c.dataset.kchClock, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
+		);
+		const tick = () => {
+			const now = new Date();
+			clocks.forEach((c, i) => {
+				c.textContent = formats[i].format(now);
+				c.dateTime = now.toISOString();
+			});
+		};
+		tick();
+		const clock = window.setInterval(tick, 1000);
+		cleanups.push(() => clearInterval(clock));
+		if (root.hasAttribute("data-read")) return;
+
+		const stops = JSON.parse(root.dataset.stops!) as string[];
+		const titles = JSON.parse(root.dataset.titles!) as string[];
+		const last = stops.length - 1;
+		const track = root.querySelector<HTMLElement>(".kch-track")!;
+		const pin = root.querySelector<HTMLElement>(".kch-pin")!;
+		const stage = root.querySelector<HTMLElement>("[data-kch-stage]")!;
+		const canvas = stage.querySelector("canvas")!;
+		const panels = [...root.querySelectorAll<HTMLElement>(".kch-panel")];
+		const beatLinks = [...root.querySelectorAll<HTMLAnchorElement>("[data-beat]")];
+		const tickLinks = [...root.querySelectorAll<HTMLAnchorElement>(".kch-ticks a")];
+		const count = root.querySelector<HTMLElement>("[data-kch-count]")!;
+		const live = root.querySelector<HTMLElement>("[data-kch-live]")!;
+		const gate = root.querySelector<HTMLElement>("[data-kch-gate]")!;
+		const capture = root.hasAttribute("data-capture");
+
+		// Offsets, measured on resize only: each stop is one screen of scroll from the top of the track.
+		let screenH = 1;
+		let top = 0;
+		const measure = () => {
+			screenH = pin.offsetHeight || innerHeight;
+			top = track.getBoundingClientRect().top + scrollY;
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(document.documentElement);
+		cleanups.push(() => resize.disconnect());
+		const position = () => (scrollY - top) / screenH;
+		const goTo = (stop: number, smooth = true) =>
+			scrollTo({ top: top + Math.max(0, Math.min(last, stop)) * screenH, behavior: smooth ? "smooth" : "instant" });
+
+		// Keyboard: arrows and Page Up/Down move one stop while the chapter is on screen; past either end the page scrolls on.
+		const onKey = (event: KeyboardEvent) => {
+			if (root.hasAttribute("data-read") || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			const target = event.target as HTMLElement;
+			if (target.closest?.("input, textarea, select, [contenteditable], dialog, [role=tab], [data-board]")) return;
+			const forward = ["ArrowDown", "ArrowRight", "PageDown"].includes(event.key);
+			const back = ["ArrowUp", "ArrowLeft", "PageUp"].includes(event.key);
+			if (!forward && !back) return;
+			const p = position();
+			if (p < -0.5 || p > last + 0.25) return;
+			const next = Math.round(p) + (forward ? 1 : -1);
+			if (next < 0 || next > last) return;
+			event.preventDefault();
+			goTo(next);
+		};
+		addEventListener("keydown", onKey);
+		cleanups.push(() => removeEventListener("keydown", onKey));
+		const onClick = (event: MouseEvent) => {
+			const el = (event.target as Element).closest<HTMLElement>("[data-goto]");
+			if (!el || root.hasAttribute("data-read")) return;
+			event.preventDefault();
+			goTo(Number(el.dataset.goto));
+		};
+		root.addEventListener("click", onClick);
+		cleanups.push(() => root.removeEventListener("click", onClick));
+		const onFocus = (event: FocusEvent) => {
+			const panel = (event.target as Element).closest<HTMLElement>(".kch-panel");
+			if (!panel || root.hasAttribute("data-read")) return;
+			const stop = Number(panel.dataset.stop);
+			if (Math.abs(position() - stop) > 0.3) goTo(stop, false);
+		};
+		root.addEventListener("focusin", onFocus);
+		cleanups.push(() => root.removeEventListener("focusin", onFocus));
+
+		// The backdrop follows the camera: the arena on beat 1, the field on 2, the pits on 3, then the grid alone.
+		const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+		const round = (x: number) => Math.round(x * 100) / 100;
+		const layers = {
+			arena: root.querySelector<HTMLElement>(".kch-bd-arena")!,
+			field: root.querySelector<HTMLElement>(".kch-bd-field")!,
+			pits: root.querySelector<HTMLElement>(".kch-bd-pits")!,
+		};
+		const shown: Record<string, number> = {};
+		const set = (name: string, value: number) => {
+			const v = round(value);
+			if (shown[name] === v) return;
+			shown[name] = v;
+			pin.style.setProperty(`--bd-${name}`, String(v));
+		};
+		const backdrop = (at: number) => {
+			const arena = clamp01(1 - at * 0.9);
+			const field = clamp01(1 - Math.abs(at - 1) * 1.2);
+			const pits = clamp01(1 - Math.abs(at - 2) * 1.05);
+			set("arena", arena);
+			set("field", field);
+			set("push", clamp01(at));
+			set("pits", pits);
+			set("swing", Math.max(-1, Math.min(1, at - 2)));
+			set("scrim", 0.7);
+			for (const [name, value] of [["arena", arena], ["field", field], ["pits", pits]] as const) layers[name].toggleAttribute("data-off", value <= 0.005);
+		};
+		backdrop(0);
+
+		// The words, the HUD's counter, the map and the announcement follow the camera.
+		const levels = new Float32Array(panels.length).fill(-1);
+		let shownStop = -1;
+		let announceTimer: number | undefined;
+		const beatNames = beatLinks.map((a) => `${a.querySelector(".kch-map-n")!.textContent} / ${String(beatLinks.length).padStart(2, "0")}: ${a.querySelector(".kch-map-title")!.textContent}`);
+		const onFrame = (at: number) => {
+			panels.forEach((panel, i) => {
+				const d = Math.abs(at - i);
+				const on = Math.round(Math.max(0, Math.min(1, (0.42 - d) / 0.22)) * 100) / 100;
+				if (on === levels[i]) return;
+				levels[i] = on;
+				panel.style.setProperty("--on", String(on));
+				panel.toggleAttribute("data-shown", on > 0.5);
+			});
+			root.style.setProperty("--w-stakes", String(Math.round(Math.max(0, 1 - Math.abs(at - 1) * 2.2) * 100) / 100));
+			backdrop(at);
+			const current = Math.max(0, Math.min(last, Math.round(at)));
+			if (current === shownStop) return;
+			shownStop = current;
+			const beat = Math.min(current, 3);
+			count.textContent = String(beat + 1).padStart(2, "0");
+			beatLinks.forEach((a, b) => (b === beat ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
+			tickLinks.forEach((a, k) => (k === current - 3 ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
+			window.clearTimeout(announceTimer);
+			announceTimer = window.setTimeout(() => {
+				live.textContent = current >= 3 && titles[current] ? `${beatNames[beat]}, ${titles[current]}` : beatNames[beat];
+			}, 600);
+		};
+		cleanups.push(() => window.clearTimeout(announceTimer));
+
+		// The loading gate, only if the model takes a moment.
+		const gateTimer = window.setTimeout(() => {
+			if (root.hasAttribute("data-live") || root.hasAttribute("data-read") || capture) return;
+			gate.hidden = false;
+		}, LIVE_GATE);
+		const closeGate = () => {
+			window.clearTimeout(gateTimer);
+			if (gate.hidden) return;
+			gate.setAttribute("data-leaving", "");
+			window.setTimeout(() => {
+				gate.hidden = true;
+				gate.removeAttribute("data-leaving");
+			}, 600);
+		};
+		cleanups.push(closeGate);
+
+		let cancelled = false;
+		let dispose: (() => void) | undefined;
+		/** The plain page, for any reason the 3D cannot carry on (no WebGL, too slow, the GPU lost, an error). */
+		const toRead = (why: string) => {
+			if (cancelled || root.hasAttribute("data-read")) return;
+			console.warn(`KitBot chapter: switching to the plain page (${why}).`);
+			closeGate();
+			root.setAttribute("data-read", "");
+			root.removeAttribute("data-live");
+			root.classList.remove("dark");
+			dispose?.();
+			dispose = undefined;
+		};
+		cleanups.push(() => {
+			cancelled = true;
+			dispose?.();
+			dispose = undefined;
+		});
+
+		type Hook = { go(n: number | null): void; capture(): string };
+		const w = window as unknown as { __showcase?: Hook };
+		let hook: Hook | undefined;
+		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()])
+			.then(async ([stageModule, chapterModule]) => {
+				if (cancelled || root.hasAttribute("data-read")) return;
+				if (chapterModule.STOPS.join() !== stops.join()) console.warn("KitBot chapter: the page's stops and the camera's differ.", stops, chapterModule.STOPS);
+				const look = chapterModule.LOOK;
+				pin.style.setProperty("--look-glow", String(look.glow));
+				pin.style.setProperty("--look-vignette", String(look.vignette));
+				pin.style.setProperty("--look-grain", String(look.grain));
+				for (const [name, value] of Object.entries(look.backdrop)) pin.style.setProperty(`--look-${name}`, String(value));
+				backdrop(position());
+				dispose = await stageModule.mountStage(
+					stage,
+					canvas,
+					async (ctx) => {
+						const model = await chapterModule.default(ctx, { position, onStop: () => undefined, onFrame, titles, capture });
+						if (capture) {
+							hook = w.__showcase;
+							delete w.__showcase;
+						}
+						return model;
+					},
+					{ camera: [0.6, 0.3, 1.6], target: [0, 0.2, 0], fov: 34, near: 0.02, orbit: false, effects: capture, pixelRatio: 1.5, onFallback: (reason) => toRead(reason) },
+				);
+				if (cancelled || root.hasAttribute("data-read")) {
+					dispose();
+					dispose = undefined;
+					return;
+				}
+				root.setAttribute("data-live", "");
+				closeGate();
+				pin.setAttribute("data-images", "first");
+				const more = window.setTimeout(() => pin.setAttribute("data-images", "all"), 1200);
+				cleanups.push(() => clearTimeout(more));
+				// A link to a stop (/work/frc/#intake) lands on it, on arrival and when the address changes to one.
+				const toHash = () => {
+					const hashed = stops.indexOf(decodeURIComponent(location.hash.slice(1)));
+					if (hashed >= 0) goTo(hashed, false);
+				};
+				toHash();
+				addEventListener("hashchange", toHash);
+				cleanups.push(() => removeEventListener("hashchange", toHash));
+				const held = hook;
+				if (capture && held) w.__showcase = { ...held, go: (n) => held.go(n === null ? null : n + 3) };
+			})
+			.catch((error) => {
+				console.warn("KitBot chapter: the 3D could not start.", error);
+				toRead("error");
+			});
+	}
+
+	document.addEventListener("astro:page-load", initKitbot);
+	document.addEventListener("astro:before-swap", () => {
+		cleanup?.();
+		cleanup = undefined;
+	});
+</script>
