@@ -1,6 +1,4 @@
 ---
-// @ts-ignore: the project has no Node type definitions; this only runs at build
-import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
@@ -16,8 +14,8 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { board, frcDeck, frcPhotos, frcPage, outreach, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
 import { EventSheets, PhotoDeck, WeekPosts } from "@/components/frc-photos";
 import { CertPipeline, SeasonSlides, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
-import { Filmstrip, Goals2027, HardwareView, KitBotView, Overview2027, PartsView, Road2027, SeasonGame, SeasonTimeline } from "@/components/frc-views";
-import { robotShowcase } from "@/text/showcase/robot";
+import { Filmstrip, Goals2027, HardwareView, KitBotView, Overview2027, Road2027, SeasonGame, SeasonTimeline } from "@/components/frc-views";
+import FrcChapter from "@/components/FrcChapter.astro";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
 import { buttonVariants } from "@/components/ui/button";
@@ -36,12 +34,6 @@ const facts = [
 	{ label: f.nextSeasonLabel, value: f.nextSeason },
 ];
 
-// The CAD render of each part of the robot (scripts/showcase-stills.py --page robot). A part without one shows its name.
-const stills = Object.fromEntries(
-	robotShowcase.features
-		.filter((f) => existsSync(`public/showcase/robot/${f.id}-800.webp`))
-		.map((f) => [f.id, `/showcase/robot/${f.id}`]),
-);
 const chapter = (id: string) => board.chapters.find((c) => c.id === id)!;
 const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c.id === id) + 1) % board.chapters.length];
 ---
@@ -73,14 +65,48 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 		</dl>
 	</header>
 
+	<!-- The rookie season in eight scenes: it plays by itself until the visitor steps through it. -->
+	<section class="wrapper flex flex-col gap-8 pb-20 md:pb-28" aria-labelledby="story-heading">
+		<div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-3">
+			<h2 id="story-heading" class="max-w-[16ch] font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]" data-reveal>{frcDeck.heading}</h2>
+			<p class="max-w-[46ch] text-lg text-muted-foreground" data-reveal>{frcDeck.text}</p>
+		</div>
+		<SeasonSlides client:visible />
+	</section>
+
+	<!-- The two regionals, in the open: rank, record, the alliance that picked us, the playoffs. -->
+	<section id="results" class="scroll-mt-24 border-t bg-card/60" aria-labelledby="results-heading">
+		<div class="wrapper flex flex-col gap-8 py-20 md:py-28">
+			<div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-3">
+				<h2 id="results-heading" class="max-w-[14ch] font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]" data-reveal>{rookieText.eventsHeading}</h2>
+				<p class="max-w-[46ch] text-lg text-muted-foreground" data-reveal>{rookieText.eventsIntro}</p>
+			</div>
+			<EventSheets client:visible />
+		</div>
+	</section>
+
+	<!-- The KitBot in 3D, scrolled through like the drone's chapter (src/components/FrcChapter.astro). -->
+	<FrcChapter />
+
+	<!-- The swerve: drive the simulator, or point at the real chassis to light up its parts. -->
+	<section class="border-y bg-card/60" aria-labelledby="swerve-heading">
+		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
+			<div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-3">
+				<h2 id="swerve-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]" data-reveal>{swerveSim.heading}</h2>
+				<p class="max-w-[52ch] text-lg text-muted-foreground" data-words>{swerveSim.text}</p>
+			</div>
+			<SwerveLab client:visible />
+		</div>
+	</section>
+
 	<!-- The pit board: everything about the team in one screen. A chapter on the side (on phones, along the top), a view
 	     inside it, and the detail a click away. Without JavaScript every chapter and view shows, one after another. -->
 	<section id="board" class="frc-board" aria-labelledby="board-heading" data-board>
 		<div class="wrapper py-8 md:py-10">
 			<div class="frc-board-grid">
 				<div class="frc-board-intro">
-					<h2 id="board-heading" class="font-wide text-[clamp(1.5rem,1.9vw,1.6rem)] font-[880] leading-[1.02]">{frcDeck.heading}</h2>
-					<p class="text-sm text-muted-foreground">{frcDeck.text}</p>
+					<h2 id="board-heading" class="font-wide text-[clamp(1.5rem,1.9vw,1.6rem)] font-[880] leading-[1.02]">{board.heading}</h2>
+					<p class="text-sm text-muted-foreground">{board.intro}</p>
 				</div>
 				<nav class="frc-rail" aria-label={board.label}>
 					<div role="tablist" aria-orientation="vertical" aria-label={board.label}>
@@ -104,12 +130,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 							</div>
 						)}
 					</header>
-					<div class="frc-view" id="v-2026-story" data-view="story" role="tabpanel" aria-labelledby="vt-2026-story">
-						<SeasonSlides client:visible />
-					</div>
-					<div class="frc-view" id="v-2026-results" data-view="results" role="tabpanel" aria-labelledby="vt-2026-results">
-						<EventSheets client:visible />
-					</div>
 					<div class="frc-view" id="v-2026-game" data-view="game" role="tabpanel" aria-labelledby="vt-2026-game">
 						<SeasonGame client:visible />
 					</div>
@@ -172,15 +192,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 					</header>
 					<div class="frc-view" id="v-robot-kitbot" data-view="kitbot" role="tabpanel" aria-labelledby="vt-robot-kitbot">
 						<KitBotView client:visible />
-					</div>
-					<div class="frc-view" id="v-robot-parts" data-view="parts" role="tabpanel" aria-labelledby="vt-robot-parts">
-						<PartsView client:visible stills={stills} />
-					</div>
-					<div class="frc-view" id="v-robot-swerve" data-view="swerve" role="tabpanel" aria-labelledby="vt-robot-swerve">
-						<div class="flex flex-col gap-4">
-							<p class="max-w-3xl text-muted-foreground">{swerveSim.text}</p>
-							<SwerveLab client:visible />
-						</div>
 					</div>
 					<div class="frc-view" id="v-robot-hardware" data-view="hardware" role="tabpanel" aria-labelledby="vt-robot-hardware">
 						<HardwareView client:visible />
@@ -258,7 +269,7 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 						</div>
 					</div>
 					<div class="frc-view" id="v-team-leadership" data-view="leadership" role="tabpanel" aria-labelledby="vt-team-leadership">
-						<Leadership lead="frc" heading={frcPage.about.leadershipHeading} headingLevel="h4" id="frc-leadership" intro={frcPage.about.leadershipIntro} />
+						<Leadership lead="frc" heading={frcPage.about.leadershipHeading} headingLevel="h3" id="frc-leadership" intro={frcPage.about.leadershipIntro} />
 					</div>
 					<footer class="frc-chapter-foot">
 						<a href={`#${nextOf("team").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("team").name}</span> <span aria-hidden="true">→</span></a>
@@ -371,24 +382,19 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 						<a href={`#${nextOf("outreach").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("outreach").name}</span> <span aria-hidden="true">→</span></a>
 					</footer>
 				</section>
-				<section class="frc-chapter" id="ch-partner" data-chapter="partner" role="tabpanel" aria-labelledby="ct-partner">
-					<header class="frc-chapter-head">
-						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("partner").name}</h3>
-						{chapter("partner").views.length > 1 && (
-							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
-								{chapter("partner").views.map((v) => (
-									<button type="button" role="tab" id={`vt-partner-${v.id}`} aria-controls={`v-partner-${v.id}`} data-view-tab={v.id}>{v.name}</button>
-								))}
-							</div>
-						)}
-					</header>
-					<div class="frc-view" id="v-partner-support" data-view="support" role="tabpanel" aria-labelledby="vt-partner-support">
-						<div class="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Partnering with the team: gifts in kind only. -->
+	<section class="wrapper py-20 md:py-28" aria-labelledby="partner-heading">
+		<div class="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
 							<div class="flex flex-col items-start gap-4">
 								<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
 									<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{partner.tag}
 								</span>
-								<h4 class="font-wide text-[clamp(1.75rem,3vw,2.5rem)] font-[880] leading-[1.02]">{partner.heading}</h4>
+								<h2 id="partner-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]">{partner.heading}</h2>
 								<p class="text-muted-foreground">{partner.text}</p>
 								<h5 class="mt-2 font-semibold">{partner.backHeading}</h5>
 								<ul class="flex w-full flex-col">
@@ -398,20 +404,11 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 							</div>
 							<SupportPicker client:visible />
 						</div>
-					</div>
-					<footer class="frc-chapter-foot">
-						<a href={`#${nextOf("partner").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("partner").name}</span> <span aria-hidden="true">→</span></a>
-					</footer>
-				</section>
-				</div>
-			</div>
-		</div>
 	</section>
 
 	<script>
-		// The pit board: shows one chapter and one view at a time, follows the address (#2026, #2026-results, #robot,
-		// a part of the robot like #intake), and is driven by mouse, touch and keyboard (arrow keys, Home, End).
-		const PARTS = ["overview", "intake", "hopper", "shooter", "drivetrain", "electronics"];
+		// The pit board: shows one chapter and one view at a time, follows the address (#2026, #2026-timeline, #robot),
+		// and is driven by mouse, touch and keyboard (arrow keys, Home, End).
 		function initBoard() {
 			const root = document.querySelector<HTMLElement>("[data-board]");
 			if (!root || root.dataset.ready) return;
@@ -456,7 +453,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 			const fromHash = (scroll: boolean) => {
 				const h = decodeURIComponent(location.hash.slice(1));
 				if (!h) return false;
-				if (PARTS.includes(h)) return show("robot", "parts", { scroll, write: false }), true;
 				for (const ch of chapters) {
 					const id = ch.dataset.chapter!;
 					if (h === id) return show(id, undefined, { scroll }), true;
