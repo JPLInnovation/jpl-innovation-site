@@ -17,12 +17,18 @@ import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
 // and the 3D robot's part by part text: src/text/showcase/robot.ts
-import { frcPage, team } from "@/text/projects/frc";
+import { frcDeck, frcPhotos, frcPage, outreach, partner, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
+import { PhotoDeck, PhotoMosaic } from "@/components/frc-photos";
 import { robotShowcase } from "@/text/showcase/robot";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
+import { buttonVariants } from "@/components/ui/button";
 
 const entry = (await getEntry("work", "frc"))!;
+const teamPhoto = frcPhotos[teamMore.photo] as FrcPhoto;
+const workshopPhoto = frcPhotos[workshop.photo] as FrcPhoto;
+/** A team photo's sizes for srcset (public/assets/frc/: the file and its 640-wide copy). */
+const frcSrcset = (photo: FrcPhoto) => `/assets/frc/${photo.id}-640.webp 640w, /assets/frc/${photo.id}.webp ${photo.w}w`;
 
 const { facts: f } = frcPage;
 const facts = [
@@ -66,6 +72,15 @@ const stills = Object.fromEntries(
 			}
 		</dl>
 	</header>
+
+	<!-- The season in six prints: drag or flick the top one away, tap one to see it large (src/components/frc-photos.tsx). -->
+	<section class="wrapper grid items-center gap-12 pb-24 md:pb-32 lg:grid-cols-[1fr_1.1fr]" aria-labelledby="deck-heading">
+		<div class="flex flex-col gap-5" data-reveal>
+			<h2 id="deck-heading" class="font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]">{frcDeck.heading}</h2>
+			<p class="max-w-[52ch] text-lg text-muted-foreground">{frcDeck.text}</p>
+		</div>
+		<PhotoDeck client:visible />
+	</section>
 
 	<FrcRobotReveal client:load src={entry.data.img} alt={entry.data.img_alt ?? ""} />
 
@@ -118,6 +133,54 @@ const stills = Object.fromEntries(
 					))
 				}
 			</ul>
+			<figure class="m-0 flex flex-col gap-2" data-reveal>
+				<img
+					src={`/assets/frc/${teamPhoto.id}-640.webp`}
+					srcset={frcSrcset(teamPhoto)}
+					sizes="(min-width: 1280px) 1200px, 100vw"
+					alt={teamPhoto.alt}
+					width={teamPhoto.w}
+					height={teamPhoto.h}
+					loading="lazy"
+					decoding="async"
+					class="h-auto w-full rounded-2xl border"
+				/>
+				<figcaption class="flex justify-between font-mono text-xs uppercase tracking-wider text-muted-foreground">
+					<span>{teamPhoto.caption}</span><span>{teamPhoto.meta}</span>
+				</figcaption>
+			</figure>
+			<div class="mt-6 flex flex-col gap-8 border-t pt-12">
+				<div class="flex max-w-3xl flex-col gap-2" data-reveal>
+					<h3 class="font-wide text-2xl font-[850] md:text-3xl">{teamMore.subTeamsHeading}</h3>
+					<p class="text-lg text-muted-foreground">{teamMore.subTeamsIntro}</p>
+				</div>
+				<ol class="frc-subteams grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
+					{
+						teamMore.subTeams.map((s, i) => (
+							<li class="flex flex-col gap-2 bg-card p-6">
+								<span class="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+								<h4 class="font-semiwide text-lg font-[760]">{s.name}</h4>
+								<p class="text-muted-foreground">{s.role}</p>
+							</li>
+						))
+					}
+					<li class="flex flex-col justify-end gap-3 bg-card p-6">
+						<h4 class="font-semiwide text-lg font-[760]">{teamMore.joinHeading}</h4>
+						<p class="text-sm text-muted-foreground">{teamMore.meets}</p>
+					</li>
+				</ol>
+				<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
+					{
+						teamMore.join.map((j) => (
+							<li class="flex flex-col gap-2 border-t py-6">
+								<h4 class="font-semiwide text-lg font-[760]">{j.title}</h4>
+								<p class="text-muted-foreground">{j.text}</p>
+							</li>
+						))
+					}
+				</ul>
+				<p class="text-sm text-muted-foreground">{teamMore.joinNote}</p>
+			</div>
 			<div class="mt-6 border-t pt-12">
 				<Leadership
 					lead="frc"
@@ -130,6 +193,340 @@ const stills = Object.fromEntries(
 		</div>
 	</section>
 
+	<!-- The workshop: how a student is certified on a machine, and the rules before anyone starts. -->
+	<section class="wrapper flex flex-col gap-12 py-20 md:py-28" aria-labelledby="workshop-heading">
+		<div class="grid items-end gap-8 lg:grid-cols-[1.2fr_1fr]">
+			<div class="flex flex-col gap-3" data-reveal>
+				<h2 id="workshop-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{workshop.heading}</h2>
+				<p class="text-lg text-muted-foreground">{workshop.intro}</p>
+			</div>
+			<figure class="m-0 flex flex-col gap-2" data-reveal>
+				<img
+					src={`/assets/frc/${workshopPhoto.id}-640.webp`}
+					srcset={frcSrcset(workshopPhoto)}
+					sizes="(min-width: 1024px) 40vw, 100vw"
+					alt={workshopPhoto.alt}
+					width={workshopPhoto.w}
+					height={workshopPhoto.h}
+					loading="lazy"
+					decoding="async"
+					class="aspect-[4/3] w-full rounded-2xl border object-cover"
+				/>
+				<figcaption class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{workshopPhoto.caption} · {workshopPhoto.meta}</figcaption>
+			</figure>
+		</div>
+		<div class="flex flex-col gap-6">
+			<h3 class="font-semiwide text-xl font-[780]">{workshop.stepsHeading}</h3>
+			<ol class="frc-path" data-reveal-group>
+				{
+					workshop.steps.map((s, i) => (
+						<li>
+							<span class="frc-path-dot" aria-hidden="true">{i + 1}</span>
+							<h4 class="font-semibold">{s.title}</h4>
+							<p class="text-sm text-muted-foreground">{s.text}</p>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+		<div class="grid gap-10 lg:grid-cols-2">
+			<div class="flex flex-col gap-4">
+				<h3 class="font-semiwide text-xl font-[780]">{workshop.rulesHeading}</h3>
+				<dl class="grid gap-x-8 sm:grid-cols-2">
+					{
+						workshop.rules.map((r) => (
+							<div class="flex flex-col gap-1 border-t py-4">
+								<dt class="font-semibold">{r.title}</dt>
+								<dd class="text-sm text-muted-foreground">{r.text}</dd>
+							</div>
+						))
+					}
+				</dl>
+			</div>
+			<div class="flex flex-col gap-4">
+				<h3 class="font-semiwide text-xl font-[780]">{workshop.checklistHeading}</h3>
+				<ul class="flex flex-col">
+					{workshop.checklist.map((c) => <li class="frc-check border-t py-3">{c}</li>)}
+				</ul>
+			</div>
+		</div>
+		<PhotoMosaic client:visible ids={workshop.photos} label={workshop.photosLabel} columns={4} />
+	</section>
+
+	<!-- Outreach: the team's programs beyond the field. -->
+	<section class="border-t bg-card/70" aria-labelledby="outreach-heading">
+		<div class="wrapper flex flex-col gap-12 py-20 md:py-28">
+			<div class="flex max-w-3xl flex-col gap-3" data-reveal>
+				<h2 id="outreach-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{outreach.heading}</h2>
+				<p class="text-lg text-muted-foreground">{outreach.intro}</p>
+			</div>
+			<ul class="grid gap-6 md:grid-cols-2" data-reveal-group>
+				{
+					outreach.programs.map((o) => (
+						<li class="flex flex-col gap-2 rounded-xl border surface p-6 md:p-8">
+							<p class="font-mono text-xs uppercase tracking-wider text-muted-foreground">{o.tag}</p>
+							<h3 class="font-semiwide text-2xl font-[780]">{o.name}</h3>
+							<p class="text-muted-foreground">{o.text}</p>
+							{o.detail && <p class="text-sm">{o.detail}</p>}
+						</li>
+					))
+				}
+			</ul>
+			<div class="flex flex-col gap-4">
+				<h3 class="font-semiwide text-xl font-[780]">{outreach.photosLabel}</h3>
+				<PhotoMosaic client:visible ids={outreach.photos} label={outreach.photosLabel} />
+				<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Partnering with the team: gifts in kind only. -->
+	<section class="wrapper flex flex-col gap-10 py-20 md:py-28" aria-labelledby="partner-heading">
+		<div class="flex max-w-3xl flex-col items-start gap-4" data-reveal>
+			<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
+				<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{partner.tag}
+			</span>
+			<h2 id="partner-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850] leading-[1.02]">{partner.heading}</h2>
+			<p class="text-lg text-muted-foreground">{partner.text}</p>
+		</div>
+		<ul class="grid gap-px overflow-hidden rounded-2xl border bg-border sm:grid-cols-2 lg:grid-cols-5" data-reveal-group>
+			{
+				partner.kinds.map((k) => (
+					<li class="flex flex-col gap-3 bg-card p-6">
+						<h3 class="font-semiwide text-lg font-[760]">{k.name}</h3>
+						<ul class="flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground marker:text-foreground/40">
+							{k.items.map((item) => <li>{item}</li>)}
+						</ul>
+					</li>
+				))
+			}
+		</ul>
+		<div class="grid items-start gap-8 md:grid-cols-[1fr_auto]">
+			<div class="flex flex-col gap-3">
+				<h3 class="font-semiwide text-xl font-[780]">{partner.backHeading}</h3>
+				<ul class="grid gap-x-8 sm:grid-cols-2">
+					{partner.back.map((b) => <li class="frc-check border-t py-3">{b}</li>)}
+				</ul>
+			</div>
+			<button type="button" data-email-open data-subject={partner.emailSubject} class={buttonVariants({ variant: "signal", size: "lg" })}>
+				{partner.button}
+			</button>
+		</div>
+	</section>
+
 	<NextChapter current={"frc"} />
 	<ContactSection />
 </BaseLayout>
+
+<style is:global>
+	/* The photo viewer (src/components/frc-photos.tsx), the browser's own <dialog>. */
+	.frc-lightbox {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100dvh;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 4.5rem 4.5rem 2rem;
+		border: 0;
+		background: transparent;
+		display: none;
+		align-items: center;
+		justify-content: center;
+	}
+	.frc-lightbox[open] {
+		display: flex;
+	}
+	.frc-lightbox::backdrop {
+		background: rgb(4 7 14 / 0.9);
+		backdrop-filter: blur(6px);
+	}
+	@media (max-width: 640px) {
+		.frc-lightbox {
+			padding: 4.5rem 0.75rem 1.5rem;
+		}
+	}
+	.frc-lightbox-btn {
+		position: absolute;
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 999px;
+		background: rgb(255 255 255 / 0.92);
+		color: #0b111c;
+	}
+	.frc-round-btn {
+		display: grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--card);
+		transition: border-color 0.2s;
+	}
+	.frc-round-btn:hover {
+		border-color: color-mix(in oklab, var(--foreground) 40%, transparent);
+	}
+	/* A print: white border and a soft shadow, like a photo on a desk. */
+	.frc-print {
+		border-radius: 0.6rem;
+		background: #fff;
+		padding: 6px;
+		box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 12px 32px -12px rgb(0 0 0 / 0.35);
+	}
+	.frc-print img {
+		border-radius: 0.35rem;
+	}
+	.frc-print-caption {
+		position: absolute;
+		inset-inline: 6px;
+		bottom: 6px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		border-radius: 0 0 0.35rem 0.35rem;
+		padding: 2.5rem 1rem 0.8rem;
+		background: linear-gradient(to top, rgb(0 0 0 / 0.78), transparent);
+		color: #fff;
+		pointer-events: none;
+	}
+	/* The mosaic: each print a little crooked (--tilt), straight and lifted on hover or focus. */
+	.frc-mosaic .frc-pin {
+		transform: rotate(var(--tilt, 0deg));
+		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-mosaic .frc-pin:hover,
+	.frc-mosaic .frc-pin:focus-within {
+		transform: rotate(0deg) translateY(-4px) scale(1.02);
+	}
+	/* The build season strips: side by side, the open one wide; stacked on phones. */
+	.frc-strips {
+		display: flex;
+		gap: 0.5rem;
+		height: clamp(22rem, 42vw, 30rem);
+	}
+	.frc-strips > li {
+		flex: 1 1 0;
+		min-width: 0;
+		transition: flex-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-strips > li[data-open] {
+		flex-grow: 6;
+	}
+	.frc-strip-label {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 3rem 1rem 0.9rem;
+		background: linear-gradient(to top, rgb(0 0 0 / 0.8), transparent);
+		color: #fff;
+		white-space: nowrap;
+	}
+	.frc-strips > li:not([data-open]) .frc-strip-caption {
+		opacity: 0;
+	}
+	.frc-strips > li:not([data-open]) .frc-strip-label {
+		writing-mode: vertical-rl;
+		transform: rotate(180deg);
+		inset: auto 0 0 auto;
+		margin: 0.4rem;
+		border-radius: 999px;
+		padding: 0.7rem 0.3rem;
+		background: rgb(0 0 0 / 0.72);
+	}
+	@media (max-width: 767px) {
+		.frc-strips {
+			flex-direction: column;
+			height: 44rem;
+		}
+	}
+	/* The preseason posts: a row that scrolls sideways and snaps. */
+	.frc-posts {
+		display: grid;
+		grid-auto-flow: column;
+		grid-auto-columns: min(20rem, 82%);
+		gap: 1.25rem;
+		overflow-x: auto;
+		scroll-snap-type: x mandatory;
+		padding-bottom: 0.75rem;
+		scrollbar-width: thin;
+	}
+	.frc-post {
+		scroll-snap-align: start;
+		overflow: hidden;
+		border-radius: 0.9rem;
+		border: 1px solid var(--border);
+		background: var(--card);
+	}
+	/* The certification path: six numbered steps along one line. */
+	.frc-path {
+		display: grid;
+		gap: 1.5rem;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	@media (min-width: 640px) {
+		.frc-path {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			row-gap: 2.5rem;
+		}
+	}
+	@media (min-width: 1024px) {
+		.frc-path {
+			grid-template-columns: repeat(6, minmax(0, 1fr));
+		}
+	}
+	.frc-path > li {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		border-top: 2px solid var(--foreground);
+		padding-top: 1.25rem;
+	}
+	.frc-path > li:last-child {
+		border-top-color: var(--accent);
+	}
+	.frc-path-dot {
+		position: absolute;
+		top: -0.95rem;
+		left: 0;
+		display: grid;
+		place-items: center;
+		width: 1.75rem;
+		height: 1.75rem;
+		border-radius: 999px;
+		background: var(--foreground);
+		color: var(--background);
+		font: 700 0.8rem/1 ui-monospace, monospace;
+	}
+	.frc-check {
+		position: relative;
+		padding-left: 1.6rem;
+	}
+	.frc-check::before {
+		content: "✓";
+		position: absolute;
+		left: 0.15rem;
+		font-weight: 800;
+		color: #15803d;
+	}
+	.dark .frc-check::before {
+		color: #4ade80;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.frc-mosaic .frc-pin,
+		.frc-strips > li {
+			transition: none;
+		}
+	}
+	html.reduce-motion .frc-mosaic .frc-pin,
+	html.reduce-motion .frc-strips > li {
+		transition: none;
+	}
+</style>
