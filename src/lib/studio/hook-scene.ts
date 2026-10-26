@@ -3,8 +3,8 @@
  * src/scripts/studio-hook.ts), on the studio's own stage and room. With no run, it draws nothing and leaves the camera
  * and the lights alone, so Home is unchanged (scripts/home-regression.py).
  *
- *   0 s       the heading: the F450 on the open sketchbook on the dark desk, in a cool rim light; the camera behind the
- *             desk, looking across the dark room to the city through the back wall
+ *   0 s       the heading: the F450 on the build bench beside the dark desk (never on the sketchbook, whose pages must
+ *             stay readable), in a cool rim light; the camera behind the bench, looking across the dark room to the city through the back wall
  *   line 1    "Then the season ends...": a second after it appears, the drone dissolves top to bottom (3.6 s) into
  *             particles sampled from its surface (hook-dissolve.ts), which hang and drift
  *   line 2    "What's left is one line on a résumé.": the particles collapse into one glowing line (1.6 s), which
@@ -13,7 +13,7 @@
  *             boxes, the drone reassembles part by part, bottom to top (its exploded view in reverse,
  *             hook-blueprint.ts), faint blueprint lines on the wall light with the lamp, and the camera pulls back
  *             over the drone to the lit room, the logo and the slogan
- *   the end   the camera hands back to the room's own (the title shot). The drone stays on the desk, and dissolves away
+ *   the end   the camera hands back to the room's own (the title shot). The drone stays on the bench, and dissolves away
  *             as the camera leaves the title, so Home is as it always is from there on.
  *
  * The desk drone is a clone of the drone bench's F450 (stations.ts): it shares its geometry. If that drone hasn't
@@ -26,19 +26,20 @@ import type { StageContext } from "../three/stage";
 import { blueprintLines, blueprintTargets, explodePieces, partBoxes, wallBlueprint } from "./hook-blueprint";
 import { type DissolveUniforms, dissolveMaterials, lineGlow, type Particles, surfaceParticles } from "./hook-dissolve";
 import { type HookRun, hookState } from "./hook-state";
-import { DESK, ROOM, type Room } from "./room";
+import { ROOM, type Room } from "./room";
+import { BENCH, BENCH_LOOK } from "./build-bench";
 
 /** Every position, time and level of the hook, in one place to tune. */
 export const HOOK_LOOK = {
-	/** Where the drone stands: on the open sketchbook (its own design), facing the room. */
-	drone: { x: DESK.book.x + 0.06, z: DESK.book.z, turn: 0 },
+	/** Where the drone stands: on the build bench (build-bench.ts), never on the sketchbook, facing the room. */
+	drone: { x: BENCH_LOOK.drone.x, z: BENCH_LOOK.drone.z, turn: 0 },
 	/**
 	 * The opening shot: behind the desk, clear of the lamp, looking across the dark room to the glass of the back wall,
 	 * the drone on the right of the frame (the words are on the left; facing +z, screen right is -x).
 	 */
-	open: { camera: [-6.1, 1.1, -3.18] as const, target: [-5.79, 0.72, -0.2] as const, push: 0.08 },
+	open: { camera: [-3.97, 1.16, -3.24] as const, target: [-3.66, 0.78, -0.29] as const, push: 0.08 },
 	/** The pull-back after the lamp: over the drone and out into the room (then the room's own camera takes over). */
-	pull: { via: [[-5.95, 1.78, -1.95], [-5.55, 1.62, 0.35]] as const, after: 1.0 },
+	pull: { via: [[-3.82, 1.84, -2.04], [-4.6, 1.68, 0.3]] as const, after: 1.0 },
 	/** The stage's lights while the room is dark: a whisper of key, no fill, a cool rim that outlines the drone. */
 	dark: { key: 0.05, fill: 0, rim: 1.5, rimColor: 0xbfe3ff },
 	/** The dissolve: how long after its line appears it starts (s), how long the cut takes (s), its edge's colour. */
@@ -75,7 +76,7 @@ const span = (t: number, from: number, to: number) => smoother(clamp01((t - from
 export function createHookScene(ctx: StageContext, room: Room): HookScene {
 	const { camera } = ctx;
 	const holder = new Group();
-	holder.position.set(HOOK_LOOK.drone.x, DESK.top + 0.012, HOOK_LOOK.drone.z);
+	holder.position.set(HOOK_LOOK.drone.x, BENCH.top + 0.004, HOOK_LOOK.drone.z);
 	holder.rotation.y = HOOK_LOOK.drone.turn;
 	holder.visible = false;
 	room.group.add(holder);
@@ -195,6 +196,8 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 					if (wall) wall.panel.visible = false;
 				}
 			}
+			// While the hook's drone stands on the bench, the bench's own drone stays hidden.
+			room.bench.occupied.value = onDesk || !!run;
 			if (!run) return;
 			const now = performance.now();
 			const t = (now - run.start) / 1000;
