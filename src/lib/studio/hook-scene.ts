@@ -21,7 +21,7 @@
  * read mode (Studio.astro), so none of this runs; a still run (the words' still card) gets one still frame, the drone
  * whole and the blueprint lit, with no camera move.
  */
-import { Box3, CatmullRomCurve3, Color, Group, Matrix4, type Object3D, Quaternion, Vector3 } from "three";
+import { AdditiveBlending, Box3, CatmullRomCurve3, Color, Group, Matrix4, NormalBlending, type Object3D, Quaternion, Vector3 } from "three";
 import type { StageContext } from "../three/stage";
 import { blueprintLines, blueprintTargets, explodePieces, partBoxes, wallBlueprint } from "./hook-blueprint";
 import { type DissolveUniforms, dissolveMaterials, lineGlow, type Particles, surfaceParticles } from "./hook-dissolve";
@@ -46,7 +46,7 @@ export const HOOK_LOOK = {
 	/** The collapse into the line: how long (s) from its words, and the glow behind the line at its brightest. */
 	collapse: { time: 1.6, glow: 0.55 },
 	/** After the lamp line (s): the blueprint spreading out, and the reassembly. `spread`: how far apart it starts (m). */
-	blueprint: { from: 0.3, to: 1.5, opacity: 0.85, colour: 0x7fe0ff },
+	blueprint: { from: 0.3, to: 1.5, opacity: 0.85, colour: 0x7fe0ff, ink: 0x1d4ed8 },
 	assemble: { from: 1.4, to: 4.6, spread: 0.32 },
 	/** The faint blueprint on the wall, right of the logo: where, how big (m), how bright with the lamp on. */
 	wall: { x: -4.45, y: 2.3, width: 0.95, height: 0.55, opacity: 0.45 },
@@ -141,6 +141,10 @@ export function createHookScene(ctx: StageContext, room: Room): HookScene {
 			return;
 		}
 		run = r;
+		// Light added to a pale room barely shows: in the light theme the blueprint is drawn in ink instead.
+		const light = !document.documentElement.classList.contains("dark");
+		blueprint!.material.blending = light ? NormalBlending : AdditiveBlending;
+		blueprint!.material.uniforms.uColour.value.setHex(light ? HOOK_LOOK.blueprint.ink : HOOK_LOOK.blueprint.colour);
 		holder.visible = true;
 		wall!.panel.visible = true;
 		holder.updateMatrixWorld(true);
