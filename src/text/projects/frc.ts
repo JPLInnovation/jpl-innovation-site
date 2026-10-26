@@ -412,6 +412,60 @@ export const frcDeck = {
 	photos: ['h1', 'ev-van', 'h3', 'g5', 'h4', 'team'] as FrcPhotoId[],
 };
 
+/**
+ * The rookie season as a story told by scrolling: the page holds still while the scenes change. `photo`: an id in
+ * `frcPhotos`; `big`/`small`: the large figure and its label; `route`: how far the flight path on the map has got
+ * (0 Ho Chi Minh City, 1 Vancouver, 2 Istanbul, 3 Honolulu). Every figure is from the season data above.
+ */
+export const seasonStory = {
+	heading: 'The rookie season, in eight scenes',
+	hint: 'Keep scrolling',
+	mapLabel: 'Where the season took us',
+	cities: ['Ho Chi Minh City', 'Vancouver', 'Istanbul', 'Honolulu'],
+	scenes: [
+		{ when: 'Sept 2025', title: 'A rookie team, from zero.', text: 'FRC Team 10951 starts at SSIS: student-led sub-teams, with mentors beside them.', photo: 'b0', big: '7', small: 'student-led sub-teams', route: 0 },
+		{ when: 'Build season', title: 'Two robots on the bench.', text: 'We build the KitBot we will compete with, and alongside it a swerve-drive chassis we will grow into.', photo: 'b1', big: '4', small: 'swerve modules, each steering on its own', route: 0 },
+		{ when: 'Jan 4, 2026', title: 'Kickoff.', text: 'The game is revealed. We analyse the manual, identify strategies and begin design concepts.', photo: 'st4', big: '2:30', small: 'per match', route: 0 },
+		{ when: 'March 4 – 7', title: 'Our first regional.', text: 'The Canadian Pacific Regional at the Pacific Coliseum in Vancouver, our first FRC event.', photo: 'ev-van', big: '11,760', small: 'km from Ho Chi Minh City', route: 1 },
+		{ when: 'Vancouver', title: 'Picked first.', text: 'We finish qualification 19th of 44, and Alliance 6’s captain chooses 10951 with its first pick.', photo: 'h4', big: '19 / 44', small: 'qualification rank', route: 1 },
+		{ when: 'March 31 – April 2', title: 'Across the world again.', text: 'Just over three weeks after Vancouver: the Avrasya Regional in Istanbul.', photo: 'g8', big: '8,188', small: 'km from Ho Chi Minh City', route: 2 },
+		{ when: 'Istanbul', title: 'Higher, and picked first again.', text: 'Three places higher than in Vancouver: 16th of 40, and Alliance 4’s captain picks 10951 first.', photo: 'h1', big: '16 / 40', small: 'qualification rank', route: 2 },
+		{ when: 'Sept 2026', title: 'Season two, on a swerve.', text: 'New members, the swerve as our drivebase, and two regionals booked: Hawaii in March, Marmara in April.', photo: 'team', big: '10,133', small: 'km to Honolulu', route: 3 },
+	] as Array<{ when: string; title: string; text: string; photo: FrcPhotoId; big: string; small: string; route: number }>,
+};
+
+/** The swerve-drive simulator next to the real chassis photo (its markers light the matching module). */
+export const swerveSim = {
+	heading: 'Drive our swerve.',
+	text: 'Each of the four corners is a module that steers and drives on its own, so the robot can move in any direction while it faces any direction. We built it in 2026; it is our drivebase for 2027.',
+	howTo: 'Point or tap on the field to drive it. W A S D moves, Q and E rotate.',
+	canvasLabel: 'Swerve drive simulator, seen from above: the robot drives toward where you point',
+	title: 'Swerve drive · top view · live',
+	auto: 'Auto',
+	spin: 'Spin while driving',
+	rotateLeft: 'Rotate left',
+	rotateRight: 'Rotate right',
+	modules: ['FL', 'FR', 'BL', 'BR'],
+	moduleNames: ['Front-left', 'Front-right', 'Back-left', 'Back-right'],
+	photoHeading: 'The real chassis',
+	photoHint: 'Tap a marker',
+	photo: 'robot' as FrcPhotoId,
+	/** Markers on the photo (percent of its width and height). `m`: which module it is. */
+	hotspots: [
+		{ m: 0, left: 56, top: 58.5 },
+		{ m: 1, left: 82.5, top: 60.5 },
+		{ m: 2, left: 50.5, top: 74 },
+		{ m: 3, left: 89.5, top: 79 },
+		{ k: 'battery', left: 85.5, top: 69 },
+		{ k: 'controller', left: 67, top: 82 },
+	] as Array<{ m?: number; k?: 'battery' | 'controller'; left: number; top: number }>,
+	parts: {
+		module: { name: 'Swerve module', text: 'Steers and drives on its own. Watch its angle and speed on the simulator readout.' },
+		battery: { name: 'Battery', text: 'The 12 V battery that powers every motor and controller on the robot.' },
+		controller: { name: 'Robot controller', text: 'The robot’s main computer. It runs the team’s code and tells each module where to point.' },
+	},
+};
+
 /** The photo viewer's buttons. */
 export const lightboxText = { close: 'Close', prev: 'Previous', next: 'Next', open: 'Open photo:' };
 
@@ -442,9 +496,6 @@ export const rookieText = {
 	buildHeading: 'Build season, week by week',
 	buildIntro: 'Sept 2025 to Feb 2026. Hover or tap a strip to open it.',
 	build: ['b0', 'b1', 'b2', 'b3', 'b4', 'b5', 'b6'] as FrcPhotoId[],
-	swerveHeading: 'The swerve we built',
-	swerveText: 'Alongside the KitBot we competed with, we built a swerve-drive chassis: each of its four corners is a module that steers and drives on its own, so the robot can move in any direction while facing any direction. It didn’t compete in 2026. It is the drivebase for 2027.',
-	swervePhoto: 'robot' as FrcPhotoId,
 };
 
 /** The 2027 tab: the next regional's countdown, both regionals, the season's goals, and the preseason week by week. */
@@ -491,14 +542,40 @@ export const teamMore = {
 	subTeamsHeading: 'Seven sub-teams. One robot.',
 	subTeamsIntro: 'The students who machine parts also write the business plan and run outreach. Each sub-team has its own student lead, guided by mentors: the program director and two advisors.',
 	meets: 'The team meets on Monday and Thursday.',
+	/** `track`: which side of the team it is on (`tracks` below). `jobs`: what it is working on first this season. */
 	subTeams: [
-		{ name: 'CAD & Design', role: 'Turns ideas into Onshape models the shop can build from.' },
-		{ name: 'Mechanical & Fabrication', role: 'Builds, assembles and repairs the robot.' },
-		{ name: 'Electrical', role: 'Wires the robot and keeps it running through every match.' },
-		{ name: 'Programming', role: 'Writes the robot code in WPILib, from swerve control to vision.' },
-		{ name: 'Strategy', role: 'Studies the game, scouts the field and trains the drive team.' },
-		{ name: 'Marketing & Media', role: 'Tells the team’s story at school and online.' },
-		{ name: 'Business & Outreach', role: 'Finds partners, plans travel and runs outreach.' },
+		{ name: 'CAD & Design', track: 'project', role: 'Turns ideas into Onshape models the shop can build from.', jobs: ['Set up the Onshape structure and naming system', 'Run the mechanism design challenge', 'Hand finished models to fabrication'] },
+		{ name: 'Mechanical & Fabrication', track: 'project', role: 'Builds, assembles and repairs the robot.', jobs: ['Inventory parts and tools', 'Get the practice robots running', 'Run tool and fabrication training'] },
+		{ name: 'Electrical', track: 'project', role: 'Wires the robot and keeps it running through every match.', jobs: ['Electrical inventory', 'Repair the practice boards', 'Wiring and troubleshooting'] },
+		{ name: 'Programming', track: 'project', role: 'Writes the robot code in WPILib, from swerve control to vision.', jobs: ['Set up the GitHub repository', 'WPILib, sensors, PID and vision'] },
+		{ name: 'Strategy', track: 'project', role: 'Studies the game, scouts the field and trains the drive team.', jobs: ['Build the game-analysis process', 'Write the driver practice plan', 'Set up the scouting and statistics system', 'Review previous games', 'Define practice metrics'] },
+		{ name: 'Marketing & Media', track: 'logistics', role: 'Tells the team’s story at school and online.', jobs: ['Media, branding and school visibility', 'Club fair and recruitment follow-up', 'A documentation home for the team'] },
+		{ name: 'Business & Outreach', track: 'logistics', role: 'Finds partners, plans travel and runs outreach.', jobs: ['Sponsor list and fundraising plan', 'Outreach opportunities', 'Competition and travel planning', 'Team calendar and communication rhythm', 'Member onboarding and role clarity'] },
+	],
+	tracks: { project: 'Project side', logistics: 'Logistics side' },
+	pickHint: 'Point at a sub-team, or tap one, to see what it owns.',
+	jobsHeading: 'First jobs this season',
+	/** The values the team works by (FIRST's core values), and how it behaves in the workshop. */
+	valuesHeading: 'What we work by',
+	values: [
+		{ name: 'Discovery', colour: '#f08a24', text: 'We explore new skills and ideas.' },
+		{ name: 'Innovation', colour: '#5b95f2', text: 'We use creativity and persistence to solve problems.' },
+		{ name: 'Impact', colour: '#3dd68c', text: 'We apply what we learn to improve our world.' },
+		{ name: 'Inclusion', colour: '#b07cf0', text: 'We respect each other and embrace our differences.' },
+		{ name: 'Teamwork', colour: '#94a3b8', text: 'We are stronger when we work together.' },
+		{ name: 'Fun', colour: '#e5484d', text: 'We enjoy and celebrate what we do.' },
+	],
+	firstValues: [
+		{ name: 'Gracious Professionalism', text: 'High-quality work combined with real respect for people. We compete hard and treat every team, volunteer and opponent with kindness while we do it.' },
+		{ name: 'Coopertition', text: 'Compete and cooperate at the same time. Teams share parts, ideas and help in the pits, so every robot on the field gets better.' },
+	],
+	firstValueTag: 'FIRST value',
+	conductHeading: 'In the workshop',
+	conduct: [
+		{ ideal: 'Inclusive community and collaboration', means: 'Include others and communicate clearly.' },
+		{ ideal: 'Responsible action and respect', means: 'Own your mistakes and be reliable.' },
+		{ ideal: 'Learning through challenge', means: 'Take care of tools, spaces and people.' },
+		{ ideal: 'Representing the school well', means: 'Be safe, always.' },
 	],
 	joinHeading: 'Find your way in',
 	join: [
@@ -529,7 +606,13 @@ export const workshop = {
 		{ title: 'Distractions', text: 'No earbuds. Phones and laptops only when the work needs them.' },
 		{ title: 'Hazards', text: 'No backpacks in the active work area. Keep the floor clear.' },
 	],
+	stepOf: 'Step',
+	prev: 'Previous step',
+	next: 'Next step',
 	checklistHeading: 'Workroom checklist',
+	/** After the ticked count: "3 / 6 ticked". */
+	checklistTicked: 'ticked',
+	checklistDone: 'Ready to work.',
 	checklist: [
 		'Ask before using tools. No machine use without training.',
 		'No rushing.',
@@ -549,9 +632,10 @@ export const outreach = {
 	programs: [
 		{ name: 'RoboKids', tag: 'Running now · every other Friday', text: 'FRC members run hands-on robotics sessions for younger SSIS students in our workshop. Kids build, code on tablets and test their robots on a real practice field.', detail: 'Fall 2026 sessions so far: Sept 4, Sept 18 and Oct 2, each led by student volunteers from the team.' },
 		{ name: 'Poussières de Vie', tag: 'Beyond SSIS', text: 'Full-day Saturday workshops at SSIS for children from Poussières de Vie, an NGO that educates disadvantaged children in Ho Chi Minh City. The team handles the arrangements.' },
-		{ name: 'EmpowerTech', tag: 'Running', text: 'Technology workshops and fundraising for children from marginalised communities, developed with our sister school, LSTS.' },
-		{ name: 'FRC Core Labs', tag: 'New', text: 'Students find practical problems in the school or community, then design, prototype and build solutions.' },
+		{ name: 'EmpowerTech', tag: 'Running', text: 'Technology workshops and fundraising for children from marginalised communities.', more: [{ k: 'Partner school', v: 'Developed together with our sister school, LSTS.' }, { k: 'Format', v: 'Interactive workshops that teach practical technology skills.' }, { k: 'Funding', v: 'Students run fundraising to keep the program going.' }] },
+		{ name: 'FRC Core Labs', tag: 'New', text: 'Prototype and fabricate solutions for our school and the communities around it.', more: [{ k: 'Identify needs', v: 'Find practical problems in the school or community.' }, { k: 'Build', v: 'Design, prototype and build solutions as student projects.' }, { k: 'Learn', v: 'Hands-on CAD, fabrication, testing and iteration.' }] },
 	],
+	moreHint: 'More',
 	photosLabel: 'RoboKids',
 	photos: ['rk0', 'rk5', 'rk3', 'rk4', 'rk1', 'rk2'] as FrcPhotoId[],
 	privacy: 'We keep younger participants’ faces out of our public photos.',
@@ -569,6 +653,8 @@ export const partner = {
 		{ name: 'Travel & logistics', items: ['Robot freight and shipping services', 'Travel or accommodation provided in kind', 'Logistics help at events'] },
 		{ name: 'Outreach programs', items: ['RoboKids sessions for young children', 'EmpowerTech workshops with LSTS', 'FRC Core Labs prototypes for the community'] },
 	],
+	pickLabel: 'Pick a kind of support',
+	powersLabel: 'Your support powers',
 	backHeading: 'What partners get back',
 	back: ['Milestone updates with photos', 'Verified outreach numbers and sessions held', 'A season-end summary of what your support did', 'Student presentations and robot demos'],
 	button: 'Become a partner',
