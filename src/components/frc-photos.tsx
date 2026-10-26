@@ -2,7 +2,6 @@
  * The FRC page's team photos (public/assets/frc/, words and captions: src/text/projects/frc.ts `frcPhotos`):
  *
  *   - PhotoDeck     a stack of prints: drag or flick the top one away and it goes to the back; tap one to see it large
- *   - PhotoMosaic   a wall of prints, each a little crooked, straightening on hover; tap one to see it large
  *   - BuildStrips   the build season as tall strips side by side; the one you hover, focus or tap opens wide
  *   - EventSheets   the two rookie regionals as tabs: the photo crossfades, and the rank shows among the whole field
  *   - Countdown     days, hours and minutes until the next regional's first day
@@ -179,35 +178,6 @@ function DeckCard({ photo, depth, onFling, onOpen, still }: { photo: FrcPhoto; d
 }
 
 /* ------------------------------------------------------------------ */
-/* The mosaic                                                          */
-/* ------------------------------------------------------------------ */
-
-export function PhotoMosaic({ ids, label, columns = 3 }: { ids: FrcPhotoId[]; label: string; columns?: 2 | 3 | 4 }) {
-	const photos = pick(ids);
-	const [viewing, setViewing] = useState<number | null>(null);
-	return (
-		<>
-			<ul aria-label={label} className={cn("frc-mosaic gap-5 [&>li]:mb-5", columns === 2 ? "sm:columns-2" : columns === 4 ? "sm:columns-2 lg:columns-4" : "sm:columns-2 lg:columns-3")}>
-				{photos.map((photo, i) => (
-					<li key={photo.id} className="break-inside-avoid" style={{ ["--tilt" as string]: `${tilt(photo.id)}deg` }}>
-						<figure className="frc-pin m-0">
-							<button type="button" onClick={() => setViewing(i)} className="frc-print block w-full overflow-hidden" aria-label={`${lightboxText.open} ${photo.caption}`}>
-								<img src={small(photo.id)} srcSet={srcSet(photo)} sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw" alt={photo.alt} width={photo.w} height={photo.h} loading="lazy" decoding="async" className="h-auto w-full" />
-							</button>
-							<figcaption className="mt-2 flex flex-col gap-0.5 px-1 text-sm">
-								<span className="font-medium">{photo.caption}</span>
-								{photo.meta && <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{photo.meta}</span>}
-							</figcaption>
-						</figure>
-					</li>
-				))}
-			</ul>
-			<Lightbox photos={photos} index={viewing} onIndex={setViewing} />
-		</>
-	);
-}
-
-/* ------------------------------------------------------------------ */
 /* The build season strips                                             */
 /* ------------------------------------------------------------------ */
 
@@ -262,28 +232,9 @@ export function EventSheets() {
 	};
 	return (
 		<MotionConfig reducedMotion="user">
-			<div className="flex flex-col gap-6">
-				<div role="tablist" aria-label={t.eventsLabel} className="flex w-fit gap-1 rounded-xl border bg-card p-1" onKeyDown={onKey}>
-					{events.map((ev, i) => (
-						<button
-							key={ev.key}
-							ref={(el) => {
-								tabs.current[i] = el;
-							}}
-							role="tab"
-							id={`ev-tab-${ev.key}`}
-							aria-selected={active === i}
-							aria-controls="ev-panel"
-							tabIndex={active === i ? 0 : -1}
-							onClick={() => setActive(i)}
-							className={cn("min-h-11 rounded-lg px-5 text-sm font-semibold transition-colors", active === i ? "bg-foreground text-background" : "hover:bg-foreground/5")}
-						>
-							{ev.tab}
-						</button>
-					))}
-				</div>
-				<div role="tabpanel" id="ev-panel" aria-labelledby={`ev-tab-${e.key}`} className="grid overflow-hidden rounded-2xl border surface lg:grid-cols-[1.1fr_1fr]">
-					<figure className="relative m-0 aspect-[4/3] overflow-hidden bg-muted lg:aspect-auto lg:min-h-[30rem]">
+			<div className="flex flex-col">
+				<div role="tabpanel" id="ev-panel" aria-labelledby={`ev-tab-${e.key}`} className="grid overflow-hidden rounded-2xl border surface lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+					<figure className="relative m-0 aspect-[4/3] overflow-hidden bg-muted lg:aspect-auto lg:min-h-[22rem]">
 						<AnimatePresence initial={false}>
 							<motion.img
 								key={photo.id}
@@ -305,10 +256,31 @@ export function EventSheets() {
 							<span>2026</span>
 						</figcaption>
 					</figure>
-					<div className="flex flex-col gap-6 p-6 md:p-8">
+					<div className="flex flex-col gap-3.5 p-5 md:p-6">
 						<div>
-							<p className="text-sm text-muted-foreground">{e.city}</p>
-							<h3 className="font-wide text-[clamp(1.6rem,3vw,2.25rem)] font-[850] leading-tight">{e.name}</h3>
+							<div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+								<p className="text-sm text-muted-foreground">{e.city}</p>
+								<div role="tablist" aria-label={t.eventsLabel} className="flex w-fit gap-1 rounded-xl border bg-card p-1" onKeyDown={onKey}>
+									{events.map((ev, i) => (
+										<button
+											key={ev.key}
+											ref={(el) => {
+												tabs.current[i] = el;
+											}}
+											role="tab"
+											id={`ev-tab-${ev.key}`}
+											aria-selected={active === i}
+											aria-controls="ev-panel"
+											tabIndex={active === i ? 0 : -1}
+											onClick={() => setActive(i)}
+											className={cn("min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors", active === i ? "bg-foreground text-background" : "hover:bg-foreground/5")}
+										>
+											{ev.tab}
+										</button>
+									))}
+								</div>
+							</div>
+							<h3 className="font-wide text-[clamp(1.4rem,2.2vw,1.9rem)] font-[850] leading-tight">{e.name}</h3>
 							<p className="text-sm text-muted-foreground">
 								{e.venue} · {e.dates}
 							</p>
@@ -320,13 +292,13 @@ export function EventSheets() {
 							<Stat label={t.kmLabel} value={`${e.km.toLocaleString("en-US")} km`} note={t.kmNote} />
 						</dl>
 						<RankStrip rank={e.rank} of={e.of} />
-						<div className="flex flex-col gap-2">
-							<h4 className="text-sm font-semibold">{t.playoffsHeading}</h4>
+						<div className="flex flex-wrap items-center gap-2">
+							<h4 className="mr-1 text-sm font-semibold">{t.playoffsHeading}</h4>
 							<ol className="flex flex-wrap gap-2">
 								{e.playoffs.map((m, i) => {
 									const won = m.us > m.them;
 									return (
-										<li key={i} className={cn("rounded-lg border px-3 py-1.5 font-mono text-sm tabular-nums", won && "border-foreground bg-foreground text-background")}>
+										<li key={i} className={cn("rounded-lg border px-2.5 py-1 font-mono text-sm tabular-nums", won && "border-foreground bg-foreground text-background")}>
 											{won ? t.playoffWin : t.playoffLoss} {m.us}–{m.them}
 										</li>
 									);
@@ -334,6 +306,7 @@ export function EventSheets() {
 							</ol>
 						</div>
 						<p className="text-[15px]">{e.note}</p>
+						<div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
 						<details className="text-sm">
 							<summary className="cursor-pointer font-semibold">{t.goalsHeading}</summary>
 							<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
@@ -345,6 +318,7 @@ export function EventSheets() {
 						<a href={t.sourceHref} target="_blank" rel="noopener noreferrer" className="inline-flex w-fit items-center gap-1 text-sm font-semibold underline underline-offset-4">
 							{t.sourceLink} <ArrowUpRight className="size-4" aria-hidden="true" />
 						</a>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -354,7 +328,7 @@ export function EventSheets() {
 
 function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
 	return (
-		<div className="flex flex-col gap-1 bg-card p-4">
+		<div className="flex flex-col gap-0.5 bg-card px-4 py-3">
 			<dt className="order-2 text-xs text-muted-foreground">
 				{label}
 				{note && <span className="block">{note}</span>}
@@ -369,7 +343,7 @@ function RankStrip({ rank, of }: { rank: number; of: number }) {
 	const reduce = useReducedMotion();
 	return (
 		<figure className="m-0 flex flex-col gap-2">
-			<div className="flex h-8 items-end gap-[3px]" aria-hidden="true">
+			<div className="flex h-6 items-end gap-[3px]" aria-hidden="true">
 				{Array.from({ length: of }, (_, i) => (
 					<motion.span
 						key={`${of}-${i}`}
@@ -408,7 +382,7 @@ export function Countdown() {
 	const left = now === null ? null : Math.max(0, Date.parse(next.startsAt) - now);
 	const parts = left === null ? null : { d: Math.floor(left / 864e5), h: Math.floor(left / 36e5) % 24, m: Math.floor(left / 6e4) % 60 };
 	return (
-		<div className="flex flex-col gap-5 rounded-2xl border surface p-6 md:flex-row md:items-center md:justify-between md:p-8">
+		<div className="flex flex-col gap-4 rounded-2xl border surface p-5">
 			<div className="flex flex-col gap-1">
 				<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{t.nextLabel}</p>
 				<p className="font-wide text-2xl font-[850]">{next.name}</p>
@@ -424,7 +398,7 @@ export function Countdown() {
 				<p className="flex gap-4" role="timer" aria-live="off">
 					{(["d", "h", "m"] as const).map((k) => (
 						<span key={k} className="flex flex-col items-center">
-							<span className="min-w-[3ch] text-center font-wide text-4xl font-[900] tabular-nums md:text-5xl">{parts ? String(parts[k]).padStart(k === "d" ? 3 : 2, "0") : "–"}</span>
+							<span className="min-w-[3ch] text-center font-wide text-4xl font-[900] tabular-nums">{parts ? String(parts[k]).padStart(k === "d" ? 3 : 2, "0") : "–"}</span>
 							<span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t.units[k]}</span>
 						</span>
 					))}
