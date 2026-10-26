@@ -5,7 +5,8 @@ import { CountUp, Grow, Reveal } from "@/components/motion-primitives";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Words: src/text/projects/frc.ts (`seasonsText`, `season2027`, `season2026`)
-import { season2026, season2027, seasonsText } from "@/text/projects/frc";
+import { frcPhotos, rookieText, season2026, season2027, season2027More, seasonsText, type FrcPhoto } from "@/text/projects/frc";
+import { BuildStrips, Countdown, EventSheets, PhotoMosaic, WeekPosts } from "@/components/frc-photos";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ const sections2026 = [
 	{ id: "s2026-timeline", label: t26.sectionLinks.timeline },
 	{ id: "s2026-robot", label: t26.sectionLinks.robot },
 	{ id: "s2026-results", label: t26.sectionLinks.results },
+	{ id: "s2026-photos", label: rookieText.sectionLink },
 ];
 
 /** Season switcher for the FRC page. Deep links: #2026, #2027, or a 2026 section like #s2026-robot. */
@@ -131,6 +133,46 @@ const Season2027 = memo(function Season2027({ onShow2026 }: { onShow2026: (seaso
 				</div>
 			</div>
 
+			<section aria-labelledby="regionals-2027" className="flex flex-col gap-8">
+				<div className="flex max-w-3xl flex-col gap-2">
+					<h2 id="regionals-2027" className="font-wide text-3xl font-[850] md:text-4xl">
+						{season2027More.regionalsHeading}
+					</h2>
+					<p className="text-lg text-muted-foreground">{season2027More.regionalsIntro}</p>
+				</div>
+				<Countdown />
+				<ul className="grid gap-6 md:grid-cols-2">
+					{season2027More.regionals.map((r, i) => (
+						<Reveal as="li" delay={i * 0.08} key={r.name} className="flex flex-col gap-2 rounded-xl border surface p-6 md:p-8">
+							<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{r.label}</p>
+							<h3 className="font-semiwide text-2xl font-[780]">{r.name}</h3>
+							<p className="text-sm text-muted-foreground">
+								{r.city} · {r.dates}
+							</p>
+							<p className="text-muted-foreground">{r.desc}</p>
+							{r.km && (
+								<p className="mt-auto pt-3 font-wide text-3xl font-[900] tabular-nums">
+									{r.km.toLocaleString("en-US")} <span className="text-base font-semibold text-muted-foreground">km</span>
+								</p>
+							)}
+						</Reveal>
+					))}
+				</ul>
+				<ul className="grid gap-x-10 md:grid-cols-3">
+					{season2027More.goals.map((g, i) => (
+						<Reveal as="li" delay={i * 0.08} key={g.title} className="flex flex-col gap-2 border-t py-6">
+							<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{g.label}</p>
+							<h3 className="font-semiwide text-lg font-[760]">{g.title}</h3>
+							<ul className="flex list-disc flex-col gap-1.5 pl-5 text-muted-foreground marker:text-foreground/40">
+								{g.items.map((item) => (
+									<li key={item}>{item}</li>
+								))}
+							</ul>
+						</Reveal>
+					))}
+				</ul>
+			</section>
+
 			<section aria-labelledby="road-2027" className="flex flex-col gap-8">
 				<h2 id="road-2027" className="font-wide text-3xl font-[850] md:text-4xl">
 					{t27.roadHeading}
@@ -171,6 +213,16 @@ const Season2027 = memo(function Season2027({ onShow2026 }: { onShow2026: (seaso
 						</Reveal>
 					))}
 				</ul>
+			</section>
+
+			<section aria-labelledby="weeks-2027" className="flex flex-col gap-8">
+				<div className="flex max-w-3xl flex-col gap-2">
+					<h2 id="weeks-2027" className="font-wide text-3xl font-[850] md:text-4xl">
+						{season2027More.weeksHeading}
+					</h2>
+					<p className="text-lg text-muted-foreground">{season2027More.weeksIntro}</p>
+				</div>
+				<WeekPosts />
 			</section>
 		</div>
 	);
@@ -438,6 +490,16 @@ const Season2026 = memo(function Season2026() {
 						))}
 					</ul>
 				</figure>
+
+				<SwerveStory />
+
+				<div className="flex flex-col gap-6">
+					<div className="flex flex-col gap-2">
+						<h3 className="font-wide text-2xl font-[850] md:text-3xl">{rookieText.buildHeading}</h3>
+						<p className="text-muted-foreground">{rookieText.buildIntro}</p>
+					</div>
+					<BuildStrips />
+				</div>
 			</section>
 
 			{/* Results */}
@@ -445,6 +507,11 @@ const Season2026 = memo(function Season2026() {
 				<h2 id="h-results" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
 					{t26.resultsHeading}
 				</h2>
+				<div className="flex max-w-3xl flex-col gap-2">
+					<h3 className="font-wide text-2xl font-[850] md:text-3xl">{rookieText.eventsHeading}</h3>
+					<p className="text-lg text-muted-foreground">{rookieText.eventsIntro}</p>
+				</div>
+				<EventSheets />
 				<ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
 					{season2026.achievements.map((a, i) => (
 						<Reveal as="li" delay={i * 0.08} key={a.title} className="flex flex-col gap-2 border-t py-6">
@@ -454,35 +521,44 @@ const Season2026 = memo(function Season2026() {
 						</Reveal>
 					))}
 				</ul>
-				<ul className="grid gap-6 md:grid-cols-2">
-					{season2026.competitions.map((c, i) => (
-						<Reveal as="li" delay={i * 0.1} key={c.code} className="flex flex-col gap-4 rounded-xl border surface p-6 md:p-8">
-							<div className="flex items-start justify-between gap-4">
-								<div>
-									<h3 className="font-semiwide text-xl font-[780]">{c.name}</h3>
-									<p className="text-sm text-muted-foreground">{c.city}</p>
-									<p className="text-sm text-muted-foreground">{c.dates}</p>
-								</div>
-								<span aria-hidden="true" className="font-wide text-3xl font-[900] text-foreground/20">
-									{c.code}
-								</span>
-							</div>
-							<h4 className="text-sm font-semibold">{t26.goalsHeading}</h4>
-							<ul className="flex flex-col gap-2">
-								{c.goals.map((g) => (
-									<li key={g} className="flex gap-2.5">
-										<span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-accent ring-1 ring-foreground/30" />
-										{g}
-									</li>
-								))}
-							</ul>
-						</Reveal>
-					))}
-				</ul>
+			</section>
+
+			<section id="s2026-photos" aria-labelledby="h-photos" className="flex scroll-mt-24 flex-col gap-10">
+				<div className="flex flex-col gap-2">
+					<h2 id="h-photos" className="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">
+						{rookieText.pitsHeading}
+					</h2>
+					<p className="text-lg text-muted-foreground">{rookieText.pitsIntro}</p>
+				</div>
+				<PhotoMosaic ids={rookieText.pits} label={rookieText.pitsHeading} />
 			</section>
 		</div>
 	);
 });
+
+/** The swerve chassis built in 2026: it didn't compete, and it is the drivebase for 2027. */
+function SwerveStory() {
+	const photo = frcPhotos[rookieText.swervePhoto] as FrcPhoto;
+	return (
+		<Reveal className="grid items-center gap-8 overflow-hidden rounded-2xl border surface md:grid-cols-[1.2fr_1fr]">
+			<img
+				src={`/assets/frc/${photo.id}-640.webp`}
+				srcSet={`/assets/frc/${photo.id}-640.webp 640w, /assets/frc/${photo.id}.webp ${photo.w}w`}
+				sizes="(min-width: 768px) 55vw, 100vw"
+				alt={photo.alt}
+				width={photo.w}
+				height={photo.h}
+				loading="lazy"
+				decoding="async"
+				className="aspect-[4/3] size-full object-cover"
+			/>
+			<div className="flex flex-col gap-3 p-6 md:p-8">
+				<h3 className="font-wide text-2xl font-[850] md:text-3xl">{rookieText.swerveHeading}</h3>
+				<p className="text-muted-foreground">{rookieText.swerveText}</p>
+			</div>
+		</Reveal>
+	);
+}
 
 function LiveTag({ children }: { children: ReactNode }) {
 	return (
