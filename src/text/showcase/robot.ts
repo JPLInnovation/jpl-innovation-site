@@ -9,6 +9,8 @@
  *   - `id` is the part's link (/work/frc/#intake) and the name of its picture for phones,
  *     public/showcase/robot/<id>.webp (made by scripts/showcase-stills.py). Without a picture the card shows text only.
  *   - Only write what the CAD shows. The team hasn't confirmed speeds, weights or motor controller models yet.
+ *   - The model is our modified robot (src/lib/three/models/frc-robot.ts), not the stock kit: the indexer and launcher
+ *     each have a Kraken X60 outside the side plate, the two intake side fins are gone, and the hopper is extended.
  *   - The small label floating in the 3D view is the feature's `title`.
  */
 import { frcPage } from "../projects/frc";
@@ -25,10 +27,10 @@ export const robotShowcase = {
 		{
 			id: 'overview',
 			title: 'The KitBot platform',
-			text: 'The standard KitBot platform our 2026 robot is built on. It rolls on six wheels, with blue bumpers carrying our team number, 10951.',
+			text: 'Our 2026 robot, built on the KitBot platform and modified by the team. It rolls on six wheels, with blue bumpers carrying our team number, 10951.',
 			facts: [
-				{ label: 'Robot', value: 'KitBot platform' },
-				{ label: 'Model', value: 'The kit’s standard design' },
+				{ label: 'Robot', value: 'A modified KitBot' },
+				{ label: 'Base', value: 'The kit’s platform' },
 				{ label: 'Wheels', value: 'Six' },
 				{ label: 'Bumpers', value: 'Blue, team 10951' },
 			],
@@ -36,9 +38,9 @@ export const robotShowcase = {
 		{
 			id: 'intake',
 			title: 'Intake',
-			text: 'Two intake rollers with yellow spacers pull FUEL, the 150 mm foam ball, off the floor and up the intake ramp into the hopper.',
+			text: 'Blue and orange flex stars pull FUEL, the 150 mm foam ball, off the floor and up the intake ramp into the hopper. We removed the kit’s two side fins to feed more reliably.',
 			facts: [
-				{ label: 'Rollers', value: 'Two, with yellow spacers' },
+				{ label: 'Rollers', value: 'Flex star wheels' },
 				{ label: 'Game piece', value: 'FUEL, a 150 mm foam ball' },
 				{ label: 'Path', value: 'Floor, up the ramp, into the hopper' },
 			],
@@ -46,19 +48,19 @@ export const robotShowcase = {
 		{
 			id: 'hopper',
 			title: 'Hopper',
-			text: 'The hopper is see-through polycarbonate, so the stored FUEL shows. Its floor slopes down to the feeder roller, which sends each ball on to the launcher.',
+			text: 'We extended the kit’s hopper to hold more FUEL. It stays see-through polycarbonate, so the stored balls show; its floor slopes down to the indexer, which sends each one on to the launcher.',
 			facts: [
 				{ label: 'Walls', value: 'See-through polycarbonate' },
-				{ label: 'Floor', value: 'Slopes down to the feeder' },
+				{ label: 'Size', value: 'Extended from the kit' },
 			],
 		},
 		{
 			id: 'shooter',
-			title: 'Feeder and launcher',
-			text: 'The feeder roller pushes FUEL into the launcher wheel, which flings it up the curved hood and out of the top of the robot.',
+			title: 'Indexer and launcher',
+			text: 'The green indexer wheels push FUEL into the launcher wheel, which flings it up the curved hood and out of the top of the robot. Two Kraken X60 motors, mounted outside the side plate, drive the indexer and the launcher.',
 			facts: [
-				{ label: 'Order', value: 'Feeder, launcher wheel, hood' },
-				{ label: 'Shoots', value: 'Up and out of the top' },
+				{ label: 'Order', value: 'Indexer, launcher wheel, hood' },
+				{ label: 'Motors', value: 'Kraken X60, outside the frame' },
 			],
 		},
 		{
