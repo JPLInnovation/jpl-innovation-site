@@ -32,12 +32,12 @@ export const frcPage = {
 	/** Heading, sentence, note and screen reader description of the 3D robot that turns to each part as you scroll
 	 *  (its part by part text: src/text/showcase/robot.ts). `fallbackAlt` describes the photo shown without 3D. */
 	model3d: {
-		heading: 'The KitBot platform in 3D',
-		text: 'The standard KitBot platform our 2026 robot is built on. Follow a ball of FUEL: the intake rollers pull it off the floor into the hopper, the feeder pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
-		note: 'The kit’s standard design, simplified: every part in place, without the fasteners and small holes. Our modified robot is not modelled yet.',
+		heading: 'Our 2026 robot in 3D',
+		text: 'Our modified KitBot. Follow a ball of FUEL: the intake pulls it off the floor into the extended hopper, the indexer pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
+		note: 'From our own CAD: every part in place, without the fasteners and small holes.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of the standard KitBot platform our 2026 robot is built on: an aluminium frame on six wheels with blue 10951 bumpers, intake rollers with yellow spacers, a see-through sloped hopper, a feeder roller, a salmon launcher wheel under a curved hood, CIM motors driving it all through belts and gears, the battery, power hub and an orange signal light.",
+			"3D model of our modified 2026 robot: an aluminium frame on six wheels with blue 10951 bumpers, a blue-and-orange flex star intake, a see-through extended hopper, green indexer wheels, a launcher wheel under a curved hood, two Kraken X60 motors outside the side plate driving the indexer and launcher, CIM motors on the drivetrain, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */
@@ -555,7 +555,7 @@ export const robotChapter = {
 		status: 'Competed in Vancouver and Istanbul',
 		kicker: 'Team 10951’s 2026 robot',
 		name: 'The KitBot',
-		intro: 'The standard KitBot platform, modified and tuned by our team. Follow a ball of FUEL as you scroll: the intake pulls it off the floor, the hopper holds it, the feeder and launcher send it up the hood and out.',
+		intro: 'The KitBot platform, modified and tuned by our team: an extended hopper, a reworked indexer, and two Kraken X60 motors moved outside the frame to drive the indexer and launcher. Follow a ball of FUEL as you scroll: the intake pulls it off the floor, the hopper holds it, the indexer and launcher send it up the hood and out.',
 		facts: [
 			{ icon: 'cpu', label: 'Total mass', value: '140 lb' },
 			{ icon: 'lightning', label: 'Top speed', value: '12 ft/s' },
