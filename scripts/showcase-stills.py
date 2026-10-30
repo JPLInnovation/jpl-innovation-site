@@ -106,6 +106,7 @@ def main() -> None:
     parser.add_argument("--url")
     parser.add_argument("--out")
     parser.add_argument("--executable")
+    parser.add_argument("--feature", help="Render only this feature ID")
     args = parser.parse_args()
     url = args.url or f"http://localhost:4321{PAGES[args.page]}"
     out = pathlib.Path(args.out or ROOT / "public" / "showcase" / args.page)
@@ -119,7 +120,11 @@ def main() -> None:
         page.locator(".showcase").scroll_into_view_if_needed()  # the showcase loads when it comes into view
         page.wait_for_function("() => window.__showcase", timeout=120_000)
         ids = page.eval_on_selector_all(".showcase-feature", "els => els.map((el) => el.id)")
+        if args.feature and args.feature not in ids:
+            raise ValueError(f"Unknown feature: {args.feature}; available: {', '.join(ids)}")
         for n, feature in enumerate(ids):
+            if args.feature and feature != args.feature:
+                continue
             data_url = page.evaluate(f"(n) => {{ window.__showcase.go(n); return ({FADE})(window.__showcase.capture()); }}", n)
             base = out / feature
             write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base, args.page in AVIF)

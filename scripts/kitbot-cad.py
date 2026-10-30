@@ -1,7 +1,7 @@
 """
 Reduce the KitBot Onshape export (.glb) to the light shape list behind the FRC page's 3D robot.
 
-    python scripts/kitbot-cad.py ["CAD/Kitbot 2026 (1).glb"] [src/lib/three/models/frc-robot-cad.json]
+    python scripts/kitbot-cad.py ["CAD/10951_robot.glb"] [src/lib/three/models/frc-robot-cad.json]
 
 Python 3, no packages. Run it after replacing the CAD in CAD/ (that folder stays out of git: the export is
 ~140 MB, over GitHub's 100 MB file limit). Takes about 30 seconds.
@@ -19,7 +19,7 @@ centred on the frame, wheels on y = 0.
 import collections, json, math, re, struct, sys, time
 from array import array
 
-GLB = sys.argv[1] if len(sys.argv) > 1 else "CAD/Kitbot 2026 (1).glb"
+GLB = sys.argv[1] if len(sys.argv) > 1 else "CAD/10951_robot.glb"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "src/lib/three/models/frc-robot-cad.json"
 
 HARDWARE = re.compile(
@@ -32,7 +32,7 @@ ROUNDED = re.compile(r"^(Left|Right) Bumper( \(KITBOT lettering removed\))?$")  
 # The hopper (side, back and floor panels; polycarbonate on the real robot): drawn see-through so the FUEL shows.
 # The original CAD tagged these with part numbers (KB-260xx); the modified robot's export instead names each piece
 # with a literal "(clear)" suffix, which is matched too (and preferred, being self-describing either way).
-CLEAR = re.compile(r"^KB-260(04|05|06|14)\b|\(clear\)", re.I)
+CLEAR = re.compile(r"^KB-260(04|05|06|14)\b|\(clear\)|^(Extended hopper|Extended Back Hopper|Back Hopper|Right Side hopper|Left Side|Hopper Floor)", re.I)
 CENTRE_Y = -0.299  # CAD y of the frame centre (the CAD's intake end is towards -y, z is up)
 E3 = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)]
 t_start = time.time()
@@ -441,7 +441,7 @@ for p in placed:
              "d": q(s["depth"]), **({"r": 0.02} if ROUNDED.search(p["name"]) else {})}
         pieces = [(shape_id(p["mesh"], d), mat_id(s["rgb"], bool(CLEAR.search(p["name"]))))]
     for sid, mid in pieces:
-        parts.append({"s": sid, "c": mid, "m": M, **({"g": rotor} if rotor >= 0 else {})})
+        parts.append({"s": sid, "c": mid, "m": M, "name": p["name"], **({"g": rotor} if rotor >= 0 else {})})
 
 
 def centre_of(pattern):
