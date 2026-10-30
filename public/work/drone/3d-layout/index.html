@@ -1541,7 +1541,7 @@ var PARTS = [
  {id:"pi", short:"Pi 4", n:15, name:"Raspberry Pi 4", zone:"under", spec:"4 GB · own black ABS case, lengthwise in a printed holder · microSD end forward",
   body:"Powered through USB-C from the BEC. Runs MediaMTX (the camera), Tailscale, drone_telemetry and the dashboard. The case hangs upside down and lengthwise under the front-left: flat base up in the printed holder, fan lid facing the ground, microSD end forward, USB end to the rear, HDMI/USB-C side facing the battery.",
   list:["Lengthwise because of the camera ribbon: the CAMERA connector's slot runs across the Pi, so this way the ribbon comes straight back from the camera on the centre line, with no twist and no fold.","The holder (pi-case-holder.stl) is a 6.3 mm tray with a lip along the GPIO side and short lips on the port side where there are no openings. Print it with the plate side on the bed, lips up: PETG, 4 walls, 40 % gyroid, no supports. About 35 g.","Peel off the case's rubber feet so its base sits flat. Four cable ties hold the tray to the plate (down one slot, through a tunnel in the tray, up the next slot); two 300 mm ties go round the case where it has no openings.","A cable tie for the battery case comes down the plate's centre-right slot, runs through a channel in the tray and on into the battery case's top wall.","The FC's USB cable and the 4G stick plug into the two black USB 2.0 ports on the rear end. The blue USB 3.0 ports stay empty.","Keep at least 10 mm of air under the fan."], stages:["05","07","09","10"]},
- {id:"cam", short:"Camera", n:16, name:"Camera Module 3 + tilt mount", zone:"under", spec:"Raspberry Pi Camera Module 3 (imx708) · 1280 × 720 at 60 fps · printed mount, 0–45° down",
+ {id:"cam", short:"Camera", n:16, name:"Camera Module 3 + tilt mount", zone:"under", spec:"Raspberry Pi Camera Module 3 (imx708) · 1280 × 720 at 60 fps or 1080p at 30 fps · printed mount, 0–45° down",
   body:"The camera sits in a 3D-printed case on a hinge under the front tab of the bottom plate. To change the angle, loosen the two lock screws, line the screw up with a tick, and tighten. The Camera tilt slider shows the range.",
   list:["Two M3 bolts through the bottom plate's front slots hold the mount.","The ribbon runs back under the Pi case to its CAMERA connector, blue side toward the Pi's USB ports.",'Print files, hardware and assembly: <a href="' + MOUNT_URL + '" target="_blank" rel="noopener">camera mount page ↗</a>'], stages:["07","09"]},
  {id:"lte", short:"MF833 4G", n:17, name:"ZTE MF833 4G stick", zone:"under", spec:"94 × 29 × 14 mm · 30 g · Viettel SIM, APN v-internet",
@@ -1592,7 +1592,7 @@ function overview(){
     '<li><i style="background:var(--w-vbat)"></i><span>Pair U → 22 AWG → Matek BEC → USB-C → Pi 4</span></li>' +
     '<li><i style="background:var(--w-sbus)"></i><span>FC → receiver (SBUS, 5 V from the FC)</span></li>' +
     '<li><i style="background:var(--w-usb)"></i><span>FC → Pi over USB (MSP telemetry)</span></li>' +
-    '<li><i style="background:#d9d6cc"></i><span>Camera Module 3 → ribbon → Pi (720p60 video)</span></li>' +
+    '<li><i style="background:#d9d6cc"></i><span>Camera Module 3 → ribbon → Pi (720p60 or 1080p30 video)</span></li>' +
     '</ul>' +
     '<p class="warn">The FC\'s 5 V never connects to the Pi.</p>' +
     '<div class="guide">' + stageLinks(["02","04","05"]) + '</div>';

@@ -35,6 +35,8 @@ export const sceneNames: Record<string, string> = {
 	robotics: "Robotics",
 	drones: "Drones",
 	networks: "Networks",
+	build: "Build",
+	test: "Test",
 	web: "Testing",
 	wall: "Selected work",
 	standards: "Standards",
@@ -65,7 +67,7 @@ export const sketchText = {
 	camera: {
 		heading: "Camera",
 		model: "Camera Module 3",
-		specs: "12 MP, autofocus, 720p at 60 fps",
+		specs: "12 MP, autofocus, 720p60 or 1080p30",
 		mount: "printed PETG tilt mount",
 		ribbon: "CSI ribbon to the Pi",
 		level: "0°",
@@ -96,9 +98,14 @@ export const sketchText = {
 		viewer: "watch from anywhere",
 		link: "4G + Tailscale",
 	},
-	/** The roadmap's six steps, short, in the same order as drone.ts's roadmap. */
-	steps: ["design", "parts", "build", "FC setup", "4G video", "field test"],
+	/**
+	 * The roadmap's six steps, short, one for each step of drone.ts's roadmap and in its order (each takes that step's
+	 * done / current / upcoming). A long one wraps onto two lines.
+	 */
+	steps: ["design & parts", "frame & power", "FC setup", "4G video", "printed mounts", "First hover & tuning"],
 	here: "we are here",
+	/** Under a step that hasn't started yet. */
+	planned: "planned",
 };
 
 export type SketchText = typeof sketchText;
@@ -112,4 +119,42 @@ export const benchBoard = {
 	passed: ["Flight controller", "ESCs", "Receiver", "Pi 4 companion", "4G video link"],
 	nextHeading: "Next",
 	next: ["Printed mounts", "Balance check", "First hover", "PID tuning"],
+};
+
+/**
+ * THE LOOSE SHEETS around the sketchbook and pinned on the wall by the desk (src/lib/studio/desk-sheets.ts): working
+ * pages from the F450's build, drawn by hand. Every fact is from the drone page (src/text/projects/drone.ts). The
+ * failed designs are left empty on purpose: only Jayden's own list goes there (see `failed`).
+ */
+export const deskSheets = {
+	topView: { title: "F450 from above", diag: "450 mm", front: "front", motors: "A2212 1000KV" },
+	power: { title: "Power", steps: ["3S LiPo 2200 mAh", "switch 60 A+", "PDB (bottom plate)", "IO board", "4× ESC 30 A", "4× motors"], branch: "Matek BEC 5 V 5 A → Pi 4", note: "own 5 V: never brown out the FC" },
+	video: { title: "Live video", steps: ["Camera Module 3", "Pi 4", "ZTE MF833 4G", "viewer, anywhere"], links: ["CSI", "USB", "4G + Tailscale"] },
+	control: { title: "Flight control", steps: ["MC6C radio", "MC7RE V2", "MicoAir743 V2", "IO board", "4× ESC"], links: ["2.4 GHz", "SBUS", "8-pin"], branch: "USB-C → Pi 4: MSP telemetry" },
+	tilt: { title: "Camera tilt mount", material: "printed PETG", level: "0°", down: "45° down", ribbon: "CSI ribbon" },
+	fc: { title: "FC", model: "MicoAir743 V2", size: "30 × 30 mm", firmware: "INAV 9.1", warn: "its 5 V never to the Pi!" },
+	props: { title: "Props 10 × 4.5", cw: "CW", ccw: "CCW", note: "2 CW, 2 CCW: quad X" },
+	parts: { title: "Parts", items: ["F450 frame", "4× A2212 1000KV", "4× 30 A ESC", "1045 props", "150 mm legs", "MicoAir743 V2", "MC7RE V2 receiver", "3S 2200 mAh", "Matek BEC12S-PRO", "Raspberry Pi 4", "Camera Module 3", "ZTE MF833 4G"] },
+	legs: { title: "Landing gear", height: "150 mm", note: "battery, Pi + camera hang under the frame" },
+	battery: { title: "Battery", pack: "3S 2200 mAh", note: "under the frame, strapped" },
+	modem: { title: "4G stick", model: "ZTE MF833", note: "USB 2.0 to the Pi" },
+	ideas: { title: "Ideas, later", items: ["hold position (no drift)", "return to the landing spot", "follow a person", "hand gestures"], note: "after the first hover" },
+	/** Failed designs: Jayden's own list goes here (what we tried, why it failed, what we changed). Empty until then. */
+	failed: [] as { title: string; why: string; fix: string }[],
+};
+
+/** THE BUILD AND TEST SCENES (the bench between the desk and the robot cart). Facts from src/text/projects/drone.ts. */
+export const buildStory = {
+	build: {
+		tag: "F450 · Build",
+		heading: "Then we build it, piece by piece",
+		body: "Frame and power first, then the flight controller, ESCs and receiver, then the Pi 4, the camera and the 4G stick. Every part you see coming together is from the drone's real CAD.",
+	},
+	test: {
+		tag: "F450 · Test",
+		heading: "Then we test it",
+		bench: "On the bench, these passed:",
+		body: "The first hover comes after the printed mounts. Until then, the flight on the screen is a simulation of our 3D model, not real footage.",
+		label: "Simulation · not flown yet",
+	},
 };

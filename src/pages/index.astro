@@ -1,6 +1,6 @@
 ---
 /**
- * The home page: the studio (src/components/Studio.astro). One room, twelve camera stops, and the loop back to the
+ * The home page: the studio (src/components/Studio.astro). One room, fourteen camera stops, and the loop back to the
  * desk. Phones, reduced motion and read mode get the same text as one ordinary page, with a picture of each scene.
  *
  * All the words: src/text/home.ts and src/text/site.ts (the studio's own: src/text/studio.ts). The projects on the
@@ -10,16 +10,17 @@ import { ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import ClassicHome from "@/components/ClassicHome.astro";
+import ProofCounts from "@/components/ProofCounts.astro";
 import Studio from "@/components/Studio.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, getProjects, toBadge } from "@/lib/content";
 import { copyUpTo, srcset } from "@/lib/images";
 import type { RoomContent } from "@/lib/studio/room";
 import { HOME } from "@/lib/studio/scenes";
-import { hero, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
+import { hero, hook, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
 import { roadmap } from "@/text/projects/drone";
 import { contact, displayDomain, footer, site, talk } from "@/text/site";
-import { sketchText, studio } from "@/text/studio";
+import { benchBoard, buildStory, sketchText, studio } from "@/text/studio";
 
 const projects = await getProjects();
 const members = await getMembers();
@@ -32,6 +33,7 @@ const content: RoomContent = {
 	standards: { heading: mission.standardsHeading, items: mission.standards, steps: mission.process.map((s) => s.title) },
 	milestones: journey.milestones.map(({ year, state }) => ({ year, state })),
 	sign: talk.label,
+	slogan: site.slogan,
 	domain: displayDomain,
 	sketch: { text: sketchText, states: roadmap.map((step) => step.state) },
 };
@@ -73,6 +75,21 @@ const organization = {
 			<p class="studio-hint">{studio.scrollHint} <span aria-hidden="true">↓</span></p>
 		</section>
 
+		<!-- Why we exist: on the first visit to the studio, over the dark room before the lamp comes on (a short cut,
+		     src/text/home.ts `hook.playLines`); otherwise, and for screen readers always, the full paragraph as text. -->
+		<div class="studio-hook" data-studio-hook>
+			<div class="studio-hook-inner">
+				<h2>{hook.heading}</h2>
+				<p class="sr-only">{hook.lines.join(" ")}</p>
+				<div class="studio-hook-window" aria-hidden="true">
+					<div class="studio-hook-roll" data-hook-roll>
+						{hook.playLines.map((i) => <p data-play data-lamp={i === hook.lampLine ? "" : undefined}>{hook.lines[i]}</p>)}
+					</div>
+				</div>
+				<button type="button" class="studio-hook-skip" data-hook-skip data-continue={hook.continue} hidden>{hook.skip}</button>
+			</div>
+		</div>
+
 		<!-- 1 Sketch: where every project starts -->
 		<section data-scene="sketch" data-place="top" class="studio-scene studio-card" aria-labelledby="scene-sketch">
 			<img class="studio-still" {...still("sketch")} alt="" loading="lazy" width="1600" height="900" />
@@ -88,6 +105,27 @@ const organization = {
 			<p class="studio-tag">{mission.stepLabel} 02 · {build.title}</p>
 			<h2 id="scene-research">{mission.processHeading}</h2>
 			<p>{build.desc}</p>
+		</section>
+
+		<!-- 2b Build: the F450 goes together on the bench, piece by piece -->
+		<section data-scene="build" class="studio-scene studio-card" aria-labelledby="scene-build">
+			<img class="studio-still" {...still("build")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{buildStory.build.tag}</p>
+			<h2 id="scene-build">{buildStory.build.heading}</h2>
+			<p>{buildStory.build.body}</p>
+		</section>
+
+		<!-- 2c Test: the bench test, and the simulated flight on the screen (labelled as one) -->
+		<section data-scene="test" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-test">
+			<img class="studio-still" {...still("test")} alt="" loading="lazy" width="1600" height="900" />
+			<p class="studio-tag">{buildStory.test.tag}</p>
+			<h2 id="scene-test">{buildStory.test.heading}</h2>
+			<p>{buildStory.test.bench}</p>
+			<ul class="studio-checks">
+				{benchBoard.passed.map((item) => <li>{item}</li>)}
+			</ul>
+			<p>{buildStory.test.body}</p>
+			<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
 		</section>
 
 		<!-- 3 The four stations: one service each -->
@@ -123,6 +161,7 @@ const organization = {
 			<img class="studio-still" {...still("wall")} alt="" loading="lazy" width="1600" height="900" />
 			<h2 id="scene-wall">{workSection.heading}</h2>
 			<p>{workSection.intro}</p>
+			<ProofCounts class="proof-compact" />
 			<ul class="studio-list">
 				{
 					projects.map((p) => (
@@ -234,7 +273,161 @@ const organization = {
 			document.addEventListener("studio:on", place, { once: true });
 		})();
 	</script>
+	<script>
+		import "@/scripts/studio-hook";
+	</script>
 	<style is:global>
+		/* ---------- The studio's first words (src/scripts/studio-hook.ts) ---------- */
+		.studio-hook:not([data-playing]) .studio-hook-inner > h2 {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+		.studio-hook:not([data-playing]) .studio-hook-window {
+			display: none;
+		}
+		.studio-hook[data-playing] {
+			position: fixed;
+			inset: 0;
+			z-index: 4;
+			display: grid;
+			place-items: center;
+			padding: 6rem 1.5rem;
+			text-align: center;
+			background: radial-gradient(ellipse 55% 45% at 50% 50%, color-mix(in oklab, var(--background) 72%, transparent), transparent 80%);
+			transition: opacity 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+		}
+		.studio-hook[data-leaving] {
+			opacity: 0;
+		}
+		.studio-hook-inner {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 1.75rem;
+			max-width: 48rem;
+		}
+		.studio-hook[data-playing] h2 {
+			font-stretch: 125%;
+			font-weight: 850;
+			font-size: clamp(2rem, 4.5vw, 3.75rem);
+			line-height: 1.02;
+			letter-spacing: -0.02em;
+			color: var(--foreground);
+			text-wrap: balance;
+			animation: hook-in 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+		}
+		/* A window a few lines tall: the lines roll up through it, the current one bright, the one before dimmed. */
+		.studio-hook-window {
+			position: relative;
+			width: min(34ch, 100%);
+			height: 7.5em;
+			overflow: hidden;
+			font-size: clamp(1.25rem, 2.2vw, 1.75rem);
+			line-height: 1.35;
+			-webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%);
+			mask-image: linear-gradient(to bottom, transparent, #000 40%);
+		}
+		.studio-hook-roll {
+			display: flex;
+			flex-direction: column;
+			gap: 0.9em;
+			transform: translateY(7.5em);
+			transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+		}
+		.studio-hook-roll > p {
+			color: var(--foreground);
+			opacity: 0;
+			transition: opacity 0.7s;
+			text-wrap: balance;
+		}
+		.studio-hook-roll > p[data-state="current"] {
+			opacity: 1;
+		}
+		.studio-hook-roll > p[data-state="previous"] {
+			opacity: 0.4;
+		}
+		.studio-hook-roll > p[data-lamp] {
+			font-weight: 700;
+		}
+		.studio-hook-skip {
+			position: fixed;
+			left: 50%;
+			bottom: 1.25rem;
+			transform: translateX(-50%);
+			min-height: 44px;
+			padding: 0 1.4rem;
+			border-radius: 999px;
+			border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
+			background: color-mix(in oklab, var(--background) 70%, transparent);
+			-webkit-backdrop-filter: blur(10px);
+			backdrop-filter: blur(10px);
+			color: var(--foreground);
+			font-weight: 600;
+			cursor: pointer;
+		}
+		.studio-hook-skip:focus-visible {
+			outline: 2px solid var(--ring);
+			outline-offset: 3px;
+		}
+		/* Wide screens: on the empty wall to the left, where the title's words will be, so the logo stays clear to light up. */
+		@media (min-width: 1101px) {
+			.studio-hook[data-playing] {
+				place-items: center start;
+				padding-left: clamp(1rem, 5vw, 4.5rem);
+				text-align: left;
+				background: radial-gradient(ellipse 38% 55% at 16% 50%, color-mix(in oklab, var(--background) 72%, transparent), transparent 80%);
+			}
+			.studio-hook-inner {
+				align-items: flex-start;
+				max-width: min(30rem, 34vw);
+			}
+			.studio-hook-window {
+				width: 100%;
+			}
+			.studio-hook[data-playing] h2 {
+				font-size: clamp(2rem, 3.3vw, 3.25rem);
+			}
+		}
+		/* Reduced motion: the heading and the lamp line together, still, and Continue under them. */
+		.studio-hook[data-still] .studio-hook-window {
+			height: auto;
+			-webkit-mask-image: none;
+			mask-image: none;
+		}
+		.studio-hook[data-still] .studio-hook-roll {
+			transform: none;
+			transition: none;
+		}
+		.studio-hook[data-still] .studio-hook-roll > p:not([data-state="current"]) {
+			display: none;
+		}
+		.studio-hook[data-still] h2,
+		.studio-hook[data-still] .studio-hook-roll > p {
+			animation: none;
+			transition: none;
+		}
+		.studio-hook[data-still] .studio-hook-skip {
+			position: static;
+			transform: none;
+			background: var(--primary);
+			color: var(--primary-foreground);
+		}
+		/* While the words play, the scene's own words and the ruler wait. */
+		html.hook-on .studio-panels > [data-scene],
+		html.hook-on .studio-ruler {
+			opacity: 0 !important;
+			pointer-events: none !important;
+		}
+		@keyframes hook-in {
+			from {
+				opacity: 0;
+				transform: translateY(14px);
+			}
+		}
 		html.studio-on .classic-home,
 		html:not(.studio-on) .studio-home {
 			display: none;

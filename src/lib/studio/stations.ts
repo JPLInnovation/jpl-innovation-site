@@ -37,6 +37,7 @@ import {
 } from "three";
 import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
+import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
 import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
@@ -58,6 +59,8 @@ export interface Stations {
 	wall: { screens: Mesh[]; hover(index: number): void };
 	/** The test bench's laptop and phone, whose pages scroll (the room updates them with the monitor). */
 	screens: PageScreen[];
+	/** The drone bench's F450, once it has loaded (the opening hook's desk drone shares its geometry). */
+	drone(): DroneRig | undefined;
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -189,7 +192,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	droneHolder.position.set(droneX, benchTop, -2.55);
 	droneHolder.rotation.y = 0.5;
 	group.add(droneHolder);
-	let drone: { animate(t: number, dt: number): void; model: Group; floor: number } | undefined;
+	let drone: DroneRig | undefined;
 	import("../three/models/drone")
 		.then(({ loadDrone }) => loadDrone())
 		.then((rig) => {
@@ -582,7 +585,8 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const winH = 1.4;
 	const winY = 1.62;
 	const sky = canvasSurface(2048, 760);
-	const windowGlass = new Mesh(new PlaneGeometry(winW, winH), new MeshBasicMaterial({ map: sky.texture, toneMapped: false }));
+	// Clear glass now: the city outside shows through (backdrop.ts), with a year on each pane.
+	const windowGlass = new Mesh(new PlaneGeometry(winW, winH), new MeshBasicMaterial({ map: sky.texture, toneMapped: false, transparent: true, depthWrite: false }));
 	windowGlass.position.set(winX, winY, z1 - 0.01);
 	windowGlass.rotation.y = Math.PI;
 	group.add(windowGlass);
@@ -596,43 +600,10 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		const { g, canvas } = sky;
 		const w = canvas.width;
 		const h = canvas.height;
-		const gradient = g.createLinearGradient(0, 0, 0, h);
-		if (darkTheme) {
-			gradient.addColorStop(0, "#030616");
-			gradient.addColorStop(0.7, "#0b1640");
-			gradient.addColorStop(1, "#1e2a6a");
-		} else {
-			gradient.addColorStop(0, "#5b7fd6");
-			gradient.addColorStop(0.65, "#f0a8b8");
-			gradient.addColorStop(1, "#ffd59a");
-		}
-		g.fillStyle = gradient;
-		g.fillRect(0, 0, w, h);
-		let seed = 7;
-		const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-		for (let i = 0; i < (darkTheme ? 520 : 70); i++) {
-			const x = rand() * w;
-			const y = rand() * h * 0.8;
-			const r = rand() < 0.08 ? 2.4 : 1.2;
-			g.globalAlpha = darkTheme ? 0.4 + rand() * 0.6 : 0.5 + rand() * 0.4;
-			g.fillStyle = darkTheme ? "#e6eeff" : "#ffffff";
-			g.beginPath();
-			g.arc(x, y, r, 0, Math.PI * 2);
-			g.fill();
-		}
-		g.globalAlpha = 1;
-		// A city skyline at the bottom, Ho Chi Minh City at night (or at dusk).
-		g.fillStyle = darkTheme ? "#050816" : "#3b3f6b";
-		let x = 0;
-		while (x < w) {
-			const bw = 40 + rand() * 90;
-			const bh = 50 + rand() * 150;
-			g.fillRect(x, h - bh, bw, bh);
-			g.fillStyle = darkTheme ? "rgba(255,214,140,0.7)" : "rgba(255,230,180,0.55)";
-			for (let wy = h - bh + 12; wy < h - 10; wy += 18) for (let wx = x + 8; wx < x + bw - 8; wx += 14) if (rand() < 0.35) g.fillRect(wx, wy, 5, 7);
-			g.fillStyle = darkTheme ? "#050816" : "#3b3f6b";
-			x += bw + 4;
-		}
+		// Clear: the sky and the city are outside now (backdrop.ts); only the years are painted on the glass.
+		g.clearRect(0, 0, w, h);
+		g.shadowColor = darkTheme ? "rgba(0,0,0,0.6)" : "rgba(10,17,36,0.45)";
+		g.shadowBlur = 8;
 		// The years, one on each pane, read from inside the room (left to right).
 		const paneW = w / panes;
 		content.milestones.forEach((m, i) => {
@@ -786,6 +757,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	return {
 		accents,
 		screens: [laptop],
+		drone: () => drone,
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {

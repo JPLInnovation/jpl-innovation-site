@@ -31,10 +31,21 @@ screenshots/
 
 # full-size audit captures (the report uses the smaller sheets in audit/before/)
 audit/screenshots/
+# the Home regression check's captures (scripts/home-regression.py)
+audit/regression/
 
 # Playwright MCP page snapshots
 .playwright-mcp/
 
 # Raw CAD exports: over GitHub's 100 MB file limit. scripts/kitbot-cad.py reduces the KitBot export to
-# src/lib/three/models/frc-robot-cad.json (50 KB), which is what the site's 3D robot is built from.
+# src/lib/three/models/frc-robot-cad.json, which is what the site's 3D robot is built from.
 CAD/
+# Local design inspection captures and temporary browser checks
+.taste-skill/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
+
+# local agent skills
+.agents/
+.skills.json
+skills-lock.json

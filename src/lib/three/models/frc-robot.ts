@@ -1,8 +1,11 @@
 /**
- * The standard KitBot platform (the base of Team 10951's 2026 robot) in 3D, from the kit's CAD. Our modified robot is not modelled.
+ * Team 10951's 2026 robot in 3D: the KitBot platform as the team built and modified it, from the team's own CAD export
+ * (CAD/10951_robot.glb; scripts/kitbot-cad.py). The real changes from the stock kit: the two intake
+ * side fins removed, a reworked indexer (green wheels), an extended see-through hopper, and the Kraken X60 motors
+ * that drive the intake and flywheel moved outside the side plate instead of inside the frame.
  *
- * frc-robot-cad.json is the CAD reduced to simple shapes (scripts/kitbot-cad.py turns the 142 MB export in CAD/,
- * which stays out of the repo, into these 50 KB):
+ * frc-robot-cad.json is the CAD reduced to simple shapes (scripts/kitbot-cad.py turns the 162 MB export in CAD/,
+ * which stays out of the repo, into these 125 KB):
  *   - round parts (wheels, rollers, motors, pulleys, gears, spacers) are their real side profile, revolved, and
  *     coloured section by section by the CAD material on their outside
  *   - everything else (plates, panels, bumpers, belts, frame rails, hood) is its real outline, extruded to its
@@ -33,7 +36,6 @@ import {
 	type MeshBasicMaterial,
 	Object3D,
 	Path,
-	PlaneGeometry,
 	Shape,
 	SphereGeometry,
 	Vector2,
@@ -41,7 +43,7 @@ import {
 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { type Finish, hardware } from "../finish";
-import { contactShadow, type Model, type StageContext, type StageView, textTexture } from "../stage";
+import { contactShadow, type Model, type StageContext, type StageView } from "../stage";
 import cadJson from "./frc-robot-cad.json";
 
 export const view: StageView = {
@@ -65,7 +67,7 @@ interface CadData {
 	rotors: [number, number][];
 	anchors: Record<string, [number, number, number]>;
 	/** s = shape, c = material, m = 3x4 matrix (column-major) into site coordinates, g = rotor index. */
-	parts: Array<{ s: number; c: number; m: number[]; g?: number }>;
+	parts: Array<{ s: number; c: number; m: number[]; g?: number; name?: string }>;
 }
 const cad = cadJson as unknown as CadData;
 
@@ -94,6 +96,7 @@ type V3 = [number, number, number];
 
 /** One CAD part, as buildRobot's `tag` sees it. */
 export interface RobotPart {
+	name: string;
 	/** CAD colour, "#rrggbb". */
 	color: string;
 	/** Drawn see-through (the hopper). */
@@ -118,8 +121,10 @@ export interface RobotRig {
 	materials(color: string): MeshStandardMaterial[];
 	/** Spins the rollers and moves the FUEL. dt = 0 for a still frame. */
 	animate(t: number, dt: number): void;
-	/** Puts the FUEL where it is at `t` seconds into its loop, without moving anything else. */
+	/** Deterministically poses FUEL and the rollers at `t` seconds into the demonstration. */
 	pose(t: number): void;
+	/** 0 = provisional folded pose, 1 = CAD's open pose. */
+	hopper(open: number): void;
 	applyPalette(p: { dark: boolean }): void;
 }
 
@@ -150,7 +155,10 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		if ("p" in s) {
 			const points = pairs(s.p);
 			const r = Math.max(...points.map((p) => p.x));
-			return new LatheGeometry(points, Math.min(48, Math.max(16, Math.round(r * 500)))).toNonIndexed();
+			// More segments than before (was 16-48): round parts (wheels, pulleys, motors) are seen close up on this
+			// page's pinned scroll, where a visibly faceted edge reads as low quality; this stays cheap because only
+			// the round parts' segment count grows, not the frame and panel geometry around them.
+			return new LatheGeometry(points, Math.min(64, Math.max(20, Math.round(r * 650)))).toNonIndexed();
 		}
 		const outers = s.o.map(pairs);
 		const list = outers.map((o) => new Shape(o));
@@ -186,6 +194,13 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		robot.add(g);
 		return g;
 	});
+	// Pivot centres measured from the two named 3D printed blocks in 10951_robot.glb.
+	// The GLB contains no joint limits: the folded angle is an illustrative pose pending team confirmation.
+	const hopperPivot = new Vector3(0, 0.499, -0.279);
+	const hopperClosedAngle = -Math.PI / 2;
+	const extension = new Group();
+	extension.position.copy(hopperPivot);
+	robot.add(extension);
 	const buckets = new Map<string, { geometries: BufferGeometry[]; material: number; rotor: number }>();
 	const m4 = new Matrix4();
 	const placed = cad.parts.map((part) => {
@@ -198,16 +213,20 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 			geometry.computeBoundingBox();
 			const { min, max } = geometry.boundingBox!;
 			const c = cad.parts[i].c;
-			return { color: cad.materials[c], clear: cad.clear.includes(c), rotor: cad.parts[i].g ?? -1, lo: min.toArray(), hi: max.toArray() };
+			return { name: cad.parts[i].name ?? '', color: cad.materials[c], clear: cad.clear.includes(c), rotor: cad.parts[i].g ?? -1, lo: min.toArray(), hi: max.toArray() };
 		}),
 	);
 	cad.parts.forEach((part, i) => {
 		const geometry = placed[i];
-		const rotor = part.g ?? -1;
+		const movingHopper = /^(Extended hopper|Extended Back Hopper|Sticker -)|^Zip tie (20|21|22|26|27|28)\b/i.test(part.name ?? '');
+		const rotor = movingHopper ? -2 : (part.g ?? -1);
 		if (rotor >= 0) geometry.translate(0, -cad.rotors[rotor][0], -cad.rotors[rotor][1]);
 		if (features) {
 			const count = geometry.getAttribute("position").count;
 			geometry.setAttribute("feature", new BufferAttribute(new Float32Array(count).fill(features[i] ?? 0), 1));
+		}
+		if (movingHopper) {
+			geometry.translate(-hopperPivot.x, -hopperPivot.y, -hopperPivot.z);
 		}
 		const key = `${rotor}:${part.c}`;
 		const bucket = buckets.get(key) ?? { geometries: [], material: part.c, rotor };
@@ -215,37 +234,17 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		buckets.set(key, bucket);
 	});
 	for (const { geometries, material, rotor } of buckets.values()) {
-		(rotor >= 0 ? rotors[rotor] : robot).add(new Mesh(mergeGeometries(geometries, false), materials[material]));
+		(rotor === -2 ? extension : rotor >= 0 ? rotors[rotor] : robot).add(new Mesh(mergeGeometries(geometries, false), materials[material]));
 		geometries.forEach((g) => g.dispose());
 	}
 	shapes.forEach((g) => g.dispose());
 
-	/* ---------- Team number on the bumpers (where the CAD has "KITBOT") ---------- */
-	await document.fonts.load('700 96px "Archivo Variable"').catch(() => undefined);
-	const TEAM = "10951";
-	/** `canvasWidth` sets the aspect: 560 px wide gives ~66 mm tall digits on a 0.31 m plane. */
+	/* ---------- Team number on the bumpers ----------
+	 * The stock kit's bumpers are moulded with "KITBOT"; the real, modified robot's CAD instead carries the team's own
+	 * "10951"/"51"/"109" lettering as its own parts ("Right Bumper lettering 10951", etc.), already placed and shaped
+	 * to the real bumpers, so no separate decal is drawn here: those parts render like any other CAD piece above.
+	 * `numbers` stays empty for callers (the drivetrain stop's highlight, frc-robot-showcase.ts) that ask for it. */
 	const numbers: MeshStandardMaterial[] = [];
-	const lettering = (width: number, canvasWidth: number) => {
-		const texture = textTexture(TEAM, { width: canvasWidth, height: 120, font: '700 96px "Archivo Variable", "Arial", sans-serif', color: "#e8edf4" });
-		const geometry = new PlaneGeometry(width, (width * 120) / canvasWidth);
-		if (tag) geometry.setAttribute("feature", new BufferAttribute(new Float32Array(geometry.getAttribute("position").count), 1));
-		const material = new MeshStandardMaterial({ map: texture, transparent: true, depthWrite: false, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2 });
-		numbers.push(material);
-		return new Mesh(geometry, material);
-	};
-	const decals: Array<[number, number, [number, number, number], number]> = [
-		[0.31, 560, [0.4208, 0.137, 0.027], Math.PI / 2], // right side
-		[0.31, 560, [-0.4208, 0.137, 0.027], -Math.PI / 2], // left side
-		[0.31, 560, [0, 0.137, -0.4178], Math.PI], // back
-		[0.17, 380, [-0.314, 0.137, 0.4178], 0], // front corners, either side of the intake
-		[0.17, 380, [0.314, 0.137, 0.4178], 0],
-	];
-	for (const [width, canvasWidth, [x, y, z], turn] of decals) {
-		const mesh = lettering(width, canvasWidth);
-		mesh.position.set(x, y, z);
-		mesh.rotation.y = turn;
-		robot.add(mesh);
-	}
 
 	/* ---------- FUEL: floor -> intake -> hopper -> feeder -> launcher wheel -> up the hood ---------- */
 	const at = (z: number, y: number) => new Vector3(0, y, z);
@@ -281,14 +280,14 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		if (phase < 1.5) {
 			ball.position.copy(intakePath.getPointAt(easeInOut(phase / 1.5)));
 			ball.scale.setScalar(Math.min(1, phase / 0.3));
-			ball.rotation.x -= 0.12;
+			ball.rotation.x = -t * 9;
 		} else if (phase < 2.2) {
 			ball.position.copy(intakePath.getPointAt(1)); // waits in the hopper, against the feeder
 		} else if (phase < 2.8) {
 			const u = (phase - 2.2) / 0.6;
 			ball.position.copy(feedPath.getPointAt(u * u)); // speeds up as the launcher wheel grabs it
 			ball.scale.setScalar(u > 0.45 && u < 0.95 ? 0.86 : 1); // squashed between the wheel and the hood
-			ball.rotation.x += 0.3;
+			ball.rotation.x = t * 18;
 		} else if (phase < 3.9) {
 			const s = phase - 2.8;
 			flight(ball, s);
@@ -328,7 +327,11 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
 		},
 		pose(t) {
+			rotors.forEach((rotor, i) => { rotor.rotation.x = t * [9, 9, -18, -8][i]; });
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
+		},
+		hopper(open) {
+			extension.rotation.x = (1 - Math.max(0, Math.min(1, open))) * hopperClosedAngle;
 		},
 		applyPalette(p) {
 			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.6 : 0.32;

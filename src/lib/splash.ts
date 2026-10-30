@@ -73,6 +73,15 @@ export function afterIntro() {
  * from arrivalMode, which SplashShell inlines next to it.
  */
 export function getIntroMode(kind: SplashKind): IntroMode {
+	try {
+		// Settings' "Replay the opening" (src/components/SettingsPanel.astro): the full version, once.
+		if (sessionStorage.getItem("replay-opening")) {
+			sessionStorage.removeItem("replay-opening");
+			return "full";
+		}
+	} catch {
+		/* storage blocked */
+	}
 	const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
 	const type = nav ? nav.type : "navigate";
 	if (type === "reload") return "fast";

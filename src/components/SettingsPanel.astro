@@ -8,6 +8,8 @@
  *   Experience Classic / 3D (localStorage "experience"; src/lib/prefs.ts); the page reloads into it
  *   Sound      Off; "On" is there but disabled until the sounds exist
  *   3D quality Auto / High / Low (localStorage "quality"; the 3D stage's starting tier); the page reloads
+ *   Replay the opening: forgets the Classic/3D answer and that the studio's first words were seen, then opens the home
+ *              page with the full logo intro (sessionStorage "replay-opening", read by getIntroMode in src/lib/splash.ts)
  *
  * Words: src/text/site.ts (`settings`).
  */
@@ -55,6 +57,7 @@ const groups = [
 			</fieldset>
 		))
 	}
+	<button type="button" data-replay-opening class="press min-h-11 rounded-full border px-4 text-sm font-semibold hover:bg-secondary">{text.replay}</button>
 </div>
 
 <style is:global>
@@ -200,6 +203,15 @@ const groups = [
 			if (event.key === "Escape") panel()?.removeAttribute("data-open");
 		});
 	}
+	document.addEventListener("click", (event) => {
+		if (!(event.target as Element).closest?.("[data-replay-opening]")) return;
+		write(EXPERIENCE_KEY, null);
+		write("hook-seen", null);
+		try {
+			sessionStorage.setItem("replay-opening", "1");
+		} catch {}
+		location.href = "/";
+	});
 	document.addEventListener("change", (event) => {
 		const input = event.target as HTMLInputElement;
 		if (!input.closest?.("[data-settings]")) return;
