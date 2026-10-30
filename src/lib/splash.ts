@@ -21,8 +21,11 @@
 export type SplashKind = "jpl" | "frc" | "drone";
 export type IntroMode = "full" | "fast" | "none";
 
-export const isFrcRoute = (path: string) => /^\/work\/frc(\/|$)/.test(path);
-export const isDroneRoute = (path: string) => /^\/work\/drone\/?$/.test(path);
+// Match the route after any GitHub Pages project-site prefix (for example,
+// /jpl-innovation-site/work/frc/). The subpath deployment rewrites links and
+// assets, but `location.pathname` still includes that prefix at runtime.
+export const isFrcRoute = (path: string) => /(?:^|\/)work\/frc(?:\/|$)/.test(path);
+export const isDroneRoute = (path: string) => /(?:^|\/)work\/drone\/?$/.test(path);
 
 /** Runs inlined in the browser too (SplashShell), next to the two route tests above. */
 export const splashFor = (path: string): SplashKind => (isFrcRoute(path) ? "frc" : isDroneRoute(path) ? "drone" : "jpl");
