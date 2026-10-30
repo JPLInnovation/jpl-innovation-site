@@ -67,7 +67,7 @@ export const LOOK = {
 };
 
 /** The chapter's stops, in order: beats 1 to 3, then beat 4's part-by-part stops (src/text/showcase/robot.ts). */
-export const STOPS = ["prologue", "stakes", "reveal", "overview", "intake", "hopper", "shooter", "drivetrain", "electronics"];
+export const STOPS = ["prologue", "stakes", "reveal", "overview", "intake", "hopper", "indexer", "shooter", "hopper-close", "krakens", "vision", "odometry", "drivetrain", "electronics"];
 
 export interface ChapterOptions {
 	/** Where the page is, in stops (0 = the prologue). */
@@ -230,7 +230,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	const chapter = {
 		...base,
 		// The opening beats and the overview keep the whole robot in colour; each part stop fades the rest back.
-		whole: [0, 1, 2, 3],
+		whole: [0, 1, 2, 3, STOPS.indexOf('hopper-close')],
 		focus(w: ArrayLike<number>, explode: number) {
 			base.focus?.(w, explode);
 			for (let i = 0; i < weights.length; i++) weights[i] = w[i] ?? 0;

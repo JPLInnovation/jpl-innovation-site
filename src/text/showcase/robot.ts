@@ -1,18 +1,4 @@
-/**
- * FRC PAGE, "THE KITBOT PLATFORM IN 3D" (/work/frc/, right after the robot photo that opens to full screen).
- * The 3D robot turns to each part as its text comes up. Phones show each part's text as a card instead.
- *
- * Edit the words between the quotes. Keep the quotes and the commas at the end of lines.
- *   - The heading, the sentence under it, the small note and the screen reader description are shared with the
- *     rest of the FRC page's words: change them in src/text/projects/frc.ts (`frcPage.model3d`).
- *   - Keep the features in this order: each one has its camera position in src/lib/three/models/frc-robot-showcase.ts.
- *   - `id` is the part's link (/work/frc/#intake) and the name of its picture for phones,
- *     public/showcase/robot/<id>.webp (made by scripts/showcase-stills.py). Without a picture the card shows text only.
- *   - Only write what the CAD shows. The team hasn't confirmed speeds, weights or motor controller models yet.
- *   - The model is our modified robot (src/lib/three/models/frc-robot.ts), not the stock kit: the indexer and launcher
- *     each have a Kraken X60 outside the side plate, the two intake side fins are gone, and the hopper is extended.
- *   - The small label floating in the 3D view is the feature's `title`.
- */
+/** Feature copy for the shared 10951_robot.glb CAD model. Stop IDs also identify fallback renders. */
 import { frcPage } from "../projects/frc";
 
 export const robotShowcase = {
@@ -26,7 +12,7 @@ export const robotShowcase = {
 	features: [
 		{
 			id: 'overview',
-			title: 'The KitBot platform',
+			title: 'Follow the FUEL',
 			text: 'Our 2026 robot, built on the KitBot platform and modified by the team. It rolls on six wheels, with blue bumpers carrying our team number, 10951.',
 			facts: [
 				{ label: 'Robot', value: 'A modified KitBot' },
@@ -55,16 +41,41 @@ export const robotShowcase = {
 			],
 		},
 		{
-			id: 'shooter',
-			title: 'Indexer and launcher',
-			text: 'The green indexer wheels push FUEL into the launcher wheel, which flings it up the curved hood and out of the top of the robot. Two Kraken X60 motors, mounted outside the side plate, drive the indexer and the launcher.',
+            id: 'indexer', title: 'Indexer',
+            text: 'The green indexer wheels move FUEL from the hopper into the shooter. A separate REV NEO drive lets the indexer meter the feed independently of the flywheel. Follow the yellow ball through the handoff.',
+            facts: [{ label: 'Mechanism', value: 'Green indexer wheels' }, { label: 'Motor in this CAD', value: 'REV NEO V1.1' }, { label: 'Job', value: 'Feed the flywheel' }],
+        },
+        {
+            id: 'shooter',
+			title: 'Flywheel & shooter',
+			text: 'The indexer delivers FUEL to the spinning flywheel. The wheel accelerates it against the curved hood, which guides the ball up and out. The upper Kraken drives the flywheel through an HTD5 belt.',
 			facts: [
 				{ label: 'Order', value: 'Indexer, launcher wheel, hood' },
-				{ label: 'Motors', value: 'Kraken X60, outside the frame' },
+				{ label: 'Drive', value: 'Kraken X60 + HTD5 belt' },
 			],
 		},
-		{
-			id: 'drivetrain',
+        {
+            id: 'hopper-close', title: 'Fold the extension.',
+            text: 'The extended hopper can open and close. Here, its side panels and back panel move together around the crosswise pivot, with the lettering attached. Scroll back to reopen it.',
+            facts: [{ label: 'Moving assembly', value: 'Extension sides + back' }, { label: 'Animation', value: 'Illustrative closing angle' }],
+        },
+        {
+            id: 'krakens', title: 'Kraken X60',
+            text: 'Two Kraken X60 motors drive the intake and flywheel through separate belt paths. Each motor combines a brushless motor, a Talon FX controller and an encoder in one package. Feedback lets robot code regulate mechanism speed as the load changes.',
+            facts: [{ label: 'Motor', value: 'WCP Kraken X60' }, { label: 'Controller', value: 'Integrated CTRE Talon FX' }, { label: 'Feedback', value: 'Built-in encoder' }],
+        },
+        {
+            id: 'vision', title: 'Limelight 4+',
+            text: 'Our Limelight 4+ processes camera images on board. AprilTags provide known landmarks for estimating robot position. With MegaTag2, robot heading, the camera mount transform and a field map work together to produce a pose estimate.',
+            facts: [{ label: 'Vision', value: 'Limelight 4+' }, { label: 'Landmarks', value: 'AprilTags' }, { label: 'MegaTag2 needs', value: 'Robot heading + calibrated camera pose' }],
+        },
+        {
+            id: 'odometry', title: 'Pigeon 2.0 & odometry',
+            text: 'The CTRE Pigeon 2.0 measures orientation. Its heading combines with left and right wheel encoder distances to estimate this six-wheel robot?s position. Limelight measurements can correct accumulated drift when fused into a pose estimator.',
+            facts: [{ label: 'Heading', value: 'CTRE Pigeon 2.0' }, { label: 'Distance', value: 'Wheel encoders' }, { label: 'Correction', value: 'Vision pose measurements' }],
+        },
+        {
+            id: 'drivetrain',
 			title: 'Drivetrain',
 			text: 'Six wheels on an aluminium frame. CIM motors drive them through belts and gears.',
 			facts: [

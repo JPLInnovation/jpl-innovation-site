@@ -1,11 +1,11 @@
 /**
  * Team 10951's 2026 robot in 3D: the KitBot platform as the team built and modified it, from the team's own CAD export
- * (CAD/Modified Kitbot 2026 10951.glb; scripts/kitbot-cad.py). The real changes from the stock kit: the two intake
+ * (CAD/10951_robot.glb; scripts/kitbot-cad.py). The real changes from the stock kit: the two intake
  * side fins removed, a reworked indexer (green wheels), an extended see-through hopper, and the Kraken X60 motors
- * that drive the indexer and launcher moved outside the side plate instead of inside the frame.
+ * that drive the intake and flywheel moved outside the side plate instead of inside the frame.
  *
- * frc-robot-cad.json is the CAD reduced to simple shapes (scripts/kitbot-cad.py turns the 142 MB export in CAD/,
- * which stays out of the repo, into these 50 KB):
+ * frc-robot-cad.json is the CAD reduced to simple shapes (scripts/kitbot-cad.py turns the 162 MB export in CAD/,
+ * which stays out of the repo, into these 125 KB):
  *   - round parts (wheels, rollers, motors, pulleys, gears, spacers) are their real side profile, revolved, and
  *     coloured section by section by the CAD material on their outside
  *   - everything else (plates, panels, bumpers, belts, frame rails, hood) is its real outline, extruded to its
@@ -67,7 +67,7 @@ interface CadData {
 	rotors: [number, number][];
 	anchors: Record<string, [number, number, number]>;
 	/** s = shape, c = material, m = 3x4 matrix (column-major) into site coordinates, g = rotor index. */
-	parts: Array<{ s: number; c: number; m: number[]; g?: number }>;
+	parts: Array<{ s: number; c: number; m: number[]; g?: number; name?: string }>;
 }
 const cad = cadJson as unknown as CadData;
 
@@ -96,6 +96,7 @@ type V3 = [number, number, number];
 
 /** One CAD part, as buildRobot's `tag` sees it. */
 export interface RobotPart {
+	name: string;
 	/** CAD colour, "#rrggbb". */
 	color: string;
 	/** Drawn see-through (the hopper). */
@@ -120,8 +121,10 @@ export interface RobotRig {
 	materials(color: string): MeshStandardMaterial[];
 	/** Spins the rollers and moves the FUEL. dt = 0 for a still frame. */
 	animate(t: number, dt: number): void;
-	/** Puts the FUEL where it is at `t` seconds into its loop, without moving anything else. */
+	/** Deterministically poses FUEL and the rollers at `t` seconds into the demonstration. */
 	pose(t: number): void;
+	/** 0 = provisional folded pose, 1 = CAD's open pose. */
+	hopper(open: number): void;
 	applyPalette(p: { dark: boolean }): void;
 }
 
@@ -191,6 +194,13 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		robot.add(g);
 		return g;
 	});
+	// Pivot centres measured from the two named 3D printed blocks in 10951_robot.glb.
+	// The GLB contains no joint limits: the folded angle is an illustrative pose pending team confirmation.
+	const hopperPivot = new Vector3(0, 0.499, -0.279);
+	const hopperClosedAngle = -Math.PI / 2;
+	const extension = new Group();
+	extension.position.copy(hopperPivot);
+	robot.add(extension);
 	const buckets = new Map<string, { geometries: BufferGeometry[]; material: number; rotor: number }>();
 	const m4 = new Matrix4();
 	const placed = cad.parts.map((part) => {
@@ -203,16 +213,20 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 			geometry.computeBoundingBox();
 			const { min, max } = geometry.boundingBox!;
 			const c = cad.parts[i].c;
-			return { color: cad.materials[c], clear: cad.clear.includes(c), rotor: cad.parts[i].g ?? -1, lo: min.toArray(), hi: max.toArray() };
+			return { name: cad.parts[i].name ?? '', color: cad.materials[c], clear: cad.clear.includes(c), rotor: cad.parts[i].g ?? -1, lo: min.toArray(), hi: max.toArray() };
 		}),
 	);
 	cad.parts.forEach((part, i) => {
 		const geometry = placed[i];
-		const rotor = part.g ?? -1;
+		const movingHopper = /^(Extended hopper|Extended Back Hopper|Sticker -)|^Zip tie (20|21|22|26|27|28)\b/i.test(part.name ?? '');
+		const rotor = movingHopper ? -2 : (part.g ?? -1);
 		if (rotor >= 0) geometry.translate(0, -cad.rotors[rotor][0], -cad.rotors[rotor][1]);
 		if (features) {
 			const count = geometry.getAttribute("position").count;
 			geometry.setAttribute("feature", new BufferAttribute(new Float32Array(count).fill(features[i] ?? 0), 1));
+		}
+		if (movingHopper) {
+			geometry.translate(-hopperPivot.x, -hopperPivot.y, -hopperPivot.z);
 		}
 		const key = `${rotor}:${part.c}`;
 		const bucket = buckets.get(key) ?? { geometries: [], material: part.c, rotor };
@@ -220,7 +234,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		buckets.set(key, bucket);
 	});
 	for (const { geometries, material, rotor } of buckets.values()) {
-		(rotor >= 0 ? rotors[rotor] : robot).add(new Mesh(mergeGeometries(geometries, false), materials[material]));
+		(rotor === -2 ? extension : rotor >= 0 ? rotors[rotor] : robot).add(new Mesh(mergeGeometries(geometries, false), materials[material]));
 		geometries.forEach((g) => g.dispose());
 	}
 	shapes.forEach((g) => g.dispose());
@@ -266,14 +280,14 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		if (phase < 1.5) {
 			ball.position.copy(intakePath.getPointAt(easeInOut(phase / 1.5)));
 			ball.scale.setScalar(Math.min(1, phase / 0.3));
-			ball.rotation.x -= 0.12;
+			ball.rotation.x = -t * 9;
 		} else if (phase < 2.2) {
 			ball.position.copy(intakePath.getPointAt(1)); // waits in the hopper, against the feeder
 		} else if (phase < 2.8) {
 			const u = (phase - 2.2) / 0.6;
 			ball.position.copy(feedPath.getPointAt(u * u)); // speeds up as the launcher wheel grabs it
 			ball.scale.setScalar(u > 0.45 && u < 0.95 ? 0.86 : 1); // squashed between the wheel and the hood
-			ball.rotation.x += 0.3;
+			ball.rotation.x = t * 18;
 		} else if (phase < 3.9) {
 			const s = phase - 2.8;
 			flight(ball, s);
@@ -313,7 +327,11 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
 		},
 		pose(t) {
+			rotors.forEach((rotor, i) => { rotor.rotation.x = t * [9, 9, -18, -8][i]; });
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
+		},
+		hopper(open) {
+			extension.rotation.x = (1 - Math.max(0, Math.min(1, open))) * hopperClosedAngle;
 		},
 		applyPalette(p) {
 			(shadow.material as MeshBasicMaterial).opacity = p.dark ? 0.6 : 0.32;

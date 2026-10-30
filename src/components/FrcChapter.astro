@@ -43,6 +43,11 @@ const still = (id: string) =>
 		? { src: `/showcase/robot/${id}-800.webp`, srcset: `/showcase/robot/${id}-800.webp 800w, /showcase/robot/${id}.webp 1600w` }
 		: undefined;
 const overviewStill = still("overview");
+const hardwareSources: Record<string, { label: string; href: string }> = {
+	krakens: { label: 'WCP motor documentation', href: 'https://wcproducts.com/products/kraken' },
+	vision: { label: 'Limelight MegaTag2 documentation', href: 'https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2' },
+	odometry: { label: 'WPILib odometry documentation', href: 'https://docs.wpilib.org/en/stable/docs/software/kinematics-and-odometry/differential-drive-odometry.html' },
+};
 ---
 
 <div id="kitbot" class="kch showcase" data-kch data-read data-stops={JSON.stringify(stops)} data-titles={JSON.stringify(titles)} style={`--stops: ${stops.length}`}>
@@ -214,6 +219,7 @@ const overviewStill = still("overview");
 									<dl class="kch-part-facts">
 										{f.facts.map((x) => <div><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
 									</dl>
+									{hardwareSources[f.id] && <p class="kch-note"><a href={hardwareSources[f.id].href}>{hardwareSources[f.id].label}</a></p>}
 									{s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />}
 								</section>
 							);

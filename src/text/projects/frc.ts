@@ -34,10 +34,10 @@ export const frcPage = {
 	model3d: {
 		heading: 'Our 2026 robot in 3D',
 		text: 'Our modified KitBot. Follow a ball of FUEL: the intake pulls it off the floor into the extended hopper, the indexer pushes it into the launcher wheel, and the curved hood sends it up and out of the top. On a computer you can drag to look around.',
-		note: 'From our own CAD: every part in place, without the fasteners and small holes.',
+		note: 'From our latest team CAD. Mechanism speeds and the FUEL flight are slowed down for illustration.',
 		/** Read aloud by screen readers instead of the 3D model. */
 		description:
-			"3D model of our modified 2026 robot: an aluminium frame on six wheels with blue 10951 bumpers, a blue-and-orange flex star intake, a see-through extended hopper, green indexer wheels, a launcher wheel under a curved hood, two Kraken X60 motors outside the side plate driving the indexer and launcher, CIM motors on the drivetrain, the battery, power hub and an orange signal light.",
+			"3D model of our modified 2026 robot: an aluminium frame on six wheels with blue 10951 bumpers, a blue-and-orange flex star intake, a see-through extended hopper, green indexer wheels, a launcher wheel under a curved hood, two Kraken X60 motors outside the side plate driving the intake and flywheel, CIM motors on the drivetrain, the battery, power hub and an orange signal light.",
 		fallbackAlt: "Team 10951's 2026 robot",
 	},
 	/** "About Team 10951" near the bottom. The sentence under it is built from `team` below. */
@@ -555,7 +555,7 @@ export const robotChapter = {
 		status: 'Competed in Vancouver and Istanbul',
 		kicker: 'Team 10951’s 2026 robot',
 		name: 'The KitBot',
-		intro: 'The KitBot platform, modified and tuned by our team: an extended hopper, a reworked indexer, and two Kraken X60 motors moved outside the frame to drive the indexer and launcher. Follow a ball of FUEL as you scroll: the intake pulls it off the floor, the hopper holds it, the indexer and launcher send it up the hood and out.',
+		intro: 'The KitBot platform, modified and tuned by our team: an extended hopper, a reworked indexer, and two Kraken X60 motors moved outside the frame to drive the intake and flywheel. Follow a ball of FUEL as you scroll: the intake pulls it off the floor, the hopper holds it, the indexer and launcher send it up the hood and out.',
 		facts: [
 			{ icon: 'cpu', label: 'Total mass', value: '140 lb' },
 			{ icon: 'lightning', label: 'Top speed', value: '12 ft/s' },
@@ -902,7 +902,7 @@ export const controlStack: HardwareItem[] = [
 /** Vision: cameras that see the field. */
 export const vision: HardwareItem[] = [
 	{
-		name: 'Limelight',
+		name: 'Limelight 4+',
 		maker: 'Limelight Vision',
 		desc: 'Smart camera for live video and on-board vision processing, so the robot can see the field.',
 		specs: [{ value: 'Live video' }, { value: 'Vision processing' }],
