@@ -5,7 +5,9 @@
  *   Front wall, left to right:  the desk (lamp, sketchbook, monitor, keyboard, the logo on the wall above), then the
  *                               four work stations (robot cart, drone bench, switch rack, test bench), and the curved
  *                               project wall at the right-hand end.
- *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door.
+ *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door. Above its sill
+ *                               the back wall is glass, onto the city at night (backdrop.ts), except around the door
+ *                               and behind the whiteboard and the binders.
  *
  * Everything on a screen or on paper is real: the build guide on the monitor and the F450's ground station on the test
  * bench's laptop are 4K screenshots of the live pages that scroll with the mouse wheel (screens.ts;
@@ -36,17 +38,23 @@ import {
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
-import type { SketchText } from "../../text/studio";
+import { deskSheets, type SketchText } from "../../text/studio";
+import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
 import { buildAmbience } from "./ambience";
+import { buildBackdrop } from "./backdrop";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { SHOTS } from "./scenes";
+import { BLANK, buildDeskSheets, type SheetPlace } from "./desk-sheets";
 import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { type PageScreen, pageScreen } from "./screens";
 import { buildStations } from "./stations";
+import { buildBench, type BuildBench } from "./build-bench";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
+/** The desk (scenes 0 to 2): its middle and the height of its top; the sketchbook lies open on it at `book`. */
+export const DESK = { x: -6, z: -2.45, top: 0.76, book: { x: -6.32, z: -2.31 } };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 export const asset = (path: string) => `${BASE}${path}`;
 
@@ -126,6 +134,8 @@ export interface RoomState {
 	near: Record<string, number>;
 	/** How much the camera is on each scene, by scene id, summing to 1 (follows the camera's own easing). */
 	focus: Record<string, number>;
+	/** The scenes' ids, in the order the camera visits them. */
+	ids: readonly string[];
 }
 
 /** What the room shows, from the site's own content (the page passes it in; src/components/Studio.astro). */
@@ -140,6 +150,8 @@ export interface RoomContent {
 	milestones: { year: string; state: "past" | "now" | "future" }[];
 	/** The lit sign over the door. */
 	sign: string;
+	/** The line under the logo on the wall (src/text/site.ts). */
+	slogan: string;
 	/** The web address drawn in the address bars of the monitor and the laptop (src/text/site.ts). */
 	domain: string;
 	/** The sketchbook: its words (src/text/studio.ts) and where the project is on its roadmap ("done", "current", "upcoming", in order). */
@@ -154,6 +166,10 @@ export interface Room {
 	screens: PageScreen[];
 	/** The logo on the wall above the desk (the opening page's logo flies onto it). */
 	logo: Mesh;
+	/** The drone bench's F450, once loaded (the opening hook's desk drone shares its geometry). */
+	stationDrone(): DroneRig | undefined;
+	/** The build bench (build-bench.ts): the opening hook's drone stands on it, and says so with `occupied`. */
+	bench: BuildBench;
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -191,7 +207,34 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		return mesh;
 	};
 	wall(width, 0, z0, 0); // front, facing +z
-	wall(width, 0, z1, Math.PI); // back, facing -z
+	// The back wall: solid below the sill, around the door and its sign, and behind the whiteboard and the binders
+	// (stations.ts); glass everywhere else, onto the night outside (backdrop.ts).
+	const SILL = 0.85;
+	const piers: [number, number][] = [
+		[-6.3, -4.2], // the door, its sign and the badge by it
+		[3.7, 7.4], // the whiteboard and the shelf of binders
+	];
+	const backPlane = (a: number, b: number, y0: number, y1: number, material: Material) => {
+		const mesh = new Mesh(new PlaneGeometry(b - a, y1 - y0), material);
+		mesh.position.set((a + b) / 2, (y0 + y1) / 2, z1);
+		mesh.rotation.y = Math.PI;
+		group.add(mesh);
+		return mesh;
+	};
+	backPlane(x0, x1, 0, SILL, wallMat);
+	for (const [a, b] of piers) backPlane(a, b, SILL, h, wallMat);
+	const glassMat = new MeshStandardMaterial({ color: 0x0b1424, roughness: 0.06, metalness: 0, transparent: true, opacity: 0.14, depthWrite: false });
+	const mullionMat = new MeshStandardMaterial({ color: 0x1b2440, roughness: 0.5, metalness: 0.3 });
+	const edges = [x0, ...piers.flat(), x1];
+	for (let i = 0; i < edges.length; i += 2) {
+		const [a, b] = [edges[i], edges[i + 1]];
+		backPlane(a, b, SILL, h, glassMat);
+		boxAt(group, b - a, 0.06, 0.14, mullionMat, (a + b) / 2, SILL, z1 - 0.06); // the sill
+		boxAt(group, b - a, 0.05, 0.08, mullionMat, (a + b) / 2, h - 0.03, z1 - 0.04); // the head
+	}
+	// Mullions, clear of the long window (it has its own, stations.ts) and of the portraits' middles.
+	for (const x of [-7.4, -3.55, -1.6]) boxAt(group, 0.05, h - SILL, 0.08, mullionMat, x, SILL + (h - SILL) / 2, z1 - 0.04);
+	const backdrop = buildBackdrop(group);
 	wall(depth, x0, (z0 + z1) / 2, Math.PI / 2);
 	wall(depth, x1, (z0 + z1) / 2, -Math.PI / 2);
 	// A skirting line and ceiling light strips: the room's lines, which make the camera's moves readable.
@@ -208,9 +251,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	await tick();
 
 	/* ---------- The desk (scene 0 to 2) ---------- */
-	const deskX = -6;
-	const deskZ = -2.45;
-	const deskTop = 0.76;
+	const deskX = DESK.x;
+	const deskZ = DESK.z;
+	const deskTop = DESK.top;
 	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
 	boxAt(group, 2.3, 0.05, 0.9, wood, deskX, deskTop - 0.025, deskZ, 0.012);
@@ -244,6 +287,34 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	pencil.rotation.y = 0.5;
 	pencil.position.set(deskX + 0.16, deskTop + 0.006, deskZ + 0.26);
 	group.add(pencil);
+
+	// The loose sheets around the book (never on it) and the corkboard of pinned pages between the shelving and the logo (desk-sheets.ts).
+	const B = BLANK;
+	const sheetPlaces: SheetPlace[] = [
+		// The desk, left of the book: the parts list (with the coffee ring), on a pile.
+		{ slot: B, on: "desk", x: -7.0, y: -2.29, turn: 0.3 },
+		{ slot: B, on: "desk", x: -6.99, y: -2.27, turn: 0.17, layer: 1 },
+		{ slot: 7, on: "desk", x: -7.0, y: -2.27, turn: 0.22, layer: 2, lift: 0.012 },
+		// Behind the book: power, the top view (on two blanks), the flight controller.
+		{ slot: 1, on: "desk", x: -6.5, y: -2.66, turn: -0.12 },
+		{ slot: B, on: "desk", x: -6.14, y: -2.67, turn: 0.2, layer: 1 },
+		{ slot: 0, on: "desk", x: -6.15, y: -2.66, turn: 0.1, layer: 2 },
+		{ slot: 5, on: "desk", x: -5.78, y: -2.63, turn: -0.25, layer: 3 },
+		// Right of the book: the battery under the tilt mount (its corner lifting), by the pencil.
+		{ slot: 9, on: "desk", x: -5.67, y: -2.33, turn: 0.08 },
+		{ slot: 4, on: "desk", x: -5.62, y: -2.26, turn: 0.35, layer: 1, lift: 0.016 },
+		// In front of the keyboard: the props.
+		{ slot: 6, on: "desk", x: -4.99, y: -2.12, turn: -0.3, layer: 1, lift: 0.01 },
+		// The corkboard, between the shelving and the logo: the video and control paths, the legs, the 4G stick, the ideas.
+		{ slot: 2, on: "wall", x: -7.35, y: 2.12, turn: 0.04, lift: 0.004 },
+		{ slot: 3, on: "wall", x: -7.03, y: 2.13, turn: -0.03, lift: 0.004 },
+		{ slot: 8, on: "wall", x: -7.34, y: 1.78, turn: 0.05, lift: 0.004, layer: 1 },
+		{ slot: 10, on: "wall", x: -7.02, y: 1.76, turn: -0.06, lift: 0.004, layer: 1 },
+		{ slot: B, on: "wall", x: -7.33, y: 1.49, turn: -0.08 },
+		{ slot: 11, on: "wall", x: -7.17, y: 1.47, turn: 0.03, lift: 0.004, layer: 2 },
+	];
+	const deskSheetSet = buildDeskSheets(deskSheets, sheetPlaces, deskTop, z0, { x: -7.19, y: 1.81, w: 0.64, h: 1.0 });
+	group.add(deskSheetSet.group);
 
 	// The monitor: the build guide on screen. It drifts while you look at it, and scrolls with the mouse wheel (screens.ts).
 	const monitorX = deskX + 0.88;
@@ -292,14 +363,35 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const logo = new Mesh(new PlaneGeometry(1.66, 0.6), new MeshBasicMaterial({ map: logoLight, transparent: true, toneMapped: false }));
 	logo.position.set(deskX, 2.15, z0 + 0.02);
 	group.add(logo);
+	// The slogan under it, as on the opening page: white type, tinted for the theme, and only there once the lamp is on.
+	const sloganFace = canvasSurface(1600, 160);
+	const drawSlogan = () => {
+		const { g } = sloganFace;
+		g.clearRect(0, 0, 1600, 160);
+		g.fillStyle = "#ffffff";
+		g.textAlign = "center";
+		g.textBaseline = "middle";
+		g.font = '800 expanded 84px "Archivo Variable", "Archivo", system-ui, sans-serif';
+		g.fillText(content.slogan, 800, 84, 1560);
+		sloganFace.redraw();
+	};
+	drawSlogan();
+	document.fonts?.ready.then(drawSlogan);
+	const slogan = new Mesh(
+		new PlaneGeometry(1.66, 0.166),
+		new MeshBasicMaterial({ map: sloganFace.texture, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }),
+	);
+	slogan.position.set(deskX, 1.76, z0 + 0.02);
+	group.add(slogan);
 
 	await tick();
 
 	/* ---------- The stations, the project wall and the back wall ---------- */
 	const stations = await buildStations(ctx, group, content);
+	const bench = buildBench(ctx, group);
 	await tick();
 	// The pooled point lights: the glow of what the camera is on, and a ceiling light above the camera.
-	const accents: Record<string, LightSpec> = { ...stations.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
+	const accents: Record<string, LightSpec> = { ...stations.accents, ...bench.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
 	const overhead: Record<string, LightSpec> = {};
 	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
 	const pool = createLightPool(group, accents, overhead);
@@ -319,7 +411,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		wall: stations.wall,
 		screens,
 		logo,
-		busy: () => busy,
+		stationDrone: stations.drone,
+		bench,
+		busy: () => busy || bench.busy(),
 		finishSketch() {
 			sketchDone = true;
 		},
@@ -327,6 +421,8 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			const { lamp: on, time, near } = state;
 			const dt = Math.max(0, time - lastTime);
 			stations.update(state, dt);
+			bench.update(state, state.ids, stations.drone());
+			backdrop.update();
 			ambience.update(state, dt);
 			props.update(state, dt);
 			lastTime = time;
@@ -339,6 +435,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			sky.intensity = (palette?.dark ? 0.35 : 0.9) * (0.25 + 0.75 * level);
 			pool.update(state.focus, level, !!palette?.dark);
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
+			(slogan.material as MeshBasicMaterial).opacity = level;
 
 			// The sketch draws itself once the camera is at the book, over a few seconds (the strokes arrive a few times a
 			// second at most), and stays drawn from then on, wherever the camera goes.
@@ -358,11 +455,18 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
 			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
+			glassMat.color.set(dark ? 0x0b1424 : 0xdfe9f7);
+			glassMat.opacity = dark ? 0.14 : 0.1;
+			mullionMat.color.set(dark ? 0x1b2440 : 0xf2f5fa);
+			backdrop.applyPalette(dark);
 			bookMaterial.color.setScalar(dark ? 0.46 : 0.45);
+			deskSheetSet.applyPalette(dark);
 			stations.applyPalette(p);
+			bench.applyPalette(dark);
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
+			(slogan.material as MeshBasicMaterial).color.set(dark ? 0xe6f6ff : 0x0a1124);
 			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);
 			(ctx.scene.fog as Fog).near = dark ? 7 : 12;
 			(ctx.scene.fog as Fog).far = dark ? 19 : 32;

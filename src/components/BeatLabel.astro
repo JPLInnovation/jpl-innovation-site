@@ -1,0 +1,14 @@
+---
+/**
+ * A chapter beat's number and title ("01 Prologue"), at the top of the beat. Its id labels the beat's section for
+ * screen readers. The words: src/text/projects/<project>.ts (the chapter's `beats`).
+ */
+interface Props {
+	id: string;
+	beat: { number: string; title: string };
+	class?: string;
+}
+const { id, beat, class: className } = Astro.props;
+---
+
+<p id={id} class:list={["chapter-label", className]}><span class="chapter-label-n">{beat.number}</span> {beat.title}</p>

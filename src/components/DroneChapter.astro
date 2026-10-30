@@ -1,0 +1,1315 @@
+---
+/**
+ * The drone chapter, beats 1 to 4: one pinned, full-window 3D stage that the page's own scroll moves the camera through
+ * (src/lib/three/models/drone-chapter.ts), with each beat's words as real HTML over it. Nothing scrolls past: the stage
+ * stays put for about nine and a half screens of scroll, then lets go into the rest of the page.
+ *
+ *   01 Prologue   the drone in the dark, a silhouette against the rim light; the HUD and the problem
+ *   02 Stakes     the camera pushes in to the lens: 720p at 60 fps (or 1080p at 30 fps), the camera's
+ *   03 Reveal     the lights come up: the name, the status, the credits
+ *   04 Anatomy    the part-by-part stops (450 mm, then the parts), the rest of the drone fading back
+ *
+ * Every stop is one screen of native scroll (nothing is hijacked); the camera follows through the showcase's damped
+ * spring. Keyboard: arrows and Page Up/Down move one stop while the chapter is on screen; "Skip the chapter" goes past
+ * it. The chapter map at the side has a dot per beat and a tick per part-by-part stop.
+ *
+ * Classic (data-read, decided before the first paint): the same words as one ordinary page in the same order, the
+ * first three beats on a still dark gradient, the parts as cards with pictures of the real model
+ * (public/showcase/drone/, scripts/showcase-stills.py). Used on phones (under 768 px), with reduced motion, without
+ * WebGL, when Classic is chosen, and when the 3D gives up (too slow, a lost GPU, an error, or not up within 30 s).
+ *
+ * All the words: src/text/projects/drone.ts (droneChapter, drone, dronePage, roadmap) and src/text/showcase/drone.ts.
+ * Dev: ?showcase=capture shows the drone alone for scripts/showcase-stills.py (window.__showcase.go(n) = part n).
+ */
+// @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
+import { existsSync, statSync } from "node:fs";
+import { getEntry } from "astro:content";
+import BackLink from "@/components/BackLink.astro";
+import BeatLabel from "@/components/BeatLabel.astro";
+import StatusTag from "@/components/StatusTag.astro";
+import { buttonVariants } from "@/components/ui/button";
+import { DataIcon } from "@/lib/icons";
+import { drone, droneChapter as chapter, dronePage as text, roadmap } from "@/text/projects/drone";
+import { droneShowcase as parts } from "@/text/showcase/drone";
+import { backToWork } from "@/text/work";
+
+const team = await Promise.all(
+	drone.team.map(async (t) => ({ role: t.role, member: "member" in t ? await getEntry("members", t.member) : null })),
+);
+const beats = chapter.beats;
+const [first, ...rest] = parts.features;
+/** The stops in order (the camera's, src/lib/three/models/drone-chapter.ts STOPS): beats 1 to 3, then the parts. */
+const stops = ["prologue", "stakes", "reveal", ...parts.features.map((f) => f.id)];
+/** The small label in the 3D view on each stop: none on beats 1 to 3. */
+const titles = ["", "", "", ...parts.features.map((f) => f.title)];
+const beatList = [beats.prologue, beats.stakes, beats.reveal, beats.anatomy];
+const now = roadmap.findIndex((s) => s.state === "current");
+const step = now >= 0 ? `${chapter.hud.stepLabel} ${now + 1} ${chapter.hud.ofLabel} ${roadmap.length} · ${roadmap[now].title}` : "";
+// The model's size, for the loading gate's real percentage (the bytes as served).
+const cadBytes = statSync("src/lib/three/models/f450-cad.bin").size;
+/** Classic's picture of a stop, from the real model (scripts/showcase-stills.py), when there is one. */
+const still = (id: string) =>
+	existsSync(`public/showcase/drone/${id}-800.webp`)
+		? { src: `/showcase/drone/${id}-800.webp`, srcset: `/showcase/drone/${id}-800.webp 800w, /showcase/drone/${id}.webp 1600w` }
+		: undefined;
+const overviewStill = still("overview");
+---
+
+<div class="dch showcase" data-dch data-read data-cad-bytes={cadBytes} data-stops={JSON.stringify(stops)} data-titles={JSON.stringify(titles)} data-measure={chapter.anatomy.measure} style={`--stops: ${stops.length}`}>
+	<script is:inline data-astro-rerun>
+		// Before the first paint: the 3D chapter unless Classic was chosen, the window is under 768 px, motion is reduced
+		// or there is no WebGL. In 3D the whole chapter has the dark theme's colours, in both themes.
+		(() => {
+			const el = document.currentScript.parentElement;
+			const root = document.documentElement;
+			const capture = new URLSearchParams(location.search).get("showcase") === "capture";
+			const read =
+				!capture &&
+				(root.classList.contains("read-mode") ||
+					root.classList.contains("reduce-motion") ||
+					matchMedia("(max-width: 767px), (prefers-reduced-motion: reduce)").matches);
+			if (read) return;
+			const gl = document.createElement("canvas").getContext("webgl2") || document.createElement("canvas").getContext("webgl");
+			if (!gl) return;
+			gl.getExtension("WEBGL_lose_context")?.loseContext();
+			el.removeAttribute("data-read");
+			el.classList.add("dark");
+			if (capture) el.setAttribute("data-capture", "");
+			// Failsafe: if the 3D is not up within 30 s (scripts blocked, a very slow device), the plain page instead.
+			setTimeout(() => {
+				if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
+					el.setAttribute("data-read", "");
+					el.classList.remove("dark");
+					console.warn("Drone chapter: the 3D did not start in time, showing the plain page.");
+				}
+			}, 30000);
+		})();
+	</script>
+	<a class="dch-skip" href="#after-chapter">{chapter.skip}</a>
+
+	<div class="dch-track">
+		<div class="dch-pin">
+			<!-- The backdrop, a layer per beat (public/chapter/drone/, scripts/drone-backdrops.mjs); the script fades each in
+			     with the camera. -->
+			<div class="dch-bg" aria-hidden="true">
+				<div class="dch-bd dch-bd-city"><div class="dch-drift dch-drift-far"></div><div class="dch-drift dch-drift-near"></div></div>
+				<div class="dch-bd dch-bd-dusk"><span style="--depth: 0"></span><span style="--depth: 0.6"></span><span style="--depth: 1.2"></span><span style="--depth: 2"></span><span style="--depth: 3"></span></div>
+				<div class="dch-bd dch-bd-skyline"></div>
+				<div class="dch-bd dch-bd-streaks"></div>
+			</div>
+			<div class="dch-stage" data-dch-stage>
+				<canvas role="img" aria-label={parts.modelLabel}></canvas>
+			</div>
+			<div class="dch-veil" aria-hidden="true"></div>
+			<div class="dch-frame" aria-hidden="true">
+				<span class="dch-corner dch-tl"></span><span class="dch-corner dch-tr"></span><span class="dch-corner dch-bl"></span><span class="dch-corner dch-br"></span>
+			</div>
+			<div class="dch-frame dch-aim" aria-hidden="true">
+				<svg class="dch-cross" viewBox="-20 -20 40 40"><path d="M0-20v12M0 8v12M-20 0h12M8 0h12" fill="none" stroke="currentColor" stroke-width="1.6"></path><circle r="11" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"></circle></svg>
+			</div>
+
+			<!-- The HUD: the drone's real state only (from src/text/projects/drone.ts). -->
+			<div class="dch-hud" aria-hidden="true">
+				<p class="dch-hud-left">
+					<span class="dch-hud-state"><span class="dch-hud-dot"></span>{chapter.hud.state}</span>
+					{step && <span class="dch-hud-step">{step}</span>}
+				</p>
+				<p class="dch-hud-right">
+					<span>{chapter.hud.city} <time class="dch-hud-time" data-dch-clock={chapter.hud.timeZone}>--:--:--</time></span>
+					<span class="dch-hud-count"><span data-dch-count>01</span> / {beatList.length.toString().padStart(2, "0")}</span>
+				</p>
+			</div>
+
+			<nav class="dch-map" aria-label={chapter.mapLabel}>
+				<ol>
+					{
+						beatList.map((beat, b) => (
+							<li>
+								<a href={`#${stops[b]}`} data-goto={b} data-beat={b}>
+									<span class="dch-map-dot" aria-hidden="true" />
+									<span class="dch-map-n">{beat.number}</span>
+									<span class="dch-map-title">{beat.title}</span>
+								</a>
+								{b === 3 && (
+									<ol class="dch-ticks">
+										{parts.features.map((f, i) => (
+											<li>
+												<a href={`#${f.id}`} data-goto={3 + i} aria-label={`${beat.number} ${beat.title}: ${f.title}`}>
+													<span class="dch-map-title" aria-hidden="true">{f.title}</span>
+												</a>
+											</li>
+										))}
+									</ol>
+								)}
+							</li>
+						))
+					}
+				</ol>
+			</nav>
+
+			<div class="dch-gate" data-dch-gate hidden>
+				<p class="dch-gate-label">{chapter.loading}</p>
+				<div class="dch-gate-bar" role="progressbar" aria-label={chapter.loading} aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" data-dch-bar>
+					<span></span>
+				</div>
+				<p class="dch-gate-n" aria-hidden="true"><span data-dch-percent>0</span>%</p>
+			</div>
+
+			<div class="dch-panels">
+				<!-- Beats 1 to 3: dark in both modes (Classic: a still gradient). -->
+				<div class="dch-band dark">
+					<div class="dch-back wrapper"><BackLink href="/work/">{backToWork}</BackLink></div>
+
+					<!-- 01 Prologue -->
+					<section id="prologue" class="dch-panel" data-stop="0" aria-labelledby="prologue-label">
+						<BeatLabel id="prologue-label" beat={beats.prologue} />
+						<p class="dch-classic-hud">
+							<span class="dch-hud-state"><span class="dch-hud-dot" aria-hidden="true"></span>{chapter.hud.state}</span>
+							{step && <span>{step}</span>}
+							<span>
+								<span aria-hidden="true">{chapter.hud.city}</span>
+								<span class="sr-only">{chapter.hud.timeLabel} {chapter.hud.city}:</span>
+								<time class="dch-hud-time" data-dch-clock={chapter.hud.timeZone}>--:--:--</time>
+							</span>
+						</p>
+						<p class="dch-statement font-wide">{chapter.prologue.problem}</p>
+					</section>
+
+					<!-- 02 The stakes: the camera's modes, and the 4G link said on its own (no frame rate for the stream) -->
+					<section id="stakes" class="dch-panel" data-stop="1" aria-labelledby="stakes-label">
+						<BeatLabel id="stakes-label" beat={beats.stakes} />
+						<p class="dch-stat-label">{chapter.stakes.label}</p>
+						<p class="dch-stat font-wide"><span>{chapter.stakes.value}</span> <span class="dch-stat-unit">{chapter.stakes.unit}</span></p>
+						<p class="dch-stat-secondary font-wide">{chapter.stakes.secondary}</p>
+						<p class="dch-stat-source">{chapter.stakes.source}</p>
+						<p class="dch-aside">{chapter.stakes.link}</p>
+					</section>
+
+					<!-- 03 The reveal: the name, status and credits -->
+					<header id="reveal" class="dch-panel dch-reveal" data-stop="2" aria-labelledby="reveal-label">
+						<BeatLabel id="reveal-label" beat={beats.reveal} />
+						<div><StatusTag>{drone.status}</StatusTag></div>
+						<h1 class="font-wide"><span class="dch-kicker">{chapter.reveal.kicker}</span> {drone.name}</h1>
+						<p class="dch-intro">{drone.intro}</p>
+						<dl class="dch-facts">
+							{
+								drone.facts.map((f) => (
+									<div>
+										<dt>
+											<DataIcon name={f.icon} className="size-4" />
+											{f.label}
+										</dt>
+										<dd>{f.value}</dd>
+									</div>
+								))
+							}
+						</dl>
+						<ul class="dch-team">
+							{
+								team.map((t) => (
+									<li>
+										{t.role}
+										{t.member && (
+											<>
+												{" — "}
+												<a href={`/members/${t.member.id}/`}>{t.member.data.title}</a>
+											</>
+										)}
+									</li>
+								))
+							}
+						</ul>
+						<!-- data-astro-reload: the guide, the 3D layout and Camera POV are standalone pages. -->
+						<div class="dch-actions">
+							<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
+							<a href={text.layout3d.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.layout3d.label}</a>
+							<a href={text.cameraPov.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.cameraPov.label}</a>
+						</div>
+						<p class="dch-note">{text.buildGuide.note}</p>
+						<p class="dch-legend">
+							<span><span class="dch-swatch bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
+							<span><span class="dch-swatch bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
+							<span>{text.model3d.layoutNote}</span>
+						</p>
+						{
+							overviewStill && (
+								<img class="dch-still" transition:name="project-drone" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={text.model3d.description} width="1600" height="1200" loading="lazy" />
+							)
+						}
+					</header>
+				</div>
+
+				<!-- 04 Anatomy: 450 mm, then the parts (Classic: cards with pictures of the real model) -->
+				<div class="dch-parts">
+					<section id={first.id} class="dch-panel showcase-feature" data-stop="3" aria-labelledby="anatomy-label">
+						<BeatLabel id="anatomy-label" beat={beats.anatomy} />
+						<p class="dch-stat dch-stat-small font-wide"><span>{chapter.anatomy.value}</span> <span class="dch-stat-unit">{chapter.anatomy.label}</span></p>
+						<h2 class="dch-parts-heading font-wide">{parts.heading}</h2>
+						<p class="dch-parts-intro">{parts.intro}</p>
+						<h3 class="dch-part-title font-semiwide">{first.title}</h3>
+						<p>{first.text}</p>
+						<dl class="dch-part-facts">
+							{first.facts.map((f) => <div><dt>{f.label}</dt><dd>{f.value}</dd></div>)}
+						</dl>
+						{(() => { const s = still(first.id); return s && <img class="dch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />; })()}
+					</section>
+					{
+						rest.map((f, i) => {
+							const s = still(f.id);
+							return (
+								<section id={f.id} class="dch-panel showcase-feature" data-stop={4 + i} aria-labelledby={`part-${f.id}`}>
+									<h3 id={`part-${f.id}`} class="dch-part-title font-semiwide">{f.title}</h3>
+									<p>{f.text}</p>
+									<dl class="dch-part-facts">
+										{f.facts.map((x) => <div><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
+									</dl>
+									{s && <img class="dch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />}
+								</section>
+							);
+						})
+					}
+				</div>
+			</div>
+		</div>
+	</div>
+	<p class="sr-only" aria-live="polite" data-dch-live></p>
+</div>
+<div id="after-chapter" class="dch-after" tabindex="-1"></div>
+
+<style is:global>
+	/* ---------- Both modes ---------- */
+	.dch .chapter-label {
+		font: 600 0.8rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+	.dch .chapter-label-n {
+		color: var(--foreground);
+		margin-right: 0.6em;
+	}
+	.dch-panel {
+		color: var(--foreground);
+		scroll-margin-top: 5rem;
+	}
+	.dch-hud-state {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.dch-hud-dot {
+		width: 0.55em;
+		height: 0.55em;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 80%, transparent);
+	}
+	.dch-hud-time {
+		display: inline-block;
+		min-width: 8ch;
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	.dch-statement {
+		max-width: 16ch;
+		font-weight: 860;
+		font-size: clamp(2rem, 5vw, 3.5rem);
+		line-height: 1.02;
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+	}
+	.dch-stat-label {
+		font: 600 0.85rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+	.dch-stat {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 0.3em;
+		font-weight: 900;
+		font-size: clamp(4rem, 15vw, 9rem);
+		line-height: 0.86;
+		letter-spacing: -0.03em;
+		font-variant-numeric: tabular-nums;
+	}
+	.dch-stat > span:first-child {
+		white-space: nowrap;
+	}
+	.dch-stat-small {
+		font-size: clamp(2.75rem, 8vw, 5rem);
+	}
+	.dch-stat-unit {
+		font-size: 0.32em;
+		font-weight: 760;
+		letter-spacing: 0;
+		color: var(--muted-foreground);
+	}
+	.dch-stat-secondary {
+		font-size: clamp(1.4rem, 3vw, 2.25rem);
+		font-weight: 780;
+		color: var(--muted-foreground);
+	}
+	.dch-stat-source,
+	.dch-aside {
+		max-width: 46ch;
+		font-size: 1.125rem;
+	}
+	.dch-stat-source {
+		color: var(--muted-foreground);
+	}
+	.dch-reveal h1 {
+		font-size: clamp(2.8rem, 8vw, 6.25rem);
+		font-weight: 900;
+		line-height: 0.94;
+	}
+	.dch-kicker {
+		display: block;
+		margin-bottom: 0.15em;
+		font-size: 0.36em;
+		font-weight: 720;
+		color: var(--muted-foreground);
+	}
+	.dch-intro {
+		max-width: 56ch;
+		font-size: 1.125rem;
+	}
+	.dch-facts {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 1.25rem 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--border);
+	}
+	@media (min-width: 40rem) {
+		.dch-facts {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+	.dch-facts dt {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.dch-facts dd {
+		font-weight: 600;
+	}
+	.dch-team {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.25rem;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.dch-team a {
+		font-weight: 500;
+		color: var(--foreground);
+	}
+	.dch-team a:hover {
+		text-decoration: underline;
+	}
+	.dch-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+	}
+	.dch-note,
+	.dch-legend {
+		max-width: 48ch;
+		font-size: 0.875rem;
+		color: var(--muted-foreground);
+	}
+	.dch-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.25rem;
+	}
+	.dch-legend > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.dch-swatch {
+		width: 1.25rem;
+		height: 0.375rem;
+		border-radius: 999px;
+	}
+	.dch-parts-heading {
+		font-size: clamp(2rem, 4.5vw, 3.25rem);
+		font-weight: 850;
+	}
+	.dch-parts-intro {
+		max-width: 56ch;
+		font-size: 1.125rem;
+		color: var(--muted-foreground);
+	}
+	.dch-part-title {
+		font-size: 1.5rem;
+		font-weight: 780;
+	}
+	.dch-part-facts {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem 1.5rem;
+		padding-top: 0.75rem;
+		border-top: 1px solid var(--border);
+	}
+	.dch-part-facts dt {
+		font-size: 0.8rem;
+		color: var(--muted-foreground);
+	}
+	.dch-part-facts dd {
+		font-weight: 600;
+	}
+	.dch-skip {
+		position: absolute;
+		left: 1rem;
+		z-index: 60;
+		translate: 0 -200%;
+		padding: 0.6rem 1rem;
+		border-radius: 999px;
+		background: var(--primary);
+		color: var(--primary-foreground);
+		font-weight: 600;
+	}
+	.dch-skip:focus-visible {
+		translate: 0 0.5rem;
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+
+	/* ---------- Classic: an ordinary page, in the same order ---------- */
+	.dch[data-read] :is(.dch-bg, .dch-stage, .dch-veil, .dch-frame, .dch-hud, .dch-map, .dch-gate) {
+		display: none;
+	}
+	.dch[data-read] .dch-band {
+		padding-bottom: 10rem;
+		/* The still gradient: the 3D's colours, fading into the page. */
+		background:
+			linear-gradient(to bottom, rgb(3 10 16 / 0.35), rgb(3 10 16 / 0.6) 60%, #030a10 calc(100% - 10rem), transparent),
+			url("/chapter/drone/classic.webp") center 35% / cover no-repeat,
+			#071822;
+	}
+	.dch[data-read] .dch-back {
+		padding-top: 1.5rem;
+	}
+	.dch[data-read] .dch-panel {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		width: 100%;
+		max-width: 76rem;
+		margin-inline: auto;
+		padding: 2.5rem clamp(1rem, 4vw, 2.5rem);
+	}
+	.dch-classic-hud {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.5rem 2rem;
+		padding-block: 0.75rem;
+		border-block: 1px solid var(--border);
+		font: 500 0.85rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.dch-classic-hud > span:last-child {
+		display: inline-flex;
+		gap: 1em;
+		color: var(--muted-foreground);
+	}
+	.dch-still {
+		width: 100%;
+		max-width: 40rem;
+		height: auto;
+		border-radius: 0.75rem;
+	}
+	.dch[data-read] .dch-parts {
+		display: grid;
+		max-width: 76rem;
+		margin-inline: auto;
+	}
+	@media (min-width: 48rem) {
+		.dch[data-read] .dch-parts {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+		.dch[data-read] .dch-parts > :first-child {
+			grid-column: 1 / -1;
+		}
+		.dch[data-read] .dch-parts > :first-child .dch-still {
+			max-width: 36rem;
+		}
+	}
+	.dch[data-read] .dch-parts .dch-still {
+		order: -1;
+		background: var(--card);
+		border: 1px solid var(--border);
+	}
+	.dch[data-read] .dch-parts > :first-child .dch-still {
+		order: 0;
+	}
+
+	/* ---------- 3D: the pinned stage ---------- */
+	.dch:not([data-read]) {
+		/* Under the sticky site header, so the stage fills the window from the top. */
+		margin-top: -4.5rem;
+	}
+	.dch:not([data-read]) .dch-track {
+		position: relative;
+		/* A screen per stop after the first, and a half screen to let go. */
+		height: calc((var(--stops) + 0.5) * 100svh);
+	}
+	.dch:not([data-read]) .dch-pin {
+		position: sticky;
+		top: 0;
+		height: 100svh;
+		overflow: hidden;
+		isolation: isolate;
+		--edge: clamp(1rem, 4vw, 2.5rem);
+		--left: max(var(--edge), calc((100vw - 76rem) / 2 + var(--edge)));
+		--focus-x: 70%;
+	}
+	@media (max-aspect-ratio: 6/5) {
+		.dch:not([data-read]) .dch-pin {
+			--focus-x: 50%;
+		}
+	}
+	/* The backdrop: a very dark teal-blue gradient and a glow behind the drone (no pure black). */
+	.dch-bg {
+		position: absolute;
+		inset: 0;
+		z-index: -2;
+		background:
+			radial-gradient(42% 52% at var(--focus-x) 50%, rgb(34 211 238 / calc(var(--look-glow, 0.24) * var(--glow-level, 1))), transparent 72%),
+			radial-gradient(120% 90% at 50% 10%, #0b2130, transparent 70%),
+			linear-gradient(to bottom, #071822, #030a10);
+	}
+	/* The backdrop layers: their images only once the 3D is up (data-images: beat 1's first, then the rest), each shown
+	   by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). Moved with transform and opacity only. */
+	.dch-bd {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+	}
+	.dch-bd[data-off] {
+		visibility: hidden;
+	}
+	.dch-bd-city {
+		opacity: calc(var(--bd-city, 0) * var(--look-city, 0.85));
+		overflow: hidden;
+	}
+	.dch-drift {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 200%;
+		background-repeat: repeat-x;
+		background-size: 50% 100%;
+		animation: dch-drift var(--drift, 240s) linear infinite;
+		animation-play-state: paused;
+		will-change: transform;
+	}
+	.dch-drift-far {
+		--drift: var(--look-far-drift, 260s);
+	}
+	.dch-drift-near {
+		--drift: var(--look-near-drift, 170s);
+		animation-direction: reverse;
+	}
+	.dch-pin[data-city-on] .dch-drift {
+		animation-play-state: running;
+	}
+	@keyframes dch-drift {
+		to {
+			transform: translateX(-50%);
+		}
+	}
+	.dch-pin[data-images] .dch-drift-far { background-image: url("/chapter/drone/city-far.webp"); }
+	.dch-pin[data-images] .dch-drift-near { background-image: url("/chapter/drone/city-near.webp"); }
+	.dch-bd-dusk {
+		opacity: calc(var(--bd-dusk, 0) * var(--look-dusk, 1));
+		overflow: hidden;
+	}
+	.dch-bd-dusk > span {
+		position: absolute;
+		inset: 0 -4%;
+		background: center / cover no-repeat;
+		/* A little sideways with the camera's swing, the nearer ridges more: depth, never travel. */
+		translate: calc(var(--bd-swing, 0) * var(--depth) * var(--look-parallax, 1) * -1%) 0;
+	}
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(1) { background-image: url("/chapter/drone/dusk-sky.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(2) { background-image: url("/chapter/drone/dusk-1.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(3) { background-image: url("/chapter/drone/dusk-2.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(4) { background-image: url("/chapter/drone/dusk-3.webp"); }
+	.dch-pin[data-images="all"] .dch-bd-dusk > :nth-child(5) { background-image: url("/chapter/drone/dusk-4.webp"); }
+	/* (its foot on the 4G stop's horizon, behind the drone) */
+	.dch-bd-skyline {
+		inset: auto 0 33% 0;
+		height: 22%;
+		opacity: calc(var(--bd-video, 0) * var(--look-skyline, 0.16));
+		background: center bottom / 100% 100% no-repeat;
+	}
+	.dch-pin[data-images="all"] .dch-bd-skyline { background-image: url("/chapter/drone/skyline.webp"); }
+	/* The camera's video: streaks from the lens (where the crosshair is), growing as the camera pushes in. */
+	.dch-bd-streaks {
+		inset: auto;
+		left: var(--focus-x);
+		top: 50%;
+		width: 120vmin;
+		aspect-ratio: 1;
+		translate: -50% -50%;
+		scale: calc(0.45 + var(--bd-push, 0) * var(--look-grow, 0.75));
+		opacity: calc(var(--bd-streaks, 0) * var(--look-streaks, 0.85));
+		background: center / contain no-repeat;
+		mix-blend-mode: screen;
+	}
+	.dch-pin[data-images="all"] .dch-bd-streaks { background-image: url("/chapter/drone/streaks.webp"); }
+	.dch-stage {
+		position: absolute;
+		inset: 0;
+	}
+	.dch-stage canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		opacity: 0;
+		transition: opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+	}
+	.dch[data-live] .dch-stage canvas {
+		opacity: 1;
+	}
+	/* Over the canvas: the vignette, a scrim behind the words on the left (wide windows), and a light film grain (it
+	   keeps the dark gradient from banding). */
+	.dch-veil {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			linear-gradient(to right, rgb(3 10 16 / var(--bd-scrim, 0.7)), rgb(3 10 16 / calc(var(--bd-scrim, 0.7) * 0.75)) 36%, transparent 60%),
+			radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+	}
+	@media (max-aspect-ratio: 6/5) {
+		.dch-veil {
+			background: radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+		}
+	}
+	.dch-veil::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		opacity: var(--look-grain, 0.06);
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+		mix-blend-mode: overlay;
+	}
+	/* Corner brackets, and the crosshair on the lens on the stakes (where the camera looks). */
+	.dch-frame {
+		position: absolute;
+		inset: 5.75rem 1.5rem 1.5rem;
+		pointer-events: none;
+		color: rgb(230 236 236 / 0.5);
+	}
+	.dch-corner {
+		position: absolute;
+		width: 1.25rem;
+		height: 1.25rem;
+		border-color: currentColor;
+		border-style: solid;
+		border-width: 0;
+	}
+	.dch-tl { left: 0; top: 0; border-left-width: 1.5px; border-top-width: 1.5px; }
+	.dch-tr { right: 0; top: 0; border-right-width: 1.5px; border-top-width: 1.5px; }
+	.dch-bl { left: 0; bottom: 0; border-left-width: 1.5px; border-bottom-width: 1.5px; }
+	.dch-br { right: 0; bottom: 0; border-right-width: 1.5px; border-bottom-width: 1.5px; }
+	/* (on the whole pin, so its middle is where the camera looks: the lens, on the stakes) */
+	.dch-aim {
+		inset: 0;
+	}
+	.dch-cross {
+		position: absolute;
+		left: var(--focus-x);
+		top: 50%;
+		width: 3rem;
+		translate: -50% -50%;
+		color: var(--accent);
+		opacity: var(--w-stakes, 0);
+	}
+	.dch-hud {
+		position: absolute;
+		inset: 5.25rem 0 auto;
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem 2rem;
+		padding-inline: var(--left);
+		font: 500 0.78rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+		pointer-events: none;
+	}
+	.dch-hud p {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.5rem;
+	}
+	.dch-hud-left .dch-hud-state {
+		color: var(--foreground);
+	}
+	.dch-hud-count {
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	/* In 3D the prologue's own status line is the HUD's, so it is for screen readers only. */
+	.dch:not([data-read]) .dch-classic-hud {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.dch:not([data-read]) .dch-band,
+	.dch:not([data-read]) .dch-parts {
+		display: contents;
+	}
+	.dch:not([data-read]) .dch-back {
+		position: absolute;
+		top: 6.75rem;
+		left: 0;
+		right: 0;
+		z-index: 2;
+		padding-inline: var(--left);
+		max-width: none;
+	}
+	.dch:not([data-read]) .dch-back > * {
+		opacity: calc(1 - var(--past, 0));
+	}
+	.dch:not([data-read]) .dch-still {
+		display: none;
+	}
+
+	/* Each stop's words, over the stage on the left; the current one showing. --on (0 to 1) follows the camera, and the
+	   lines come in one after another as it rises (src/components/DroneChapter.astro's script). */
+	.dch:not([data-read]) .dch-panel {
+		position: absolute;
+		left: var(--left);
+		top: 50%;
+		width: min(36rem, 40vw);
+		max-height: calc(100svh - 11rem);
+		display: flex;
+		flex-direction: column;
+		gap: 1.1rem;
+		translate: 0 -46%;
+		pointer-events: none;
+		opacity: var(--on, 0);
+	}
+	.dch:not([data-read]) .dch-panel[data-shown] {
+		pointer-events: auto;
+	}
+	.dch:not([data-read]):not([data-live]) .dch-panel[data-stop="0"] {
+		--on: 1;
+	}
+	.dch:not([data-read]) .dch-panel > * {
+		opacity: clamp(0, calc(var(--on, 0) * 1.6 - var(--i, 0) * 0.1), 1);
+		translate: 0 calc((1 - var(--on, 0)) * (18px + var(--i, 0) * 7px));
+	}
+	.dch-panel > :nth-child(2) { --i: 1; }
+	.dch-panel > :nth-child(3) { --i: 2; }
+	.dch-panel > :nth-child(4) { --i: 3; }
+	.dch-panel > :nth-child(5) { --i: 4; }
+	.dch-panel > :nth-child(6) { --i: 5; }
+	.dch-panel > :nth-child(n + 7) { --i: 6; }
+	.dch:not([data-read]) .dch-statement {
+		font-size: clamp(2.6rem, 5.2vw, 5.25rem);
+		max-width: 14ch;
+	}
+	.dch:not([data-read]) #stakes .dch-stat {
+		font-size: clamp(6rem, 15vw, 14rem);
+	}
+	.dch:not([data-read]) .dch-reveal {
+		width: min(38rem, 44vw);
+		gap: 0.9rem;
+	}
+	.dch:not([data-read]) .dch-reveal h1 {
+		font-size: clamp(2.6rem, 5vw, 4.75rem);
+	}
+	.dch:not([data-read]) .dch-reveal .dch-facts {
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+	}
+	.dch:not([data-read]) .dch-reveal .dch-intro,
+	.dch:not([data-read]) .dch-parts-intro {
+		font-size: 1rem;
+	}
+	/* Narrower windows (the drone in the middle): the words at the bottom, over a scrim. */
+	@media (max-aspect-ratio: 6/5) {
+		.dch:not([data-read]) .dch-panel {
+			top: auto;
+			bottom: 2rem;
+			width: auto;
+			right: var(--left);
+			translate: 0 0;
+			padding: 1.25rem;
+			border-radius: 1rem;
+			background: rgb(3 10 16 / 0.72);
+			-webkit-backdrop-filter: blur(8px);
+			backdrop-filter: blur(8px);
+		}		.dch:not([data-read]) #stakes .dch-stat {
+			font-size: clamp(4rem, 10vw, 6.5rem);
+		}
+		.dch:not([data-read]) .dch-panel {
+			max-height: 46svh;
+			gap: 0.6rem;
+		}
+	}
+
+	/* The chapter map: a dot per beat at the right edge, a tick per part-by-part stop under beat 4; each is a link. */
+	.dch-map {
+		position: absolute;
+		right: max(0.75rem, env(safe-area-inset-right));
+		top: 50%;
+		z-index: 3;
+		translate: 0 -50%;
+		padding: 0.5rem 0.3rem;
+		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--background) 60%, transparent);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+	}
+	.dch-map ol {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.1rem;
+	}
+	.dch-map a {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.2rem;
+		padding: 0.4rem 0.35rem;
+		border-radius: 999px;
+		color: var(--muted-foreground);
+		font: 600 0.68rem/1 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+	}
+	.dch-map a:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	.dch-map-dot {
+		width: 0.55rem;
+		height: 0.55rem;
+		border-radius: 50%;
+		border: 1.5px solid currentColor;
+		transition: background 0.3s, scale 0.3s;
+	}
+	.dch-map a[aria-current] {
+		color: var(--foreground);
+	}
+	.dch-map a[aria-current] .dch-map-dot {
+		border-color: var(--accent);
+		background: var(--accent);
+		scale: 1.25;
+	}
+	.dch-ticks {
+		padding-block: 0.15rem;
+	}
+	.dch-ticks a {
+		padding: 0.22rem 0.5rem;
+	}
+	.dch-ticks a::before {
+		content: "";
+		display: block;
+		width: 0.6rem;
+		height: 2px;
+		border-radius: 1px;
+		background: currentColor;
+		opacity: 0.55;
+		transition: width 0.25s, opacity 0.25s;
+	}
+	.dch-ticks a[aria-current]::before {
+		width: 0.9rem;
+		opacity: 1;
+		background: var(--accent);
+	}
+	.dch-map-title {
+		position: absolute;
+		right: calc(100% + 0.6rem);
+		top: 50%;
+		translate: 6px -50%;
+		padding: 0.4rem 0.65rem;
+		border-radius: 999px;
+		white-space: nowrap;
+		background: color-mix(in oklab, var(--background) 86%, transparent);
+		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		color: var(--foreground);
+		font: 600 0.75rem/1 var(--font-sans, inherit);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.25s, translate 0.25s;
+	}
+	.dch-map a:is(:hover, :focus-visible) > .dch-map-title {
+		opacity: 1;
+		translate: 0 -50%;
+	}
+	/* The loading gate: only if the model takes a moment (more than about 300 ms). */
+	.dch-gate {
+		position: absolute;
+		inset: 0;
+		z-index: 4;
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		gap: 0.9rem;
+		background: linear-gradient(to bottom, #071822, #030a10);
+		font: 500 0.8rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+		transition: opacity 0.6s;
+	}
+	.dch-gate[hidden] {
+		display: none;
+	}
+	.dch-gate[data-leaving] {
+		opacity: 0;
+	}
+	.dch-gate-bar {
+		width: min(16rem, 60vw);
+		height: 2px;
+		background: color-mix(in oklab, var(--foreground) 15%, transparent);
+	}
+	.dch-gate-bar > span {
+		display: block;
+		height: 100%;
+		width: calc(var(--p, 0) * 1%);
+		background: var(--accent);
+		transition: width 0.2s;
+	}
+	.dch-gate-n {
+		color: var(--foreground);
+		font-variant-numeric: tabular-nums;
+	}
+	/* After the chapter: its dark fades gradually into the page's own colour (both themes). */
+	.dch:not([data-read]) + .dch-after {
+		height: 40vh;
+		background: linear-gradient(to bottom, #030a10, color-mix(in oklab, #030a10 40%, transparent) 45%, transparent);
+		pointer-events: none;
+	}
+	.dch-after:focus {
+		outline: none;
+	}
+	/* While the chapter is in 3D, the page's own backdrop footage is covered anyway: don't show it. */
+	html:has(.dch:not([data-read])) .chapter-backdrop {
+		display: none;
+	}
+	/* ?showcase=capture: the drone alone, on a transparent background (scripts/showcase-stills.py). */
+	.dch[data-capture] :is(.dch-bg, .dch-veil, .dch-frame, .dch-hud, .dch-map, .dch-gate, .dch-panels, .dch-skip) {
+		display: none;
+	}
+	.dch[data-capture] .dch-pin {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		height: auto;
+	}
+</style>
+
+<script>
+	import { afterIntro } from "@/lib/splash";
+
+	const LIVE_GATE = 300; // ms: the loading gate shows only if the 3D isn't up by then
+	let cleanup: (() => void) | undefined;
+
+	function initChapter() {
+		cleanup?.();
+		cleanup = undefined;
+		const root = document.querySelector<HTMLElement>("[data-dch]");
+		if (!root) return;
+		const cleanups: Array<() => void> = [];
+		cleanup = () => cleanups.forEach((c) => c());
+
+		// The live local time in Ho Chi Minh City, in both modes.
+		const clocks = [...root.querySelectorAll<HTMLTimeElement>("[data-dch-clock]")];
+		const formats = clocks.map(
+			(c) => new Intl.DateTimeFormat("en-GB", { timeZone: c.dataset.dchClock, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }),
+		);
+		const tick = () => {
+			const now = new Date();
+			clocks.forEach((c, i) => {
+				c.textContent = formats[i].format(now);
+				c.dateTime = now.toISOString();
+			});
+		};
+		tick();
+		const clock = window.setInterval(tick, 1000);
+		cleanups.push(() => clearInterval(clock));
+		if (root.hasAttribute("data-read")) return;
+
+		const stops = JSON.parse(root.dataset.stops!) as string[];
+		const titles = JSON.parse(root.dataset.titles!) as string[];
+		const last = stops.length - 1;
+		const track = root.querySelector<HTMLElement>(".dch-track")!;
+		const pin = root.querySelector<HTMLElement>(".dch-pin")!;
+		const stage = root.querySelector<HTMLElement>("[data-dch-stage]")!;
+		const canvas = stage.querySelector("canvas")!;
+		const panels = [...root.querySelectorAll<HTMLElement>(".dch-panel")];
+		const beatLinks = [...root.querySelectorAll<HTMLAnchorElement>("[data-beat]")];
+		const tickLinks = [...root.querySelectorAll<HTMLAnchorElement>(".dch-ticks a")];
+		const count = root.querySelector<HTMLElement>("[data-dch-count]")!;
+		const live = root.querySelector<HTMLElement>("[data-dch-live]")!;
+		const gate = root.querySelector<HTMLElement>("[data-dch-gate]")!;
+		const capture = root.hasAttribute("data-capture");
+
+		// Offsets, measured on resize only: each stop is one screen of scroll from the top of the track.
+		let screenH = 1;
+		let top = 0;
+		const measure = () => {
+			screenH = pin.offsetHeight || innerHeight;
+			top = track.getBoundingClientRect().top + scrollY;
+		};
+		measure();
+		const resize = new ResizeObserver(measure);
+		resize.observe(document.documentElement);
+		cleanups.push(() => resize.disconnect());
+		const position = () => (scrollY - top) / screenH;
+		const goTo = (stop: number, smooth = true) =>
+			scrollTo({ top: top + Math.max(0, Math.min(last, stop)) * screenH, behavior: smooth ? "smooth" : "instant" });
+
+		// Keyboard: arrows and Page Up/Down move one stop while the chapter is on screen; past either end the page scrolls on.
+		const onKey = (event: KeyboardEvent) => {
+			if (root.hasAttribute("data-read") || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+			const target = event.target as HTMLElement;
+			if (target.closest?.("input, textarea, select, [contenteditable], dialog")) return;
+			const forward = ["ArrowDown", "ArrowRight", "PageDown"].includes(event.key);
+			const back = ["ArrowUp", "ArrowLeft", "PageUp"].includes(event.key);
+			if (!forward && !back) return;
+			const p = position();
+			if (p < -0.5 || p > last + 0.25) return;
+			const next = Math.round(p) + (forward ? 1 : -1);
+			if (next < 0 || next > last) return;
+			event.preventDefault();
+			goTo(next);
+		};
+		addEventListener("keydown", onKey);
+		cleanups.push(() => removeEventListener("keydown", onKey));
+		// The map's links (and the skip link, which the browser handles itself).
+		const onClick = (event: MouseEvent) => {
+			const el = (event.target as Element).closest<HTMLElement>("[data-goto]");
+			if (!el || root.hasAttribute("data-read")) return;
+			event.preventDefault();
+			goTo(Number(el.dataset.goto));
+		};
+		root.addEventListener("click", onClick);
+		cleanups.push(() => root.removeEventListener("click", onClick));
+		// A link inside a stop's words gets focus (Tab): bring the camera to that stop.
+		const onFocus = (event: FocusEvent) => {
+			const panel = (event.target as Element).closest<HTMLElement>(".dch-panel");
+			if (!panel || root.hasAttribute("data-read")) return;
+			const stop = Number(panel.dataset.stop);
+			if (Math.abs(position() - stop) > 0.3) goTo(stop, false);
+		};
+		root.addEventListener("focusin", onFocus);
+		cleanups.push(() => root.removeEventListener("focusin", onFocus));
+
+		// The backdrop follows the camera too: how much of each beat's layer shows, the dusk's swing, the scrim.
+		const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+		const round = (x: number) => Math.round(x * 100) / 100;
+		const layers = {
+			city: root.querySelector<HTMLElement>(".dch-bd-city")!,
+			dusk: root.querySelector<HTMLElement>(".dch-bd-dusk")!,
+			video: root.querySelector<HTMLElement>(".dch-bd-skyline")!,
+			streaks: root.querySelector<HTMLElement>(".dch-bd-streaks")!,
+		};
+		const shown: Record<string, number> = {};
+		let scrims = { base: 0.7, prologue: 0, stakes: 0, reveal: 0, video: 0 };
+		const set = (name: string, value: number) => {
+			const v = round(value);
+			if (shown[name] === v) return;
+			shown[name] = v;
+			pin.style.setProperty(`--bd-${name}`, String(v));
+		};
+		const backdrop = (at: number) => {
+			const city = clamp01(1 - at * 0.8);
+			const streaks = clamp01(1 - Math.abs(at - 1) * 1.6);
+			const dusk = clamp01(1 - Math.abs(at - 2) * 1.05);
+			const video = clamp01(1 - Math.abs(at - (stops.length - 1)) * 1.6);
+			set("city", city);
+			set("streaks", streaks);
+			set("push", clamp01(at));
+			set("dusk", dusk);
+			set("swing", Math.max(-1, Math.min(1, at - 2)));
+			set("video", video);
+			set("scrim", scrims.base + scrims.prologue * city + scrims.stakes * streaks + scrims.reveal * dusk + scrims.video * video);
+			for (const [name, value] of [["city", city], ["dusk", dusk], ["video", video], ["streaks", streaks]] as const) layers[name].toggleAttribute("data-off", value <= 0.005);
+			pin.toggleAttribute("data-city-on", city > 0.005);
+		};
+		backdrop(0);
+
+		// The words, the HUD's counter, the map and the announcement follow the camera.
+		const levels = new Float32Array(panels.length).fill(-1);
+		let shownStop = -1;
+		let announceTimer: number | undefined;
+		const beatNames = beatLinks.map((a) => `${a.querySelector(".dch-map-n")!.textContent} / ${String(beatLinks.length).padStart(2, "0")}: ${a.querySelector(".dch-map-title")!.textContent}`);
+		const onFrame = (at: number) => {
+			panels.forEach((panel, i) => {
+				const d = Math.abs(at - i);
+				const on = Math.round(Math.max(0, Math.min(1, (0.42 - d) / 0.22)) * 100) / 100;
+				if (on === levels[i]) return;
+				levels[i] = on;
+				panel.style.setProperty("--on", String(on));
+				panel.toggleAttribute("data-shown", on > 0.5);
+			});
+			root.style.setProperty("--w-stakes", String(Math.round(Math.max(0, 1 - Math.abs(at - 1) * 2.2) * 100) / 100));
+			backdrop(at);
+			root.style.setProperty("--past", String(Math.round(Math.min(1, Math.max(0, at * 2)) * 100) / 100));
+			const current = Math.max(0, Math.min(last, Math.round(at)));
+			if (current === shownStop) return;
+			shownStop = current;
+			const beat = Math.min(current, 3);
+			count.textContent = String(beat + 1).padStart(2, "0");
+			beatLinks.forEach((a, b) => (b === beat ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
+			tickLinks.forEach((a, k) => (k === current - 3 ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
+			// Told to screen readers once the camera has settled, not for every stop it passes on a long move.
+			window.clearTimeout(announceTimer);
+			announceTimer = window.setTimeout(() => {
+				live.textContent = current >= 3 && titles[current] ? `${beatNames[beat]}, ${titles[current]}` : beatNames[beat];
+			}, 600);
+		};
+		cleanups.push(() => window.clearTimeout(announceTimer));
+
+		// The loading gate: a real percentage of the model's bytes, only if it takes a moment.
+		const total = Number(root.dataset.cadBytes) || 0;
+		let stopProgress: (() => void) | undefined;
+		const gateTimer = window.setTimeout(() => {
+			if (root.hasAttribute("data-live") || root.hasAttribute("data-read") || capture) return;
+			gate.hidden = false;
+			const bar = gate.querySelector<HTMLElement>("[data-dch-bar]")!;
+			const percent = gate.querySelector<HTMLElement>("[data-dch-percent]")!;
+			import("@/lib/three/models/drone").then(({ onCadProgress }) => {
+				stopProgress = onCadProgress((received) => {
+					const p = total ? Math.min(100, Math.round((received / total) * 100)) : 0;
+					percent.textContent = String(p);
+					bar.setAttribute("aria-valuenow", String(p));
+					bar.style.setProperty("--p", String(p));
+				});
+			});
+		}, LIVE_GATE);
+		const closeGate = () => {
+			window.clearTimeout(gateTimer);
+			stopProgress?.();
+			if (gate.hidden) return;
+			gate.setAttribute("data-leaving", "");
+			window.setTimeout(() => {
+				gate.hidden = true;
+				gate.removeAttribute("data-leaving");
+			}, 600);
+		};
+		cleanups.push(closeGate);
+
+		let cancelled = false;
+		let dispose: (() => void) | undefined;
+		/** The plain page, for any reason the 3D cannot carry on (no WebGL, too slow, the GPU lost, an error). */
+		const toRead = (why: string) => {
+			if (cancelled || root.hasAttribute("data-read")) return;
+			console.warn(`Drone chapter: switching to the plain page (${why}).`);
+			closeGate();
+			root.setAttribute("data-read", "");
+			root.removeAttribute("data-live");
+			root.classList.remove("dark");
+			dispose?.();
+			dispose = undefined;
+			scrollTo({ top: 0, behavior: "instant" }); // the tall track is gone; start the ordinary page at its top
+		};
+		cleanups.push(() => {
+			cancelled = true;
+			dispose?.();
+			dispose = undefined;
+		});
+
+		type Hook = { go(n: number | null): void; capture(): string };
+		const w = window as unknown as { __showcase?: Hook };
+		let hook: Hook | undefined;
+		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/drone-chapter"), afterIntro()])
+			.then(async ([stageModule, chapterModule]) => {
+				if (cancelled || root.hasAttribute("data-read")) return;
+				if (chapterModule.STOPS.join() !== stops.join()) console.warn("Drone chapter: the page's stops and the camera's differ.", stops, chapterModule.STOPS);
+				// The look's CSS intensities, from the same config as the 3D's.
+				const look = chapterModule.LOOK;
+				pin.style.setProperty("--look-glow", String(look.glow));
+				pin.style.setProperty("--look-vignette", String(look.vignette));
+				pin.style.setProperty("--look-grain", String(look.grain));
+				const b = look.backdrop;
+				const values = {
+					city: b.prologue.cityOpacity,
+					"far-drift": `${b.prologue.farDrift}s`,
+					"near-drift": `${b.prologue.nearDrift}s`,
+					streaks: b.stakes.streaksOpacity,
+					grow: b.stakes.streaksGrow,
+					dusk: b.reveal.duskOpacity,
+					parallax: b.reveal.parallax,
+					skyline: b["video-link"].skylineOpacity,
+				};
+				for (const [name, value] of Object.entries(values)) pin.style.setProperty(`--look-${name}`, String(value));
+				scrims = { base: look.scrim, prologue: b.prologue.scrim, stakes: b.stakes.scrim, reveal: b.reveal.scrim, video: b["video-link"].scrim };
+				delete shown.scrim;
+				backdrop(position());
+				dispose = await stageModule.mountStage(
+					stage,
+					canvas,
+					async (ctx) => {
+						const model = await chapterModule.default(ctx, {
+							position,
+							onStop: () => undefined,
+							onFrame,
+							titles,
+							measureLabel: root.dataset.measure ?? "",
+							capture,
+						});
+						// ?showcase=capture: held back until the stage is up, then offered per part (below).
+						if (capture) {
+							hook = w.__showcase;
+							delete w.__showcase;
+						}
+						return model;
+					},
+					{ camera: [-0.6, 0.1, -0.9], target: [0, 0, 0], fov: 36, near: 0.02, orbit: false, effects: capture, pixelRatio: 1.5, onFallback: (reason) => toRead(reason) },
+				);
+				if (cancelled || root.hasAttribute("data-read")) {
+					dispose();
+					dispose = undefined;
+					return;
+				}
+				root.setAttribute("data-live", "");
+				closeGate();
+				// The backdrop's images: beat 1's now, the rest a moment later.
+				pin.setAttribute("data-images", "first");
+				const more = window.setTimeout(() => pin.setAttribute("data-images", "all"), 1200);
+				cleanups.push(() => clearTimeout(more));
+				// A link to a stop (/work/drone/#motors) lands on it, on arrival and when the address changes to one.
+				const toHash = () => {
+					const hashed = stops.indexOf(decodeURIComponent(location.hash.slice(1)));
+					if (hashed > 0) goTo(hashed, false);
+				};
+				toHash();
+				addEventListener("hashchange", toHash);
+				cleanups.push(() => removeEventListener("hashchange", toHash));
+				// ?showcase=capture: part n is stop 3 + n (scripts/showcase-stills.py counts the parts only).
+				const held = hook;
+				if (capture && held) w.__showcase = { ...held, go: (n) => held.go(n === null ? null : n + 3) };
+			})
+			.catch((error) => {
+				console.warn("Drone chapter: the 3D could not start.", error);
+				toRead("error");
+			});
+	}
+
+	document.addEventListener("astro:page-load", initChapter);
+	document.addEventListener("astro:before-swap", () => {
+		cleanup?.();
+		cleanup = undefined;
+	});
+</script>

@@ -54,7 +54,7 @@ def main() -> None:
             if only and scene not in only:
                 continue
             page.evaluate(f"window.__studio.go({i})")
-            page.wait_for_timeout(12000)  # the lamp, the drone's lift-off, the whiteboard writing itself out
+            page.wait_for_timeout(12000)  # the lamp, the drone's LED, the whiteboard writing itself out (the drone never lifts off: not flown yet)
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
                 page.locator(".studio-stage canvas").screenshot(path=tmp.name)
             for width, name in ((SIZE["width"], f"{scene}.webp"), (SMALL, f"{scene}-{SMALL}.webp")):

@@ -9,7 +9,8 @@ import HomePortal from "@/components/home-portal";
 import ContactSection from "@/components/ContactSection.astro";
 import MemberList from "@/components/MemberList.astro";
 import ProjectList from "@/components/ProjectList.astro";
-import { journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
+import ProofCounts from "@/components/ProofCounts.astro";
+import { hook, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
 import { getMembers, getProjects } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,14 @@ const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
 	<div class="-mt-18">
 		<HomePortal client:load />
 	</div>
+
+	<!-- Why we exist (the same words the 3D studio opens on) -->
+	<section class="wrapper pt-20 md:pt-28" aria-labelledby="hook-heading">
+		<h2 id="hook-heading" class="max-w-4xl font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]" data-reveal>{hook.heading}</h2>
+		<p class="mt-6 max-w-3xl text-lg text-muted-foreground md:text-xl" data-reveal>
+			{hook.lines.map((line, i) => (i === hook.lampLine ? <><strong class="font-semibold text-foreground">{line}</strong> </> : `${line} `))}
+		</p>
+	</section>
 
 	<!-- Services -->
 	<!-- TODO: confirm services — placeholder copy, edit in src/text/home.ts -->
@@ -68,6 +77,7 @@ const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
 				<h2 id="work-heading" class="font-wide text-[clamp(2rem,4.5vw,3.5rem)] font-[850]">{workSection.heading}</h2>
 				<p class="text-lg text-muted-foreground">{workSection.intro}</p>
 			</div>
+			<ProofCounts class="mb-10 max-w-4xl" />
 			<ProjectList projects={projects} />
 		</div>
 	</section>
@@ -151,6 +161,11 @@ const processIcons = { plan: NotebookPen, build: Cog, check: CircleCheck };
 								{m.state === "now" && (
 									<span class="rounded-sm bg-accent px-1.5 py-0.5 font-sans text-xs font-bold text-accent-foreground [font-stretch:100%]">
 										{journey.nowTag}
+									</span>
+								)}
+								{m.before && (
+									<span class="rounded-sm border border-foreground/30 px-1.5 py-0.5 font-sans text-xs font-semibold text-muted-foreground [font-stretch:100%]">
+										{journey.beforeTag}
 									</span>
 								)}
 							</p>

@@ -43,6 +43,8 @@ const POOLS: Record<string, { at: [number, number]; size: number; color: number 
 	title: { at: [-6, -1.7], size: 3.6, color: 0xffd9a0 },
 	sketch: { at: [-6, -1.7], size: 3.2, color: 0xffd9a0 },
 	research: { at: [-5.1, -1.5], size: 3.2, color: 0x9ccfff },
+	build: { at: [-4.15, -1.9], size: 3.0, color: 0xffe2b8 },
+	test: { at: [-4.0, -1.8], size: 3.2, color: 0x9fc8ff },
 	robotics: { at: [-2.6, -2.0], size: 3.6, color: 0x2dd4bf },
 	drones: { at: [-0.6, -1.9], size: 3.4, color: 0xffc20e },
 	networks: { at: [1.4, -2.0], size: 3.2, color: 0x22d3ee },

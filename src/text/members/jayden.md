@@ -6,7 +6,7 @@ leadership:
   jpl: CEO
   frc: Mechanical Lead
 description: |
-  Passionate about technology, innovation, and creating solutions that make a difference. Specializing in robotics, artificial intelligence, and full-stack development.
+  Passionate about technology, innovation, and creating solutions that make a difference. Specializing in robotics, mechanical design, networking and C++.
 tags:
 - Software Developer
 - Robotics Enthusiast

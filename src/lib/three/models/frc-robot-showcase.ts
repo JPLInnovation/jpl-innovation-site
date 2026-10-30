@@ -36,10 +36,20 @@ const ORANGE = "#f88701"; // the signal light
  * it sits is worked out for the stage, so the whole robot always fits and no part is cut off
  * (src/lib/three/showcase.ts).
  */
-const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
+const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number }> = {
+	// The FRC chapter's opening beats (src/components/FrcChapter.astro, ./frc-chapter.ts): low at the front in the dark,
+	// close on the launcher and its hood, then the other three-quarter view as the lights come up.
+	prologue: { at: [0, -0.25, 0.2], from: [0.42, 0.1, 1.5], label: [0, 1.2, 0] },
+	stakes: { at: [0, 0.2, 0.3], from: [0.75, 0.38, 0.9], label: [0.6, 1.25, 0.4], distance: 0.95 },
+	reveal: { at: [0, -0.1, 0], from: [-1.25, 0.7, 1.3], label: [-0.55, 1.1, 0.6] },
 	overview: { at: [0, -0.15, 0], from: [1.18, 0.78, 1.3], label: [0.55, 1.1, -0.6] }, // the 3D viewer's three-quarter view
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
 	hopper: { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] }, // high at the back, looking down into it
+	'hopper-close': { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] },
+	indexer: { from: [0.25, 1.4, -1.0], label: [-0.8, 1.2, 0] },
+	krakens: { from: [1.5, 0.4, 0.8], label: [1.1, 1.2, 0] },
+	vision: { from: [0.8, 0.9, -1.2], label: [0, 1.4, 0] },
+	odometry: { from: [-0.9, 1.2, -0.8], label: [0, 1.3, 0] },
 	shooter: { from: [1.45, 0.15, 0.12], label: [1.1, 1.25, 0] }, // from the side, through the side plates
 	drivetrain: { at: [0, 0, 0], from: [1.65, 0.16, 0.8], label: [0.9, 1.6, 0.6] }, // low at the side, through the bumpers
 	electronics: { at: [0, -0.2, 0], from: [0.8, 1.05, -0.95], label: [0.5, 1.4, -0.9] }, // high at the back
@@ -51,7 +61,9 @@ const LABEL_GAP = 0.02; // metres outside a face, for label coordinates of ±1
 export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0], fov: 34, orbit: false };
 
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
-const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, shooter: 2.65 };
+const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, indexer: 2.55, shooter: 2.85, stakes: 2.65, reveal: 2 };
+/** Stops that frame another stop's parts (the chapter's stakes look at the launcher). */
+const LOOKS_AT: Record<string, string> = { stakes: "shooter", 'hopper-close': 'hopper' };
 
 const inside = (p: RobotPart, lo: V3, hi: V3) => [0, 1, 2].every((d) => p.lo[d] >= lo[d] && p.hi[d] <= hi[d]);
 const touches = (a: RobotPart, b: RobotPart, gap: number) =>
@@ -64,6 +76,11 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	const light = new Set(parts.filter((p) => p.color === ORANGE));
 	for (const p of parts) if (Math.max(size(p, 0), size(p, 1), size(p, 2)) < 0.1 && [...light].some((l) => touches(p, l, 0.003))) light.add(p);
 	return parts.map((p) => {
+		if (/limelight/i.test(p.name)) return "vision";
+		if (/pigeon/i.test(p.name)) return "odometry";
+		if (/^(Extended|Sticker -)|hopper/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
+		if (/kraken/i.test(p.name)) return "krakens";
+		if (/indexer|REV NEO/i.test(p.name) || p.rotor === 3) return "indexer";
 		if (p.rotor === 0 || p.rotor === 1) return "intake";
 		if (p.rotor >= 2) return "shooter";
 		if (p.clear) return "hopper";
@@ -99,13 +116,14 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 
 	const stops: ShowcaseStop[] = ids.map((id) => {
 		const framing = FRAMING[id] ?? FRAMING.overview;
-		const own = id === "overview" ? undefined : groups.get(id);
+		const own = id === "overview" ? undefined : groups.get(LOOKS_AT[id] ?? id);
 		const box = around(own?.length ? own : all);
 		const target = point(box, framing.at ?? [0, 0, 0]);
 		return {
 			target,
 			camera: target.map((v, d) => v + framing.from[d]) as V3,
 			label: point(box, framing.label, LABEL_GAP),
+			distance: framing.distance,
 		};
 	});
 
@@ -118,7 +136,10 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	].filter((g) => g.stop >= 0);
 	for (const g of ghosts) for (const m of g.materials) m.transparent = true;
 	// FUEL belongs to the intake, the hopper and the shooter: it leaves the picture for the drivetrain and electronics.
-	const fuelStops = ["overview", "intake", "hopper", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
+	const fuelStops = ["stakes", "reveal", "overview", "intake", "hopper", "indexer", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
+	// Mechanism time is a deterministic function of scroll, including reverse scrolling.
+	const phases: Record<string, number> = { intake: 0.65, hopper: 1.85, indexer: 2.55, shooter: 3.15 };
+	let mechanismTime: number | undefined;
 	let fuel = true;
 	// The opening beat: one ball of FUEL rides the whole way through as the section scrolls into place (off the floor,
 	// up the intake, into the hopper, through the feeder and launcher, up the hood and out), then the loop takes over.
@@ -139,8 +160,14 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			hideFuel();
 		},
 		focus(weights) {
+			const closed = ids.indexOf('hopper-close');
+			rig.hopper(closed >= 0 ? 1 - weights[closed] : 1);
+			let time = 0, total = 0;
+			ids.forEach((id, i) => { if (phases[id] !== undefined) { time += phases[id] * weights[i]; total += weights[i]; } });
+			mechanismTime = total > 0.01 ? time / total : undefined;
+			if (mechanismTime !== undefined) { rig.pose(mechanismTime); rig.balls[1].visible = false; }
 			for (const g of ghosts) {
-				const clear = weights[g.stop];
+				const clear = weights[g.stop] + (g.stop === ids.indexOf('shooter') ? (weights[ids.indexOf('indexer')] ?? 0) : 0);
 				for (const m of g.materials) {
 					m.opacity = 1 - (m.map ? 0.9 : 0.82) * clear;
 					m.depthWrite = !m.map && clear < 0.05;
@@ -153,12 +180,14 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 		},
 		pose(stop) {
 			intro = 1;
+			rig.hopper(ids[stop] === 'hopper-close' ? 0 : 1);
 			const t = POSE[ids[stop]];
 			if (t !== undefined) rig.pose(t);
 			hideFuel();
 		},
 		update(t, dt) {
-			rig.animate(t, dt);
+			if (mechanismTime === undefined) rig.animate(t, dt);
+			else { rig.pose(mechanismTime); rig.balls[1].visible = false; }
 			hideFuel();
 		},
 		applyPalette: (p) => rig.applyPalette(p),

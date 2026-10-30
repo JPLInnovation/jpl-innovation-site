@@ -27,6 +27,30 @@ export const hero = {
 };
 
 /**
+ * Why we exist: the first section after the opening screen (Classic), and in 3D the words over the dark room before the
+ * desk lamp comes on. `lines` joined with spaces are the whole paragraph, as Classic and screen readers get it; 3D plays
+ * only the lines in `playLines` (by number, counting from 0), and the lamp comes on at `lampLine`.
+ */
+export const hook = {
+	heading: "Most student engineering disappears.",
+	lines: [
+		"Students build remarkable things:",
+		"a robot for a competition season, a drone at a desk at home, a network in a training lab.",
+		"Then the season ends, the parts get reused, and the files sit in a folder nobody opens again.",
+		"What's left is one line on a résumé.",
+		"We started JPL Innovation so our work doesn't vanish.",
+		"Every sketch, every failed test and every hour on the bench is documented here,",
+		"so anyone can see not just what we built, but how we learned to build it.",
+	],
+	playLines: [2, 3, 4],
+	lampLine: 4,
+	/** The button that skips the 3D version. */
+	skip: "Skip",
+	/** With reduced motion, the 3D version is a still card with this button. */
+	continue: "Continue",
+};
+
+/**
  * "What we do": JPL Innovation's services.
  *
  * TODO: confirm services — these are PLACEHOLDERS. Nothing in the repo documented what JPL Innovation
@@ -81,6 +105,23 @@ export const workSection = {
 	heading: "Selected work",
 	intro: "Our own builds and the team we compete with: a drone that streams over 4G, an FRC robot, and a secured network lab.",
 	allWorkLink: "All work",
+};
+
+/**
+ * Proof, in numbers: under "Selected work" (Classic) and on the wall of projects (3D). Only the labels are here: every
+ * number is counted from the site's own data (src/components/ProofCounts.astro), so it can never be out of date.
+ * Under each drone's numbers is its project title (src/text/projects/*.md).
+ */
+export const proof = {
+	/** Read by screen readers before the numbers. */
+	label: "In numbers",
+	projects: "projects documented",
+	parts: "drone parts",
+	budget: "drone budget",
+	budgetNote: "estimate, parts not yet priced excluded",
+	steps: "build steps done",
+	/** Between the two numbers: "4 of 6". */
+	of: "of",
 };
 
 /** "Our mission", the standards list, and "How we work". */

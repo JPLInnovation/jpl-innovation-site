@@ -1,33 +1,20 @@
 ---
-// @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
-import { existsSync } from "node:fs";
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
-import BackLink from "@/components/BackLink.astro";
-import { buttonVariants } from "@/components/ui/button";
-import { backToWork } from "@/text/work";
-import DroneIllustration from "@/components/DroneIllustration.astro";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
+import DroneChapter from "@/components/DroneChapter.astro";
 import NextChapter from "@/components/NextChapter.astro";
-import ModelViewer from "@/components/model-viewer";
 import PartsTable from "@/components/parts-table";
-import Showcase from "@/components/showcase";
-import StatusTag from "@/components/StatusTag.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-// All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md),
-// and the "Part by part" showcase: src/text/showcase/drone.ts
+// All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md); the
+// chapter at the top (src/components/DroneChapter.astro) also uses "Part by part": src/text/showcase/drone.ts
 import { drone, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
-import { droneShowcase } from "@/text/showcase/drone";
 import { formatVnd } from "@/lib/format";
 import { DataIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const entry = (await getEntry("work", "drone"))!;
-
-const team = await Promise.all(
-	drone.team.map(async (t) => ({ role: t.role, member: "member" in t ? await getEntry("members", t.member) : null })),
-);
 
 const groups = partGroups.map((g) => ({
 	...g,
@@ -35,78 +22,12 @@ const groups = partGroups.map((g) => ({
 }));
 const total = groups.reduce((sum, g) => sum + g.subtotal, 0);
 const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
-
-// The showcase's pictures for phones (scripts/showcase-stills.py). A feature without one shows its text only.
-const stills = Object.fromEntries(
-	droneShowcase.features
-		.filter((f) => existsSync(`public/showcase/drone/${f.id}-800.webp`))
-		.map((f) => [f.id, `/showcase/drone/${f.id}`]),
-);
 ---
 
 <BaseLayout title={`${drone.name} | JPL Innovation`} description={entry.data.description}>
 	<ChapterBackdrop project="drone" />
-	<!-- Hero -->
-	<header class="wrapper grid gap-10 pb-16 pt-6 md:pt-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-14 lg:pb-24">
-		<div class="flex flex-col gap-6">
-			<BackLink href="/work/">{backToWork}</BackLink>
-			<div data-reveal><StatusTag>{drone.status}</StatusTag></div>
-			<h1 data-reveal class="font-wide text-[clamp(2.8rem,8vw,6.25rem)] font-[900] leading-[0.94]">{drone.name}</h1>
-			<p class="max-w-[56ch] text-lg" data-reveal data-reveal-delay="150">{drone.intro}</p>
-			<dl class="grid grid-cols-2 gap-x-6 gap-y-5 border-t pt-6 sm:grid-cols-4" data-reveal-group>
-				{
-					drone.facts.map((f) => (
-						<div class="flex flex-col gap-1">
-							<dt class="flex items-center gap-1.5 text-sm text-muted-foreground">
-								<DataIcon name={f.icon} className="size-4" />
-								{f.label}
-							</dt>
-							<dd class="font-semibold">{f.value}</dd>
-						</div>
-					))
-				}
-			</dl>
-			<ul class="flex flex-wrap gap-x-5 gap-y-1 text-sm text-muted-foreground" data-reveal>
-				{
-					team.map((t) => (
-						<li>
-							{t.role}
-							{t.member && (
-								<>
-									{" — "}
-									<a href={`/members/${t.member.id}/`} class="font-medium text-foreground hover:underline">
-										{t.member.data.title}
-									</a>
-								</>
-							)}
-						</li>
-					))
-				}
-			</ul>
-			<!-- data-astro-reload: the guide, the 3D layout and the camera mount are standalone pages, so load them fully instead of a client-side swap. -->
-			<div class="flex flex-wrap items-center gap-x-4 gap-y-2" data-reveal>
-				<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
-				<a href={text.layout3d.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.layout3d.label}</a>
-				<a href={text.cameraPov.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.cameraPov.label}</a>
-				<p class="max-w-[40ch] text-sm text-muted-foreground">{text.buildGuide.note}</p>
-			</div>
-		</div>
-		<figure transition:name="project-drone" class="flex flex-col gap-4 rounded-xl border surface p-4 md:p-6" data-reveal>
-			<ModelViewer
-				client:visible
-				model="drone"
-				label={text.model3d.description}
-				className="aspect-square w-full"
-			>
-				<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
-			</ModelViewer>
-			<figcaption class="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
-				<span class="flex items-center gap-2"><span class="h-1.5 w-5 rounded-full bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
-				<span>{text.model3d.layoutNote}</span>
-			</figcaption>
-		</figure>
-	</header>
+	<!-- The chapter, beats 1 to 4: one pinned 3D stage the scroll moves the camera through (Classic: an ordinary page). -->
+	<DroneChapter />
 
 	<!-- Progress -->
 	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">
@@ -143,11 +64,6 @@ const stills = Object.fromEntries(
 			}
 		</ol>
 	</section>
-
-	<!-- Part by part: the 3D drone turns to each part as its text scrolls past (src/components/showcase.tsx) -->
-	<Showcase client:visible={{ rootMargin: "200px" }} model="drone" text={droneShowcase} stills={stills}>
-		<div class="mx-auto w-full max-w-[22rem]"><DroneIllustration /></div>
-	</Showcase>
 
 	<!-- How it works -->
 	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
