@@ -13,7 +13,7 @@ self.onmessage = async (event: MessageEvent<{ url: string; features: number[]; b
 	try {
 		const { url, features, batches } = event.data;
 		let next = 0;
-		await Promise.all(Array.from({ length: 6 }, async () => {
+		await Promise.all(Array.from({ length: 16 }, async () => {
 			while (next < batches.length) {
 				const id = next++, batch = batches[id];
 				const [buffer, motion] = await Promise.all([
