@@ -46,6 +46,8 @@ export interface ShowcaseStop {
  * float per vertex: 0 = no stop in particular, n = stop n's parts) fade back when another stop is showing.
  */
 export interface ShowcaseModel extends Model {
+	/** Switch geometry detail during motion; render full detail once at rest. */
+	motion?(active: boolean): void;
 	/** One per feature in the page's text, in the same order. Only the camera's direction from the target counts:
 	 *  its distance is worked out for the stage. */
 	stops: ShowcaseStop[];
@@ -429,7 +431,8 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		const wanted = still > REST_AFTER ? 0 : 1;
 		pace = wanted > pace ? Math.min(1, pace + dt / (WIND * 0.5)) : Math.max(0, pace - dt / WIND);
 		snap = false;
-		return pace > 0 || moving;
+		model.motion?.(dt > 0 && (moving || still < .15));
+		return model.motion ? moving || still < .15 : pace > 0 || moving;
 	};
 	step(0);
 	snap = true;

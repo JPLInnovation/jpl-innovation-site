@@ -1,3 +1,15 @@
+# Animated showcase restoration
+
+The chapter again uses the original site2/main continuous camera path and spring follow. The image slideshow and Inspect button were removed. Non-feature geometry remains present and is subdued by the existing feature shader. Wider hopper (inside the frame) and extended hopper (beyond the footprint) are distinct feature groups and camera stops.
+
+CAD color values are interpreted as sRGB for this exporter. Named polycarbonate panels receive transparent materials independently of shared opaque hardware. Neutral lighting preserves saturated roller and bumper colors. Text uses a narrower desktop column, generous leading and fact spacing, with display sans headings, readable body text and monospace labels.
+
+Run `node scripts/robot-motion.mjs` after rebuilding the exact assets. Motion indices reduce the full 13,538,800 triangles to approximately 1,496,088 within a 0.15 mm simplification error; original vertex buffers and full indices remain available. Full source geometry returns after camera motion settles, then drawing sleeps. Empty reduced buffers correctly retain the original geometry. Capture mode uses full geometry.
+
+Validation: production build and all 14 full-resolution renders succeeded. Desktop scroll: 8.3 ms median, 12.5 ms p95, 91.7 ms worst frame on this workstation; no JS errors. Full-detail geometry returned at rest. Device performance varies.
+
+## Previous implementation history
+
 # Exact 10951 robot rendering ? 2026-10-31
 
 The active renderer now preserves all source triangles, vertex normals, source material values and node transforms from `CAD/10951_robot.glb`. The hopper stays in its exported pose. No decimation, outline reconstruction, dropped hardware or invented hinge rotation is used.

@@ -63,7 +63,7 @@ export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0]
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
 const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, indexer: 2.55, shooter: 2.85, stakes: 2.65, reveal: 2 };
 /** Stops that frame another stop's parts (the chapter's stakes look at the launcher). */
-const LOOKS_AT: Record<string, string> = { stakes: "shooter", 'hopper-close': 'hopper' };
+const LOOKS_AT: Record<string, string> = { stakes: "shooter", 'hopper-close': 'extended-hopper' };
 
 const inside = (p: RobotPart, lo: V3, hi: V3) => [0, 1, 2].every((d) => p.lo[d] >= lo[d] && p.hi[d] <= hi[d]);
 const touches = (a: RobotPart, b: RobotPart, gap: number) =>
@@ -78,7 +78,8 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	return parts.map((p) => {
 		if (/limelight/i.test(p.name) || (p.name === 'Minimal' && inside(p, [.22, .40, .25], [.33, .49, .33]))) return "vision";
 		if (/pigeon/i.test(p.name) || (p.name === 'mesh0' && inside(p, [.19, .14, -.13], [.25, .17, -.07]))) return "odometry";
-		if (/^(Extended|Sticker -)|hopper/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
+		if (/^(Extended|Sticker -)/i.test(p.name)) return "extended-hopper";
+		if (/hopper|^Left Side$/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
 		if (/kraken/i.test(p.name) && !/belt/i.test(p.name) && center(p, 0) > .2) return "krakens";
 		if (/indexer|REV NEO/i.test(p.name) || p.rotor === 3) return "indexer";
 		if (p.rotor === 0 || p.rotor === 1) return "intake";
@@ -103,7 +104,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	const rig = await buildRobot(ctx.root, (parts) => {
 		const names = classify(parts, robotAnchors.battery);
 		parts.forEach((p, i) => groups.set(names[i], [...(groups.get(names[i]) ?? []), p]));
-		return names.map((name) => Math.max(0, ids.indexOf(name)));
+		return names.map((name) => Math.max(0, ids.indexOf(name === 'extended-hopper' ? 'hopper-close' : name)));
 	});
 
 	const all = [...groups.values()].flat();
@@ -154,14 +155,14 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 
 	return {
 		stops,
+		motion: rig.motion,
 		floor: 0,
 		opening(progress) {
 			intro = progress;
 			hideFuel();
 		},
 		focus(weights) {
-			const detail = ['indexer', 'krakens', 'vision', 'odometry'].map(id => ids.indexOf(id)).find(i => i >= 0 && weights[i] > .5);
-			rig.isolate(detail ?? -1);
+			rig.isolate(-1);
 			let time = 0, total = 0;
 			ids.forEach((id, i) => { if (phases[id] !== undefined) { time += phases[id] * weights[i]; total += weights[i]; } });
 			mechanismTime = total > 0.01 ? time / total : undefined;
