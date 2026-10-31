@@ -55,9 +55,9 @@ export const robotShowcase = {
 			],
 		},
         {
-            id: 'hopper-close', title: 'Fold the extension.',
-            text: 'The extended hopper can open and close. Here, its side panels and back panel move together around the crosswise pivot, with the lettering attached. Scroll back to reopen it.',
-            facts: [{ label: 'Moving assembly', value: 'Extension sides + back' }, { label: 'Animation', value: 'Illustrative closing angle' }],
+            id: 'hopper-close', title: 'The hopper extension.',
+            text: 'The extended hopper is shown in its original CAD position, with the exact panel shapes, hardware and lettering from the team?s robot model.',
+            facts: [{ label: 'Assembly', value: 'Extension sides + back' }, { label: 'Pose', value: 'Original CAD export' }],
         },
         {
             id: 'krakens', title: 'Kraken X60',

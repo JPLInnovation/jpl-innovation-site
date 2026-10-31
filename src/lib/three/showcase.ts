@@ -70,6 +70,8 @@ export interface ShowcaseModel extends Model {
 }
 
 interface Options {
+	/** Bind camera directly to native scroll, without the trailing spring. */
+	directScroll?: boolean;
 	/** One label per stop. */
 	titles: string[];
 	/** Where the page is, in stops: 0 = the first, 1.5 = halfway from the second to the third. */
@@ -185,7 +187,7 @@ function fit(stop: ShowcaseStop, points: Float32Array, aspect: number, tanHalf: 
 }
 
 /** Wraps a showcase model so the stage runs it: camera, fading, labels and drag. */
-export function drive(ctx: StageContext, model: ShowcaseModel, { titles, position, opening, onStop, onFrame }: Options): Model {
+export function drive(ctx: StageContext, model: ShowcaseModel, { titles, position, opening, onStop, onFrame, directScroll }: Options): Model {
 	const { camera, canvas } = ctx;
 	const stops = model.stops;
 	const last = stops.length - 1;
@@ -208,6 +210,16 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 	const shifted: number[] = [];
 	const at = new Vector3();
 	for (const mesh of meshes) {
+		// Instanced source CAD uses local geometry shared across many placements.
+		// Its aggregate box includes every instance; sampling local vertices does not.
+		if ('isInstancedMesh' in mesh && mesh.isInstancedMesh) {
+			const box = (mesh as import('three').InstancedMesh).boundingBox;
+			if (box) for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+				at.set(x, y, z).applyMatrix4(mesh.matrixWorld);
+				sampled.push(at.x, at.y, at.z); shifted.push(0, 0, 0);
+			}
+			continue;
+		}
 		const position = mesh.geometry.getAttribute("position");
 		const shift = mesh.geometry.getAttribute("explode") as BufferAttribute | undefined;
 		for (let i = 0; i < position.count; i += stride) {
@@ -331,7 +343,7 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		frame();
 		const page = clamp(override ?? position(), 0, last);
 		const opened = override !== null ? 1 : clamp(opening(), 0, 1);
-		if (snap || dt <= 0) {
+		if (snap || dt <= 0 || directScroll) {
 			s = page;
 			speed = 0;
 			open = opened;

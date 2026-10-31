@@ -1,3 +1,19 @@
+# Exact 10951 robot rendering ? 2026-10-31
+
+The active renderer now preserves all source triangles, vertex normals, source material values and node transforms from `CAD/10951_robot.glb`. The hopper stays in its exported pose. No decimation, outline reconstruction, dropped hardware or invented hinge rotation is used.
+
+- Source SHA-256: `88c39211e8d51897d638aab801742fee119a62844a684f33a9cdef6c1e788bae`.
+- 851 mesh instances; 13,538,800 rendered triangles; 424 shared geometry/material batches.
+- `python scripts/robot-exact.py` rebuilds `public/assets/robot/` with NumPy. Gzip is lossless; the approximately 47 MB payload is only requested by the optional 3D inspector. Workers decompress geometry and transfer buffers to the main thread.
+- `python scripts/render-robot-exact.py` exports all 14 chapter views at **3840 ? 2160** plus responsive 1600/800 px WebP and AVIF versions. Run a production build and local preview first. Requires Python Playwright, Chrome, and the project's Sharp dependency.
+- The normal chapter crossfades these exact-model renders with native scroll. No model download or WebGL animation occurs during normal scrolling. Inspect in 3D is explicit; further scrolling closes the inspector and restores images. Mobile and reduced motion keep the reading layout with updated renders.
+- The Kraken, NEO/indexer, Limelight and Pigeon stops isolate hardware so panels cannot hide it. The GLB's unnamed `mesh0` Pigeon housing and `Minimal` camera assembly are associated by their measured bounds. Their geometry is unchanged.
+- The full robot and hopper renders show the original assembly. FUEL balls are illustrative overlays, not part of the source GLB.
+
+Validation: production build; Chrome desktop scroll, optional inspector entry/exit, mobile layout, all 14 images loaded; no page JS errors. Normal scrolling requested zero robot model payloads. On this workstation, the desktop sweep measured 4.2 ms median / 4.3 ms p95 frame intervals, with one 104 ms worst interval. This is a local measurement, not a universal zero-lag guarantee. The previous continuous full-model capture measured about 82 ms/frame. Full-workspace Astro checking includes unrelated errors in the untracked duplicate site and an existing nullability error in `src/scripts/studio-hook.ts:76`.
+
+## Earlier implementation (superseded geometry and hopper animation)
+
 # 10951 robot update
 
 Source: `CAD/10951_robot.glb`. Rebuild lightweight geometry with `python scripts/kitbot-cad.py`.

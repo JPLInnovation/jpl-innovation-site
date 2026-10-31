@@ -251,6 +251,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 
 	const driven = drive(ctx, chapter, {
 		titles: options.titles,
+		directScroll: true,
 		position: options.position,
 		opening: () => 1,
 		onStop: options.onStop,
@@ -269,7 +270,6 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	return {
 		...driven,
 		update(t, dt) {
-			frameShift();
 			return driven.update?.(t, dt);
 		},
 		applyPalette(p) {

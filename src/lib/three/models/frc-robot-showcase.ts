@@ -46,10 +46,10 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number 
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
 	hopper: { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] }, // high at the back, looking down into it
 	'hopper-close': { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] },
-	indexer: { from: [0.25, 1.4, -1.0], label: [-0.8, 1.2, 0] },
-	krakens: { from: [1.5, 0.4, 0.8], label: [1.1, 1.2, 0] },
-	vision: { from: [0.8, 0.9, -1.2], label: [0, 1.4, 0] },
-	odometry: { from: [-0.9, 1.2, -0.8], label: [0, 1.3, 0] },
+	indexer: { distance: 0.65, from: [-1.4, 0.75, 0.6], label: [-0.8, 1.2, 0] },
+	krakens: { distance: 0.48, from: [1.5, 0.4, 0.8], label: [1.1, 1.2, 0] },
+	vision: { distance: 0.24, from: [0.8, 0.9, -1.2], label: [0, 1.4, 0] },
+	odometry: { distance: 0.14, from: [0.6, 1.6, -0.6], label: [0, 1.3, 0] },
 	shooter: { from: [1.45, 0.15, 0.12], label: [1.1, 1.25, 0] }, // from the side, through the side plates
 	drivetrain: { at: [0, 0, 0], from: [1.65, 0.16, 0.8], label: [0.9, 1.6, 0.6] }, // low at the side, through the bumpers
 	electronics: { at: [0, -0.2, 0], from: [0.8, 1.05, -0.95], label: [0.5, 1.4, -0.9] }, // high at the back
@@ -76,10 +76,10 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	const light = new Set(parts.filter((p) => p.color === ORANGE));
 	for (const p of parts) if (Math.max(size(p, 0), size(p, 1), size(p, 2)) < 0.1 && [...light].some((l) => touches(p, l, 0.003))) light.add(p);
 	return parts.map((p) => {
-		if (/limelight/i.test(p.name)) return "vision";
-		if (/pigeon/i.test(p.name)) return "odometry";
+		if (/limelight/i.test(p.name) || (p.name === 'Minimal' && inside(p, [.22, .40, .25], [.33, .49, .33]))) return "vision";
+		if (/pigeon/i.test(p.name) || (p.name === 'mesh0' && inside(p, [.19, .14, -.13], [.25, .17, -.07]))) return "odometry";
 		if (/^(Extended|Sticker -)|hopper/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
-		if (/kraken/i.test(p.name)) return "krakens";
+		if (/kraken/i.test(p.name) && !/belt/i.test(p.name) && center(p, 0) > .2) return "krakens";
 		if (/indexer|REV NEO/i.test(p.name) || p.rotor === 3) return "indexer";
 		if (p.rotor === 0 || p.rotor === 1) return "intake";
 		if (p.rotor >= 2) return "shooter";
@@ -160,8 +160,8 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			hideFuel();
 		},
 		focus(weights) {
-			const closed = ids.indexOf('hopper-close');
-			rig.hopper(closed >= 0 ? 1 - weights[closed] : 1);
+			const detail = ['indexer', 'krakens', 'vision', 'odometry'].map(id => ids.indexOf(id)).find(i => i >= 0 && weights[i] > .5);
+			rig.isolate(detail ?? -1);
 			let time = 0, total = 0;
 			ids.forEach((id, i) => { if (phases[id] !== undefined) { time += phases[id] * weights[i]; total += weights[i]; } });
 			mechanismTime = total > 0.01 ? time / total : undefined;
@@ -180,7 +180,6 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 		},
 		pose(stop) {
 			intro = 1;
-			rig.hopper(ids[stop] === 'hopper-close' ? 0 : 1);
 			const t = POSE[ids[stop]];
 			if (t !== undefined) rig.pose(t);
 			hideFuel();
