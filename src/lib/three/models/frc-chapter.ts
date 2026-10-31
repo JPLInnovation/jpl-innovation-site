@@ -210,9 +210,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	if (atmosphere) ctx.root.add(grid, dust);
 
 	/* ---------- Framing: on a wide window the robot sits in the right part, clear of the words ---------- */
-	const frameShift = () => {
-		const w = ctx.canvas.clientWidth;
-		const h = ctx.canvas.clientHeight;
+	const frameShift = (w = ctx.canvas.clientWidth, h = ctx.canvas.clientHeight) => {
 		if (!w || !h) return;
 		const k = options.capture || w / h < 1.2 ? 1 : LOOK.frame;
 		const aspect = (w * k) / h;
@@ -259,16 +257,12 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	});
 	frameShift();
 	applyLights();
-	const refit = new ResizeObserver(() =>
-		requestAnimationFrame(() => {
-			frameShift();
-			ctx.wake();
-			ctx.invalidate();
-		}),
-	);
-	refit.observe(ctx.canvas);
 	return {
 		...driven,
+		resize(w, h) {
+			frameShift(w, h);
+			driven.update?.(0, 0);
+		},
 		update(t, dt) {
 			return driven.update?.(t, dt);
 		},
@@ -277,7 +271,6 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 			frameShift();
 		},
 		dispose() {
-			refit.disconnect();
 			environment?.dispose();
 			driven.dispose?.();
 		},

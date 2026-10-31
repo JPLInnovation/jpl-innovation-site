@@ -161,6 +161,8 @@ export interface StageContext {
 }
 
 export interface Model {
+	/** Apply model-specific projection after the stage sets the canvas aspect ratio. */
+	resize?(width: number, height: number): void;
 	/**
 	 * Called every frame with elapsed and delta seconds. Not called under reduced motion (except once with t = 0).
 	 * Return false when nothing is moving any more: the stage stops drawing until ctx.wake() (or a drag, resize or
@@ -574,6 +576,7 @@ export async function mountStage(
 		renderer.setSize(w, h, false);
 		pipeline?.setSize(w, h, ratio);
 		camera.aspect = w / h;
+		model.resize?.(w, h);
 		if (view.fitWidth) {
 			const from = controls?.target ?? target;
 			const halfFov = (camera.fov * Math.PI) / 360;
