@@ -112,6 +112,8 @@ export interface StageView {
 	orbit?: boolean;
 	/** Highest device pixel ratio to render at, on any tier (the tiers have their own caps). */
 	pixelRatio?: number;
+	/** Offline still export only: override the interactive pixel budget. */
+	maxPixels?: number;
 	/**
 	 * false: never the higher tiers' extras (the ambient-occlusion pass and the real contact shadows), only the plain
 	 * renderer and the blob shadows, whatever the tier. For a full-window stage that must stay light (the drone chapter).
@@ -467,7 +469,7 @@ export async function mountStage(
 	const pixelRatio = () => {
 		const ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
 		const area = Math.max(1, container.clientWidth * container.clientHeight);
-		return Math.max(MIN_RATIO, Math.min(ratio, Math.sqrt(MAX_PIXELS[tier] / area)) * scale);
+		return Math.max(MIN_RATIO, Math.min(ratio, Math.sqrt((view.maxPixels ?? MAX_PIXELS[tier]) / area)) * scale);
 	};
 	const dropTier = (frameMs: number) => {
 		const next = TIERS[TIERS.indexOf(tier) + 1];

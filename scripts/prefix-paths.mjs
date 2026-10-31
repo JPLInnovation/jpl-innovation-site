@@ -13,7 +13,7 @@ import path from "node:path";
 
 const [dir, prefix] = process.argv.slice(2);
 if (!dir || !prefix?.startsWith("/")) throw new Error("usage: node scripts/prefix-paths.mjs <dist> </prefix>");
-const tops = "work|members|about|assets|studio|showcase|fonts|_astro|favicon\\.png|apple-touch-icon\\.png|404";
+const tops = "chapter|work|members|about|assets|studio|showcase|fonts|_astro|favicon\\.png|apple-touch-icon\\.png|404";
 const re = new RegExp(`(["'(=,]\\s*|, |&quot;)/(?=(?:${tops})(?:[/"'\\s)?#.&]|$))`, "g");
 const home = /(href=["'])\/(?=["'#])/g;
 // The script loader builds its chunk addresses as "/" + file (Vite's preload helper).
