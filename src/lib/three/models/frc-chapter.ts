@@ -39,12 +39,12 @@ export const LOOK = {
 	light: {
 		prologue: { key: 0.06, fill: 0, rim: 3.4, sky: 0.02, environment: 0.05 },
 		stakes: { key: 0.9, fill: 0.08, rim: 2.6, sky: 0.05, environment: 0.3 },
-		reveal: { key: 2.3, fill: 0.35, rim: 2.4, sky: 0.2, environment: 1.2 },
-		anatomy: { key: 2.2, fill: 0.4, rim: 2.0, sky: 0.22, environment: 1.3 },
+		reveal: { key: 1.6, fill: 0.3, rim: 1.0, sky: 0.18, environment: 0.45 },
+		anatomy: { key: 1.6, fill: 0.3, rim: 1.0, sky: 0.18, environment: 0.45 },
 	} satisfies Record<string, Light>,
-	keyColor: "#fff4e8",
+	keyColor: "#ffffff",
 	/** The site's cyan accent (--accent). */
-	rimColor: "#22d3ee",
+	rimColor: "#dbeafe",
 	/** The floor grid: line brightness, and how far out (metres) it has faded to nothing. */
 	grid: 0.22,
 	gridReach: 1.9,
@@ -230,7 +230,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	const chapter = {
 		...base,
 		// The opening beats and the overview keep the whole robot in colour; each part stop fades the rest back.
-		whole: [0, 1, 2, 3, STOPS.indexOf('hopper-close')],
+		whole: [0, 1, 2, 3],
 		focus(w: ArrayLike<number>, explode: number) {
 			base.focus?.(w, explode);
 			for (let i = 0; i < weights.length; i++) weights[i] = w[i] ?? 0;
@@ -251,7 +251,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 
 	const driven = drive(ctx, chapter, {
 		titles: options.titles,
-		directScroll: true,
+		directScroll: false,
 		position: options.position,
 		opening: () => 1,
 		onStop: options.onStop,

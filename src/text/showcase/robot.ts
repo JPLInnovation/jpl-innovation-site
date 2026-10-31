@@ -33,12 +33,9 @@ export const robotShowcase = {
 		},
 		{
 			id: 'hopper',
-			title: 'Hopper',
-			text: 'We extended the kit’s hopper to hold more FUEL. It stays see-through polycarbonate, so the stored balls show; its floor slopes down to the indexer, which sends each one on to the launcher.',
-			facts: [
-				{ label: 'Walls', value: 'See-through polycarbonate' },
-				{ label: 'Size', value: 'Extended from the kit' },
-			],
+			title: 'Wider hopper',
+			text: 'The widened hopper uses the space inside the robot frame. Transparent polycarbonate walls hold the FUEL, while the sloped floor guides it toward the indexer.',
+			facts: [{ label: 'Position', value: 'Inside the robot frame' }, { label: 'Panels', value: 'Transparent polycarbonate' }],
 		},
 		{
             id: 'indexer', title: 'Indexer',
@@ -55,9 +52,9 @@ export const robotShowcase = {
 			],
 		},
         {
-            id: 'hopper-close', title: 'The hopper extension.',
-            text: 'The extended hopper is shown in its original CAD position, with the exact panel shapes, hardware and lettering from the team?s robot model.',
-            facts: [{ label: 'Assembly', value: 'Extension sides + back' }, { label: 'Pose', value: 'Original CAD export' }],
+            id: 'hopper-close', title: 'Extended hopper',
+            text: 'The extension adds storage beyond the robot footprint. These outer side and rear panels are separate from the wider hopper inside the frame.',
+            facts: [{ label: 'Position', value: 'Beyond the robot footprint' }, { label: 'Panels', value: 'Transparent polycarbonate' }],
         },
         {
             id: 'krakens', title: 'Kraken X60',

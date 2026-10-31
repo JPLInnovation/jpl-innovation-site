@@ -46,6 +46,7 @@ export interface RobotPart {
 }
 
 export interface RobotRig {
+	motion(active: boolean): void;
 	isolate(feature: number): void;
 	/** The whole robot, in metres, with its floor shadow. */
 	model: Group;
@@ -74,7 +75,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	const robot = new Group();
 	parent.add(robot);
 
-	const { materials, colors, isolate } = await loadExactRobot(robot, tag);
+	const { materials, colors, isolate, motion } = await loadExactRobot(robot, tag);
 	// The export has no joints or animation. Keep its geometry in its authored pose.
 
 	/* ---------- Team number on the bumpers ----------
@@ -152,6 +153,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	return {
 		model: robot,
 		isolate,
+	motion,
 		anchors: robotAnchors,
 		anchor,
 		balls: balls.map((b) => b.ball),

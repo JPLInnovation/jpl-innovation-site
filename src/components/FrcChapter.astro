@@ -91,10 +91,6 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			<div class="kch-stage" data-kch-stage>
 				<canvas role="img" aria-label={parts.modelLabel}></canvas>
 			</div>
-			<div class="kch-renders" aria-label={parts.modelLabel} role="img">
-				{stops.map((id, i) => <img src={`/showcase/robot/${id}.webp`} srcset={`/showcase/robot/${id}.webp 1600w, /showcase/robot/${id}-3840.webp 3840w`} sizes="(max-aspect-ratio: 6/5) 100vw, 65vw" width="3840" height="2160" alt="" decoding="async" data-render={i} style={`opacity:${i === 0 ? 1 : 0}`} />)}
-			</div>
-			<button class="kch-inspect" type="button" data-inspect>Inspect in 3D</button>
 			<div class="kch-veil" aria-hidden="true"></div>
 			<div class="kch-frame" aria-hidden="true">
 				<span class="kch-corner kch-tl"></span><span class="kch-corner kch-tr"></span><span class="kch-corner kch-bl"></span><span class="kch-corner kch-br"></span>
@@ -583,12 +579,6 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		position: absolute;
 		inset: 0;
 	}
-	.kch-renders { position: absolute; inset: 0 0 0 35%; pointer-events: none; }
-	.kch-renders img { position: absolute; width: 100%; height: 100%; object-fit: contain; }
-	.kch-inspect { position: absolute; right: 2rem; bottom: 2rem; z-index: 12; padding: .75rem 1rem; border: 1px solid #ffffff60; border-radius: .5rem; color: white; background: #111c; cursor: pointer; }
-	.kch[data-read] :is(.kch-renders,.kch-inspect), .kch[data-capture] :is(.kch-renders,.kch-inspect), .kch[data-inspecting] .kch-renders { display: none; }
-	.kch:not([data-inspecting]):not([data-capture]) .kch-stage { visibility: hidden; }
-	@media (max-aspect-ratio: 6/5) { .kch-renders { left: 0; bottom: 25%; } }
 	.kch-stage canvas {
 		display: block;
 		width: 100%;
@@ -933,6 +923,16 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		z-index: 100;
 		height: auto;
 	}
+
+ .kch-panel h2, .kch-panel h3 { font-family: "Archivo Variable", "Arial", sans-serif; letter-spacing: -.035em; line-height: 1.08; }
+ .kch-panel p { font-family: "Segoe UI", Arial, sans-serif; line-height: 1.7; max-width: 42ch; }
+ .kch-panel .kch-facts { margin-top: 1.75rem; gap: 1.25rem 1.5rem; padding-top: 1.5rem; }
+ .kch-panel .kch-facts dt { font-family: ui-monospace, "Cascadia Code", monospace; font-size: .68rem; letter-spacing: .06em; line-height: 1.5; }
+ .kch-panel .kch-facts dd { margin-top: .4rem; line-height: 1.45; }
+ @media (min-width: 1100px) and (min-aspect-ratio: 6/5) {
+  .kch:not([data-read]) .kch-panel { width: min(31vw, 29rem); }
+  .kch-panel h3 { font-size: clamp(1.8rem, 2.8vw, 3rem); margin-bottom: 1.25rem; }
+ }
 </style>
 
 <script>
@@ -1113,8 +1113,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		/** The plain page, for any reason the 3D cannot carry on (no WebGL, too slow, the GPU lost, an error). */
 		const toRead = (why: string) => {
 			if (cancelled || root.hasAttribute("data-read")) return;
-			console.warn(`KitBot chapter: 3D unavailable (${why}).`);
-			if (!capture) { close3D(); return; }
+			console.warn(`KitBot chapter: switching to the plain page (${why}).`);
 			closeGate();
 			root.setAttribute("data-read", "");
 			root.removeAttribute("data-live");
@@ -1131,35 +1130,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		type Hook = { go(n: number | null): void; capture(): string };
 		const w = window as unknown as { __showcase?: Hook };
 		let hook: Hook | undefined;
-		const inspect = root.querySelector<HTMLButtonElement>('[data-inspect]')!;
-		let inspecting = capture;
-		const renders = [...root.querySelectorAll<HTMLImageElement>('[data-render]')];
-		let scrollFrame = 0;
-		const close3D = () => {
-			inspecting = false;
-			loadId++;
-			dispose?.(); dispose = undefined;
-			root.removeAttribute('data-inspecting');
-			inspect.textContent = 'Inspect in 3D'; inspect.disabled = false;
-		};
-		const renderScroll = () => {
-			scrollFrame = 0;
-			const at = Math.max(0, Math.min(last, position()));
-			onFrame(at);
-			for (let i = 0; i < renders.length; i++) {
-				const opacity = Math.max(0, 1 - Math.abs(i - at));
-				const value = String(Math.round(opacity * 100) / 100);
-				if (renders[i].style.opacity !== value) renders[i].style.opacity = value;
-			}
-		};
-		const scrollRenders = () => {
-			if (inspecting) close3D();
-			if (!scrollFrame) scrollFrame = requestAnimationFrame(renderScroll);
-		};
-		let loadId = 0;
-		const start3D = () => {
-			const thisLoad = ++loadId;
-			return Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()])
+		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()])
 			.then(async ([stageModule, chapterModule]) => {
 				if (cancelled || root.hasAttribute("data-read")) return;
 				if (chapterModule.STOPS.join() !== stops.join()) console.warn("KitBot chapter: the page's stops and the camera's differ.", stops, chapterModule.STOPS);
@@ -1169,7 +1140,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				pin.style.setProperty("--look-grain", String(look.grain));
 				for (const [name, value] of Object.entries(look.backdrop)) pin.style.setProperty(`--look-${name}`, String(value));
 				backdrop(position());
-				const mounted = await stageModule.mountStage(
+				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
 					async (ctx) => {
@@ -1182,15 +1153,12 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 					},
 					{ camera: [0.6, 0.3, 1.6], target: [0, 0.2, 0], fov: 34, near: 0.02, orbit: false, effects: false, pixelRatio: 2, maxPixels: capture ? 3840 * 2160 : undefined, onFallback: (reason) => toRead(reason) },
 				);
-				if (cancelled || root.hasAttribute("data-read") || (!capture && (!inspecting || thisLoad !== loadId))) {
-					mounted();
+				if (cancelled || root.hasAttribute("data-read")) {
+					dispose();
+					dispose = undefined;
 					return;
 				}
-				dispose = mounted;
 				root.setAttribute("data-live", "");
-				root.setAttribute("data-inspecting", "");
-				inspect.disabled = false;
-				inspect.textContent = "Close 3D";
 				closeGate();
 				pin.setAttribute("data-images", "first");
 				const more = window.setTimeout(() => pin.setAttribute("data-images", "all"), 1200);
@@ -1207,29 +1175,9 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				if (capture && held) w.__showcase = { ...held, go: (n) => held.go(n === null ? null : n + 3) };
 			})
 			.catch((error) => {
-				if (thisLoad !== loadId) return;
 				console.warn("KitBot chapter: the 3D could not start.", error);
 				toRead("error");
 			});
-		};
-		if (capture) start3D();
-		else {
-			root.setAttribute('data-live', '');
-			pin.setAttribute('data-images', 'all');
-			closeGate(); renderScroll();
-			addEventListener('scroll', scrollRenders, { passive: true });
-			addEventListener('resize', scrollRenders);
-			const inspectClick = () => {
-				if (inspecting) { close3D(); renderScroll(); return; }
-				inspecting = true; inspect.disabled = true; inspect.textContent = 'Loading 3D?';
-				start3D();
-			};
-			inspect.addEventListener('click', inspectClick);
-			cleanups.push(() => {
-				removeEventListener('scroll', scrollRenders); removeEventListener('resize', scrollRenders);
-				cancelAnimationFrame(scrollFrame); inspect.removeEventListener('click', inspectClick);
-			});
-		}
 	}
 
 	document.addEventListener("astro:page-load", initKitbot);
