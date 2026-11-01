@@ -18,6 +18,7 @@
  * robot's space (y up, intake toward +z, wheels on y = 0); if the CAD changes, check them with
  * window.__showcase.go(n) on /work/frc/.
  */
+import { CircleGeometry, Mesh, MeshBasicMaterial, PointLight } from "three";
 import type { ShowcaseModel, ShowcaseStop } from "../showcase";
 import type { StageContext, StageView } from "../stage";
 import { extensionAngle, SWING } from "./extension-swing";
@@ -26,13 +27,31 @@ import { EXTENSION } from "./robot-exact";
 
 type V3 = [number, number, number];
 
-const BUMPER = "#1651b0";
+const BUMPER = "#2a6fbf"; // the blue bumper material, as the manifest records it
 // The side plate facing the camera on the indexer and shooter stops, and the radio on it, which would hide the ball.
 const NEAR_PLATE = /^(KB-26001: Side Plate|Robot Radio)/;
 const SIGNAL = "#f88701"; // the signal light's lens
 const FLASHES = 2; // a second: never 3 or more
 const RAMP = "#eaeaea"; // the intake ramp panels, and the hood's cross bars higher up
 const ORANGE = "#f88701"; // the signal light
+// The aluminium rail beside the wheels that the bumper bolts to, and the bumpers' team numbers: gone on the drivetrain stop.
+const FRAME_SIDE = /^(am-3921b AM14U6 Outside Plate|(Front|Left|Right) Bumper lettering)/;
+/**
+ * Stops whose part is the subject of the picture. It is read by shaping it, not by flooding it: the rest of the robot
+ * falls back (`LIFTED`), and these two lights only give the part an edge and a highlight to catch.
+ */
+const SPOTLIT: Record<string, { key: number; rim: number; color: number }> = {
+	vision: { key: 9, rim: 5, color: 0xffffff }, // neutral and low: the Limelight's housing has to stay black
+	odometry: { key: 9, rim: 5, color: 0xffffff },
+	hopper: { key: 32, rim: 18, color: 0xffffff }, // white, so the clear panels and the FUEL inside read brightly
+};
+/** Stops that lift their own parts and push the rest of the robot back, by how much. Only the strongest applies. */
+const LIFTED: Record<string, number> = { intake: 1, hopper: 1, 'hopper-close': 0.6, vision: 1, odometry: 1 };
+
+/** The radio's status lights: five green dots down the left edge of its front panel, measured off the CAD part. */
+const RADIO_LIGHTS = { x: -0.2591, z: 0.2085, y: [0.3545, 0.3625, 0.3705, 0.3785, 0.3865], r: 0.0019 };
+/** Flashes a second for each, top to bottom: steady, slow, steady, quicker, steady. Never 3 or more.  */
+const RADIO_RATES = [0, 1, 0, 2, 0];
 
 /**
  * How each stop frames its parts (the box around everything with that feature; the whole robot for the overview).
@@ -51,7 +70,7 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number 
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
 	hopper: { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] }, // high at the back, looking down into it
 	'hopper-close': { from: [-1.15, 0.45, -1.0], label: [0.2, 1.3, 0] }, // from the back corner, across the groove
-	indexer: { distance: 0.65, from: [-1.4, 0.75, 0.6], label: [0.3, 1.5, 0] },
+	indexer: { distance: 0.82, from: [-1.4, 0.52, 0.6], label: [0.3, 1.5, 0] }, // low, nearly level with the wheels
 	krakens: { distance: 0.48, from: [1.5, 0.4, 0.8], label: [1.1, 1.2, 0] },
 	vision: { distance: 0.24, from: [0.8, 0.9, -1.2], label: [0, 1.4, 0] },
 	odometry: { distance: 0.14, from: [0.6, 1.6, -0.6], label: [0, 1.3, 0] },
@@ -81,11 +100,12 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	const light = new Set(parts.filter((p) => p.color === ORANGE));
 	for (const p of parts) if (Math.max(size(p, 0), size(p, 1), size(p, 2)) < 0.1 && [...light].some((l) => touches(p, l, 0.003))) light.add(p);
 	return parts.map((p) => {
-		if (/limelight/i.test(p.name) || (p.name === 'Minimal' && inside(p, [.22, .40, .25], [.33, .49, .33]))) return "vision";
+		if (p.name === 'Minimal' && inside(p, [.22, .40, .25], [.33, .49, .33])) return "vision"; // the black camera, not its printed mount
 		if (/pigeon/i.test(p.name) || (p.name === 'mesh0' && inside(p, [.19, .14, -.13], [.25, .17, -.07]))) return "odometry";
 		if (EXTENSION.test(p.name)) return "extended-hopper";
 		if (/Robot Radio/.test(p.name)) return "electronics";
-		if (/hopper|^Left Side$/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
+		// "Left side bracket" is the only hopper panel the CAD doesn't name after the hopper: it is the one beside the NEO.
+		if (/hopper|^Left Side( bracket)?$/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
 		if (/kraken/i.test(p.name) && !/belt/i.test(p.name) && center(p, 0) > .2) return "krakens";
 		if (/indexer|REV NEO/i.test(p.name) || p.rotor === 3) return "indexer";
 		if (p.rotor === 0 || p.rotor === 1) return "intake";
@@ -139,10 +159,67 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	// rebuild a shader.
 	const ghosts = [{ stop: ids.indexOf("drivetrain"), materials: [...rig.materials(BUMPER), ...rig.materials("numbers")] }].filter((g) => g.stop >= 0);
 	for (const g of ghosts) for (const m of g.materials) m.transparent = true;
+	/**
+	 * One key light and one rim light for the whole chapter, moved to whichever of SPOTLIT's stops the scroll is on: a
+	 * pair per stop costs every material a lighting loop on 13 M triangles. They are built dark and never removed, so
+	 * no shader is rebuilt when one comes on.
+	 */
+	const key = new PointLight(0xffffff, 0, 0, 0);
+	const rim = new PointLight(0x9fd0ff, 0, 0, 0);
+	ctx.root.add(key, rim);
+	const spots = Object.entries(SPOTLIT).map(([id, look]) => ({ stop: ids.indexOf(id), look })).filter((s) => s.stop >= 0).map(({ stop, look }) => {
+		const { target, camera } = stops[stop];
+		const toCamera = camera.map((v, d) => v - target[d]) as V3;
+		const out = Math.hypot(...toCamera) || 1;
+		// Key: on the camera's side, a little above and to the left; rim: behind the part, low, on the other side.
+		const at: V3 = [target[0] + toCamera[0] * 0.7 - 0.06, target[1] + toCamera[1] * 0.7 + 0.1, target[2] + toCamera[2] * 0.7];
+		const behind: V3 = [target[0] - toCamera[0] * 0.9 + 0.08, target[1] + 0.04, target[2] - toCamera[2] * 0.9 / out * 0.2 - 0.12];
+		return { stop, look, at, behind };
+	});
+	// The radio's status lights. Drawn as their own flat dots just off the panel: the CAD's radio is a single solid body.
+	const lamp = new CircleGeometry(RADIO_LIGHTS.r, 16);
+	const lights = RADIO_LIGHTS.y.map((y) => {
+		const material = new MeshBasicMaterial({ color: 0x27f06a, transparent: true, opacity: 0, toneMapped: false });
+		const dot = new Mesh(lamp, material);
+		dot.position.set(RADIO_LIGHTS.x, y, RADIO_LIGHTS.z);
+		dot.rotation.y = -Math.PI / 2; // facing out of the panel, the way the electronics stop looks at it
+		dot.userData.shadow = false;
+		rig.model.add(dot);
+		return material;
+	});
+	/** 0 to 1 for each light: `lit` scales them all (the stop fading in), `t` undefined for a still frame. */
+	const showLights = (lit: number, t?: number) => {
+		lights.forEach((m, i) => {
+			const rate = RADIO_RATES[i];
+			const on = t === undefined || rate === 0 || Math.sin(t * Math.PI * 2 * rate) > 0 ? 1 : 0.06;
+			m.opacity = lit * on;
+			m.visible = m.opacity > 0.01;
+		});
+	};
+	const rails = rig.own((p) => FRAME_SIDE.test(p.name));
+	// The CAD gives the Limelight's housing pure black with no roughness at all, so it reads as a flat hole: polished
+	// here instead, with a little lift off zero, so the moulded plastic catches the stage lights and the key light above.
+	const camera = new Set(groups.get("vision") ?? []);
+	for (const m of rig.own((p) => camera.has(p) && Number.parseInt(p.color.slice(1), 16) < 0x303030)) {
+		m.color.setHex(0x0c0c0e);
+		m.roughness = 0.09;
+		m.metalness = 0.4;
+		m.transparent = false;
+		m.depthWrite = true;
+	}
+	// The Limelight's green status LED, flashing like the orange signal light (the CAD draws it as a plain green face).
+	const led = rig.own((p) => camera.has(p) && p.color === "#4cae4f");
+	for (const m of led) {
+		m.emissive.set(0x4cae4f);
+		m.emissiveIntensity = 0.6;
+		m.transparent = false;
+		m.depthWrite = true;
+	}
+	const showLed = (level: number) => { for (const m of led) m.emissiveIntensity = level; };
 	const indexerStop = ids.indexOf("indexer");
+	const drivetrainStop = ids.indexOf("drivetrain");
 	const shooterStop = ids.indexOf("shooter");
 	const extensionStop = ids.indexOf("hopper-close");
-	const intakeStop = ids.indexOf("intake");
 	const electronicsStop = ids.indexOf("electronics");
 	// The nearest side plate fades away on the indexer and shooter stops, so the hopper floor, the rollers and the hood show.
 	const plate = rig.own((p) => NEAR_PLATE.test(p.name));
@@ -158,7 +235,9 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	const panels = rig.own((p) => /^(Extended hopper side|Extended Back Hopper|Back Hopper)/.test(p.name));
 	const panelOpacity = panels[0]?.opacity ?? 0.25;
 	let shooting = false;
+	let rollingWheels = false;
 	let blinking = false;
+	let radioLit = 0; // how far the electronics stop has come up: the radio's lights fade in with it
 	// FUEL belongs to the intake, the hopper and the shooter: it leaves the picture for the drivetrain and electronics.
 	const fuelStops = ["stakes", "reveal", "overview", "intake", "hopper", "indexer", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
 	// Mechanism time is a deterministic function of scroll, including reverse scrolling.
@@ -179,7 +258,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	return {
 		stops,
 		motion: rig.motion,
-		keepsMoving: (stop) => ["intake", "indexer", "shooter", "electronics"].includes(ids[stop]),
+		keepsMoving: (stop) => ["intake", "indexer", "shooter", "electronics", "drivetrain"].includes(ids[stop]),
 		floor: 0,
 		opening(progress) {
 			intro = progress;
@@ -194,10 +273,29 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			for (const g of ghosts) {
 				const clear = weights[g.stop];
 				for (const m of g.materials) {
-					m.opacity = 1 - (m.map ? 0.9 : 0.82) * clear;
+					m.opacity = 1 - clear; // gone entirely on the drivetrain stop, so the wheels show
+					m.visible = clear < 0.995;
 					m.depthWrite = !m.map && clear < 0.05;
 				}
 			}
+			for (const m of rails) {
+				m.opacity = 1 - (weights[drivetrainStop] ?? 0);
+				m.visible = m.opacity > 0.005;
+				m.depthWrite = m.opacity > 0.95;
+			}
+			// Whichever spotlit stop the scroll is nearest owns the pair; between two, the brighter one has it.
+			let spot = spots[0];
+			for (const s of spots) if ((weights[s.stop] ?? 0) > (weights[spot.stop] ?? 0)) spot = s;
+			const onSpot = spot ? (weights[spot.stop] ?? 0) : 0;
+			if (spot && onSpot > 0) {
+				key.position.set(...spot.at);
+				rim.position.set(...spot.behind);
+				key.color.setHex(spot.look.color);
+			}
+			key.intensity = spot ? spot.look.key * onSpot : 0;
+			rim.intensity = spot ? spot.look.rim * onSpot : 0;
+			radioLit = weights[electronicsStop] ?? 0;
+			showLights(radioLit);
 			showPlate(1 - Math.min(1, (weights[indexerStop] ?? 0) + (weights[shooterStop] ?? 0)));
 			// The extension: stowed until the page reaches its stop, open from there on; the curve runs both ways.
 			let opened = 0;
@@ -205,10 +303,16 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			rig.extension(extensionStop < 0 ? 0 : extensionAngle(opened));
 			const onExtension = weights[extensionStop] ?? 0;
 			for (const m of panels) m.opacity = panelOpacity + 0.3 * onExtension;
-			const onIntake = weights[intakeStop] ?? 0;
-			if (onIntake >= onExtension) rig.highlight(intakeStop, onIntake);
-			else rig.highlight(extensionStop, onExtension * 0.6);
+			// Only one feature can be lifted at a time: the stop that wants it most.
+			let lifted = { stop: -1, level: 0 };
+			for (const [id, strength] of Object.entries(LIFTED)) {
+				const n = ids.indexOf(id);
+				const level = n < 0 ? 0 : (weights[n] ?? 0) * strength;
+				if (level > lifted.level) lifted = { stop: n, level };
+			}
+			rig.highlight(lifted.stop, lifted.level);
 			shooting = (weights[shooterStop] ?? 0) > 0.5;
+			rollingWheels = (weights[drivetrainStop] ?? 0) > 0.5;
 			blinking = (weights[electronicsStop] ?? 0) > 0.5;
 			if (!blinking) for (const m of signal) m.emissiveIntensity = 0;
 			let shown = 0;
@@ -226,10 +330,15 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			}
 			if (variant === "stowed") rig.extension(SWING);
 			if (stop === electronicsStop) for (const m of signal) m.emissiveIntensity = 1.4; // lit and steady
+			showLights(stop === electronicsStop ? 1 : 0); // steady: a still frame, or reduced motion
+			showLed(0.6); // steady too
 			hideFuel();
 		},
 		update(t, dt) {
+			if (radioLit > 0) showLights(radioLit, t);
 			if (blinking) for (const m of signal) m.emissiveIntensity = Math.sin(t * Math.PI * 2 * FLASHES) > 0 ? 1.4 : 0;
+			showLed(Math.sin(t * Math.PI * 2 * FLASHES) > 0 ? 0.8 : 0.05);
+			if (rollingWheels) rig.roll(dt);
 			if (shooting) { rig.spin(dt); rig.shoot(t); }
 			else if (mechanismTime === undefined) rig.animate(t, dt);
 			else { rig.spin(dt); rig.pose(mechanismTime); rig.balls[1].visible = false; }

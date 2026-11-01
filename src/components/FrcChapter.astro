@@ -40,7 +40,7 @@ const beatList = [beats.prologue, beats.stakes, beats.reveal, beats.anatomy];
 /** Classic's picture of a stop, from the real model (scripts/showcase-stills.py), when there is one. */
 const still = (id: string) =>
 	existsSync(`public/showcase/robot/${id}-800.webp`)
-		? { src: `/showcase/robot/${id}-800.webp`, srcset: `/showcase/robot/${id}-800.webp 800w, /showcase/robot/${id}.webp 1600w` }
+		? { src: `/showcase/robot/${id}-800.webp`, srcset: `/showcase/robot/${id}-800.webp 800w, /showcase/robot/${id}.webp 1600w`, full: `/showcase/robot/${id}.webp` }
 		: undefined;
 const overviewStill = still("overview");
 /** What shows until the 3D's first full frame is ready (scripts/showcase-stills.py). */
@@ -196,7 +196,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 							<a href={chapter.reveal.resultsHref} class={buttonVariants({ variant: "outline", size: "lg" })}>{chapter.reveal.resultsLink}</a>
 						</div>
 						<p class="kch-note">{parts.note}</p>
-						{overviewStill && <img class="kch-still" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />}
+						{overviewStill && <img class="kch-still" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" data-zoom={overviewStill.full} data-zoom-caption={parts.modelLabel} role="button" tabindex="0" />}
 					</header>
 				</div>
 
@@ -233,10 +233,10 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 											</div>
 											{parts.states[f.id].options.map((o) => {
 												const pic = still(o.still);
-												return pic && <img class="kch-still" src={pic.src} srcset={pic.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}, ${o.label}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />;
+												return pic && <img class="kch-still" src={pic.src} srcset={pic.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}, ${o.label}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" data-zoom={pic.full} data-zoom-caption={`${f.title} · ${o.label}`} role="button" tabindex="0" />;
 											})}
 										</fieldset>
-									) : s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />}
+									) : s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" data-zoom={s.full} data-zoom-caption={f.title} role="button" tabindex="0" />}
 								</section>
 							);
 						})
@@ -494,6 +494,25 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		display: inline-flex;
 		gap: 1em;
 		color: var(--muted-foreground);
+	}
+	/* A picture that opens full size (the page's viewer, src/pages/work/frc.astro) says so when pointed at. */
+	.kch-still[data-zoom] {
+		cursor: zoom-in;
+		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s;
+	}
+	.kch-still[data-zoom]:hover,
+	.kch-still[data-zoom]:focus-visible {
+		transform: scale(1.02);
+		box-shadow: 0 18px 40px -22px rgb(0 0 0 / 0.55);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.kch-still[data-zoom] {
+			transition: none;
+		}
+		.kch-still[data-zoom]:hover,
+		.kch-still[data-zoom]:focus-visible {
+			transform: none;
+		}
 	}
 	.kch-still {
 		width: 100%;

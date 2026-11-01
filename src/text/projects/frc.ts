@@ -475,7 +475,7 @@ export const swerveSim = {
 export const board = {
 	/** Over the board. */
 	heading: 'Inside Team 10951',
-	intro: 'The season, the robot’s specs, the team, the workshop and our outreach: pick a chapter.',
+	intro: 'The season, the robot’s specs, the team and the workshop: pick a chapter.',
 	label: 'Chapters',
 	viewsLabel: 'Views',
 	nextLabel: 'Next:',
@@ -506,10 +506,6 @@ export const board = {
 			{ id: 'rules', name: 'Rules' },
 			{ id: 'conduct', name: 'Conduct' },
 			{ id: 'photos', name: 'Photos' },
-		] },
-		{ id: 'outreach', name: 'Outreach', figure: '4 programs', views: [
-			{ id: 'programs', name: 'Programs' },
-			{ id: 'robokids', name: 'RoboKids' },
 		] },
 	],
 	kitbot: { specsButton: 'Specs and test results', close: 'Close', photosLabel: 'Photos of our 2026 KitBot' },
@@ -732,6 +728,7 @@ export const workshop = {
 
 /** Outreach: the team's programs beyond the field. */
 export const outreach = {
+	tag: '4 programs',
 	heading: 'Engineering, put to work.',
 	intro: 'Student-led programs that take what we learn in the workshop to younger students, partner schools and the wider community.',
 	programs: [

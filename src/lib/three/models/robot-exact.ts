@@ -9,6 +9,8 @@ interface Batch {
 
 /** rad/s, shafts low to high: intake, upper intake, indexer, flywheel. Slowed for illustration; the signs follow the FUEL's path (./frc-robot.ts). */
 const SHAFT_SPEEDS = [5, 5, -6, -14];
+const ON_AXLE = 0.02; // metres: a part centred this close to a wheel's axis rolls with it
+const WHEEL_SPEED = 4; // rad/s, forward (the intake's way): illustrative, like the roller speeds
 const ON_SHAFT = 0.02; // metres: a part's centre this close to a shaft's axis is mounted on it (wheels, spacers, collars and their screws)
 const KEEP_FULL_UNDER = 12000; // triangles: smaller meshes skip the motion geometry (simplifying them tore the bumper numbers, and saves little)
 
@@ -51,8 +53,8 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 				// The highlighted parts lift a little (full colour, on any background); the rest fall much further back.
 				.replace('#include <dithering_fragment>', `#include <dithering_fragment>
 				if (robotHighlightLevel > 0.0) {
-					if (abs(robotFeature - robotHighlightFeature) < 0.5) gl_FragColor.rgb += robotHighlightLevel * (gl_FragColor.rgb * 0.3 + 0.05) * gl_FragColor.a;
-					else gl_FragColor *= 1.0 - 0.72 * robotHighlightLevel;
+					if (abs(robotFeature - robotHighlightFeature) < 0.5) gl_FragColor.rgb += robotHighlightLevel * (gl_FragColor.rgb * 0.12 + 0.015) * gl_FragColor.a;
+					else gl_FragColor *= 1.0 - 0.6 * robotHighlightLevel;
 				}`);
 		};
 		material.customProgramCacheKey = () => 'exact-robot-isolation';
@@ -67,8 +69,14 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 	const shaftOf = (p: RobotPart) => shafts.find(s => Math.hypot(middle(p, 1) - s.y, middle(p, 2) - s.z) < ON_SHAFT);
 	// RobotPart.rotor's order: intake, second intake, launcher, feeder.
 	const rotorOrder = [shafts[0], shafts[1], shafts[3], shafts[2]];
+	// The six drive wheels sit on three axles across the robot; everything small centred on one rolls with it.
+	const axles = [...new Map(manifest.parts.filter(p => /^6 wheel Rev/.test(p.name))
+		.map(p => [Math.round(middle(p, 2) * 1000), { y: middle(p, 1), z: middle(p, 2), angle: 0, turn: new Matrix4() }])).values()];
+	const axleOf = (p: RobotPart) => Math.max(p.hi[1] - p.lo[1], p.hi[2] - p.lo[2]) > 0.17 ? undefined
+		: axles.find(a => Math.hypot(middle(p, 1) - a.y, middle(p, 2) - a.z) < ON_AXLE);
 	for (const p of manifest.parts) { const shaft = shaftOf(p); p.rotor = shaft ? rotorOrder.indexOf(shaft) : -1; }
 	const placed: Array<{ mesh: InstancedMesh; index: number; base: Matrix4; part: RobotPart }> = [];
+	const rolling: Array<{ mesh: InstancedMesh; index: number; base: Matrix4; axle: (typeof axles)[number] }> = [];
 	const turning: Array<{ mesh: InstancedMesh; index: number; base: Matrix4; shaft: typeof shafts[number] }> = [];
 	const turned = new Matrix4();
 	const features = tag?.(manifest.parts) ?? manifest.parts.map(() => 0);
@@ -110,6 +118,8 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 					const base = matrix.clone();
 					placed.push({ mesh, index: i, base, part: manifest.parts[instance.part] });
 					if (shaft) { turning.push({ mesh, index: i, base, shaft }); mesh.frustumCulled = false; }
+					const axle = axleOf(manifest.parts[instance.part]);
+					if (axle) { rolling.push({ mesh, index: i, base, axle }); mesh.frustumCulled = false; }
 				});
 				mesh.instanceMatrix.needsUpdate = true;
 				mesh.computeBoundingBox(); mesh.computeBoundingSphere();
@@ -161,6 +171,17 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 			for (const t of turning) {
 				t.mesh.setMatrixAt(t.index, turned.multiplyMatrices(t.shaft.turn, t.base));
 				t.mesh.instanceMatrix.needsUpdate = true;
+			}
+		},
+		/** Rolls the six drive wheels forward by dt seconds' worth. */
+		roll(dt: number) {
+			for (const a of axles) {
+				a.angle = (a.angle + WHEEL_SPEED * dt) % (Math.PI * 2);
+				turnAbout(a.turn, a.angle, a.y, a.z);
+			}
+			for (const r of rolling) {
+				r.mesh.setMatrixAt(r.index, turned.multiplyMatrices(r.axle.turn, r.base));
+				r.mesh.instanceMatrix.needsUpdate = true;
 			}
 		},
 		motion(active: boolean) {

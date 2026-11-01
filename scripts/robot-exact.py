@@ -131,7 +131,12 @@ for name,mi,m in new[2]:
     placed.append((name,1,mi,m)); fresh+=1
 print(f'{kept} instances keep the previous mesh, {fresh} use the new one. Differ from the previous file:', sorted(set(changed)))
 
-floor=min(bounds(w,mi,m)[0][1] for _,w,mi,m in placed)
+# The real lowest vertex, not the corners of a rotated part's box: those sit below the part and would float the robot.
+def lowest(which,mi,m):
+    g,acc,_=FILES[which]; w=site@m
+    return min(float((acc(p['attributes']['POSITION']) @ w[:3,:3].T + w[:3,3])[:,1].min())
+        for p in g['meshes'][mi]['primitives'])
+floor=min(lowest(w,mi,m) for _,w,mi,m in placed)
 site[1,3]=-floor
 
 # Previous materials first, so unchanged parts keep their payload's file name.

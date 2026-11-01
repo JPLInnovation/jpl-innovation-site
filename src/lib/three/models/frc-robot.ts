@@ -66,6 +66,8 @@ export interface RobotRig {
 	materials(color: string): MeshStandardMaterial[];
 	/** Turns the intake, indexer and flywheel rollers. */
 	spin(dt: number): void;
+	/** Rolls the six drive wheels forward. */
+	roll(dt: number): void;
 	/** Swings the hopper extension: degrees from the CAD's open pose. */
 	extension(degrees: number): void;
 	/** Materials of their own for these parts (./robot-exact.ts). */
@@ -91,7 +93,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	const robot = new Group();
 	parent.add(robot);
 
-	const { materials, colors, isolate, motion, spin, group, own, highlight } = await loadExactRobot(robot, tag);
+	const { materials, colors, isolate, motion, spin, roll, group, own, highlight } = await loadExactRobot(robot, tag);
 	const placeExtension = group((p) => EXTENSION.test(p.name));
 	const swing = new Matrix4();
 	let swung = 0;
@@ -199,6 +201,7 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		balls: balls.map((b) => b.ball),
 		materials: (color) => (color === "numbers" ? numbers : materials.filter((_, i) => colors[i] === color)),
 		spin,
+		roll,
 		own,
 		highlight,
 		extension(degrees) {
