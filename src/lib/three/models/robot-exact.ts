@@ -7,6 +7,20 @@ interface Batch {
 	instances: Array<{ part: number; matrix: number[] }>;
 }
 
+/** rad/s, shafts low to high: intake, upper intake, indexer, flywheel. Slowed for illustration; the signs follow the FUEL's path (./frc-robot.ts). */
+const SHAFT_SPEEDS = [5, 5, -6, -14];
+const ON_SHAFT = 0.02; // metres: a part's centre this close to a shaft's axis is mounted on it (wheels, spacers, collars and their screws)
+const KEEP_FULL_UNDER = 12000; // triangles: smaller meshes skip the motion geometry (simplifying them tore the bumper numbers, and saves little)
+
+/** Everything on the hopper extension: it moves as one piece, with the clamps and their bolts. */
+export const EXTENSION = /^(Extended |Back Hopper|Sticker - |Pivot block |#6 screw - (left|right) pivot|Bolt 1\/4-20 SHCS|Spacer 1\/2 OD|Washer 1\/4|Nyloc nut 1\/4-20|Zip tie (1[7-9]|2[0-8]) )/;
+
+/** Writes a turn of `angle` radians about the x axis through (y, z) into `m`. */
+export function turnAbout(m: Matrix4, angle: number, y: number, z: number) {
+	const c = Math.cos(angle), n = Math.sin(angle);
+	return m.makeRotationX(angle).setPosition(0, y - y * c + z * n, z - y * n - z * c);
+}
+
 export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]) => number[]) {
 	const url = new URL('/assets/robot/manifest.json', location.href);
 	const response = await fetch(url, { cache: 'no-cache' });
@@ -18,6 +32,7 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 	};
 	const colors: string[] = [];
 	const isolatedFeature = { value: -1 };
+	const highlight = { feature: { value: -1 }, level: { value: 0 } };
 	const materials = manifest.materials.map(source => {
 		const pbr = source.pbrMetallicRoughness ?? {};
 		const [r,g,b,a] = pbr.baseColorFactor ?? [1,1,1,1];
@@ -28,14 +43,34 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 			depthWrite: source.alphaMode !== 'BLEND', alphaTest: source.alphaMode === 'MASK' ? source.alphaCutoff ?? .5 : 0 });
 		material.onBeforeCompile = shader => {
 			shader.uniforms.isolatedFeature = isolatedFeature;
+			shader.uniforms.robotHighlightFeature = highlight.feature;
+			shader.uniforms.robotHighlightLevel = highlight.level;
 			shader.vertexShader = shader.vertexShader.replace('void main() {', 'attribute float robotPartFeature; varying float robotFeature; void main() { robotFeature = robotPartFeature;');
-			shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform float isolatedFeature; varying float robotFeature; void main() { if (isolatedFeature >= 0.0 && abs(robotFeature - isolatedFeature) > 0.5) discard;');
+			shader.fragmentShader = shader.fragmentShader.replace('void main() {', 'uniform float isolatedFeature; varying float robotFeature; void main() { if (isolatedFeature >= 0.0 && abs(robotFeature - isolatedFeature) > 0.5) discard;')
+				.replace('uniform float isolatedFeature;', 'uniform float isolatedFeature; uniform float robotHighlightFeature; uniform float robotHighlightLevel;')
+				// The highlighted parts lift a little (full colour, on any background); the rest fall much further back.
+				.replace('#include <dithering_fragment>', `#include <dithering_fragment>
+				if (robotHighlightLevel > 0.0) {
+					if (abs(robotFeature - robotHighlightFeature) < 0.5) gl_FragColor.rgb += robotHighlightLevel * (gl_FragColor.rgb * 0.3 + 0.05) * gl_FragColor.a;
+					else gl_FragColor *= 1.0 - 0.72 * robotHighlightLevel;
+				}`);
 		};
 		material.customProgramCacheKey = () => 'exact-robot-isolation';
 		return material;
 	});
 	const meshes: Array<{ mesh: InstancedMesh; full: BufferAttribute; motion: BufferAttribute; features: number[] }> = [];
-	const panel = /^(Extended hopper side|Extended Back Hopper|Back Hopper|Right Side hopper|Left Side$|Hopper Floor)/i;
+	const panel = /^(Extended hopper side|Extended Back Hopper|Back Hopper|Right Side hopper|Left Side$|Hopper Floor|Hopper bottom plate|Left side bracket|Right hopper bracket)/i;
+	// The export has no joints, so the roller shafts give the axes (along x). Everything centred on a shaft turns with it.
+	const middle = (p: RobotPart, d: number) => (p.lo[d] + p.hi[d]) / 2;
+	const shafts = manifest.parts.filter(p => /Roller Shaft/.test(p.name)).sort((a, b) => middle(a, 1) - middle(b, 1))
+		.map((p, i) => ({ y: middle(p, 1), z: middle(p, 2), speed: SHAFT_SPEEDS[i] ?? 0, angle: 0, turn: new Matrix4() }));
+	const shaftOf = (p: RobotPart) => shafts.find(s => Math.hypot(middle(p, 1) - s.y, middle(p, 2) - s.z) < ON_SHAFT);
+	// RobotPart.rotor's order: intake, second intake, launcher, feeder.
+	const rotorOrder = [shafts[0], shafts[1], shafts[3], shafts[2]];
+	for (const p of manifest.parts) { const shaft = shaftOf(p); p.rotor = shaft ? rotorOrder.indexOf(shaft) : -1; }
+	const placed: Array<{ mesh: InstancedMesh; index: number; base: Matrix4; part: RobotPart }> = [];
+	const turning: Array<{ mesh: InstancedMesh; index: number; base: Matrix4; shaft: typeof shafts[number] }> = [];
+	const turned = new Matrix4();
 	const features = tag?.(manifest.parts) ?? manifest.parts.map(() => 0);
 	const worker = new Worker(new URL('./robot-exact.worker.ts', import.meta.url), { type: 'module' });
 	await new Promise<void>((resolve, reject) => {
@@ -50,7 +85,7 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 				geometry.setAttribute('position', new BufferAttribute(new Float32Array(data.buffer, 0, batch.vertices * 3), 3));
 				geometry.setAttribute('normal', new BufferAttribute(new Float32Array(data.buffer, batch.vertices * 12, batch.vertices * 3), 3));
 				const full = new BufferAttribute(new Uint32Array(data.buffer, batch.vertices * 24, batch.indices), 1);
-				const motion = data.motion.byteLength ? new BufferAttribute(new Uint32Array(data.motion), 1) : full;
+				const motion = data.motion.byteLength && batch.indices / 3 >= KEEP_FULL_UNDER ? new BufferAttribute(new Uint32Array(data.motion), 1) : full;
 				geometry.setIndex(motion);
 				geometry.setAttribute('feature', new InstancedBufferAttribute(data.feature, 1));
 				geometry.setAttribute('robotPartFeature', geometry.getAttribute('feature'));
@@ -61,13 +96,21 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 					material = material.clone();
 					material.onBeforeCompile = materials[batch.material].onBeforeCompile;
 					material.customProgramCacheKey = materials[batch.material].customProgramCacheKey;
-					material.transparent = true; material.opacity = .22; material.depthWrite = false;
+					material.transparent = true; material.opacity = .25; material.depthWrite = false;
+					// The decals sit 0.2 mm off these panels: pushed back in the depth buffer, they stay sharp up close.
+					material.polygonOffset = true; material.polygonOffsetFactor = 1; material.polygonOffsetUnits = 4;
 					material.roughness = .16; material.metalness = 0; material.forceSinglePass = true;
 				}
 				const mesh = new InstancedMesh(geometry, material, batch.instances.length);
 				meshes.push({ mesh, full, motion, features: Array.from(data.feature as Float32Array) });
 				const matrix = new Matrix4();
-				batch.instances.forEach((instance, i) => mesh.setMatrixAt(i, matrix.fromArray(instance.matrix)));
+				batch.instances.forEach((instance, i) => {
+					mesh.setMatrixAt(i, matrix.fromArray(instance.matrix));
+					const shaft = shaftOf(manifest.parts[instance.part]);
+					const base = matrix.clone();
+					placed.push({ mesh, index: i, base, part: manifest.parts[instance.part] });
+					if (shaft) { turning.push({ mesh, index: i, base, shaft }); mesh.frustumCulled = false; }
+				});
 				mesh.instanceMatrix.needsUpdate = true;
 				mesh.computeBoundingBox(); mesh.computeBoundingSphere();
 				parent.add(mesh);
@@ -77,6 +120,49 @@ export async function loadExactRobot(parent: Object3D, tag?: (parts: RobotPart[]
 	});
 	let moving = true;
 	return { materials, colors,
+		/** Parts that move together: returns the function that places them, as a matrix on top of their CAD pose. */
+		group(test: (part: RobotPart) => boolean) {
+			const items = placed.filter(p => test(p.part));
+			for (const item of items) item.mesh.frustumCulled = false;
+			return (m: Matrix4) => {
+				for (const item of items) {
+					item.mesh.setMatrixAt(item.index, turned.multiplyMatrices(m, item.base));
+					item.mesh.instanceMatrix.needsUpdate = true;
+				}
+			};
+		},
+		/** A material of their own for these parts, to fade or tint without touching anything else (all set for see-through). */
+		own(test: (part: RobotPart) => boolean) {
+			const owned: MeshStandardMaterial[] = [];
+			for (const { mesh } of placed.filter(p => test(p.part))) {
+				const shared = mesh.material as MeshStandardMaterial;
+				if (owned.includes(shared) || !placed.filter(p => p.mesh === mesh).every(p => test(p.part))) continue;
+				const material = shared.clone();
+				material.onBeforeCompile = shared.onBeforeCompile;
+				material.customProgramCacheKey = shared.customProgramCacheKey;
+				material.transparent = true;
+				material.forceSinglePass = true;
+				mesh.material = material;
+				owned.push(material);
+			}
+			return owned;
+		},
+		/** One feature's parts lifted and everything else pushed further back, 0 (off) to 1. */
+		highlight(feature: number, level: number) {
+			highlight.feature.value = feature;
+			highlight.level.value = level;
+		},
+		/** Turns the rollers on their shafts by dt seconds' worth. */
+		spin(dt: number) {
+			for (const s of shafts) {
+				s.angle = (s.angle + s.speed * dt) % (Math.PI * 2);
+				turnAbout(s.turn, s.angle, s.y, s.z);
+			}
+			for (const t of turning) {
+				t.mesh.setMatrixAt(t.index, turned.multiplyMatrices(t.shaft.turn, t.base));
+				t.mesh.instanceMatrix.needsUpdate = true;
+			}
+		},
 		motion(active: boolean) {
 			if (active === moving) return;
 			moving = active;

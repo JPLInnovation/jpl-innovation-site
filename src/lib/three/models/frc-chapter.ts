@@ -197,16 +197,18 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	dust.frustumCulled = false;
 
 	/* ---------- The reflections: a blurred dusk instead of the stage's studio ---------- */
+	// Awaited, so the first frame is already lit by it: arriving later, it changed every surface in front of the visitor.
 	let environment: Texture | undefined;
-	if (atmosphere)
-		new TextureLoader().load(LOOK.environment, (texture) => {
-			texture.mapping = EquirectangularReflectionMapping;
-			texture.colorSpace = SRGBColorSpace;
-			environment = texture;
-			scene.environment = texture;
-			ctx.wake();
-			ctx.invalidate();
-		});
+	if (atmosphere) {
+		try {
+			environment = await new TextureLoader().loadAsync(LOOK.environment);
+			environment.mapping = EquirectangularReflectionMapping;
+			environment.colorSpace = SRGBColorSpace;
+			scene.environment = environment;
+		} catch {
+			/* the stage's studio reflections stay */
+		}
+	}
 	if (atmosphere) ctx.root.add(grid, dust);
 
 	/* ---------- Framing: on a wide window the robot sits in the right part, clear of the words ---------- */
@@ -229,6 +231,7 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 		...base,
 		// The opening beats and the overview keep the whole robot in colour; each part stop fades the rest back.
 		whole: [0, 1, 2, 3],
+		keepsMoving: options.capture ? undefined : base.keepsMoving, // stills need the full geometry
 		focus(w: ArrayLike<number>, explode: number) {
 			base.focus?.(w, explode);
 			for (let i = 0; i < weights.length; i++) weights[i] = w[i] ?? 0;
@@ -259,6 +262,9 @@ export default async function createFrcChapter(ctx: StageContext, options: Chapt
 	applyLights();
 	return {
 		...driven,
+		get idle() {
+			return driven.idle;
+		},
 		resize(w, h) {
 			frameShift(w, h);
 			driven.update?.(0, 0);

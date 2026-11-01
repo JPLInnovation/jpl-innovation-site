@@ -9,6 +9,11 @@ export const robotShowcase = {
 	modelLabel: frcPage.model3d.description,
 	/** Read aloud by screen readers for the row of dots that jump to each part. */
 	dotsLabel: 'Parts of the robot',
+	/** Classic's pictures of a part in two states, with a toggle. The stills: scripts/showcase-stills.py. */
+	states: {
+		'hopper-close': { legend: 'The extension', options: [{ label: 'Stowed', still: 'hopper-close-stowed' }, { label: 'Open', still: 'hopper-close' }] },
+		shooter: { legend: 'The side plate', options: [{ label: 'Plate on', still: 'shooter-plate' }, { label: 'Plate off', still: 'shooter' }] },
+	} as Record<string, { legend: string; options: Array<{ label: string; still: string }> }>,
 	features: [
 		{
 			id: 'overview',
@@ -53,8 +58,8 @@ export const robotShowcase = {
 		},
         {
             id: 'hopper-close', title: 'Extended hopper',
-            text: 'The extension adds storage beyond the robot footprint. These outer side and rear panels are separate from the wider hopper inside the frame.',
-            facts: [{ label: 'Position', value: 'Beyond the robot footprint' }, { label: 'Panels', value: 'Transparent polycarbonate' }],
+            text: 'The extension swings open about its hinge, guided by two orange clamps riding in curved grooves. On the real robot it drops open when the robot moves up and down.',
+            facts: [{ label: 'Open', value: 'Beyond the robot footprint' }, { label: 'Guides', value: 'Two orange clamps in curved grooves' }, { label: 'Panels', value: 'Transparent polycarbonate' }],
         },
         {
             id: 'krakens', title: 'Kraken X60',
@@ -85,11 +90,12 @@ export const robotShowcase = {
 		{
 			id: 'electronics',
 			title: 'Battery and electronics',
-			text: 'The battery sits low at the back, near the power hub that feeds the rest of the robot. The orange signal light is up on top.',
+			text: 'The battery sits low at the back, near the power hub that feeds the rest of the robot. The orange signal light is up on top, on the same side as the radio.',
 			facts: [
 				{ label: 'Battery', value: 'Low at the back' },
 				{ label: 'Power', value: 'Power hub' },
 				{ label: 'Signal light', value: 'Orange, on top' },
+				{ label: 'Radio', value: 'Under the signal light' },
 			],
 		},
 	],

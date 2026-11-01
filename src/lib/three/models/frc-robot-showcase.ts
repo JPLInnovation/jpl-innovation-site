@@ -20,12 +20,17 @@
  */
 import type { ShowcaseModel, ShowcaseStop } from "../showcase";
 import type { StageContext, StageView } from "../stage";
+import { extensionAngle, SWING } from "./extension-swing";
 import { buildRobot, robotAnchors, type RobotPart } from "./frc-robot";
+import { EXTENSION } from "./robot-exact";
 
 type V3 = [number, number, number];
 
 const BUMPER = "#1651b0";
-const SIDE_PLATE = "#a5a5a5"; // the shooter's side plates (and the motor shafts, which share the colour)
+// The side plate facing the camera on the indexer and shooter stops, and the radio on it, which would hide the ball.
+const NEAR_PLATE = /^(KB-26001: Side Plate|Robot Radio)/;
+const SIGNAL = "#f88701"; // the signal light's lens
+const FLASHES = 2; // a second: never 3 or more
 const RAMP = "#eaeaea"; // the intake ramp panels, and the hood's cross bars higher up
 const ORANGE = "#f88701"; // the signal light
 
@@ -45,14 +50,14 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number 
 	overview: { at: [0, -0.15, 0], from: [1.18, 0.78, 1.3], label: [0.55, 1.1, -0.6] }, // the 3D viewer's three-quarter view
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
 	hopper: { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] }, // high at the back, looking down into it
-	'hopper-close': { from: [-0.6, 0.95, -1.0], label: [0.6, 1.2, -0.6] },
-	indexer: { distance: 0.65, from: [-1.4, 0.75, 0.6], label: [-0.8, 1.2, 0] },
+	'hopper-close': { from: [-1.15, 0.45, -1.0], label: [0.2, 1.3, 0] }, // from the back corner, across the groove
+	indexer: { distance: 0.65, from: [-1.4, 0.75, 0.6], label: [0.3, 1.5, 0] },
 	krakens: { distance: 0.48, from: [1.5, 0.4, 0.8], label: [1.1, 1.2, 0] },
 	vision: { distance: 0.24, from: [0.8, 0.9, -1.2], label: [0, 1.4, 0] },
 	odometry: { distance: 0.14, from: [0.6, 1.6, -0.6], label: [0, 1.3, 0] },
-	shooter: { from: [1.45, 0.15, 0.12], label: [1.1, 1.25, 0] }, // from the side, through the side plates
+	shooter: { from: [-1.45, 0.15, 0.12], label: [-1.1, 1.25, 0] }, // from the side, where a side plate fades away
 	drivetrain: { at: [0, 0, 0], from: [1.65, 0.16, 0.8], label: [0.9, 1.6, 0.6] }, // low at the side, through the bumpers
-	electronics: { at: [0, -0.2, 0], from: [0.8, 1.05, -0.95], label: [0.5, 1.4, -0.9] }, // high at the back
+	electronics: { at: [0, -0.2, 0], from: [-1.25, 0.85, -0.55], label: [-0.5, 1.4, -0.9] }, // high on the radio's side, looking back over it
 };
 
 const LABEL_GAP = 0.02; // metres outside a face, for label coordinates of ±1
@@ -61,7 +66,7 @@ const LABEL_GAP = 0.02; // metres outside a face, for label coordinates of ±1
 export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0], fov: 34, orbit: false };
 
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
-const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, indexer: 2.55, shooter: 2.85, stakes: 2.65, reveal: 2 };
+const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, indexer: 2.55, stakes: 2.65, reveal: 2 };
 /** Stops that frame another stop's parts (the chapter's stakes look at the launcher). */
 const LOOKS_AT: Record<string, string> = { stakes: "shooter", 'hopper-close': 'extended-hopper' };
 
@@ -78,7 +83,8 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	return parts.map((p) => {
 		if (/limelight/i.test(p.name) || (p.name === 'Minimal' && inside(p, [.22, .40, .25], [.33, .49, .33]))) return "vision";
 		if (/pigeon/i.test(p.name) || (p.name === 'mesh0' && inside(p, [.19, .14, -.13], [.25, .17, -.07]))) return "odometry";
-		if (/^(Extended|Sticker -)/i.test(p.name)) return "extended-hopper";
+		if (EXTENSION.test(p.name)) return "extended-hopper";
+		if (/Robot Radio/.test(p.name)) return "electronics";
 		if (/hopper|^Left Side$/i.test(p.name) && !/battery/i.test(p.name)) return "hopper";
 		if (/kraken/i.test(p.name) && !/belt/i.test(p.name) && center(p, 0) > .2) return "krakens";
 		if (/indexer|REV NEO/i.test(p.name) || p.rotor === 3) return "indexer";
@@ -90,8 +96,8 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 		if (inside(p, [battery[0] - 0.14, 0.06, battery[2] - 0.11], [battery[0] + 0.14, 0.26, battery[2] + 0.11])) return "electronics";
 		if (inside(p, [-0.34, 0.15, -0.32], [0.34, 0.25, 0])) return "electronics"; // the board under the hopper
 		if (size(p, 0) < 0.01 && size(p, 1) > 0.3) return "";
-		if (p.color === RAMP && center(p, 1) < 0.3) return "intake";
-		if (inside(p, [-0.3, 0.15, 0.17], [0.3, 0.32, 1])) return "intake";
+		if (p.color === RAMP && center(p, 1) < 0.3) return "ramp"; // only the rollers count as the intake's: they light up
+		if (inside(p, [-0.3, 0.15, 0.17], [0.3, 0.32, 1])) return "ramp";
 		if (center(p, 1) > 0.3 && Math.abs(center(p, 0)) < 0.3) return "shooter";
 		if (p.hi[1] < 0.23) return "drivetrain";
 		return "";
@@ -131,15 +137,32 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	// From the side, the bumpers hide the wheels and the side plates hide the feeder and launcher, so on those stops
 	// they turn almost clear. They're drawn as see-through from the start, at full opacity, so the change never has to
 	// rebuild a shader.
-	const ghosts = [
-		{ stop: ids.indexOf("drivetrain"), materials: [...rig.materials(BUMPER), ...rig.materials("numbers")] },
-		{ stop: ids.indexOf("shooter"), materials: rig.materials(SIDE_PLATE) },
-	].filter((g) => g.stop >= 0);
+	const ghosts = [{ stop: ids.indexOf("drivetrain"), materials: [...rig.materials(BUMPER), ...rig.materials("numbers")] }].filter((g) => g.stop >= 0);
 	for (const g of ghosts) for (const m of g.materials) m.transparent = true;
+	const indexerStop = ids.indexOf("indexer");
+	const shooterStop = ids.indexOf("shooter");
+	const extensionStop = ids.indexOf("hopper-close");
+	const intakeStop = ids.indexOf("intake");
+	const electronicsStop = ids.indexOf("electronics");
+	// The nearest side plate fades away on the indexer and shooter stops, so the hopper floor, the rollers and the hood show.
+	const plate = rig.own((p) => NEAR_PLATE.test(p.name));
+	const showPlate = (opacity: number) => {
+		for (const m of plate) {
+			m.opacity = opacity;
+			m.visible = opacity > 0.005;
+			m.depthWrite = opacity > 0.95;
+		}
+	};
+	const signal = rig.materials(SIGNAL);
+	for (const m of signal) m.emissive.set(SIGNAL);
+	const panels = rig.own((p) => /^(Extended hopper side|Extended Back Hopper|Back Hopper)/.test(p.name));
+	const panelOpacity = panels[0]?.opacity ?? 0.25;
+	let shooting = false;
+	let blinking = false;
 	// FUEL belongs to the intake, the hopper and the shooter: it leaves the picture for the drivetrain and electronics.
 	const fuelStops = ["stakes", "reveal", "overview", "intake", "hopper", "indexer", "shooter"].map((id) => ids.indexOf(id)).filter((n) => n >= 0);
 	// Mechanism time is a deterministic function of scroll, including reverse scrolling.
-	const phases: Record<string, number> = { intake: 0.65, hopper: 1.85, indexer: 2.55, shooter: 3.15 };
+	const phases: Record<string, number> = { intake: 0.65, hopper: 1.85, indexer: 2.55 };
 	let mechanismTime: number | undefined;
 	let fuel = true;
 	// The opening beat: one ball of FUEL rides the whole way through as the section scrolls into place (off the floor,
@@ -156,6 +179,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 	return {
 		stops,
 		motion: rig.motion,
+		keepsMoving: (stop) => ["intake", "indexer", "shooter", "electronics"].includes(ids[stop]),
 		floor: 0,
 		opening(progress) {
 			intro = progress;
@@ -168,26 +192,47 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			mechanismTime = total > 0.01 ? time / total : undefined;
 			if (mechanismTime !== undefined) { rig.pose(mechanismTime); rig.balls[1].visible = false; }
 			for (const g of ghosts) {
-				const clear = weights[g.stop] + (g.stop === ids.indexOf('shooter') ? (weights[ids.indexOf('indexer')] ?? 0) : 0);
+				const clear = weights[g.stop];
 				for (const m of g.materials) {
 					m.opacity = 1 - (m.map ? 0.9 : 0.82) * clear;
 					m.depthWrite = !m.map && clear < 0.05;
 				}
 			}
+			showPlate(1 - Math.min(1, (weights[indexerStop] ?? 0) + (weights[shooterStop] ?? 0)));
+			// The extension: stowed until the page reaches its stop, open from there on; the curve runs both ways.
+			let opened = 0;
+			for (let n = extensionStop; n >= 0 && n < ids.length; n++) opened += weights[n];
+			rig.extension(extensionStop < 0 ? 0 : extensionAngle(opened));
+			const onExtension = weights[extensionStop] ?? 0;
+			for (const m of panels) m.opacity = panelOpacity + 0.3 * onExtension;
+			const onIntake = weights[intakeStop] ?? 0;
+			if (onIntake >= onExtension) rig.highlight(intakeStop, onIntake);
+			else rig.highlight(extensionStop, onExtension * 0.6);
+			shooting = (weights[shooterStop] ?? 0) > 0.5;
+			blinking = (weights[electronicsStop] ?? 0) > 0.5;
+			if (!blinking) for (const m of signal) m.emissiveIntensity = 0;
 			let shown = 0;
 			for (const n of fuelStops) shown += weights[n];
-			fuel = shown > 0.5;
+			fuel = shown > 0.5 && onExtension < 0.05; // the swing has the stage to itself
 			hideFuel();
 		},
-		pose(stop) {
+		pose(stop, variant) {
 			intro = 1;
 			const t = POSE[ids[stop]];
 			if (t !== undefined) rig.pose(t);
+			if (stop === shooterStop) {
+				rig.shoot(2.35); // a ball just leaving the hood
+				if (variant === "plate") showPlate(1);
+			}
+			if (variant === "stowed") rig.extension(SWING);
+			if (stop === electronicsStop) for (const m of signal) m.emissiveIntensity = 1.4; // lit and steady
 			hideFuel();
 		},
 		update(t, dt) {
-			if (mechanismTime === undefined) rig.animate(t, dt);
-			else { rig.pose(mechanismTime); rig.balls[1].visible = false; }
+			if (blinking) for (const m of signal) m.emissiveIntensity = Math.sin(t * Math.PI * 2 * FLASHES) > 0 ? 1.4 : 0;
+			if (shooting) { rig.spin(dt); rig.shoot(t); }
+			else if (mechanismTime === undefined) rig.animate(t, dt);
+			else { rig.spin(dt); rig.pose(mechanismTime); rig.balls[1].visible = false; }
 			hideFuel();
 		},
 		applyPalette: (p) => rig.applyPalette(p),
