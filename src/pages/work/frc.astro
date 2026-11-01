@@ -7,11 +7,12 @@ import Leadership from "@/components/Leadership.astro";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
+import TeamReveal from "@/components/TeamReveal.astro";
 import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
 // and the robot's part by part text: src/text/showcase/robot.ts
-import { board, frcDeck, frcPhotos, frcPage, outreach, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
+import { board, frcDeck, frcPhotos, frcPage, lightboxText, outreach, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
 import { EventSheets, PhotoDeck, WeekPosts } from "@/components/frc-photos";
 import { CertPipeline, SeasonSlides, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
 import { Filmstrip, Goals2027, HardwareView, KitBotView, Overview2027, Road2027, SeasonGame, SeasonTimeline } from "@/components/frc-views";
@@ -64,6 +65,9 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 			}
 		</dl>
 	</header>
+
+	<!-- The whole team, growing to fill the screen as the page scrolls (src/components/TeamReveal.astro). -->
+	<TeamReveal photo={teamPhoto} words={teamPhoto.caption} meta={teamPhoto.meta} />
 
 	<!-- The rookie season in eight scenes: it plays by itself until the visitor steps through it. -->
 	<section class="wrapper flex flex-col gap-8 pb-20 md:pb-28" aria-labelledby="story-heading">
@@ -229,7 +233,9 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 								</ul>
 							</div>
 							<figure class="m-0 flex flex-col gap-2">
-								<img src={`/assets/frc/${teamPhoto.id}-640.webp`} srcset={frcSrcset(teamPhoto)} sizes="(min-width: 1024px) 50vw, 100vw" alt={teamPhoto.alt} width={teamPhoto.w} height={teamPhoto.h} loading="lazy" decoding="async" class="h-auto w-full rounded-xl" />
+								<button type="button" class="frc-zoom block w-full overflow-hidden rounded-xl" data-zoom={`/assets/frc/${teamPhoto.id}.webp`} data-zoom-alt={teamPhoto.alt} data-zoom-caption={`${teamPhoto.caption} · ${teamPhoto.meta}`} aria-label={`${lightboxText.open} ${teamPhoto.caption}`}>
+									<img src={`/assets/frc/${teamPhoto.id}-640.webp`} srcset={frcSrcset(teamPhoto)} sizes="(min-width: 1024px) 50vw, 100vw" alt={teamPhoto.alt} width={teamPhoto.w} height={teamPhoto.h} loading="lazy" decoding="async" class="h-auto w-full" />
+								</button>
 								<figcaption class="text-sm text-muted-foreground">{teamPhoto.caption} · {teamPhoto.meta}</figcaption>
 							</figure>
 						</div>
@@ -295,7 +301,9 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 					<div class="frc-view" id="v-workshop-rules" data-view="rules" role="tabpanel" aria-labelledby="vt-workshop-rules">
 						<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
 							<figure class="m-0 flex flex-col gap-2">
-								<img src={`/assets/frc/${workshopPhoto.id}-640.webp`} srcset={frcSrcset(workshopPhoto)} sizes="(min-width: 1024px) 40vw, 100vw" alt={workshopPhoto.alt} width={workshopPhoto.w} height={workshopPhoto.h} loading="lazy" decoding="async" class="aspect-[4/3] w-full rounded-xl object-cover" />
+								<button type="button" class="frc-zoom block w-full overflow-hidden rounded-xl" data-zoom={`/assets/frc/${workshopPhoto.id}.webp`} data-zoom-alt={workshopPhoto.alt} data-zoom-caption={`${workshopPhoto.caption} · ${workshopPhoto.meta}`} aria-label={`${lightboxText.open} ${workshopPhoto.caption}`}>
+									<img src={`/assets/frc/${workshopPhoto.id}-640.webp`} srcset={frcSrcset(workshopPhoto)} sizes="(min-width: 1024px) 40vw, 100vw" alt={workshopPhoto.alt} width={workshopPhoto.w} height={workshopPhoto.h} loading="lazy" decoding="async" class="aspect-[4/3] w-full object-cover" />
+								</button>
 								<figcaption class="text-sm text-muted-foreground">{workshopPhoto.caption} · {workshopPhoto.meta}</figcaption>
 							</figure>
 							<div class="flex flex-col gap-5">
@@ -331,58 +339,52 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 						<a href={`#${nextOf("workshop").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("workshop").name}</span> <span aria-hidden="true">→</span></a>
 					</footer>
 				</section>
-				<section class="frc-chapter" id="ch-outreach" data-chapter="outreach" role="tabpanel" aria-labelledby="ct-outreach">
-					<header class="frc-chapter-head">
-						<h3 class="font-wide text-[clamp(1.5rem,2.4vw,2rem)] font-[880] leading-tight">{chapter("outreach").name}</h3>
-						{chapter("outreach").views.length > 1 && (
-							<div class="frc-views" role="tablist" aria-label={board.viewsLabel}>
-								{chapter("outreach").views.map((v) => (
-									<button type="button" role="tab" id={`vt-outreach-${v.id}`} aria-controls={`v-outreach-${v.id}`} data-view-tab={v.id}>{v.name}</button>
-								))}
-							</div>
-						)}
-					</header>
-					<div class="frc-view" id="v-outreach-programs" data-view="programs" role="tabpanel" aria-labelledby="vt-outreach-programs">
-						<div class="flex flex-col gap-4">
-							<p class="max-w-3xl text-muted-foreground">{outreach.intro}</p>
-							<ul class="grid gap-4 md:grid-cols-2">
-								{outreach.programs.map((o) => (
-									<li class="frc-prog flex flex-col gap-1.5 rounded-xl border surface p-5" tabindex={o.more ? "0" : undefined}>
-										<p class="text-sm text-muted-foreground">{o.tag}</p>
-										<h5 class="font-semiwide text-xl font-[780]">{o.name}</h5>
-										<p class="text-sm text-muted-foreground">{o.text}</p>
-										{o.detail && <p class="text-sm">{o.detail}</p>}
-										{o.more && (
-											<>
-												<p class="frc-prog-hint text-sm font-semibold" aria-hidden="true">{outreach.moreHint} +</p>
-												<dl class="frc-prog-more">
-													<div class="flex flex-col gap-1.5 pt-1">
-														{o.more.map((m) => (
-															<div class="grid gap-1 border-t pt-1.5 sm:grid-cols-[8.5rem_1fr]">
-																<dt class="text-sm font-semibold">{m.k}</dt>
-																<dd class="text-sm text-muted-foreground">{m.v}</dd>
-															</div>
-														))}
-													</div>
-												</dl>
-											</>
-										)}
-									</li>
-								))}
-							</ul>
-						</div>
-					</div>
-					<div class="frc-view" id="v-outreach-robokids" data-view="robokids" role="tabpanel" aria-labelledby="vt-outreach-robokids">
-						<div class="flex flex-col gap-3">
-							<Filmstrip client:visible ids={outreach.photos} label={outreach.photosLabel} />
-							<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
-						</div>
-					</div>
-					<footer class="frc-chapter-foot">
-						<a href={`#${nextOf("outreach").id}`} class="frc-next">{board.nextLabel} <span>{nextOf("outreach").name}</span> <span aria-hidden="true">→</span></a>
-					</footer>
-				</section>
 				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Outreach, a section of its own: the programs that carry the workshop out to younger students,
+	     partner schools and the city. It used to be the last chapter of the pit board. -->
+	<section id="outreach" class="scroll-mt-24 border-y bg-card/60" aria-labelledby="outreach-heading">
+		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
+			<div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
+				<div class="flex flex-col items-start gap-3">
+					<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
+						<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{outreach.tag}
+					</span>
+					<h2 id="outreach-heading" class="max-w-[16ch] font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]" data-reveal>{outreach.heading}</h2>
+				</div>
+				<p class="max-w-[46ch] text-lg text-muted-foreground" data-reveal>{outreach.intro}</p>
+			</div>
+			<ul class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+				{outreach.programs.map((o) => (
+					<li class="frc-prog flex flex-col gap-1.5 rounded-xl border surface p-5" tabindex={o.more ? "0" : undefined}>
+						<p class="text-sm text-muted-foreground">{o.tag}</p>
+						<h5 class="font-semiwide text-xl font-[780]">{o.name}</h5>
+						<p class="text-sm text-muted-foreground">{o.text}</p>
+						{o.detail && <p class="text-sm">{o.detail}</p>}
+						{o.more && (
+							<>
+								<p class="frc-prog-hint text-sm font-semibold" aria-hidden="true">{outreach.moreHint} +</p>
+								<dl class="frc-prog-more">
+									<div class="flex flex-col gap-1.5 pt-1">
+										{o.more.map((m) => (
+											<div class="grid gap-1 border-t pt-1.5 sm:grid-cols-[8.5rem_1fr]">
+												<dt class="text-sm font-semibold">{m.k}</dt>
+												<dd class="text-sm text-muted-foreground">{m.v}</dd>
+											</div>
+										))}
+									</div>
+								</dl>
+							</>
+						)}
+					</li>
+				))}
+			</ul>
+			<div class="flex flex-col gap-3">
+				<Filmstrip client:visible ids={outreach.photos} label={outreach.photosLabel} />
+				<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
 			</div>
 		</div>
 	</section>
@@ -498,9 +500,46 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 				});
 			}
 		}
+		// A photo outside the galleries opens full size in the viewer above: one listener for the whole page.
+		if (!document.documentElement.dataset.zoomReady) {
+			document.documentElement.dataset.zoomReady = "1";
+			// A picture that is not a button of its own (Classic's stills) still answers Enter and Space.
+			document.addEventListener("keydown", (e) => {
+				const photo = (e.target as HTMLElement).closest<HTMLElement>("[data-zoom][tabindex]");
+				if (!photo || (e.key !== "Enter" && e.key !== " ")) return;
+				e.preventDefault();
+				photo.click();
+			});
+			document.addEventListener("click", (e) => {
+				const view = document.querySelector<HTMLDialogElement>("[data-zoom-view]");
+				if (!view) return;
+				const open = (e.target as HTMLElement).closest<HTMLElement>("[data-zoom]");
+				if (open) {
+					const img = view.querySelector("img")!;
+					img.src = open.dataset.zoom!;
+					img.alt = open.dataset.zoomAlt ?? "";
+					view.querySelector("figcaption")!.textContent = open.dataset.zoomCaption ?? "";
+					view.showModal();
+				} else if (view.open && ((e.target as HTMLElement).closest("[data-zoom-close]") || e.target === view)) {
+					view.close();
+				}
+			});
+		}
 		initBoard();
 		document.addEventListener("astro:page-load", initBoard);
 	</script>
+
+	<!-- One viewer for the photos that stand on their own (the robot's, the team's, the workshop's): every
+	     [data-zoom] button shows its full-size photo here. The galleries bring their own (frc-photos.tsx). -->
+	<dialog class="frc-lightbox" data-zoom-view>
+		<figure class="m-0 flex max-h-full flex-col items-center gap-3">
+			<img alt="" class="max-h-[78vh] w-auto max-w-full rounded-lg object-contain" />
+			<figcaption class="text-center text-white"></figcaption>
+		</figure>
+		<button type="button" class="frc-lightbox-btn right-4 top-4" data-zoom-close aria-label={lightboxText.close}>
+			<span aria-hidden="true" class="text-xl leading-none">&#215;</span>
+		</button>
+	</dialog>
 
 	<NextChapter current={"frc"} />
 	<ContactSection />
@@ -533,6 +572,34 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 	@media (max-width: 640px) {
 		.frc-lightbox {
 			padding: 4.5rem 0.75rem 1.5rem;
+		}
+	}
+	.frc-zoom {
+		cursor: zoom-in;
+	}
+	.frc-zoom img,
+	.frc-zoom-img {
+		transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.frc-zoom-img {
+		cursor: zoom-in;
+	}
+	.frc-zoom:hover img,
+	.frc-zoom:focus-visible img,
+	.frc-zoom-img:hover,
+	.frc-zoom-img:focus-visible {
+		transform: scale(1.04);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.frc-zoom img,
+		.frc-zoom-img {
+			transition: none;
+		}
+		.frc-zoom:hover img,
+		.frc-zoom:focus-visible img,
+		.frc-zoom-img:hover,
+		.frc-zoom-img:focus-visible {
+			transform: none;
 		}
 	}
 	.frc-lightbox-btn {

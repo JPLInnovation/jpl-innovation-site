@@ -242,7 +242,13 @@ export function EventSheets() {
 								srcSet={srcSet(photo)}
 								sizes="(min-width: 1024px) 50vw, 100vw"
 								alt={photo.alt}
-								className="absolute inset-0 size-full object-cover"
+								data-zoom={full(photo.id)}
+								data-zoom-alt={photo.alt}
+								data-zoom-caption={`${photo.caption}${photo.meta ? ` · ${photo.meta}` : ""}`}
+								role="button"
+								tabIndex={0}
+								aria-label={`${lightboxText.open} ${photo.caption}`}
+								className="frc-zoom-img absolute inset-0 size-full object-cover"
 								initial={{ opacity: 0, scale: 1.04 }}
 								animate={{ opacity: 1, scale: 1 }}
 								exit={{ opacity: 0 }}

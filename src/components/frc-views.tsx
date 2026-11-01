@@ -251,7 +251,14 @@ export function KitBotView() {
 	return (
 		<div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
 			<figure className="m-0 flex flex-col gap-3">
-				<div className="relative aspect-[3/2] overflow-hidden rounded-xl border bg-muted">
+				<button
+					type="button"
+					data-zoom={photo.src}
+					data-zoom-alt={photo.alt}
+					data-zoom-caption={photo.caption}
+					aria-label={`${lightboxText.open} ${photo.caption}`}
+					className="frc-zoom relative block aspect-[3/2] w-full overflow-hidden rounded-xl border bg-muted"
+				>
 					<AnimatePresence initial={false}>
 						<motion.img
 							key={photo.src}
@@ -266,7 +273,7 @@ export function KitBotView() {
 							transition={{ duration: 0.4 }}
 						/>
 					</AnimatePresence>
-				</div>
+				</button>
 				<ul className="flex gap-2" aria-label={board.kitbot.photosLabel}>
 					{robot.photos.map((ph, i) => (
 						<li key={ph.src}>
