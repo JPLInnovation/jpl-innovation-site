@@ -43,6 +43,8 @@ const still = (id: string) =>
 		? { src: `/showcase/robot/${id}-800.webp`, srcset: `/showcase/robot/${id}-800.webp 800w, /showcase/robot/${id}.webp 1600w` }
 		: undefined;
 const overviewStill = still("overview");
+/** What shows until the 3D's first full frame is ready (scripts/showcase-stills.py). */
+const poster = existsSync("public/chapter/frc/poster.webp") ? "/chapter/frc/poster.webp" : undefined;
 const hardwareSources: Record<string, { label: string; href: string }> = {
 	krakens: { label: 'WCP motor documentation', href: 'https://wcproducts.com/products/kraken' },
 	vision: { label: 'Limelight MegaTag2 documentation', href: 'https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2' },
@@ -91,6 +93,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			<div class="kch-stage" data-kch-stage>
 				<canvas role="img" aria-label={parts.modelLabel}></canvas>
 			</div>
+			{poster && <img class="kch-poster" src={poster} alt="" width="1600" height="1200" />}
 			<div class="kch-veil" aria-hidden="true"></div>
 			<div class="kch-frame" aria-hidden="true">
 				<span class="kch-corner kch-tl"></span><span class="kch-corner kch-tr"></span><span class="kch-corner kch-bl"></span><span class="kch-corner kch-br"></span>
@@ -220,7 +223,20 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 										{f.facts.map((x) => <div><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
 									</dl>
 									{hardwareSources[f.id] && <p class="kch-note"><a href={hardwareSources[f.id].href}>{hardwareSources[f.id].label}</a></p>}
-									{s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />}
+									{parts.states[f.id] ? (
+										<fieldset class="kch-states">
+											<legend class="sr-only">{parts.states[f.id].legend}</legend>
+											<div class="kch-state-pick">
+												{parts.states[f.id].options.map((o, n) => (
+													<label><input type="radio" name={`kch-state-${f.id}`} checked={n === 1} /> {o.label}</label>
+												))}
+											</div>
+											{parts.states[f.id].options.map((o) => {
+												const pic = still(o.still);
+												return pic && <img class="kch-still" src={pic.src} srcset={pic.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}, ${o.label}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />;
+											})}
+										</fieldset>
+									) : s && <img class="kch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={`${f.title}: ${parts.modelLabel}`} width="1600" height="1200" loading="lazy" />}
 								</section>
 							);
 						})
@@ -440,7 +456,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	}
 
 	/* ---------- Classic: an ordinary page, in the same order ---------- */
-	.kch[data-read] :is(.kch-bg, .kch-stage, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate) {
+	.kch[data-read] :is(.kch-bg, .kch-stage, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate) {
 		display: none;
 	}
 	.kch[data-read] .kch-band {
@@ -500,6 +516,57 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		.kch[data-read] .kch-parts > :first-child .kch-still {
 			max-width: 36rem;
 		}
+	}
+	/* A part in two states: the browser's own radio buttons pick the picture (no script needed). */
+	.kch-states {
+		order: -1;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		min-width: 0;
+		border: 0;
+		padding: 0;
+		margin: 0;
+	}
+	.kch:not([data-read]) .kch-states {
+		display: none;
+	}
+	.kch-state-pick {
+		display: flex;
+		gap: 0.25rem;
+		width: fit-content;
+		padding: 0.25rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--foreground) 7%, transparent);
+	}
+	.kch-state-pick label {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		padding: 0 1.1rem;
+		border-radius: 999px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.kch-state-pick input {
+		position: absolute;
+		opacity: 0;
+	}
+	.kch-state-pick label:has(input:checked) {
+		background: var(--foreground);
+		color: var(--background);
+	}
+	.kch-state-pick label:has(input:focus-visible) {
+		outline: 2px solid var(--ring);
+		outline-offset: 2px;
+	}
+	.kch-states .kch-still {
+		display: none;
+	}
+	.kch-states:has(label:nth-child(1) input:checked) .kch-still:nth-of-type(1),
+	.kch-states:has(label:nth-child(2) input:checked) .kch-still:nth-of-type(2) {
+		display: block;
 	}
 	.kch[data-read] .kch-parts .kch-still {
 		order: -1;
@@ -588,6 +655,22 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	}
 	.kch[data-live] .kch-stage canvas {
 		opacity: 1;
+	}
+	/* The robot as it is framed on the prologue, dimmed to its light there, crossfading to the canvas as that comes up. */
+	.kch-poster {
+		position: absolute;
+		inset: 0 0 0 auto;
+		width: calc(var(--focus-x) * 2 - 40%);
+		height: 100%;
+		object-fit: contain;
+		filter: brightness(0.5);
+		pointer-events: none;
+		transition: opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1);
+	}
+	.kch[data-live] .kch-poster {
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1), visibility 0s 1.2s;
 	}
 	/* Over the canvas: the vignette, a scrim behind the words on the left (wide windows), and a light film grain (it
 	   keeps the dark gradient from banding). */
@@ -725,14 +808,14 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		font-size: clamp(6rem, 15vw, 14rem);
 	}
 	.kch:not([data-read]) .kch-reveal {
-		width: min(38rem, 44vw);
 		gap: 0.9rem;
 	}
 	.kch:not([data-read]) .kch-reveal h2 {
 		font-size: clamp(2.6rem, 5vw, 4.75rem);
 	}
 	.kch:not([data-read]) .kch-reveal .kch-facts {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
+		grid-template-columns: repeat(4, auto);
+		justify-content: space-between;
 	}
 	.kch:not([data-read]) .kch-reveal .kch-intro,
 	.kch:not([data-read]) .kch-parts-intro {
@@ -857,10 +940,11 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		inset: 0;
 		z-index: 4;
 		display: grid;
-		place-content: center;
+		place-content: end center;
 		justify-items: center;
 		gap: 0.9rem;
-		background: linear-gradient(to bottom, #071822, #030a10);
+		padding-bottom: 2.5rem;
+		pointer-events: none;
 		font: 500 0.8rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -914,7 +998,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		display: none;
 	}
 	/* ?showcase=capture: the robot alone, on a transparent background (scripts/showcase-stills.py). */
-	.kch[data-capture] :is(.kch-bg, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-panels, .kch-skip) {
+	.kch[data-capture] :is(.kch-bg, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-panels, .kch-skip) {
 		display: none;
 	}
 	.kch[data-capture] .kch-pin {
@@ -925,12 +1009,16 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	}
 
  .kch-panel h2, .kch-panel h3 { font-family: "Archivo Variable", "Arial", sans-serif; letter-spacing: -.035em; line-height: 1.08; }
- .kch-panel p { font-family: "Segoe UI", Arial, sans-serif; line-height: 1.7; max-width: 42ch; }
- .kch-panel .kch-facts { margin-top: 1.75rem; gap: 1.25rem 1.5rem; padding-top: 1.5rem; }
+ /* Reading text only: the big statement, numbers and labels keep their own tight type. */
+ .kch-panel > p:not([class]), .kch-panel > :is(.kch-intro, .kch-aside, .kch-stat-source, .kch-note) { font-family: "Segoe UI", Arial, sans-serif; line-height: 1.55; }
+ .kch-panel .kch-facts { margin-top: 0.5rem; gap: 1.25rem 1.5rem; padding-top: 1.25rem; }
  .kch-panel .kch-facts dt { font-family: ui-monospace, "Cascadia Code", monospace; font-size: .68rem; letter-spacing: .06em; line-height: 1.5; }
  .kch-panel .kch-facts dd { margin-top: .4rem; line-height: 1.45; }
+ /* The extension's bright panels come close to the words on this stop: a narrower column stays clear of them. */
+ @media (min-aspect-ratio: 6/5) {
+  .kch:not([data-read]) #hopper-close { width: min(30rem, 34vw); }
+ }
  @media (min-width: 1100px) and (min-aspect-ratio: 6/5) {
-  .kch:not([data-read]) .kch-panel { width: min(31vw, 29rem); }
   .kch-panel h3 { font-size: clamp(1.8rem, 2.8vw, 3rem); margin-bottom: 1.25rem; }
  }
 </style>
@@ -1127,7 +1215,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			dispose = undefined;
 		});
 
-		type Hook = { go(n: number | null): void; capture(): string };
+		type Hook = { go(n: number | null, variant?: string): void; capture(): string };
 		const w = window as unknown as { __showcase?: Hook };
 		let hook: Hook | undefined;
 		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()])
@@ -1151,7 +1239,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 						}
 						return model;
 					},
-					{ camera: [0.6, 0.3, 1.6], target: [0, 0.2, 0], fov: 34, near: 0.02, orbit: false, effects: false, pixelRatio: 2, maxPixels: capture ? 3840 * 2160 : undefined, onFallback: (reason) => toRead(reason) },
+					{ camera: [0.6, 0.3, 1.6], target: [0, 0.2, 0], fov: 34, near: 0.02, orbit: false, effects: false, pixelRatio: 2, maxPixels: capture ? 3840 * 2160 : undefined, calibrate: capture ? undefined : 6, onFallback: (reason) => toRead(reason) },
 				);
 				if (cancelled || root.hasAttribute("data-read")) {
 					dispose();
@@ -1172,7 +1260,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				addEventListener("hashchange", toHash);
 				cleanups.push(() => removeEventListener("hashchange", toHash));
 				const held = hook;
-				if (capture && held) w.__showcase = { ...held, go: (n) => held.go(n === null ? null : n + 3) };
+				if (capture && held) w.__showcase = { ...held, go: (n, variant) => held.go(n === null ? null : n + 3, variant) };
 			})
 			.catch((error) => {
 				console.warn("KitBot chapter: the 3D could not start.", error);

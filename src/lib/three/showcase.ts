@@ -22,7 +22,7 @@
  *   scroll or a press wakes it.
  *
  * Dev and test hook, for checking a stop or rendering the stills (scripts/showcase-stills.py):
- *   window.__showcase.go(n)      show stop n without scrolling (go(null) follows the page again)
+ *   window.__showcase.go(n, variant)  show stop n without scrolling, in one of the model's states if asked (go(null) follows the page again)
  *   window.__showcase.capture()  the 3D view alone as a PNG data URL, with a transparent background
  */
 import { type BufferAttribute, type Material, type Mesh, Quaternion, Spherical, Vector3 } from "three";
@@ -48,6 +48,8 @@ export interface ShowcaseStop {
 export interface ShowcaseModel extends Model {
 	/** Switch geometry detail during motion; render full detail once at rest. */
 	motion?(active: boolean): void;
+	/** Stops whose animation keeps running while the camera rests on them: the motion geometry, every other frame. */
+	keepsMoving?(stop: number): boolean;
 	/** One per feature in the page's text, in the same order. Only the camera's direction from the target counts:
 	 *  its distance is worked out for the stage. */
 	stops: ShowcaseStop[];
@@ -68,7 +70,7 @@ export interface ShowcaseModel extends Model {
 	 */
 	opening?(progress: number): number | void;
 	/** For the stills (window.__showcase.go): put any animation in a pose that tells stop n's story. */
-	pose?(stop: number): void;
+	pose?(stop: number, variant?: string): void;
 }
 
 interface Options {
@@ -328,6 +330,7 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 	let openSpeed = 0;
 	let snap = true; // the first frame jumps straight to wherever the page is
 	let still = 0; // seconds since anything last moved
+	let resting = false; // the camera is at rest on a stop that keeps moving (keepsMoving)
 	let pace = 1; // how fast the model's own animation runs: winds down to 0 when nothing moves
 	let lastPage = -1;
 	let lastOpen = -1;
@@ -428,11 +431,14 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		lastPage = page;
 		lastOpen = opened;
 		still = moving ? 0 : still + dt;
-		const wanted = still > REST_AFTER ? 0 : 1;
+		const keepGoing = model.keepsMoving?.(near) ?? false;
+		const wanted = still > REST_AFTER && !keepGoing ? 0 : 1;
 		pace = wanted > pace ? Math.min(1, pace + dt / (WIND * 0.5)) : Math.max(0, pace - dt / WIND);
 		snap = false;
-		model.motion?.(dt > 0 && (moving || still < .15));
-		return model.motion ? moving || still < .15 : pace > 0 || moving;
+		const active = moving || still < .15;
+		resting = keepGoing && !active;
+		model.motion?.(dt > 0 && (active || keepGoing));
+		return model.motion ? active || keepGoing : pace > 0 || moving;
 	};
 	step(0);
 	snap = true;
@@ -442,11 +448,11 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 	addEventListener("scroll", onScroll, { passive: true });
 
 	const hook = {
-		go(n: number | null) {
+		go(n: number | null, variant?: string) {
 			override = n === null ? null : clamp(Math.round(n), 0, last);
 			snap = true;
 			step(0);
-			if (override !== null) model.pose?.(override);
+			if (override !== null) model.pose?.(override, variant);
 			ctx.render();
 		},
 		capture() {
@@ -458,6 +464,10 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 
 	let animated = 0; // the model's own clock, which runs at `pace`
 	return {
+		get idle() {
+			return resting;
+		},
+		warming: (on) => model.motion?.(on),
 		update(_t, dt) {
 			const awake = step(dt);
 			const paced = dt * smoothstep(pace);

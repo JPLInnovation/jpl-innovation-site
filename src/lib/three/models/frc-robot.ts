@@ -2,6 +2,7 @@
 import {
 	CatmullRomCurve3,
 	Group,
+	Matrix4,
 	Mesh,
 	MeshStandardMaterial,
 	type MeshBasicMaterial,
@@ -9,7 +10,7 @@ import {
 	SphereGeometry,
 	Vector3,
 } from "three";
-import { loadExactRobot } from "./robot-exact";
+import { EXTENSION, loadExactRobot, turnAbout } from "./robot-exact";
 import { hardware } from "../finish";
 import { contactShadow, type Model, type StageContext, type StageView } from "../stage";
 import anchors from "./robot-anchors.json";
@@ -28,6 +29,11 @@ export const view: StageView = {
 export const robotAnchors = anchors as unknown as Record<string, [number, number, number]>;
 
 const BALL_R = 0.075; // FUEL: a 150 mm foam ball
+/**
+ * The hopper extension's axis, from the arcs of the groove walls in the CAD (fitted to the walls alone, without their end
+ * caps). The right groove's centre: both clamp bolts sit on its arc, while the left groove is cut 8.3 mm further back. No pin is drawn there.
+ */
+const HINGE = { y: 0.2888, z: -0.2772 };
 
 type V3 = [number, number, number];
 
@@ -58,7 +64,17 @@ export interface RobotRig {
 	balls: Mesh[];
 	/** The materials drawn in a CAD colour ("#rrggbb"), and the team numbers on the bumpers as "numbers". */
 	materials(color: string): MeshStandardMaterial[];
-	/** Moves the illustrative FUEL. dt = 0 for a still frame. */
+	/** Turns the intake, indexer and flywheel rollers. */
+	spin(dt: number): void;
+	/** Swings the hopper extension: degrees from the CAD's open pose. */
+	extension(degrees: number): void;
+	/** Materials of their own for these parts (./robot-exact.ts). */
+	own(test: (part: RobotPart) => boolean): MeshStandardMaterial[];
+	/** Lifts one feature's parts and pushes the rest back, 0 to 1. */
+	highlight(feature: number, level: number): void;
+	/** FUEL rolling down the hopper, fed into the launcher and flung out, looped and staggered. */
+	shoot(t: number): void;
+	/** Moves the illustrative FUEL and turns the rollers. dt = 0 for a still frame. */
 	animate(t: number, dt: number): void;
 	/** Deterministically poses FUEL at `t` seconds into the demonstration. */
 	pose(t: number): void;
@@ -75,8 +91,10 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 	const robot = new Group();
 	parent.add(robot);
 
-	const { materials, colors, isolate, motion } = await loadExactRobot(robot, tag);
-	// The export has no joints or animation. Keep its geometry in its authored pose.
+	const { materials, colors, isolate, motion, spin, group, own, highlight } = await loadExactRobot(robot, tag);
+	const placeExtension = group((p) => EXTENSION.test(p.name));
+	const swing = new Matrix4();
+	let swung = 0;
 
 	/* ---------- Team number on the bumpers ----------
 	 * The stock kit's bumpers are moulded with "KITBOT"; the real, modified robot's CAD instead carries the team's own
@@ -111,6 +129,28 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		robot.add(ball);
 		return { ball, offset };
 	});
+	// The demonstration: from inside the hopper, down the sloped floor to the feeder, then the launcher's path above.
+	const rollPath = new CatmullRomCurve3([at(-0.19, 0.4), at(-0.17, 0.315), at(-0.08, 0.288), at(0, 0.268), at(0.03, 0.275)]);
+	const placeShot = (ball: Mesh, t: number) => {
+		const phase = t % PERIOD;
+		ball.visible = phase < 2.85;
+		ball.scale.setScalar(1);
+		if (phase < 1.6) {
+			const u = phase / 1.6;
+			ball.position.copy(rollPath.getPointAt(u * u));
+			ball.scale.setScalar(Math.min(1, phase / 0.25));
+			ball.rotation.x = t * 7;
+		} else if (phase < 2.2) {
+			const u = (phase - 1.6) / 0.6;
+			ball.position.copy(feedPath.getPointAt(u * u));
+			ball.scale.setScalar(u > 0.45 && u < 0.95 ? 0.86 : 1);
+			ball.rotation.x = t * 18;
+		} else if (phase < 2.85) {
+			const s = phase - 2.2;
+			flight(ball, s * 0.7); // gone before it reaches the top of the window
+			ball.scale.setScalar(s < 0.4 ? 1 : 1 - (s - 0.4) / 0.25);
+		}
+	};
 	const easeInOut = (u: number) => (u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2);
 	const placeBall = (ball: Mesh, t: number) => {
 		const phase = t % PERIOD;
@@ -158,8 +198,20 @@ export async function buildRobot(parent: Object3D, tag?: (parts: RobotPart[]) =>
 		anchor,
 		balls: balls.map((b) => b.ball),
 		materials: (color) => (color === "numbers" ? numbers : materials.filter((_, i) => colors[i] === color)),
+		spin,
+		own,
+		highlight,
+		extension(degrees) {
+			if (degrees === swung) return;
+			swung = degrees;
+			placeExtension(turnAbout(swing, (degrees * Math.PI) / 180, HINGE.y, HINGE.z));
+		},
+		shoot(t) {
+			for (const { ball, offset } of balls) placeShot(ball, t + offset * PERIOD);
+		},
 		animate(t, dt) {
 			if (dt === 0) return;
+			spin(dt);
 			for (const { ball, offset } of balls) placeBall(ball, t + offset * PERIOD);
 		},
 		pose(t) {

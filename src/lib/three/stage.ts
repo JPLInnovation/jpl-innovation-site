@@ -126,6 +126,11 @@ export interface StageView {
 	 * the caller disposes it.
 	 */
 	onFallback?(reason: "error" | "slow" | "context"): void;
+	/**
+	 * Frames to time out of sight before the stage is shown, to choose its resolution once: it then keeps that resolution
+	 * and tier, so the picture never changes in front of the visitor (a slideshow still falls back).
+	 */
+	calibrate?: number;
 }
 
 export interface StageContext {
@@ -176,6 +181,8 @@ export interface Model {
 	 * other frame (about 30 a second), which halves the GPU's work while someone is reading and costs nothing to look at.
 	 */
 	idle?: boolean;
+	/** Put the model in the state it moves in, for timing frames out of sight (`calibrate`). */
+	warming?(on: boolean): void;
 	dispose?(): void;
 }
 
@@ -603,6 +610,7 @@ export async function mountStage(
 	let sinceVerdict = 0;
 	let verySlow = 0;
 	let failed = false;
+	let settled = false; // the resolution was chosen out of sight (`calibrate`): keep it
 	let lostTimer = 0;
 	/** The stage gives up: stop drawing and tell the page to show its plain version (once). */
 	const fail = (reason: "error" | "slow" | "context") => {
@@ -633,6 +641,7 @@ export async function mountStage(
 			}
 			if (verySlow >= 2 && tier === "low" && !pinned && view.onFallback) return fail("slow");
 		}
+		if (settled) return;
 		windowMs += ms;
 		windowFrames++;
 		if (windowFrames < SAMPLE) return;
@@ -779,6 +788,28 @@ export async function mountStage(
 
 	resize();
 	render();
+	if (view.calibrate) {
+		const gl = renderer.getContext();
+		const pixel = new Uint8Array(4);
+		const times: number[] = [];
+		model.warming?.(true);
+		for (let i = 0; i <= view.calibrate; i++) {
+			await new Promise((next) => setTimeout(next));
+			const start = performance.now();
+			render();
+			gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel); // waits for the GPU to finish the frame
+			if (i > 0) times.push(performance.now() - start); // (the first uploads the geometry)
+		}
+		model.warming?.(false);
+		const ms = median(times);
+		if (ms > TARGET) {
+			scale = stats.scale = Math.round(Math.max(SCALE_MIN, Math.sqrt(TARGET / ms)) * 100) / 100;
+			resize();
+		}
+		stats.frameMs = Math.round(ms * 10) / 10;
+		settled = true;
+		render();
+	}
 	ready = true;
 
 	return () => {

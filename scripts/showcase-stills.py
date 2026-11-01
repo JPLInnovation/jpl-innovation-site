@@ -40,6 +40,8 @@ PAGES = {"drone": "/work/drone/", "robot": "/work/frc/"}
 # The pages whose cards offer AVIF (src/components/showcase.tsx). The drone chapter's Classic cards
 # (src/components/DroneChapter.astro) use WebP only, so the drone gets no AVIF copies.
 AVIF = {"robot"}
+# A feature's other states, each its own picture: <feature-id>-<state>.webp (src/text/showcase/robot.ts `states`).
+STATES = {"robot": {"hopper-close": ["stowed"], "shooter": ["plate"]}}
 # WebGL without a GPU, for Playwright's own Chromium (Chrome finds its own way).
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
 
@@ -107,6 +109,7 @@ def main() -> None:
     parser.add_argument("--out")
     parser.add_argument("--executable")
     parser.add_argument("--feature", help="Render only this feature ID")
+    parser.add_argument("--poster-only", action="store_true", help="Render only the robot chapter's poster")
     args = parser.parse_args()
     url = args.url or f"http://localhost:4321{PAGES[args.page]}"
     out = pathlib.Path(args.out or ROOT / "public" / "showcase" / args.page)
@@ -123,14 +126,21 @@ def main() -> None:
         if args.feature and args.feature not in ids:
             raise ValueError(f"Unknown feature: {args.feature}; available: {', '.join(ids)}")
         for n, feature in enumerate(ids):
-            if args.feature and feature != args.feature:
+            if args.poster_only or (args.feature and feature != args.feature):
                 continue
-            data_url = page.evaluate(f"(n) => {{ window.__showcase.go(n); return ({FADE})(window.__showcase.capture()); }}", n)
-            base = out / feature
-            write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base, args.page in AVIF)
-            kinds = [".webp", f"-{SMALL}.webp"] + ([".avif", f"-{SMALL}.avif"] if args.page in AVIF else [])
-            sizes = ", ".join(f"{(base.parent / (base.name + s)).stat().st_size // 1024} KB {s.lstrip('-')}" for s in kinds)
-            print(f"{base.relative_to(ROOT) if base.is_relative_to(ROOT) else base}: {sizes}")
+            for state in [None, *STATES.get(args.page, {}).get(feature, [])]:
+                data_url = page.evaluate(f"([n, state]) => {{ window.__showcase.go(n, state ?? undefined); return ({FADE})(window.__showcase.capture()); }}", [n, state])
+                base = out / (f"{feature}-{state}" if state else feature)
+                write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base, args.page in AVIF)
+                kinds = [".webp", f"-{SMALL}.webp"] + ([".avif", f"-{SMALL}.avif"] if args.page in AVIF else [])
+                sizes = ", ".join(f"{(base.parent / (base.name + s)).stat().st_size // 1024} KB {s.lstrip('-')}" for s in kinds)
+                print(f"{base.relative_to(ROOT) if base.is_relative_to(ROOT) else base}: {sizes}")
+        if args.page == "robot" and not args.feature:
+            # The stop before the first feature card's three: the prologue, shown until the 3D is up (src/components/FrcChapter.astro).
+            data_url = page.evaluate(f"() => {{ window.__showcase.go(-3); return ({FADE})(window.__showcase.capture()); }}")
+            base = ROOT / "public" / "chapter" / "frc" / "poster"
+            write_pictures(base64.b64decode(data_url.split(",", 1)[1]), base, False)
+            print(f"{base.relative_to(ROOT)}.webp: {base.with_suffix('.webp').stat().st_size // 1024} KB")
         browser.close()
 
 
