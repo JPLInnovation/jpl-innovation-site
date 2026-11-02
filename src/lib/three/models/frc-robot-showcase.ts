@@ -216,6 +216,27 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 		m.depthWrite = true;
 	}
 	const showLed = (level: number) => { for (const m of led) m.emissiveIntensity = level; };
+	// The Pigeon 2.0's CAD parts, pushed past the CAD's colours: deeper black, stronger green, all glossy.
+	const pigeon = new Set(groups.get("odometry") ?? []);
+	const CTR_GREEN = "#9be22d";
+	const PIGEON_BLACK = ["#0d0e10", "#282828"];
+	const gloss = (m: { roughness: number; metalness: number; transparent: boolean; depthWrite: boolean }) => {
+		m.roughness = 0.05;
+		m.metalness = 0.1;
+		m.transparent = false;
+		m.depthWrite = true;
+	};
+	for (const m of rig.own((p) => pigeon.has(p) && p.color !== CTR_GREEN && !PIGEON_BLACK.includes(p.color))) gloss(m);
+	for (const m of rig.own((p) => pigeon.has(p) && PIGEON_BLACK.includes(p.color))) {
+		gloss(m);
+		m.color.setHex(0x020203);
+	}
+	for (const m of rig.own((p) => pigeon.has(p) && p.color === CTR_GREEN)) {
+		gloss(m);
+		m.color.setHex(0x4fe00a);
+		m.emissive.setHex(0x4fe00a);
+		m.emissiveIntensity = 0.45;
+	}
 	const indexerStop = ids.indexOf("indexer");
 	const drivetrainStop = ids.indexOf("drivetrain");
 	const shooterStop = ids.indexOf("shooter");
