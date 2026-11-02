@@ -60,7 +60,8 @@ export function buildProps(parent: Group): Props {
 	/** Open shelving: two uprights, boards, and what sits on them. */
 	const shelving = (x: number, z: number, width: number, boards: number[], depth = 0.34) => {
 		for (const sx of [-1, 1]) boxAt(parent, 0.04, boards[boards.length - 1] + 0.12, depth, steel, x + sx * (width / 2 - 0.02), (boards[boards.length - 1] + 0.12) / 2, z);
-		for (const y of boards) boxAt(parent, width, 0.03, depth, wood, x, y, z, 0.006);
+		// Between the uprights and a little shallower: boards as wide and deep as them would share their faces, and flicker.
+		for (const y of boards) boxAt(parent, width - 0.082, 0.03, depth - 0.03, wood, x, y, z + 0.005, 0.006);
 		boxAt(parent, width - 0.08, boards[boards.length - 1] + 0.1, 0.01, mat(0x111a33, 0.9), x, (boards[boards.length - 1] + 0.1) / 2 + 0.02, z - depth / 2 + 0.005); // the back panel
 	};
 
@@ -82,7 +83,7 @@ export function buildProps(parent: Group): Props {
 	// Top: a small plant.
 	plant(sx, 1.86, sz, 0.55);
 	// And a taller one on the floor beside the desk.
-	plant(-7.3, 0, z0 + 0.45, 1.5);
+	plant(-8.15, 0, -1.65, 1.2); // on open floor: from the title shot, clear of the shelving and the desk
 
 	/* ---------- A rug under the desk ---------- */
 	const rugFace = canvasSurface(512, 352);

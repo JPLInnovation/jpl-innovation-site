@@ -48,6 +48,24 @@ const boot = `(() => {
 	};
 	if (!window.__splashNav) {
 		window.__splashNav = true;
+		// The moment of the click: until the next page has arrived there is nothing of its intro to show, so a plain
+		// cover in the intro's own background goes up at once, and the intro takes over from it without a seam.
+		const COVER = { frc: "radial-gradient(120% 90% at 50% 42%, #0f2150 0%, #081333 45%, #050a1f 80%)", drone: "#000" };
+		let cover;
+		const uncover = () => {
+			cover?.remove();
+			cover = undefined;
+		};
+		document.addEventListener("astro:before-preparation", (e) => {
+			const to = kindOf(e.to.pathname);
+			if (e.navigationType === "traverse" || to === kindOf(e.from.pathname) || !COVER[to] || arrivalMode(to) === "none" || cover) return;
+			cover = document.createElement("div");
+			cover.setAttribute("aria-hidden", "true");
+			cover.style.cssText = "position:fixed;inset:0;z-index:9990;pointer-events:none;background:" + COVER[to];
+			root.appendChild(cover);
+			if (!matchMedia("(prefers-reduced-motion: reduce)").matches && !root.classList.contains("reduce-motion")) cover.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 90, easing: "ease-out" });
+		});
+		document.addEventListener("astro:page-load", uncover);
 		document.addEventListener("astro:before-swap", (e) => {
 			const to = kindOf(e.to.pathname);
 			// Back/forward plays nothing, and neither does a move between pages that share an intro.
@@ -60,6 +78,7 @@ const boot = `(() => {
 				// Right after the swap, in the same frame, before the new page is shown (its <html> classes are
 				// the new page's now, so ours go on after).
 				if (!document.querySelector("[data-splash]")) show(to, mode, performance.now());
+				requestAnimationFrame(() => requestAnimationFrame(uncover));
 			};
 		});
 	}

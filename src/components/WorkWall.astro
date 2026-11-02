@@ -62,7 +62,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 						{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}
 						<p class="wall-card-title">{p.data.title}</p>
 						<p class="wall-card-text">{p.data.description}</p>
-						<a href={`/work/${p.id}/`} tabindex="-1" class="wall-card-link">
+						<a href={`/work/${p.id}/`} data-astro-prefetch="viewport" tabindex="-1" class="wall-card-link">
 							{`${projectCard.readMore} ${p.data.title}`}
 							<ArrowRight className="size-4" aria-hidden="true" />
 						</a>
