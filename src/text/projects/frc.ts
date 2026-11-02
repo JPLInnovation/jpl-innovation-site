@@ -737,9 +737,10 @@ export const outreach = {
 		{ name: 'EmpowerTech', tag: 'Running', text: 'Technology workshops and fundraising for children from marginalised communities.', more: [{ k: 'Partner school', v: 'Developed together with our sister school, LSTS.' }, { k: 'Format', v: 'Interactive workshops that teach practical technology skills.' }, { k: 'Funding', v: 'Students run fundraising to keep the program going.' }] },
 		{ name: 'FRC Core Labs', tag: 'New', text: 'Prototype and fabricate solutions for our school and the communities around it.', more: [{ k: 'Identify needs', v: 'Find practical problems in the school or community.' }, { k: 'Build', v: 'Design, prototype and build solutions as student projects.' }, { k: 'Learn', v: 'Hands-on CAD, fabrication, testing and iteration.' }] },
 	],
-	moreHint: 'More',
 	photosLabel: 'RoboKids',
 	photos: ['rk0', 'rk5', 'rk3', 'rk4', 'rk1', 'rk2'] as FrcPhotoId[],
+	/** The photo faint behind the heading. */
+	backdrop: 'rk3' as FrcPhotoId,
 	privacy: 'We keep younger participants’ faces out of our public photos.',
 };
 
