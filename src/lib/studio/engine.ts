@@ -20,6 +20,7 @@ import { createHookScene } from "./hook-scene";
 import { HOOK_3D } from "./hook-state";
 import { buildRoom, type RoomContent, type RoomState } from "./room";
 import type { SceneShot } from "./scenes";
+import { createSim } from "./sim-flight";
 
 const FOLLOW = 10; // per second: the spring the camera follows the scroll through (critically damped)
 const SOFT = 0.7; // how much of each move is eased (0 = in step with the scroll, 1 = smoothstep, flat at both ends)
@@ -68,6 +69,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 	const room = await buildRoom(ctx, content);
 	// The 3D under the opening words (hook-scene.ts). Off with the flag; with no words playing it changes nothing.
 	const hook = HOOK_3D ? createHookScene(ctx, room) : undefined;
+	const sim = createSim(ctx, room, shots.map((shot) => shot.id));
 	const n = shots.length;
 	const path = new CatmullRomCurve3(shots.map((s) => new Vector3(...s.camera)), true, "centripetal", 0.5);
 	// Each scene's view as a heading (around y) and a tilt (up or down).
@@ -230,6 +232,8 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		place();
 		// While the opening words play, their 3D takes the camera (and hands it back); otherwise it does nothing.
 		hook?.update(dt, s);
+		// Between the test scene and the laptop, the simulated flight takes the camera (sim-flight.ts).
+		sim.update(s);
 		state.position = s;
 		state.lamp = lamp;
 		state.time = clock;
@@ -259,7 +263,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
 			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
 			// (Never while the opening words' 3D plays: it moves every frame.)
-			api.idle = !hook?.busy() && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
+			api.idle = !hook?.busy() && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && !sim.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {

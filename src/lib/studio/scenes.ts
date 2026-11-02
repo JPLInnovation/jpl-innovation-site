@@ -30,14 +30,21 @@ export const SHOTS: Record<string, SceneShot> = {
 	/** Test: back a little and up, so the bench and the screen above it share the frame, left of centre (the words on the right). */
 	test: { id: "test", camera: [-3.72, 1.44, -0.72], target: [-3.72, 1.3, -3.0] },
 	/**
+	 * The simulated flight (sim-flight.ts), three screens of scroll: the camera is inside the picture, so these points only
+	 * keep the curve calm on its way into "test" and out to "web".
+	 */
+	simIn: { id: "simIn", camera: [-3.69, 1.44, -0.72], target: [-3.69, 1.3, -3.0] },
+	simFly: { id: "simFly", camera: [-3.0, 1.3, -1.2], target: [-3.0, 1.1, -2.8] },
+	simLand: { id: "simLand", camera: [-2.33, 1.17, -1.75], target: [-2.33, 0.99, -2.6] },
+	/**
 	 * 3 Stations: the four work areas, one after another. Each subject sits on the side of the frame away from its text
 	 * (text on the left: the subject to the right, and the other way round).
 	 */
-	robotics: { id: "robotics", camera: [-3.1, 1.35, -0.3], target: [-3.1, 0.75, -2.6] },
-	drones: { id: "drones", camera: [-0.15, 1.4, -0.6], target: [-0.15, 1.0, -2.6] },
-	networks: { id: "networks", camera: [0.95, 1.45, -0.4], target: [0.95, 1.25, -2.9] },
+	robotics: { id: "robotics", camera: [-1.1, 1.35, -0.3], target: [-1.1, 0.75, -2.6] },
+	drones: { id: "drones", camera: [1.85, 1.4, -0.6], target: [1.85, 1.0, -2.6] },
+	networks: { id: "networks", camera: [2.85, 1.45, -0.4], target: [2.85, 1.25, -2.9] },
 	/** (The test bench: closer than the others, so the laptop's page can be read.) */
-	web: { id: "web", camera: [3.6, 1.17, -1.75], target: [3.6, 0.99, -2.6] },
+	web: { id: "web", camera: [-2.3, 1.17, -1.75], target: [-2.3, 0.99, -2.6] },
 	/**
 	 * 4 The wall: the curved wall of project panels at the end of the room, from the centre of its curve (stations.ts),
 	 * turned a little left so the panels sit to the right of the text.
@@ -54,4 +61,4 @@ export const SHOTS: Record<string, SceneShot> = {
 };
 
 /** The home page's scenes, in order. */
-export const HOME = ["title", "sketch", "research", "build", "test", "robotics", "drones", "networks", "web", "wall", "standards", "timeline", "crew", "contact"];
+export const HOME = ["title", "sketch", "research", "build", "test", "simIn", "simFly", "simLand", "web", "robotics", "drones", "networks", "wall", "standards", "timeline", "crew", "contact"];

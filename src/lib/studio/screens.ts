@@ -11,10 +11,11 @@
  *   - Until the visitor scrolls it, the page drifts down and back up by itself while its scene is in view.
  *   - The engine (engine.ts) sends the wheel to `scroll()` while the pointer is on the screen; at the page's top or
  *     bottom `scroll()` says no, and the wheel goes back to moving the studio.
+ *   - A live picture can sit over a part of the page, and scrolls with it (`feedRect`; sim-flight.ts).
  *   - A browser's address bar across the top, a scrollbar, and "Scroll to read" under the pointer (drawn once on a
  *     transparent layer over the page).
  */
-import { Color, Mesh, PlaneGeometry, ShaderMaterial, SRGBColorSpace, Texture } from "three";
+import { Color, Mesh, PlaneGeometry, ShaderMaterial, SRGBColorSpace, Texture, Vector4 } from "three";
 import { studio } from "../../text/studio";
 import { canvasSurface, loadImage } from "./room";
 import pages from "./screens.json";
@@ -32,7 +33,30 @@ export interface PageScreen {
 	hover(on: boolean): void;
 	/** Every frame. `inView` is how much its scene is in view, 0 to 1. True while it is still moving for the visitor. */
 	update(dt: number, inView: number): boolean;
+	/** The live picture over `feedRect` (null: the page's own), and the shape of the window it was drawn for. */
+	feed(texture: Texture | null, aspect: number): void;
+	/** Where `feedRect` is on the surface, at the page's top: its middle (from the surface's middle) and size, in metres. */
+	feedBox?: { x: number; y: number; width: number; height: number };
+	/** While true the page goes back to its top and stays there. */
+	hold(on: boolean): void;
 }
+
+/**
+ * A live picture on a screen: inset to fit (the picture has the window's shape, so when this rectangle fills the window
+ * the two match exactly), and tone mapped the same on every screen that shows it. `p`: 0 to 1 across the rectangle, y up.
+ */
+export const FEED_GLSL = /* glsl */ `
+	uniform sampler2D uFeed;
+	uniform float uFeedOn;
+	uniform float uFeedAspect;
+	vec3 feedAt(vec2 p, float aspect) {
+		vec2 fit = aspect > uFeedAspect ? vec2(aspect / uFeedAspect, 1.0) : vec2(1.0, uFeedAspect / aspect);
+		vec2 q = (p - 0.5) * fit + 0.5;
+		if (q.x < 0.0 || q.x > 1.0 || q.y < 0.0 || q.y > 1.0) return vec3(0.002, 0.003, 0.006);
+		vec3 c = texture2D(uFeed, q).rgb * 0.63;
+		return clamp((c * (2.51 * c + 0.03)) / (c * (2.43 * c + 0.59) + 0.14), 0.0, 1.0);
+	}
+`;
 
 interface Options {
 	page: PageName;
@@ -46,6 +70,8 @@ interface Options {
 	reducedMotion: boolean;
 	/** Asks the stage for another frame (a tile has arrived). */
 	wake(): void;
+	/** A part of the page a live picture can cover: x, y, width, height in page pixels. */
+	feedRect?: [number, number, number, number];
 }
 
 const DRIFT = 45; // page pixels a second while it plays by itself
@@ -73,6 +99,7 @@ const fragmentShader = /* glsl */ `
 	uniform float uOffset;
 	uniform float uView;
 	uniform float uTile;
+	uniform float uTileW;
 	uniform float uHeight;
 	uniform float uBar;
 	uniform float uHint;
@@ -80,7 +107,9 @@ const fragmentShader = /* glsl */ `
 	uniform vec3 uThumb;
 	uniform vec2 uThumbX;
 	uniform vec3 uBackground;
+	uniform vec4 uFeedRect;
 	varying vec2 vUv;
+	${FEED_GLSL}
 
 	void main() {
 		vec3 colour = uBackground;
@@ -98,6 +127,10 @@ const fragmentShader = /* glsl */ `
 			vec4 b = textureGrad(uB, at, gx, gy);
 			if (index == uIndexA && uHasA > 0.5) colour = a.rgb;
 			else if (index == uIndexA + 1.0 && uHasB > 0.5) colour = b.rgb;
+			if (uFeedOn > 0.5) {
+				vec2 f = (vec2(vUv.x * uTileW, pageY) - uFeedRect.xy) / uFeedRect.zw;
+				if (f.x > 0.0 && f.x < 1.0 && f.y > 0.0 && f.y < 1.0) colour = feedAt(vec2(f.x, 1.0 - f.y), uFeedRect.z / uFeedRect.w);
+			}
 			if (vUv.x > uThumbX.x && vUv.x < uThumbX.y && t > uThumb.x && t < uThumb.y) {
 				colour = mix(colour, vec3(0.08, 0.12, 0.18), uThumb.z);
 			}
@@ -109,7 +142,7 @@ const fragmentShader = /* glsl */ `
 	}
 `;
 
-export function pageScreen({ page: name, size, scene, address, background, reducedMotion, wake }: Options): PageScreen {
+export function pageScreen({ page: name, size, scene, address, background, reducedMotion, wake, feedRect }: Options): PageScreen {
 	const page = pages[name];
 	const view = page.width * ((size[1] * (1 - BAR)) / size[0]); // page pixels on screen at once
 	const max = Math.max(0, page.height - view);
@@ -171,6 +204,11 @@ export function pageScreen({ page: name, size, scene, address, background, reduc
 			uOffset: { value: 0 },
 			uView: { value: view },
 			uTile: { value: page.tile },
+			uTileW: { value: page.width },
+			uFeed: { value: empty },
+			uFeedOn: { value: 0 },
+			uFeedAspect: { value: 1.6 },
+			uFeedRect: { value: new Vector4(...(feedRect ?? [0, 0, 1, 1])) },
 			uHeight: { value: page.height },
 			uBar: { value: BAR },
 			uHint: { value: 0 },
@@ -229,10 +267,25 @@ export function pageScreen({ page: name, size, scene, address, background, reduc
 	let down = true; // which way it drifts
 	let hovered = false;
 	let shown = 0; // the scrollbar and the hint, 0 to 1
+	let held = false;
 
 	return {
 		mesh,
 		scene,
+		feed(texture, aspect) {
+			u.uFeedOn.value = texture ? 1 : 0;
+			if (texture) u.uFeed.value = texture;
+			u.uFeedAspect.value = aspect;
+		},
+		feedBox: feedRect && {
+			x: ((feedRect[0] + feedRect[2] / 2) / page.width - 0.5) * size[0],
+			y: ((1 - BAR) * (1 - (feedRect[1] + feedRect[3] / 2) / view) - 0.5) * size[1],
+			width: (feedRect[2] / page.width) * size[0],
+			height: (feedRect[3] / view) * (1 - BAR) * size[1],
+		},
+		hold(on) {
+			held = on;
+		},
 		scroll(dy) {
 			const next = Math.min(max, Math.max(0, target + dy));
 			if (next === target) return false;
@@ -245,7 +298,8 @@ export function pageScreen({ page: name, size, scene, address, background, reduc
 			hovered = on;
 		},
 		update(dt, inView) {
-			if (!touched && !reducedMotion && inView > 0.02 && max > 0) {
+			if (held) target = 0;
+			else if (!touched && !reducedMotion && inView > 0.02 && max > 0) {
 				// Drift down, then back up, faster as the scene comes fully into view.
 				target += (down ? 1 : -1) * DRIFT * Math.min(1, inView * 1.5) * dt;
 				if (target >= max) [target, down] = [max, false];
