@@ -39,7 +39,9 @@ const content: RoomContent = {
 };
 
 // The work stations, one per service, text on alternate sides.
-const stations = ["robotics", "drones", "networks", "web"] as const;
+const stations = ["web", "robotics", "drones", "networks"] as const;
+// Each station's words sit on the side away from its subject.
+const onRight: Record<string, boolean> = { web: true, drones: true };
 
 /** Read mode's picture of a scene (scripts/studio-stills.py), 800 and 1600 wide. */
 const still = (id: string) => ({
@@ -65,7 +67,7 @@ const organization = {
 	<!-- The studio (3D) and the classic home page. Only one shows: html.studio-on is set by Studio before the first paint
 	     when the 3D will run; otherwise (Classic, Read mode, phones, reduced motion, no JavaScript) the classic page shows. -->
 	<div class="studio-home">
-	<Studio scenes={HOME} content={content} anchors={{ services: "robotics", work: "wall", team: "crew", contact: "contact" }}>
+	<Studio scenes={HOME} content={content} anchors={{ services: "web", work: "wall", team: "crew", contact: "contact" }}>
 		<!-- 0 Title -->
 		<section data-scene="title" data-place="center" class="studio-scene studio-title">
 			<img class="studio-still" {...still("title")} alt="" loading="lazy" width="1600" height="900" />
@@ -128,13 +130,29 @@ const organization = {
 			<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
 		</section>
 
+		<!-- 2d The simulated flight: the camera is inside the screen (src/lib/studio/sim-flight.ts) -->
+		{
+			buildStory.sim.map((scene) => (
+				<section data-scene={scene.id} class="studio-scene studio-card studio-sim" aria-labelledby={`scene-${scene.id}`}>
+					<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
+					<h2 id={`scene-${scene.id}`}>{scene.heading}</h2>
+					<p>{scene.body}</p>
+				</section>
+			))
+		}
+
+		<!-- For anyone who would rather not watch the flight: shown only while it plays (Studio.astro) -->
+		<button type="button" class="studio-skip" data-studio-skip={HOME.indexOf("web")} data-skip-from={HOME.indexOf("test")}>
+			{studio.skipFlight} <ArrowRight className="size-4" aria-hidden="true" />
+		</button>
+
 		<!-- 3 The four stations: one service each -->
 		{
 			services.map((s, i) => {
 				const id = stations[i];
 				const external = s.proof?.href.startsWith("http");
 				return (
-					<section data-scene={id} data-side={i % 2 ? "right" : undefined} class="studio-scene studio-card" aria-labelledby={`scene-${id}`}>
+					<section data-scene={id} data-side={onRight[id] ? "right" : undefined} class="studio-scene studio-card" aria-labelledby={`scene-${id}`}>
 						<img class="studio-still" {...still(id)} alt="" loading="lazy" width="1600" height="900" />
 						<p class="studio-tag">
 							{servicesSection.heading} · {i + 1} {studio.stationOf} {services.length}
@@ -338,6 +356,13 @@ const organization = {
 			transform: translateY(7.5em);
 			transition: transform 0.9s cubic-bezier(0.65, 0, 0.35, 1);
 		}
+		/* The room behind the words can be bright (the monitor passes behind them as the camera pulls back). */
+		.studio-hook[data-playing] h2,
+		.studio-hook-roll > p {
+			text-shadow:
+				0 1px 3px color-mix(in oklab, var(--background) 85%, transparent),
+				0 2px 22px var(--background);
+		}
 		.studio-hook-roll > p {
 			color: var(--foreground);
 			opacity: 0;
@@ -379,7 +404,7 @@ const organization = {
 				place-items: center start;
 				padding-left: clamp(1rem, 5vw, 4.5rem);
 				text-align: left;
-				background: radial-gradient(ellipse 38% 55% at 16% 50%, color-mix(in oklab, var(--background) 72%, transparent), transparent 80%);
+				background: linear-gradient(to right, color-mix(in oklab, var(--background) 82%, transparent), color-mix(in oklab, var(--background) 58%, transparent) 26%, transparent 46%);
 			}
 			.studio-hook-inner {
 				align-items: flex-start;

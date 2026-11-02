@@ -436,9 +436,13 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					return;
 				}
 			}
-			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart]");
+			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart], [data-studio-skip]");
 			if (!el || !root.contains(el)) return;
 			event.preventDefault();
+			if (el.dataset.studioSkip) {
+				goTo(Number(el.dataset.studioSkip));
+				return;
+			}
 			if (root.hasAttribute("data-read")) {
 				// (read mode, after a fall back from the 3D) "Back to the start" is just the top of the page
 				if (el.hasAttribute("data-studio-restart")) scrollTo({ top: 0, behavior: "smooth" });
@@ -461,8 +465,13 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		// The text and the ruler follow the camera.
 		let shown = -1;
 		const levels = new Float32Array(panels.length).fill(-1);
+		// The skip button shows from just past its first scene until the scene it skips to is close.
+		const skip = root.querySelector<HTMLElement>("[data-studio-skip]");
+		const skipFrom = Number(skip?.dataset.skipFrom) + 0.05;
+		const skipTo = Number(skip?.dataset.studioSkip) - 0.6;
 		let handle: StudioHandle | undefined;
 		const onFrame = (at: number) => {
+			skip?.toggleAttribute("data-shown", at > skipFrom && at < skipTo);
 			panels.forEach((panel, i) => {
 				const d = Math.min(Math.abs(at - i), Math.abs(at - i - n));
 				const on = Math.round(Math.max(0, Math.min(1, (0.42 - d) / 0.22)) * 100) / 100;
@@ -647,6 +656,53 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		color: var(--primary-foreground);
 		font-weight: 600;
 		cursor: pointer;
+	}
+	/* Skip the flight: out of the way in the corner, gone unless the flight is playing. */
+	.studio-skip {
+		position: fixed;
+		z-index: 3;
+		right: clamp(1rem, 5vw, 4.5rem);
+		bottom: 1.1rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		padding: 0 1.2rem;
+		border-radius: 999px;
+		border: 1px solid rgb(255 255 255 / 0.28);
+		background: rgb(8 12 24 / 0.72);
+		color: #fff;
+		font-weight: 600;
+		cursor: pointer;
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+		visibility: hidden;
+		opacity: 0;
+		transition:
+			opacity 0.35s,
+			visibility 0.35s,
+			background-color 0.2s;
+	}
+	.studio-skip[data-shown] {
+		visibility: visible;
+		opacity: 1;
+	}
+	.studio-skip:hover {
+		background: rgb(8 12 24 / 0.92);
+	}
+	.studio-skip:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 3px;
+	}
+	.studio[data-read] .studio-skip,
+	html.hook-on .studio-skip {
+		display: none;
+	}
+	@media (max-width: 899px) {
+		/* (the ruler takes the bottom middle on narrow windows) */
+		.studio-skip {
+			bottom: 4.6rem;
+		}
 	}
 	/* Links and lists inside the cards. */
 	/* Blur only what is on screen: the scenes that are not showing are transparent and need no backdrop filter. */

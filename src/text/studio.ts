@@ -18,6 +18,8 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
+	/** The button in the corner during the simulated flight, for anyone who would rather not watch it. */
+	skipFlight: "Skip the flight",
 	/** On the monitor and the laptop when the pointer is on them: their pages scroll with the mouse wheel. */
 	screenHint: "Scroll to read",
 	/** Over each work station's text: "What we do · 1 of 4". */
@@ -37,6 +39,9 @@ export const sceneNames: Record<string, string> = {
 	networks: "Networks",
 	build: "Build",
 	test: "Test",
+	simIn: "Into the camera",
+	simFly: "Simulated flight",
+	simLand: "The H pad",
 	web: "Testing",
 	wall: "Selected work",
 	standards: "Standards",
@@ -157,4 +162,17 @@ export const buildStory = {
 		body: "The first hover comes after the printed mounts. Until then, the flight on the screen is a simulation of our 3D model, not real footage.",
 		label: "Simulation · not flown yet",
 	},
+	/** The simulated flight: the camera dives into the screen, into the drone's camera, and lands. Three scenes, one each. */
+	sim: [
+		{ id: "simIn", heading: "Into the camera", body: "This is where the Camera Module 3 looks out from, on its printed tilt mount." },
+		{ id: "simFly", heading: "The flight we are building toward", body: "Our 3D model over a made-up place. The real first flight hasn't happened yet." },
+		{ id: "simLand", heading: "Arriving at the H pad", body: "Watched from the ground station we built for it, on the test bench's laptop." },
+	],
+};
+
+/** Drawn on every frame of the simulated flight (src/lib/studio/sim-flight.ts). */
+export const simLabel = {
+	heading: "SIMULATION",
+	note: "3D model · not flown yet",
+	camera: "CAMERA MODULE 3 VIEW · SIMULATED",
 };

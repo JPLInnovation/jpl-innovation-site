@@ -75,6 +75,12 @@ export interface Service {
 
 export const services: Service[] = [
 	{
+		icon: "test",
+		title: "Testing & upgrades",
+		desc: "Bench and field tests on every build, then upgrades as we learn.",
+		proof: { label: "F450 build guide", href: "/work/drone/build-guide/" },
+	},
+	{
 		icon: "cog",
 		title: "Robotics & mechanical design",
 		desc: "CAD, prototyping and fabrication of mechanisms that hold up in real use, from concept to a tested build.",
@@ -91,12 +97,6 @@ export const services: Service[] = [
 		title: "Networking & cybersecurity",
 		desc: "Designing, configuring and hardening networks: Cisco routing and switching, Windows Server infrastructure, access control.",
 		proof: { label: "Cybersecurity lab", href: "/work/cybersecurity/" },
-	},
-	{
-		icon: "test",
-		title: "Testing & upgrades",
-		desc: "Bench and field tests on every build, then upgrades as we learn.",
-		proof: { label: "F450 build guide", href: "/work/drone/build-guide/" },
 	},
 ];
 
