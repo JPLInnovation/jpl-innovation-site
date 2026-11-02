@@ -210,6 +210,9 @@ const groups = [
 		try {
 			sessionStorage.setItem("replay-opening", "1");
 		} catch {}
+		// From the top: going to the page you are already on keeps your scroll, and the hook only starts at the top.
+		history.scrollRestoration = "manual";
+		scrollTo({ top: 0, behavior: "instant" });
 		location.href = "/";
 	});
 	document.addEventListener("change", (event) => {
