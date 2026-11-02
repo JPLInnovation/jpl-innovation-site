@@ -1,7 +1,7 @@
 ---
 /**
  * Outreach on the FRC page: a dark band in both themes (the `dark` class switches the colour tokens inside it). A huge
- * heading over a faint photo of the workshop, the programs as a large index (native <details>: one open at a time, opening when pointed at with a mouse; keyboard
+ * heading over a faint photo of the workshop, the programs as a large index (native <details>: opening when pointed at with a mouse and staying open; keyboard
  * and screen readers included, works without JavaScript), then the RoboKids photos as a mosaic (Filmstrip, with its
  * photo viewer). Words: src/text/projects/frc.ts (`outreach`).
  */
@@ -25,7 +25,7 @@ const backdrop = frcPhotos[outreach.backdrop] as FrcPhoto;
 
 		<div class="out-index" data-reveal-group>
 			{outreach.programs.map((o, i) => (
-				<details class="out-row" name="frc-outreach" open={i === 0}>
+				<details class="out-row" open={i === 0}>
 					<summary>
 						<span class="out-num" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span>
 						<h3 class="out-name font-wide">{o.name}</h3>
@@ -58,31 +58,18 @@ const backdrop = frcPhotos[outreach.backdrop] as FrcPhoto;
 </section>
 
 <script>
-	// With a mouse, a row opens when pointed at (touch and keyboard use the row's own click). The short wait lets the
-	// pointer pass over rows on its way elsewhere; while the row above closes, the page follows so that this row stays
-	// under the pointer, or it would slide away and open the next one.
-	const WAIT = 120;
-	const SETTLE = 600; // ms: a little over the opening's transition
+	// With a mouse, a row opens when pointed at (touch and keyboard use the row's own click). It stays open: closing the
+	// rows above would pull this one out from under the pointer. So nothing above it ever moves, and the page never has to
+	// scroll to make up for it. The very short wait lets the pointer pass over rows on its way elsewhere.
+	const WAIT = 70;
 	let timer: number | undefined;
 	const rowOf = (target: EventTarget | null) => (target as Element | null)?.closest?.<HTMLElement>(".out-row summary");
-	const open = (row: HTMLDetailsElement) => {
-		if (row.open) return;
-		const top = row.getBoundingClientRect().top;
-		row.open = true;
-		const end = performance.now() + SETTLE;
-		const hold = () => {
-			const moved = row.getBoundingClientRect().top - top;
-			if (moved) scrollBy({ top: moved, behavior: "instant" });
-			if (performance.now() < end) requestAnimationFrame(hold);
-		};
-		requestAnimationFrame(hold);
-	};
 	document.addEventListener("pointerover", (event) => {
 		if (event.pointerType !== "mouse") return;
 		const summary = rowOf(event.target);
 		if (!summary || summary === rowOf(event.relatedTarget)) return;
 		clearTimeout(timer);
-		timer = window.setTimeout(() => open(summary.parentElement as HTMLDetailsElement), WAIT);
+		timer = window.setTimeout(() => ((summary.parentElement as HTMLDetailsElement).open = true), WAIT);
 	});
 	document.addEventListener("click", (event) => {
 		if (rowOf(event.target)) clearTimeout(timer); // a click decides for itself
@@ -157,6 +144,11 @@ const backdrop = frcPhotos[outreach.backdrop] as FrcPhoto;
 	}
 
 	/* ---------- The programs: one big row each ---------- */
+	/* While the list is in use, the browser must not scroll the page to keep what is below a row in place. */
+	html:has(.out-index:hover),
+	html:has(.out-index:focus-within) {
+		overflow-anchor: none;
+	}
 	.out-index {
 		border-bottom: 1px solid color-mix(in oklab, var(--foreground) 18%, transparent);
 	}
@@ -251,8 +243,8 @@ const backdrop = frcPhotos[outreach.backdrop] as FrcPhoto;
 		block-size: 0;
 		overflow: clip;
 		transition:
-			block-size 0.5s cubic-bezier(0.2, 0.8, 0.2, 1),
-			content-visibility 0.5s allow-discrete;
+			block-size 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+			content-visibility 0.36s allow-discrete;
 	}
 	.out-row[open]::details-content {
 		block-size: auto;
