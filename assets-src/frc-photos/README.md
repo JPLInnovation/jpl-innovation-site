@@ -10,6 +10,9 @@ exactly as published there: WebP, no EXIF/XMP/IPTC metadata. Captions and alt te
 - `edited/` – the 62 photos after the warm colour grade, denoise, clarity, texture and sharpening
   (the two `mark-*` logos are not edited, so they exist only in `original/`).
 
+The edited photos were then cleaned by `scripts/frc-photos-clean.mjs` (two median denoise passes, a 1.8x Lanczos
+upscale and a gentle sharpen): they are about 1.8x larger than the first grade, with visibly less grain.
+
 **The website uses the edited versions.** `public/assets/frc/` holds the files the site serves: each `edited/` photo
 (identical copy, WebP q80) plus a 640-wide `-640.webp` of it. The two `mark-*` logos are not used, since the page
 already has the team logo. To change the look, re-run the grade from `original/` and overwrite `edited/` and
