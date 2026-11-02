@@ -18,6 +18,8 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
+	/** The button in the corner during the simulated flight, for anyone who would rather not watch it. */
+	skipFlight: "Skip the flight",
 	/** On the monitor and the laptop when the pointer is on them: their pages scroll with the mouse wheel. */
 	screenHint: "Scroll to read",
 	/** Over each work station's text: "What we do · 1 of 4". */
