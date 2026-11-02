@@ -6,22 +6,21 @@
  *           piece flies in from its exploded place, bottom to top: the same exploded view the opening hook plays,
  *           hook-blueprint.ts), in step with the scroll, and backwards when you scroll back.
  *   Test    the drone sits whole on the bench (its props still: it has only been bench tested). On the wall above it a
- *           screen plays a SIMULATED flight of the 3D model, scrubbed by the scroll: higher the further you go. The
- *           clip (rendered at 4K; a 1080p copy for the lower tiers) says "SIMULATION · 3D model · not flown yet" on every frame
- *           (public/studio/sim/, scripts/sim-flight.py),
- *           and the scene's text says it too.
+ *           screen shows a SIMULATED flight of the 3D model (sim-flight.ts), which the camera then dives into. It says
+ *           so on every frame, and the scene's text says it too.
  *
  * The opening hook's drone stands on this bench too (not on the sketchbook): while it is there, the bench's own drone
  * stays hidden (`occupied`).
  */
-import { Color, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry, SRGBColorSpace, VideoTexture, type Object3D } from "three";
+import { Color, Group, Mesh, MeshStandardMaterial, PlaneGeometry, ShaderMaterial, type Object3D, type Texture } from "three";
 import { hardware } from "../three/finish";
 import type { DroneRig } from "../three/models/drone";
 import type { StageContext } from "../three/stage";
 import { explodePieces } from "./hook-blueprint";
 import { type DissolveUniforms, dissolveMaterials } from "./hook-dissolve";
 import type { LightSpec } from "./lights";
-import { asset, boxAt, canvasSurface, ROOM, type RoomState } from "./room";
+import { boxAt, canvasSurface, ROOM, type RoomState } from "./room";
+import { FEED_GLSL } from "./screens";
 
 /** Where the bench stands: its middle (x, z) and the height of its top. */
 export const BENCH = { x: -4.15, z: -2.4, top: 0.82, width: 1.0, depth: 0.62 };
@@ -32,8 +31,6 @@ export const BENCH_LOOK = {
 	drone: { x: BENCH.x + 0.02, z: BENCH.z + 0.02, turn: 0.55 },
 	/** Build: over how much of the scroll before the build scene the drone assembles (in scenes), and when it is whole. */
 	build: { from: -0.75, to: 0.05 },
-	/** Test: the clip runs from this far before the test scene to this far after it (in scenes). */
-	clip: { from: -0.45, to: 0.55, url4k: "/studio/sim/flight-sim-4k.mp4", url: "/studio/sim/flight-sim-1080.mp4", seconds: 5 },
 	/** The screen on the front wall above the bench: middle height and width (16:9). */
 	screen: { y: 1.5, width: 1.3 },
 	spread: 0.32,
@@ -41,6 +38,8 @@ export const BENCH_LOOK = {
 
 export interface BuildBench {
 	accents: Record<string, LightSpec>;
+	/** The wall screen, for the simulated flight (sim-flight.ts): its surface, its size in metres, and the live picture. */
+	screen: { mesh: Mesh; width: number; height: number; feed(texture: Texture | null, aspect: number): void };
 	/** Set by the opening hook while its drone stands on the bench. */
 	occupied: { value: boolean };
 	/** The drone's footprint on the bench (x0, x1, z0, z1), for the never-on-paper check. */
@@ -114,40 +113,25 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 		g.fillText("3D model · not flown yet", 58, 74);
 		poster.redraw();
 	}
-	const screenMat = new MeshBasicMaterial({ map: poster.texture, toneMapped: false });
+	// Until the simulated flight has loaded (sim-flight.ts), the poster; then the live picture.
+	const screenMat = new ShaderMaterial({
+		uniforms: { uPoster: { value: poster.texture }, uFeed: { value: poster.texture }, uFeedOn: { value: 0 }, uFeedAspect: { value: 1.6 }, uGlow: { value: 1 } },
+		vertexShader: "varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+		fragmentShader: /* glsl */ `
+			uniform sampler2D uPoster;
+			uniform float uGlow;
+			varying vec2 vUv;
+			${FEED_GLSL}
+			void main() {
+				vec3 colour = uFeedOn > 0.5 ? feedAt(vUv, ${(sw / sh).toFixed(6)}) : texture2D(uPoster, vUv).rgb;
+				gl_FragColor = vec4(colour * uGlow, 1.0);
+				#include <colorspace_fragment>
+			}
+		`,
+	});
 	const screen = new Mesh(new PlaneGeometry(sw, sh), screenMat);
 	screen.position.set(x, BENCH_LOOK.screen.y, ROOM.z0 + 0.047);
 	group.add(screen);
-	// The clip loads only once the camera nears the bench; it never plays on its own, the scroll sets its time.
-	let video: HTMLVideoElement | undefined;
-	let videoTexture: VideoTexture | undefined;
-	let ready = false;
-	let lastSet = -1;
-	let seeking = false;
-	const load = () => {
-		if (video) return;
-		video = document.createElement("video");
-		video.muted = true;
-		video.playsInline = true;
-		video.preload = "auto";
-		video.crossOrigin = "anonymous";
-		// 4K on the high quality tier, 1080p otherwise: each scrubbed frame is uploaded to the GPU, and 4K is 4× the pixels.
-		video.src = asset(ctx.tier === "high" ? BENCH_LOOK.clip.url4k : BENCH_LOOK.clip.url);
-		video.addEventListener("loadeddata", () => {
-			ready = true;
-			videoTexture = new VideoTexture(video!);
-			videoTexture.colorSpace = SRGBColorSpace;
-			screenMat.map = videoTexture;
-			screenMat.needsUpdate = true;
-			ctx.wake();
-		});
-		video.addEventListener("seeked", () => {
-			seeking = false;
-			if (videoTexture) videoTexture.needsUpdate = true;
-			ctx.wake();
-		});
-		video.load();
-	};
 
 	// The bench's own drone: a clone of the drone bench's (shared geometry), with the exploded view to play backwards.
 	const holder = new Group();
@@ -162,6 +146,16 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 	let moving = false;
 
 	return {
+		screen: {
+			mesh: screen,
+			width: sw,
+			height: sh,
+			feed(texture, aspect) {
+				screenMat.uniforms.uFeedOn.value = texture ? 1 : 0;
+				if (texture) screenMat.uniforms.uFeed.value = texture;
+				screenMat.uniforms.uFeedAspect.value = aspect;
+			},
+		},
 		occupied,
 		footprint: { x0: BENCH_LOOK.drone.x - 0.3, x1: BENCH_LOOK.drone.x + 0.3, z0: BENCH_LOOK.drone.z - 0.3, z1: BENCH_LOOK.drone.z + 0.3 },
 		accents: {
@@ -174,8 +168,6 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 			const ti = ids.indexOf("test");
 			moving = false;
 			if (bi < 0 || ti < 0) return;
-			// Load the clip a scene ahead.
-			if (s > bi - 1.2 && s < ti + 2) load();
 			if (!drone && source) {
 				drone = source.model.clone(true);
 				holder.add(drone);
@@ -185,27 +177,17 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 			}
 			// Build: 0 = nothing yet, 1 = whole; follows the scroll both ways (the loop's far side counts as before).
 			const a = s > ti + 3 ? 1 : smooth(clamp01((s - (bi + BENCH_LOOK.build.from)) / (BENCH_LOOK.build.to - BENCH_LOOK.build.from)));
-			const nearBench = s > bi - 1.5 && s < ti + 3;
+			const nearBench = s > bi - 1.5 && s < ti + 7;
 			holder.visible = !!drone && !occupied.value && nearBench && a > 0.002;
 			uniforms.uHookAssemble.value = a;
 			moving = a > 0.002 && a < 0.998;
-			// Test: the clip's time follows the scroll.
-			const c = clamp01((s - (ti + BENCH_LOOK.clip.from)) / (BENCH_LOOK.clip.to - BENCH_LOOK.clip.from));
-			if (video && ready && !seeking) {
-				const t = Math.min(BENCH_LOOK.clip.seconds - 0.04, c * BENCH_LOOK.clip.seconds);
-				if (Math.abs(t - lastSet) > 1 / 60) {
-					lastSet = t;
-					seeking = true;
-					video.currentTime = t;
-				}
-			}
 			// The screen glows up as the camera comes to it.
-			screenGlow = clamp01(1.4 - Math.abs(s - ti) * 1.2);
-			screenMat.color.setScalar(0.25 + 0.75 * screenGlow);
+			screenGlow = s > ti ? 1 : clamp01(1.4 - (ti - s) * 1.2);
+			screenMat.uniforms.uGlow.value = 0.25 + 0.75 * screenGlow;
 		},
 		applyPalette(darkTheme) {
 			benchMat.color.set(darkTheme ? 0x2a3550 : 0xc9d3e6);
 		},
-		busy: () => moving || seeking,
+		busy: () => moving,
 	};
 }
