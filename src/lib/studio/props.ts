@@ -145,9 +145,9 @@ export function buildProps(parent: Group): Props {
 
 	/* ---------- Web: a mug and a notebook by the laptop ---------- */
 	const mug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), mat(0xf2f4f8, 0.35, "wrap"));
-	mug.position.set(3.3 - 0.62, 0.9, -2.75);
+	mug.position.set(-2.6 - 0.62, 0.9, -2.75);
 	parent.add(mug);
-	boxAt(parent, 0.2, 0.016, 0.28, mat(0xf4efe2, 0.9, "printed"), 3.3 + 0.62, 0.858, -2.78, 0.003).rotation.y = -0.3;
+	boxAt(parent, 0.2, 0.016, 0.28, mat(0xf4efe2, 0.9, "printed"), -2.6 + 0.62, 0.858, -2.78, 0.003).rotation.y = -0.3;
 
 	/* ---------- Networks: a cable spool at the rack's foot ---------- */
 	const spool = new Mesh(new CylinderGeometry(0.11, 0.11, 0.12, 20), mat(0xc8283a, 0.5));

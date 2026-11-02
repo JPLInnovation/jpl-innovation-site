@@ -134,6 +134,8 @@ export interface StageView {
 }
 
 export interface StageContext {
+	/** For a model that draws a picture of its own (src/lib/studio/sim-flight.ts). */
+	renderer: WebGLRenderer;
 	scene: Scene;
 	/** Add the model here; the stage turns this group for the idle spin. */
 	root: Group;
@@ -406,6 +408,7 @@ export async function mountStage(
 	};
 
 	const ctx: StageContext = {
+		renderer,
 		scene,
 		root,
 		camera,

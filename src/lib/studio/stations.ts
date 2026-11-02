@@ -111,7 +111,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	/* Robotics: the KitBot on a cart                                      */
 	/* ================================================================== */
-	const robotX = -2.6;
+	const robotX = -0.6;
 	const cartTop = 0.36;
 	boxAt(group, 1.1, 0.04, 0.86, steel, robotX, cartTop - 0.02, -2.55, 0.008);
 	boxAt(group, 1.1, 0.03, 0.86, steel, robotX, 0.12, -2.55, 0.008);
@@ -165,7 +165,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	/* Drones: the F450 on a landing mat                                   */
 	/* ================================================================== */
-	const droneX = -0.6;
+	const droneX = 1.4;
 	workbench(droneX);
 	const mat = canvasSurface(256, 256);
 	{
@@ -211,7 +211,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	/* Networks: the switch rack                                           */
 	/* ================================================================== */
-	const rackX = 1.4;
+	const rackX = 3.3;
 	const rackZ = -2.95;
 	const rackFront = rackZ + 0.31;
 	const rack = new Group();
@@ -275,7 +275,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	/* Testing & upgrades: the laptop and the easel whiteboard             */
 	/* ================================================================== */
-	const webX = 3.3;
+	const webX = -2.6;
 	workbench(webX);
 	const laptopZ = -2.5;
 	const aluminium = hardware({ color: 0xb4bccb, roughness: 0.32, metalness: 0.85 }, "anodised");
@@ -293,6 +293,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		scene: "web",
 		address: `${content.domain}/work/drone/camera-pov`,
 		background: "#0b1220",
+		feedRect: [15.4, 121, 828, 532], // the dashboard's camera feed (public/studio/screens/pov-0.jpg): the flight lands in it
 		reducedMotion: ctx.reducedMotion,
 		wake: () => ctx.wake(),
 	});
