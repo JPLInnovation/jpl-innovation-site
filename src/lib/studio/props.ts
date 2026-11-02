@@ -113,20 +113,20 @@ export function buildProps(parent: Group): Props {
 
 	/* ---------- Robotics: a toolbox and spare wheels ---------- */
 	const red = mat(0xc8283a, 0.45);
-	boxAt(parent, 0.52, 0.22, 0.26, red, -1.78, 0.11, -1.95, 0.02);
-	boxAt(parent, 0.5, 0.05, 0.24, mat(0x9a1f2e, 0.45), -1.78, 0.245, -1.95, 0.015);
+	boxAt(parent, 0.52, 0.22, 0.26, red, 0.22, 0.11, -1.95, 0.02);
+	boxAt(parent, 0.5, 0.05, 0.24, mat(0x9a1f2e, 0.45), 0.22, 0.245, -1.95, 0.015);
 	const handle = new Mesh(new TorusGeometry(0.06, 0.008, 8, 16, Math.PI), steel);
-	handle.position.set(-1.78, 0.27, -1.95);
+	handle.position.set(0.22, 0.27, -1.95);
 	parent.add(handle);
 	const tire = mat(0x14171f, 0.9, "rubber");
 	for (let i = 0; i < 3; i++) {
 		const wheel = new Mesh(new CylinderGeometry(0.1, 0.1, 0.05, 20), tire);
-		wheel.position.set(-3.75, 0.03 + i * 0.052, -3.0);
+		wheel.position.set(-1.75, 0.03 + i * 0.052, -3.0);
 		parent.add(wheel);
 	}
 
 	/* ---------- Drones: a parts shelf over the bench ---------- */
-	const px = -1.25;
+	const px = 1.1;
 	boxAt(parent, 1.5, 0.03, 0.26, wood, px, 1.5, z0 + 0.15, 0.006);
 	boxAt(parent, 1.5, 0.03, 0.26, wood, px, 1.9, z0 + 0.15, 0.006);
 	for (const bx of [-0.62, 0.62]) boxAt(parent, 0.03, 0.46, 0.04, steel, px + bx, 1.7, z0 + 0.06);
@@ -151,7 +151,7 @@ export function buildProps(parent: Group): Props {
 
 	/* ---------- Networks: a cable spool at the rack's foot ---------- */
 	const spool = new Mesh(new CylinderGeometry(0.11, 0.11, 0.12, 20), mat(0xc8283a, 0.5));
-	spool.position.set(1.85, 0.06, -2.2);
+	spool.position.set(3.75, 0.06, -2.2);
 	parent.add(spool);
 	const spoolCore = new Mesh(new CylinderGeometry(0.045, 0.045, 0.14, 12), steel);
 	spoolCore.position.copy(spool.position);

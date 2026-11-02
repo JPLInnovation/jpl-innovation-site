@@ -58,8 +58,8 @@ const POOLS: Record<string, { at: [number, number]; size: number; color: number 
 
 /** LED strips under the benches: where (x, y, z), how long, colour. */
 const STRIPS: [number, number, number, number, number][] = [
-	[-2.6, 0.1, -2.1, 1.1, 0x2dd4bf],
-	[-0.6, 0.8, -2.2, 1.5, 0xffc20e],
+	[-0.6, 0.1, -2.1, 1.1, 0x2dd4bf],
+	[1.4, 0.8, -2.2, 1.5, 0xffc20e],
 	[3.3, 0.04, -2.64, 0.62, 0x22d3ee],
 	[-2.6, 0.8, -2.2, 1.5, 0x8b5cf6],
 	[-6, 0.72, -2.0, 2.2, 0xffb869],
