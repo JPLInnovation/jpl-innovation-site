@@ -173,7 +173,7 @@ export function SeasonTimeline() {
 }
 
 /** A row of prints that scrolls sideways; tap one to see it large. */
-export function Filmstrip({ ids, label }: { ids: FrcPhotoId[]; label: string }) {
+export function Filmstrip({ ids, label, mosaic }: { ids: FrcPhotoId[]; label: string; mosaic?: boolean }) {
 	const photos = ids.map((id) => frcPhotos[id] as FrcPhoto);
 	const [viewing, setViewing] = useState<number | null>(null);
 	const ref = useRef<HTMLDialogElement>(null);
@@ -187,12 +187,12 @@ export function Filmstrip({ ids, label }: { ids: FrcPhotoId[]; label: string }) 
 	const p = viewing !== null ? photos[viewing] : undefined;
 	return (
 		<>
-			<ul className="frc-film" aria-label={label}>
+			<ul className={mosaic ? "frc-mosaic" : "frc-film"} aria-label={label}>
 				{photos.map((ph, i) => (
 					<li key={ph.id}>
 						<figure className="m-0 flex h-full flex-col gap-2">
 							<button type="button" onClick={() => setViewing(i)} className="group block flex-1 overflow-hidden rounded-xl" aria-label={`${lightboxText.open} ${ph.caption}`}>
-								<img src={small(ph.id)} alt={ph.alt} width={ph.w} height={ph.h} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
+								<img src={small(ph.id)} {...(mosaic ? { srcSet: `${small(ph.id)} 640w, /assets/frc/${ph.id}.webp ${ph.w}w`, sizes: "(min-width: 1024px) 66vw, 100vw" } : {})} alt={ph.alt} width={ph.w} height={ph.h} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
 							</button>
 							<figcaption className="text-sm">
 								<span className="font-medium">{ph.caption}</span>
