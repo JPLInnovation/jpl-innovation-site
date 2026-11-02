@@ -4,8 +4,16 @@ All 64 images from the team's season page (Jayden's FRC artifact, claude.ai/arti
 exactly as published there: WebP, no EXIF/XMP/IPTC metadata. Captions and alt text live in
 `src/text/projects/frc.ts` (`frcPhotos`).
 
-The site serves its own copies from `public/assets/frc/` (the same files, plus a 640-wide `-640.webp` of each;
-the two `mark-*` logos are not used, since the page already has the team logo).
+## Folders
+
+- `original/` – the 64 untouched images, exactly as published. Never edited; keep as the source of truth.
+- `edited/` – the 62 photos after the warm colour grade, denoise, clarity, texture and sharpening
+  (the two `mark-*` logos are not edited, so they exist only in `original/`).
+
+**The website uses the edited versions.** `public/assets/frc/` holds the files the site serves: each `edited/` photo
+(identical copy, WebP q80) plus a 640-wide `-640.webp` of it. The two `mark-*` logos are not used, since the page
+already has the team logo. To change the look, re-run the grade from `original/` and overwrite `edited/` and
+`public/assets/frc/` – never edit `original/`.
 
 | Prefix | What |
 |---|---|
