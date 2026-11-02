@@ -12,11 +12,12 @@ import Odometer from "@/components/Odometer.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/frc.ts (intro sentence and photo: src/text/projects/frc.md),
 // and the robot's part by part text: src/text/showcase/robot.ts
-import { board, frcDeck, frcPhotos, frcPage, lightboxText, outreach, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
+import { board, frcDeck, frcPhotos, frcPage, lightboxText, partner, rookieText, season2027More, swerveSim, team, teamMore, workshop, type FrcPhoto } from "@/text/projects/frc";
 import { EventSheets, PhotoDeck, WeekPosts } from "@/components/frc-photos";
 import { CertPipeline, SeasonSlides, SubTeamPicker, SupportPicker, SwerveLab } from "@/components/frc-story";
 import { Filmstrip, Goals2027, HardwareView, KitBotView, Overview2027, Road2027, SeasonGame, SeasonTimeline } from "@/components/frc-views";
 import FrcChapter from "@/components/FrcChapter.astro";
+import FrcOutreach from "@/components/FrcOutreach.astro";
 import { DataIcon } from "@/lib/icons";
 import { srcset } from "@/lib/images";
 import { buttonVariants } from "@/components/ui/button";
@@ -344,50 +345,8 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 		</div>
 	</section>
 
-	<!-- Outreach, a section of its own: the programs that carry the workshop out to younger students,
-	     partner schools and the city. It used to be the last chapter of the pit board. -->
-	<section id="outreach" class="scroll-mt-24 border-y bg-card/60" aria-labelledby="outreach-heading">
-		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
-			<div class="flex flex-wrap items-end justify-between gap-x-12 gap-y-4">
-				<div class="flex flex-col items-start gap-3">
-					<span class="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
-						<span class="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true"></span>{outreach.tag}
-					</span>
-					<h2 id="outreach-heading" class="max-w-[16ch] font-wide text-[clamp(2.2rem,5vw,3.75rem)] font-[880] leading-[1]" data-reveal>{outreach.heading}</h2>
-				</div>
-				<p class="max-w-[46ch] text-lg text-muted-foreground" data-reveal>{outreach.intro}</p>
-			</div>
-			<ul class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-				{outreach.programs.map((o) => (
-					<li class="frc-prog flex flex-col gap-1.5 rounded-xl border surface p-5" tabindex={o.more ? "0" : undefined}>
-						<p class="text-sm text-muted-foreground">{o.tag}</p>
-						<h5 class="font-semiwide text-xl font-[780]">{o.name}</h5>
-						<p class="text-sm text-muted-foreground">{o.text}</p>
-						{o.detail && <p class="text-sm">{o.detail}</p>}
-						{o.more && (
-							<>
-								<p class="frc-prog-hint text-sm font-semibold" aria-hidden="true">{outreach.moreHint} +</p>
-								<dl class="frc-prog-more">
-									<div class="flex flex-col gap-1.5 pt-1">
-										{o.more.map((m) => (
-											<div class="grid gap-1 border-t pt-1.5 sm:grid-cols-[8.5rem_1fr]">
-												<dt class="text-sm font-semibold">{m.k}</dt>
-												<dd class="text-sm text-muted-foreground">{m.v}</dd>
-											</div>
-										))}
-									</div>
-								</dl>
-							</>
-						)}
-					</li>
-				))}
-			</ul>
-			<div class="flex flex-col gap-3">
-				<Filmstrip client:visible ids={outreach.photos} label={outreach.photosLabel} />
-				<p class="text-sm text-muted-foreground">{outreach.privacy}</p>
-			</div>
-		</div>
-	</section>
+	<!-- Outreach, a section of its own (it used to be the last chapter of the pit board). -->
+	<FrcOutreach />
 
 	<!-- Partnering with the team: gifts in kind only. -->
 	<section class="wrapper py-20 md:py-28" aria-labelledby="partner-heading">
@@ -1150,30 +1109,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 			display: none;
 		}
 	}
-	/* Outreach programs with more to say: the extra rows open when pointed at, focused or tapped. */
-	.frc-prog {
-		transition: border-color 0.25s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-	}
-	.frc-prog-more {
-		display: grid;
-		grid-template-rows: 0fr;
-		transition: grid-template-rows 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-	}
-	.frc-prog-more > div {
-		overflow: hidden;
-	}
-	.frc-prog:hover,
-	.frc-prog:focus-within {
-		border-color: color-mix(in oklab, var(--foreground) 35%, transparent);
-	}
-	.frc-prog:hover .frc-prog-more,
-	.frc-prog:focus-within .frc-prog-more {
-		grid-template-rows: 1fr;
-	}
-	.frc-prog:hover .frc-prog-hint,
-	.frc-prog:focus-within .frc-prog-hint {
-		opacity: 0;
-	}
 	.frc-check {
 		position: relative;
 		padding-left: 1.6rem;
@@ -1193,8 +1128,7 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 		.frc-pick,
 		.frc-value::before,
 		.frc-value p,
-		.frc-conduct-arrow::before,
-		.frc-prog-more {
+		.frc-conduct-arrow::before {
 			transition: none;
 		}
 		.frc-hotspot i {
@@ -1205,8 +1139,7 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 	html.reduce-motion .frc-pick,
 	html.reduce-motion .frc-value::before,
 	html.reduce-motion .frc-value p,
-	html.reduce-motion .frc-conduct-arrow::before,
-	html.reduce-motion .frc-prog-more {
+	html.reduce-motion .frc-conduct-arrow::before {
 		transition: none;
 	}
 	html.reduce-motion .frc-hotspot i {
