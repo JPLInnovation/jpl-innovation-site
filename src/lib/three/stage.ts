@@ -253,7 +253,7 @@ const PIXEL_RATIO: Record<Tier, number> = { high: 2, medium: 1.5, low: 1.25 };
 // At most this many canvas pixels per tier. A big display (a 4K screen or projector at 1x) would otherwise be drawn at its
 // full size, which an integrated GPU cannot keep up with; drawing a little below native size and letting the browser
 // scale it up keeps the motion smooth. The HTML on top stays sharp.
-const MAX_PIXELS: Record<Tier, number> = { high: 4.6e6, medium: 3.2e6, low: 2.2e6 };
+const MAX_PIXELS: Record<Tier, number> = { high: 5.2e6, medium: 3.2e6, low: 2.2e6 }; // high: a 1440x900 window at 2x; below 4K on purpose, smoothness first
 const MIN_RATIO = 0.6;
 const SLOW = 19; // ms: frames slower than this, on average, first lose some resolution, then a tier
 const TARGET = 15; // ms: what the resolution is steered to when frames run slow (a little under one 60 Hz frame)
