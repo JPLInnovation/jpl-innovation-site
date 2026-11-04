@@ -15,6 +15,7 @@
  *
  * Drawn only while the scroll changes it. Its files load when the camera comes near.
  */
+import { compileInSlices } from "../three/yield";
 import {
 	BoxGeometry,
 	BufferAttribute,
@@ -460,7 +461,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 
 		// Build its shaders now, so the first frame of the flight never stutters.
 		rig.animate(0, 0.0001, 0.03);
-		await renderer.compileAsync(world, view);
+		await compileInSlices(renderer, world, view, target);
 
 		state = "ready";
 		dirty = true;
