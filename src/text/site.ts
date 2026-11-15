@@ -132,15 +132,40 @@ export const emailPopup = {
 	defaultSubject: "Hello JPL Innovation",
 };
 
-/** The "Page not found" (404) page. */
+/**
+ * The "Page not found" (404) page: a sheet missing from JPL's drawing set. Its drawing is the drone camera's lost
+ * feed (`signal`), its title block names the address that was asked for, and the register below lists every sheet
+ * in the set to find your way (the projects' and members' names and lines come from their own files).
+ */
 export const notFound = {
 	title: "Page not found",
 	/** For search results and link previews. */
 	description: "This page doesn't exist.",
+	/** The page's big headline. */
+	headline: "This sheet isn’t in the set",
 	lede: "There's no page at this address. It may have moved when we rebuilt the site.",
 	homeButton: "Back to the studio",
 	workButton: "See our work",
-	/** The drone's camera view that fills the page (the style of the logo intro). */
+	/** The missing sheet's title block. The address is filled in with the one the visitor typed. */
+	titleBlock: {
+		label: "Title block of the missing sheet",
+		address: "Address",
+		status: "Status",
+		statusValue: "Not in the set",
+		error: "Error",
+		errorValue: "404",
+	},
+	/** The register: every sheet of the set, as a table. */
+	register: {
+		heading: "The sheets in the set",
+		sheet: "Sheet",
+		shows: "What it shows",
+		home: { label: "Home", shows: "The studio: what we sketch, build and secure." },
+		work: { label: "Work", shows: "Every project, with its status." },
+		members: { label: "Members", shows: "The people behind JPL Innovation." },
+		about: { label: "About", shows: "How JPL Innovation began: a letter and a short film." },
+	},
+	/** The drone's camera view on the missing sheet, where its drawing should be. */
 	signal: {
 		headline: "Signal lost",
 		kicker: "Error 404 · No link",

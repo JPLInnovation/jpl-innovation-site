@@ -1,0 +1,736 @@
+---
+/**
+ * "Play the story" (the spec's section 9): the founding of JPL as a short film. The plate on the page (the sketchbook,
+ * framed like a screen) is the button; it opens to the whole screen, then each chapter's name, its pictures (a slow
+ * push on each) and its subtitles, which write themselves. Chapters at the foot (jump to any), Pause, Skip; Escape
+ * closes it and focus goes back to the plate. At its end the film lifts off the page and offers the site's two
+ * editions, Glass or Solid: the choice is made by Settings' own switch (SettingsPanel.astro), so it lives in one place.
+ * The same story is the letter on the page, so the film never stands between anyone and the words.
+ *
+ * Timing: src/lib/look/story.ts (tested). Words and pictures: src/text/about.ts → `film`. While it plays it marks
+ * itself [data-own-backdrop], which pauses the blueprint field behind it; pictures load chapter by chapter.
+ * Reduced motion: no push, no opening move, lines appear whole.
+ */
+import { Pause, Play } from "lucide-react";
+import { clock, plan } from "@/lib/look/story";
+import { film } from "@/text/about";
+import { settings } from "@/text/site";
+
+const running = clock(plan(film.chapters).total);
+/** The width in a copy's name (sketch-800.webp → 800), for srcset. */
+const widthOf = (path: string) => Number(path.match(/-(\d+)\.webp$/)?.[1] ?? 800);
+const set = (s: { src: string; small: string; w: number }) => `${s.small} ${widthOf(s.small)}w, ${s.src} ${s.w}w`;
+const { poster } = film;
+/** What the script needs (the words only: the pictures are in the markup). */
+const script = { pause: film.pause, play: film.play, chapters: film.chapters.map(({ name, lines }) => ({ name, lines })) };
+---
+
+<button type="button" class="plate press" data-film-open aria-haspopup="dialog">
+	<span class="plate__frame">
+		<img
+			src={poster.small}
+			srcset={set(poster)}
+			sizes="(min-width: 1024px) 56vw, calc(100vw - 2rem)"
+			width={poster.w}
+			height={poster.h}
+			alt=""
+			decoding="async"
+			fetchpriority="high"
+			data-film-poster
+		/>
+	</span>
+	<span class="plate__bar">
+		<span class="plate__disc" aria-hidden="true"><Play className="size-5" strokeWidth={2.25} fill="currentColor" /></span>
+		<span class="plate__label">{film.button}</span>
+		<span class="plate__time">{running}</span>
+		<span class="plate__chapters" aria-hidden="true">{film.chapters.map((c) => c.name).join(" · ")}</span>
+	</span>
+</button>
+
+<dialog class="film dark" data-film aria-label={film.title}>
+	<script type="application/json" data-film-words set:html={JSON.stringify(script)} />
+	<div class="film__stage" data-film-stage>
+		<img class="film__shot is-on" src={poster.small} srcset={set(poster)} sizes="100vw" alt="" decoding="async" data-film-poster-shot />
+		{
+			film.chapters.map((chapter, c) =>
+				chapter.shots.map((shot, s) => (
+					<img
+						class="film__shot"
+						data-shot={`${c}-${s}`}
+						data-srcset={set(shot)}
+						data-fit={"fit" in shot ? shot.fit : undefined}
+						sizes="100vw"
+						alt={shot.alt}
+						decoding="async"
+					/>
+				)),
+			)
+		}
+	</div>
+
+	<p class="film__card" data-film-card aria-hidden="true"></p>
+	<p class="film__sub" aria-hidden="true"><span class="film__typed" data-typed></span><span class="film__ghost" data-ghost></span></p>
+	<p class="sr-only" aria-live="polite" data-film-live></p>
+
+	<div class="film__controls" data-film-controls>
+		<button type="button" class="film__toggle press" data-film-toggle aria-label={film.pause}>
+			<Pause className="film__icon film__icon--pause size-5" strokeWidth={2} aria-hidden="true" />
+			<Play className="film__icon film__icon--play size-5" strokeWidth={2} aria-hidden="true" />
+		</button>
+		<ol class="film__chapters" aria-label={film.chaptersLabel}>
+			{
+				film.chapters.map((chapter, c) => (
+					<li>
+						<button type="button" class="film__chapter" data-film-chapter={c}>
+							<span class="film__chapter-name">{chapter.name}</span>
+							<span class="film__track" aria-hidden="true">
+								<span class="film__fill" data-fill />
+							</span>
+						</button>
+					</li>
+				))
+			}
+		</ol>
+		<button type="button" class="film__skip press" data-film-skip>{film.skip}</button>
+	</div>
+
+	<section class="film__end sheet" data-film-end hidden aria-labelledby="film-end-heading">
+		<h2 id="film-end-heading" class="film__end-heading" tabindex="-1">{film.edition.heading}</h2>
+		<p>{settings.style.note}</p>
+		<div class="film__editions" role="group" aria-label={settings.style.label}>
+			<button type="button" class="film__edition press" data-edition="glass" aria-pressed="false">{settings.style.glass}</button>
+			<button type="button" class="film__edition press" data-edition="solid" aria-pressed="false">{settings.style.solid}</button>
+		</div>
+		<p class="film__end-after">{film.edition.after}</p>
+		<div class="film__end-actions">
+			<button type="button" class="film__back press" data-film-close>{film.edition.back}</button>
+			<button type="button" class="film__again press" data-film-again>{film.edition.again}</button>
+		</div>
+	</section>
+</dialog>
+
+<style>
+	/* ---- The plate on the page: the film's screen, always night, framed like the sheet's drawing ---- */
+	.plate {
+		--pad: 0.625rem;
+		--inner: 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+		width: 100%;
+		padding: var(--pad);
+		border-radius: calc(var(--inner) + var(--pad)); /* concentric with the picture's corner */
+		background: #071038;
+		color: #f2eedf;
+		text-align: left;
+		cursor: pointer;
+		box-shadow: inset 0 0 0 1px rgb(242 238 223 / 0.1);
+	}
+	.plate__frame {
+		position: relative;
+		display: block;
+		overflow: hidden;
+		border-radius: var(--inner);
+		aspect-ratio: 16 / 9;
+		background: #050b2c;
+	}
+	@media (min-width: 1024px) {
+		.plate__frame {
+			aspect-ratio: 2 / 1; /* a cinema frame; keeps the whole plate on the first screen */
+		}
+	}
+	.plate__frame img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition: transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	/* Lights up from darkness once, on arrival (the spec's Forge reference): a still veil that lifts. */
+	.plate__frame::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: #050b2c;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 0.4s;
+	}
+	:global(html.motion) .plate__frame::after {
+		animation: plate-lights 1.6s 0.25s cubic-bezier(0.4, 0, 0.2, 1) both;
+	}
+	@keyframes plate-lights {
+		from {
+			opacity: 0.94;
+		}
+		to {
+			opacity: 0;
+		}
+	}
+	.plate__bar {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		column-gap: 0.9rem;
+		row-gap: 0.15rem;
+		padding: 0.9rem 0.5rem 0.4rem 0.4rem;
+	}
+	.plate__disc {
+		grid-row: span 2;
+		display: grid;
+		place-items: center;
+		width: 3.25rem;
+		height: 3.25rem;
+		border-radius: 50%;
+		background: #f5d042;
+		color: #0a174e;
+		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.plate__disc :global(svg) {
+		margin-left: 3px; /* the triangle's weight sits right of its box */
+	}
+	.plate__label {
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 112%;
+		line-height: 1.1;
+	}
+	.plate__time {
+		font-size: var(--step-small);
+		font-variant-numeric: tabular-nums;
+		color: #bcc1d6;
+	}
+	.plate__chapters {
+		grid-column: 2 / -1;
+		font-size: var(--step-small);
+		color: #bcc1d6;
+		text-wrap: pretty;
+	}
+	@media (hover: hover) {
+		.plate:hover .plate__frame img {
+			transform: scale(1.025);
+		}
+		.plate:hover .plate__disc {
+			transform: scale(1.08);
+		}
+	}
+	.plate:focus-visible {
+		outline: 3px solid var(--ring);
+		outline-offset: 4px;
+	}
+
+	/* ---- The film: the whole screen, always night ---- */
+	.film {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		max-width: none;
+		height: 100dvh;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		overflow: hidden;
+		background: transparent;
+		color: #f2eedf;
+		--g: clamp(1rem, 4vw, 2.5rem);
+	}
+	.film::backdrop {
+		background: transparent;
+	}
+	:global(html:has(.film[open])) {
+		overflow: hidden;
+	}
+	.film__stage {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		background: #050b2c;
+		transform-origin: 0 0;
+	}
+	.film[data-ended] .film__stage {
+		opacity: 0;
+		transition: opacity 0.9s;
+	}
+	.film__shot {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		opacity: 0;
+		transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+		will-change: transform, opacity;
+	}
+	.film__shot[data-fit="contain"] {
+		object-fit: contain;
+		padding: 8dvh 6vw 22dvh;
+	}
+	.film__shot.is-on {
+		opacity: 0.8;
+	}
+	.film__shot[data-fit="contain"].is-on {
+		opacity: 1;
+	}
+	/* Under a chapter's name the picture waits in the dark, then comes up as the lines begin. */
+	.film[data-card] .film__shot.is-on {
+		opacity: 0.28;
+	}
+
+	/* The chapter's name, alone at its start, as large as the frame allows. */
+	.film__card {
+		position: absolute;
+		left: var(--g);
+		right: var(--g);
+		top: 50%;
+		margin: 0;
+		translate: 0 -50%;
+		font-size: clamp(2.75rem, 10vw, 11rem);
+		font-weight: 850;
+		font-stretch: 125%;
+		line-height: 0.9;
+		letter-spacing: -0.04em;
+		text-wrap: balance;
+		opacity: 0;
+		transform: scale(1.04);
+		transition:
+			opacity 0.5s,
+			transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+		pointer-events: none;
+	}
+	.film__card[data-on] {
+		opacity: 1;
+		transform: none;
+	}
+
+	/* Subtitles, low on the left like a documentary's: the box grows with the words as they write themselves, and
+	   the rest of the line already holds its place, so nothing reflows. */
+	.film__sub {
+		position: absolute;
+		left: var(--g);
+		bottom: calc(var(--g) + 5.25rem);
+		width: min(30ch, calc(100% - 2 * var(--g)));
+		margin: 0;
+		font-size: clamp(1.25rem, 0.9rem + 1.5vw, 2.25rem);
+		font-weight: 620;
+		line-height: 1.42;
+		text-wrap: balance;
+	}
+	.film__typed {
+		/* the box is drawn by a spread shadow, not padding, so it takes no room and the line never moves */
+		border-radius: 0.12em;
+		background: #071038;
+		box-shadow: 0 0 0 0.24em #071038;
+		-webkit-box-decoration-break: clone;
+		box-decoration-break: clone;
+	}
+	.film__ghost {
+		color: transparent;
+	}
+
+	/* The foot: Pause, the chapters (each fills as it plays), Skip. */
+	.film__controls {
+		position: absolute;
+		left: var(--g);
+		right: var(--g);
+		bottom: var(--g);
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: clamp(0.75rem, 2vw, 1.5rem);
+		/* a dark dock, so the chapter names read over any picture (concentric with its 2.75rem buttons) */
+		--dock-pad: 0.5rem;
+		padding: var(--dock-pad) var(--dock-pad) var(--dock-pad) var(--dock-pad);
+		border-radius: calc(1.375rem + var(--dock-pad));
+		background: rgb(4 8 30 / 0.72);
+		transition: opacity 0.5s;
+	}
+	.film[data-ended] .film__controls {
+		opacity: 0;
+		visibility: hidden;
+	}
+	.film__toggle,
+	.film__skip {
+		display: inline-grid;
+		place-items: center;
+		min-width: 2.75rem;
+		height: 2.75rem;
+		border-radius: 999px;
+		color: #f2eedf;
+		background: rgb(4 8 30 / 0.6);
+		box-shadow: inset 0 0 0 1px rgb(242 238 223 / 0.22);
+	}
+	.film__skip {
+		padding-inline: 1.15rem;
+		font-weight: 650;
+	}
+	.film__toggle:hover,
+	.film__skip:hover {
+		background: rgb(242 238 223 / 0.16);
+	}
+	.film__icon {
+		grid-area: 1 / 1;
+		transition:
+			opacity 0.2s,
+			filter 0.2s,
+			scale 0.2s;
+	}
+	.film__icon--play,
+	.film[data-paused] .film__icon--pause {
+		opacity: 0;
+		filter: blur(4px);
+		scale: 0.6;
+	}
+	.film[data-paused] .film__icon--play {
+		opacity: 1;
+		filter: none;
+		scale: 1;
+	}
+	.film__chapters {
+		display: flex;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+	.film__chapters li {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+	.film__chapter {
+		display: flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		width: 100%;
+		min-height: 2.75rem;
+		justify-content: flex-end;
+		padding-bottom: 0.6rem;
+		text-align: left;
+		color: #bcc1d6;
+		font-size: var(--step-small);
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.film__chapter[aria-current] {
+		color: #f2eedf;
+	}
+	.film__chapter:hover {
+		color: #f2eedf;
+	}
+	.film__chapter-name {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.film__track {
+		position: relative;
+		display: block;
+		height: 3px;
+		border-radius: 3px;
+		overflow: hidden;
+		background: rgb(242 238 223 / 0.24);
+	}
+	.film__fill {
+		position: absolute;
+		inset: 0;
+		background: #f5d042;
+		transform: scaleX(0);
+		transform-origin: left center;
+	}
+	@media (max-width: 639px) {
+		/* Five names don't fit a phone: only the current one shows, over its track. */
+		.film__chapter:not([aria-current]) .film__chapter-name {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+		.film__chapters li:has([aria-current]) {
+			flex-grow: 2.4;
+		}
+		.film__sub {
+			bottom: calc(var(--g) + 4.75rem);
+		}
+	}
+
+	/* The last screen: the film has lifted off the page; one sheet offers the two editions. */
+	.film__end {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		translate: -50% -50%;
+		width: min(30rem, calc(100% - 2 * var(--g)));
+		padding: clamp(1.5rem, 4vw, 2.25rem);
+		border-radius: 1.75rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		color: var(--ink);
+	}
+	.film__end[hidden] {
+		display: none;
+	}
+	.film__end-heading {
+		font-size: clamp(1.9rem, 1.4rem + 1.6vw, 2.6rem);
+		font-weight: 800;
+		font-stretch: 125%;
+		line-height: 1;
+		letter-spacing: -0.03em;
+		outline: none;
+	}
+	.film__end-after {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.film__editions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.375rem;
+		padding: 0.375rem;
+		border-radius: 1.375rem; /* 1rem buttons + the 0.375rem gap round them */
+		background: rgb(242 238 223 / 0.08);
+	}
+	.film__edition {
+		min-height: 3.25rem;
+		border-radius: 1rem;
+		font-weight: 700;
+		font-stretch: 112%;
+		color: var(--ink);
+	}
+	.film__edition[aria-pressed="true"] {
+		background: #f5d042;
+		color: #0a174e;
+	}
+	.film__end-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		padding-top: 0.25rem;
+	}
+	.film__back,
+	.film__again {
+		min-height: 2.75rem;
+		padding-inline: 1.25rem;
+		border-radius: 999px;
+		font-weight: 650;
+	}
+	.film__back {
+		background: #f2eedf;
+		color: #0a174e;
+	}
+	.film__again {
+		box-shadow: inset 0 0 0 1px rgb(242 238 223 / 0.3);
+	}
+	.film__end :focus-visible,
+	.film__controls :focus-visible {
+		outline: 2px solid #f5d042;
+		outline-offset: 3px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.film__card {
+			transform: none;
+		}
+	}
+	:global(html.reduce-motion) .film__card {
+		transform: none;
+	}
+</style>
+
+<script>
+	import { frameAt, plan, PACE, shotAt } from "@/lib/look/story";
+	import { reducedMotion } from "@/lib/prefs";
+
+	let stop: (() => void) | undefined;
+
+	function init() {
+		stop?.();
+		stop = undefined;
+		const opener = document.querySelector<HTMLButtonElement>("[data-film-open]");
+		const dialog = document.querySelector<HTMLDialogElement>("[data-film]");
+		if (!opener || !dialog) return;
+		const $ = <T extends Element>(sel: string) => dialog.querySelector<T>(sel)!;
+		const film: { pause: string; play: string; chapters: { name: string; lines: string[] }[] } = JSON.parse($("[data-film-words]").textContent!);
+		const stage = $<HTMLElement>("[data-film-stage]");
+		const card = $<HTMLElement>("[data-film-card]");
+		const typed = $<HTMLElement>("[data-typed]");
+		const ghost = $<HTMLElement>("[data-ghost]");
+		const live = $<HTMLElement>("[data-film-live]");
+		const toggle = $<HTMLButtonElement>("[data-film-toggle]");
+		const end = $<HTMLElement>("[data-film-end]");
+		const posterShot = $<HTMLImageElement>("[data-film-poster-shot]");
+		const chapterButtons = [...dialog.querySelectorAll<HTMLButtonElement>("[data-film-chapter]")];
+		const fills = chapterButtons.map((b) => b.querySelector<HTMLElement>("[data-fill]")!);
+		const shots = film.chapters.map((_, c) => [...dialog.querySelectorAll<HTMLImageElement>(`[data-shot^="${c}-"]`)]);
+
+		let story = plan(film.chapters, PACE);
+		let t = 0;
+		let raf = 0;
+		let last = 0;
+		let paused = false;
+		let shown: HTMLImageElement = posterShot;
+		let shownCue = -2;
+		let shownChars = -1;
+		let shownChapter = -1;
+		let cardOn = false;
+
+		/** Give a chapter's pictures their source (the first time it is near), so only what is about to play loads. */
+		const load = (c: number) => {
+			for (const img of shots[c] ?? []) {
+				if (img.dataset.srcset) {
+					img.srcset = img.dataset.srcset;
+					delete img.dataset.srcset;
+					img.decode().catch(() => {});
+				}
+			}
+		};
+
+		const draw = () => {
+			if (t < 0) return; // the opening move: the poster still
+			const f = frameAt(story, t);
+			if (f.done) return finish();
+			if (f.chapter !== shownChapter) {
+				shownChapter = f.chapter;
+				load(f.chapter);
+				load(f.chapter + 1);
+				card.textContent = film.chapters[f.chapter].name;
+				chapterButtons.forEach((b, i) => (i === f.chapter ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
+			}
+			const shot = shotAt(f.progress, shots[f.chapter].length);
+			const img = shots[f.chapter][shot.index];
+			if (img !== shown) {
+				shown.classList.remove("is-on");
+				img.classList.add("is-on");
+				shown = img;
+			}
+			// A slow push on the picture that is up: transform only, one write a frame.
+			if (!reducedMotion()) img.style.transform = `scale(${(1.03 + 0.07 * shot.progress).toFixed(4)})`;
+			const onCard = f.cue < 0 && t - story.chapters[f.chapter].start < PACE.card;
+			if (onCard !== cardOn) {
+				cardOn = onCard;
+				card.toggleAttribute("data-on", onCard);
+				dialog.toggleAttribute("data-card", onCard);
+			}
+			if (f.cue !== shownCue || f.chars !== shownChars) {
+				const text = f.cue >= 0 ? story.cues[f.cue].text : "";
+				typed.textContent = text.slice(0, f.chars);
+				ghost.textContent = text.slice(f.chars);
+				if (f.cue !== shownCue && text) live.textContent = text;
+				shownCue = f.cue;
+				shownChars = f.chars;
+			}
+			fills.forEach((fill, i) => (fill.style.transform = `scaleX(${i < f.chapter ? 1 : i > f.chapter ? 0 : f.progress.toFixed(4)})`));
+		};
+
+		const tick = (now: number) => {
+			raf = requestAnimationFrame(tick);
+			t += Math.min(now - (last || now), 100); // a hidden tab doesn't skip the film ahead
+			last = now;
+			draw();
+		};
+		const play = () => {
+			paused = false;
+			dialog.removeAttribute("data-paused");
+			toggle.setAttribute("aria-label", film.pause);
+			last = 0;
+			if (!raf) raf = requestAnimationFrame(tick);
+		};
+		const pause = () => {
+			paused = true;
+			dialog.setAttribute("data-paused", "");
+			toggle.setAttribute("aria-label", film.play);
+			cancelAnimationFrame(raf);
+			raf = 0;
+		};
+
+		/** The end: the film lifts, the page shows through, and the edition choice stands on it. */
+		function finish() {
+			pause();
+			dialog.removeAttribute("data-card");
+			dialog.setAttribute("data-ended", "");
+			dialog.removeAttribute("data-own-backdrop"); // the field behind wakes up again
+			end.hidden = false;
+			syncEditions();
+			end.querySelector<HTMLElement>("h2")?.focus();
+		}
+		const syncEditions = () => {
+			const solid = document.documentElement.classList.contains("solid");
+			end.querySelectorAll<HTMLButtonElement>("[data-edition]").forEach((b) => b.setAttribute("aria-pressed", String((b.dataset.edition === "solid") === solid)));
+		};
+
+		const start = (from = 0) => {
+			// Lines appear whole under reduced motion; otherwise they write themselves.
+			story = plan(film.chapters, reducedMotion() ? { ...PACE, cps: Infinity } : PACE);
+			t = from;
+			shownChapter = -1;
+			shownCue = -2;
+			cardOn = false;
+			card.removeAttribute("data-on");
+			dialog.removeAttribute("data-card");
+			dialog.removeAttribute("data-ended");
+			dialog.setAttribute("data-own-backdrop", ""); // pauses the blueprint field while the film covers it
+			end.hidden = true;
+			play();
+		};
+
+		const open = () => {
+			shown.classList.remove("is-on");
+			posterShot.classList.add("is-on");
+			shown = posterShot;
+			dialog.showModal();
+			// The plate opens to the whole screen: from the plate's place and size, transform only.
+			const frame = opener.querySelector(".plate__frame")!.getBoundingClientRect();
+			if (!reducedMotion()) {
+				const s = frame.width / innerWidth;
+				stage.animate(
+					[
+						{ transform: `translate(${frame.left}px, ${frame.top}px) scale(${s})`, opacity: 0.6 },
+						{ transform: "none", opacity: 1 },
+					],
+					{ duration: 750, easing: "cubic-bezier(0.65, 0, 0.35, 1)" },
+				);
+			}
+			start(-700); // the opening move plays before the first chapter
+		};
+		const close = () => {
+			if (dialog.open) dialog.close();
+		};
+		const onClose = () => {
+			pause();
+			dialog.removeAttribute("data-own-backdrop");
+			dialog.removeAttribute("data-ended");
+			end.hidden = true;
+			opener.focus();
+		};
+
+		const onClick = (event: MouseEvent) => {
+			const target = (event.target as Element).closest<HTMLElement>("button");
+			if (!target) return;
+			if (target.matches("[data-film-skip], [data-film-close]")) close();
+			else if (target.matches("[data-film-toggle]")) (paused ? play : pause)();
+			else if (target.matches("[data-film-again]")) start(0);
+			else if (target.dataset.filmChapter) {
+				t = story.chapters[Number(target.dataset.filmChapter)].start;
+				draw();
+			} else if (target.dataset.edition) {
+				// Settings' own Glass/Solid switch does the work (it applies the look and remembers it).
+				document.querySelector<HTMLInputElement>(`input[name="setting-style"][value="${target.dataset.edition}"]`)?.click();
+				syncEditions();
+			}
+		};
+
+		opener.addEventListener("click", open);
+		dialog.addEventListener("click", onClick);
+		dialog.addEventListener("close", onClose);
+		stop = () => {
+			cancelAnimationFrame(raf);
+			opener.removeEventListener("click", open);
+			dialog.removeEventListener("click", onClick);
+			dialog.removeEventListener("close", onClose);
+			if (dialog.open) dialog.close();
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => stop?.());
+</script>
