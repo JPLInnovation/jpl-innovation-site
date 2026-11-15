@@ -1,0 +1,71 @@
+---
+/**
+ * The drawing's title block (the spec's idea: every page is a sheet of JPL's drawing set). A strip of glass cells, each
+ * a caption over its value: project, drawn by, checked by, date, revision, status… The words come from the page's own
+ * file in src/text/; this only lays them out. Cells wrap to fit; on a phone they stack two across.
+ *
+ *   <TitleBlock rows={[{ label: "Project", value: "F450" }, { label: "Revision", value: "C" }]} />
+ *   <TitleBlock rows={…} wide />   the last cell spans the rest of its row (a long value, a link)
+ */
+interface Row {
+	label: string;
+	value: string;
+	href?: string;
+}
+interface Props {
+	rows: Row[];
+	label?: string; // the accessible name of the block, e.g. "Title block"
+	wide?: boolean;
+	class?: string;
+}
+const { rows, label, wide = false, class: className } = Astro.props;
+---
+
+<dl class:list={["title-block sheet rounded-2xl", { "title-block--wide": wide }, className]} aria-label={label}>
+	{
+		rows.map((row) => (
+			<div class="title-block__cell">
+				<dt>{row.label}</dt>
+				<dd>{row.href ? <a href={row.href}>{row.value}</a> : row.value}</dd>
+			</div>
+		))
+	}
+</dl>
+
+<style>
+	.title-block {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(9.5rem, 45%), 1fr));
+		overflow: hidden;
+		margin: 0;
+	}
+	.title-block--wide .title-block__cell:last-child {
+		grid-column: span 2;
+	}
+	.title-block__cell {
+		/* the drawing's ruled cells: a hairline right and below each; the block clips the outer ones */
+		box-shadow:
+			1px 0 0 var(--sheet-edge),
+			0 1px 0 var(--sheet-edge);
+		padding: 0.85rem 1.1rem 0.95rem;
+		min-width: 0;
+	}
+	dt {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	dd {
+		margin: 0.2rem 0 0;
+		font-size: clamp(1rem, 0.95rem + 0.25vw, 1.15rem);
+		font-weight: 650;
+		font-stretch: 110%;
+		line-height: 1.25;
+		overflow-wrap: anywhere;
+	}
+	dd a {
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 4px;
+	}
+</style>
