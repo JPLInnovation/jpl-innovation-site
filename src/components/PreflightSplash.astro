@@ -1,0 +1,595 @@
+---
+/**
+ * PRE-FLIGHT: the hook that opens the site (spec §11), the full version of the JPL intro (IntroSplash.astro puts this
+ * inside its overlay; src/lib/splash.ts decides it plays: once per visit). Played by src/scripts/preflight.ts; the
+ * timing is src/lib/look/preflight.ts; the words are src/text/site.ts (`preflight`).
+ *
+ *   arming   night. The F450's top view (the vector of public/assets/f450-drone.svg, as lines) draws itself part by
+ *            part, each part called out as it appears; the boot log ticks off its real checks; the altitude drums
+ *            roll from 000 to 120 m.
+ *   prompt   "Click, scroll or press any key to take off." (4 s, then it goes by itself)
+ *   take-off the drone rises at you, XIN CHÀO! comes up on the hangar doors, the doors part onto the three verbs and
+ *            the sticker (IntroSplash's opening page), a line draws itself round the first glass sheet, and the logo
+ *            lands in the header.
+ *
+ * `<PreflightSplash />` is the scene; `<PreflightSplash sticker />` is the spinning sticker (it sits by the verbs).
+ */
+import { preflight as text } from "@/text/site";
+
+interface Props {
+	sticker?: boolean;
+}
+const { sticker = false } = Astro.props;
+
+/* The F450's top view, from public/assets/f450-drone.svg: centre 200,200, motors 100 out on the diagonals. */
+const f = (n: number) => Math.round(n * 10) / 10;
+const circle = (cx: number, cy: number, r: number) => `M${f(cx - r)} ${f(cy)}a${r} ${r} 0 1 0 ${f(2 * r)} 0a${r} ${r} 0 1 0 ${f(-2 * r)} 0`;
+const rect = (x: number, y: number, w: number, h: number, r: number) =>
+	`M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+/** x, y, the blade's angle at rest, its turning direction (two each way). */
+const motors = [
+	[100, 100, 25, 1],
+	[300, 100, -40, -1],
+	[100, 300, 70, -1],
+	[300, 300, -10, 1],
+] as const;
+/** An arm's two long edges (the bar is 14 wide), from the plate's rounded corner to the motor's hub. */
+const arm = (mx: number, my: number) => {
+	const u = [Math.sign(mx - 200) * Math.SQRT1_2, Math.sign(my - 200) * Math.SQRT1_2];
+	const p = [-u[1] * 7, u[0] * 7];
+	const at = (s: number, side: number) => `${f(200 + u[0] * s + p[0] * side)} ${f(200 + u[1] * s + p[1] * side)}`;
+	return [1, -1].map((side) => `M${at(61.8, side)}L${at(123.8, side)}`);
+};
+const parts = {
+	frame: [rect(148, 148, 104, 104, 26), ...motors.flatMap(([x, y]) => arm(x, y))],
+	motors: motors.flatMap(([x, y]) => [circle(x, y, 19), circle(x, y, 6)]),
+	controller: [rect(179, 179, 42, 42, 6), circle(200, 200, 4)],
+	camera: [rect(187, 136, 26, 16, 4), circle(200, 144, 4)],
+	modem: ["M190 246a14 14 0 0 1 20 0", "M182 254a26 26 0 0 1 36 0"],
+};
+/** Callouts: where each leader starts on the drawing, and the height of its label (in the drawing's units). */
+const callouts = [
+	{ id: "props", at: [357, 52], row: 34 },
+	{ id: "camera", at: [213, 144], row: 100 },
+	{ id: "controller", at: [221, 190], row: 166 },
+	{ id: "frame", at: [270, 260], row: 232 },
+	{ id: "modem", at: [218, 254], row: 298 },
+	{ id: "motors", at: [319, 300], row: 364 },
+] as const;
+/** The 120 m the reduced-motion still shows. */
+const still = [1, 2, 0];
+---
+
+{
+	sticker ? (
+		<div class="pf-sticker" data-pf-sticker aria-hidden="true">
+			<svg class="pf-sticker-spin" viewBox="0 0 200 200">
+				<circle cx="100" cy="100" r="99" class="pf-sticker-disc" />
+				<path id="pf-ring" d="M100 100m-79 0a79 79 0 1 1 158 0a79 79 0 1 1 -158 0" fill="none" />
+				<text class="pf-sticker-text">
+					<textPath href="#pf-ring" textLength="494" lengthAdjust="spacing">
+						{text.sticker}
+					</textPath>
+				</text>
+				<g class="pf-sticker-drone" transform="translate(64 64) scale(0.18)">
+					{[...parts.frame, ...motors.map(([x, y]) => circle(x, y, 80)), parts.controller[0]].map((d) => (
+						<path d={d} vector-effect="non-scaling-stroke" />
+					))}
+				</g>
+			</svg>
+		</div>
+	) : (
+		<div class="pf" data-pf aria-hidden="true">
+			{/* The hangar doors: the night behind the arming, and "XIN CHÀO!" on both halves. */}
+			{["l", "r"].map((side) => (
+				<div class={`pf-door pf-door--${side}`} data-pf-door={side}>
+					<p class="pf-hello">
+						<span data-pf-hello>{text.hello}</span>
+					</p>
+				</div>
+			))}
+
+			<div class="pf-arm" data-pf-arm>
+				<span class="pf-trim pf-trim--tl" data-pf-in />
+				<span class="pf-trim pf-trim--tr" data-pf-in />
+				<span class="pf-trim pf-trim--bl" data-pf-in />
+				<span class="pf-trim pf-trim--br" data-pf-in />
+
+				<div class="pf-log" data-pf-in>
+					<p class="pf-title">
+						<strong>{text.title}</strong> <span>{text.drone}</span>
+					</p>
+					<table>
+						<tbody>
+							{text.checks.map((c) => (
+								<tr data-pf-row>
+									<th scope="row">{c.what}</th>
+									<td>{c.result}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				</div>
+
+				<figure class="pf-drone" data-pf-drone>
+					<svg viewBox="0 0 400 400" class="pf-wire" data-pf-wire>
+						{motors.map(([x, y]) => (
+							<path class="pf-line pf-disc" data-pf-disc d={circle(x, y, 80)} pathLength="1" vector-effect="non-scaling-stroke" />
+						))}
+						<g data-pf-part="frame">
+							{parts.frame.map((d) => (
+								<path class="pf-line" d={d} pathLength="1" vector-effect="non-scaling-stroke" />
+							))}
+						</g>
+						<g data-pf-part="motors">
+							{parts.motors.map((d) => (
+								<path class="pf-line" d={d} pathLength="1" vector-effect="non-scaling-stroke" />
+							))}
+						</g>
+						<g data-pf-part="props">
+							{motors.map(([x, y, angle, dir]) => (
+								<g transform={`translate(${x} ${y}) rotate(${angle})`}>
+									<path class="pf-line pf-blade" data-pf-blade={dir} d="M-74 0a74 6.5 0 1 0 148 0a74 6.5 0 1 0 -148 0" pathLength="1" vector-effect="non-scaling-stroke" />
+								</g>
+							))}
+						</g>
+						{(["controller", "camera", "modem"] as const).map((id) => (
+							<g data-pf-part={id}>
+								{parts[id].map((d) => (
+									<path class="pf-line" d={d} pathLength="1" vector-effect="non-scaling-stroke" />
+								))}
+							</g>
+						))}
+						{callouts.map(({ id, at, row }) => (
+							<g class="pf-callout" data-pf-callout={id}>
+								<path class="pf-line pf-leader" d={`M${at[0]} ${at[1]}L414 ${row}H434`} pathLength="1" vector-effect="non-scaling-stroke" />
+								<circle class="pf-dot" cx={at[0]} cy={at[1]} r="3.2" />
+							</g>
+						))}
+					</svg>
+					<ul class="pf-labels">
+						{callouts.map(({ id, row }) => (
+							<li data-pf-label={id} style={`--row: ${(row / 400) * 100}%`}>
+								{text.parts[id]}
+							</li>
+						))}
+					</ul>
+				</figure>
+
+				<div class="pf-alt" data-pf-in>
+					<p class="pf-alt-line">
+						{text.altitude}{" "}
+						<span class="pf-status" data-pf-status data-state="cruise">
+							<span class="pf-s-climb">{text.climbing}</span>
+							<span class="pf-s-cruise">{text.cruise}</span>
+						</span>
+					</p>
+					<p class="pf-alt-num" data-pf-alt data-alt="120">
+						{still.map((d) => (
+							<span class="pf-drum">
+								<span class="pf-strip" data-pf-strip style={`--d: ${d}`}>
+									{[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => (
+										<span>{n}</span>
+									))}
+								</span>
+							</span>
+						))}
+						<span class="pf-unit">{text.unit}</span>
+					</p>
+				</div>
+				<p class="pf-prompt" data-pf-prompt>
+					<span class="pf-prompt-fine">{text.prompt}</span>
+					<span class="pf-prompt-touch">{text.promptTouch}</span>
+				</p>
+			</div>
+
+			<svg class="pf-edge" data-pf-edge-svg>
+				<path data-pf-edge pathLength="1" vector-effect="non-scaling-stroke" />
+			</svg>
+		</div>
+	)
+}
+
+<style is:global>
+	/*
+	 * The scene only exists in the full version (html.intro-full) while it is not the logo's fast one (splash-fast: a
+	 * refresh, or a script that came late). One ink on the night: paper; the one mark: yellow.
+	 */
+	[data-splash="jpl"] {
+		--pf-night: oklch(0.15 0.045 268);
+		--pf-ink: #f2eedf;
+		--pf-soft: oklch(0.8 0.02 95);
+		--pf-mark: #f5d042;
+	}
+	.pf,
+	.pf-sticker {
+		display: none;
+	}
+	html.intro-full:not(.splash-fast) [data-splash="jpl"] .pf {
+		display: block;
+		position: absolute;
+		inset: 0;
+		z-index: 2;
+		pointer-events: none;
+		color: var(--pf-ink);
+		font-family: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+	}
+	html.intro-full:not(.splash-fast):not(.splash-reduced) [data-splash="jpl"] .pf-sticker {
+		display: block;
+	}
+
+	/* ---------- The hangar doors ---------- */
+	.pf-door {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		place-items: center;
+		background: var(--pf-night);
+		will-change: transform;
+	}
+	/* Each half reaches 1px past the middle, so no hairline of the field shows between them while they are shut. */
+	.pf-door--l {
+		clip-path: inset(0 calc(50% - 1px) 0 0);
+	}
+	.pf-door--r {
+		clip-path: inset(0 0 0 calc(50% - 1px));
+	}
+	.pf-hello {
+		margin: 0;
+		overflow: hidden; /* the words come up from below their own line */
+		padding: 0 0.04em;
+		font-size: 13.6vw;
+		font-weight: 900;
+		font-stretch: 125%;
+		line-height: 0.9;
+		letter-spacing: -0.03em;
+		white-space: nowrap;
+	}
+	.pf-hello span {
+		display: block;
+		transform: translateY(135%); /* far enough that the À's accent is hidden too */
+	}
+
+	/* ---------- Arming ---------- */
+	.pf-arm {
+		position: absolute;
+		inset: 0;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-rows: auto minmax(0, 1fr) auto auto;
+		grid-template-areas:
+			"log drone"
+			". drone"
+			"alt drone"
+			"prompt drone";
+		column-gap: 2rem;
+		padding: clamp(28px, 4.2vw, 64px);
+	}
+	.pf-trim {
+		position: absolute;
+		width: 18px;
+		height: 18px;
+		border: 0 solid color-mix(in oklch, var(--pf-ink) 45%, transparent);
+	}
+	.pf-trim--tl {
+		top: 14px;
+		left: 14px;
+		border-width: 1px 0 0 1px;
+	}
+	.pf-trim--tr {
+		top: 14px;
+		right: 14px;
+		border-width: 1px 1px 0 0;
+	}
+	.pf-trim--bl {
+		bottom: 14px;
+		left: 14px;
+		border-width: 0 0 1px 1px;
+	}
+	.pf-trim--br {
+		bottom: 14px;
+		right: 14px;
+		border-width: 0 1px 1px 0;
+	}
+
+	.pf-log {
+		grid-area: log;
+		font-size: 15px;
+		line-height: 1.45;
+	}
+	.pf-title {
+		margin: 0 0 0.9rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 0.6rem;
+	}
+	.pf-title strong {
+		font-weight: 700;
+	}
+	.pf-title span {
+		color: var(--pf-soft);
+	}
+	.pf-log table {
+		border-collapse: collapse;
+		font-variant-numeric: tabular-nums;
+	}
+	.pf-log th,
+	.pf-log td {
+		padding: 0.18rem 0;
+		border-top: 1px solid color-mix(in oklch, var(--pf-ink) 14%, transparent);
+		text-align: left;
+		vertical-align: baseline;
+	}
+	.pf-log th {
+		padding-right: 2.2rem;
+		font-weight: 400;
+		color: var(--pf-soft);
+	}
+	.pf-log td {
+		font-weight: 650;
+		color: var(--pf-mark);
+	}
+	.pf-log tr {
+		transition:
+			opacity 0.2s ease-out,
+			transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+	}
+
+	/* The drawing, with its callouts to its right (the leaders run out of the drawing's square). */
+	.pf-drone {
+		grid-area: drone;
+		align-self: center;
+		position: relative;
+		width: min(62dvh, 36vw);
+		margin: 0 clamp(170px, 15vw, 230px) 0 0;
+	}
+	.pf-wire {
+		display: block;
+		width: 100%;
+		aspect-ratio: 1;
+		overflow: visible;
+		fill: none;
+		stroke: var(--pf-ink);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		transform-origin: 50% 50%;
+		will-change: transform, opacity;
+	}
+	.pf-line {
+		stroke-dasharray: 1;
+	}
+	.pf-disc {
+		stroke-opacity: 0.32;
+		stroke-width: 1;
+	}
+	.pf-blade {
+		transform-box: fill-box;
+		transform-origin: 50% 50%;
+	}
+	.pf-leader {
+		stroke-opacity: 0.5;
+		stroke-width: 1;
+	}
+	.pf-dot {
+		fill: var(--pf-mark);
+		stroke: none;
+	}
+	.pf-labels {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 14px;
+		line-height: 1.25;
+	}
+	.pf-labels li {
+		position: absolute;
+		left: calc(100% * 437 / 400);
+		top: var(--row);
+		width: max-content;
+		max-width: clamp(150px, 14vw, 220px);
+		transform: translateY(-50%);
+	}
+
+	/* The altitude: a three-drum counter in the widest, heaviest cut, the drums masked top and bottom. */
+	.pf-alt {
+		grid-area: alt;
+		align-self: end;
+	}
+	.pf-alt-line {
+		margin: 0;
+		font-size: 15px;
+		color: var(--pf-soft);
+	}
+	.pf-status {
+		color: var(--pf-mark);
+		font-weight: 650;
+	}
+	.pf-status[data-state="climb"] .pf-s-cruise,
+	.pf-status[data-state="cruise"] .pf-s-climb {
+		display: none;
+	}
+	.pf-alt-num {
+		display: flex;
+		align-items: baseline;
+		margin: 0.1em 0 0 -0.04em;
+		font-size: min(15vw, 27dvh);
+		font-weight: 800;
+		font-stretch: 125%;
+		line-height: 1;
+		letter-spacing: -0.02em;
+		font-variant-numeric: tabular-nums;
+	}
+	.pf-drum {
+		display: block;
+		height: 1em;
+		overflow: hidden;
+		-webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+		mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+	}
+	.pf-strip {
+		display: block;
+		transform: translateY(calc(var(--d) * -100% / 11));
+		will-change: transform;
+	}
+	.pf-strip span {
+		display: block;
+		height: 1em;
+	}
+	.pf-unit {
+		margin-left: 0.12em;
+		font-size: 0.32em;
+		font-weight: 700;
+		color: var(--pf-mark);
+	}
+	.pf-prompt {
+		grid-area: prompt;
+		margin: 1.1rem 0 0;
+		font-size: clamp(16px, 1.25vw, 19px);
+		font-weight: 600;
+		text-wrap: balance;
+		opacity: 0;
+	}
+	.pf-prompt-touch {
+		display: none;
+	}
+	@media (pointer: coarse) {
+		.pf-prompt-fine {
+			display: none;
+		}
+		.pf-prompt-touch {
+			display: inline;
+		}
+	}
+
+	/* Phones, tablets and narrow windows: log, drawing, altitude, prompt, top to bottom; the callouts become a legend. */
+	@media (max-width: 899px), (max-aspect-ratio: 1/1) {
+		.pf-arm {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto minmax(0, 1fr) auto auto;
+			grid-template-areas: "log" "drone" "alt" "prompt";
+			padding: 32px 16px 28px;
+		}
+		.pf-log {
+			font-size: 13px;
+			line-height: 1.35;
+		}
+		.pf-title {
+			margin-bottom: 0.5rem;
+		}
+		.pf-drone {
+			justify-self: center;
+			align-self: center;
+			width: 100%;
+			margin: 0.75rem 0;
+		}
+		.pf-wire {
+			width: min(100%, 31dvh);
+			margin: 0 auto;
+		}
+		.pf-callout {
+			display: none;
+		}
+		.pf-labels {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			gap: 0.1rem 0.9rem;
+			margin-top: 0.75rem;
+			font-size: 12.5px;
+			text-align: center;
+		}
+		.pf-labels li {
+			position: static;
+			max-width: none;
+			transform: none;
+		}
+		.pf-alt-num {
+			font-size: min(30vw, 13dvh);
+		}
+		.pf-prompt {
+			margin-top: 0.5rem;
+			padding-right: 7.5rem; /* clear of Skip */
+		}
+		/* "XIN" over "CHÀO!", as large as the width allows. */
+		.pf-hello {
+			font-size: 23vw;
+			line-height: 0.88;
+			white-space: normal;
+			text-align: center;
+		}
+	}
+
+	/* ---------- Before the script moves them (the reduced-motion still keeps them all, finished) ---------- */
+	html.splash:not(.splash-reduced) .pf-line {
+		stroke-dashoffset: 1;
+	}
+	html.splash:not(.splash-reduced) :is([data-pf-in], .pf-labels li, .pf-dot) {
+		opacity: 0;
+	}
+	html.splash:not(.splash-reduced) .pf-log tr:not([data-on]) {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+
+	/* ---------- The line drawn round the first glass sheet (its box is set by the script) ---------- */
+	.pf-edge {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+		fill: none;
+		stroke: var(--accent-brand);
+		stroke-width: 2;
+		stroke-dasharray: 1;
+		stroke-dashoffset: 1;
+	}
+
+	/* ---------- The sticker (by the verbs, IntroSplash) ---------- */
+	/* Stuck on at the end of the shortest line, "BUILD IT.", just catching the lines above and below. */
+	.pf-sticker {
+		--size: clamp(92px, 14vw, 200px);
+		position: absolute;
+		z-index: 1;
+		width: var(--size);
+		aspect-ratio: 1;
+		right: -9%;
+		top: calc(50% - var(--size) / 2);
+		will-change: transform;
+	}
+	@media (max-width: 899px), (max-aspect-ratio: 1/1) {
+		/* Under the verbs on a phone, catching the end of "SECURE IT.". */
+		.pf-sticker {
+			--size: clamp(92px, 30vw, 170px);
+			right: 0;
+			top: calc(100% - var(--size) * 0.1);
+		}
+	}
+	.pf-sticker-spin {
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+		animation: pf-spin 14s linear infinite;
+	}
+	@keyframes pf-spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	.pf-sticker-disc {
+		fill: var(--pf-mark);
+	}
+	.pf-sticker-text {
+		fill: #0a174e;
+		font: 700 15.5px "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+		font-stretch: 112%;
+		letter-spacing: 0.04em;
+	}
+	.pf-sticker-drone {
+		fill: none;
+		stroke: #0a174e;
+		stroke-width: 1.4;
+	}
+</style>
