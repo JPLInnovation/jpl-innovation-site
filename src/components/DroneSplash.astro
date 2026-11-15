@@ -218,8 +218,8 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		height: 0.62em;
 		margin-right: 0.5em;
 		border-radius: 50%;
-		background: #1fb0d6;
-		box-shadow: 0 0 8px rgb(31 176 214 / 0.8);
+		background: #f5d042;
+		box-shadow: 0 0 8px rgb(245 208 66 / 0.8);
 		vertical-align: 0.02em;
 	}
 	.ds-bars {
@@ -309,22 +309,22 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		width: 100vw;
 		height: 3px;
 		margin: -1.5px 0 0 -50vw;
-		background: linear-gradient(90deg, transparent, #bff3ff 18%, #fff 50%, #bff3ff 82%, transparent);
-		box-shadow: 0 0 12px 2px rgb(64 200 232 / 0.7);
+		background: linear-gradient(90deg, transparent, #fff1c2 18%, #fff 50%, #fff1c2 82%, transparent);
+		box-shadow: 0 0 12px 2px rgb(245 208 66 / 0.6);
 	}
 	.ds-crt-dot {
 		width: 14px;
 		height: 14px;
 		margin: -7px 0 0 -7px;
 		border-radius: 50%;
-		background: radial-gradient(circle, #fff 0 30%, #7fe3ff 55%, transparent 72%);
-		box-shadow: 0 0 22px 8px rgb(29 151 178 / 0.75);
+		background: radial-gradient(circle, #fff 0 30%, #ffe58a 55%, transparent 72%);
+		box-shadow: 0 0 22px 8px rgb(245 208 66 / 0.7);
 	}
 	.ds-ripple {
 		width: var(--ds-ring, 40vmin);
 		height: var(--ds-ring, 40vmin);
 		margin: calc(var(--ds-ring, 40vmin) / -2) 0 0 calc(var(--ds-ring, 40vmin) / -2);
-		border: 2px solid #4fd6f2;
+		border: 2px solid #f5d042;
 		border-radius: 50%;
 		box-shadow: 0 0 18px rgb(29 151 178 / 0.8), inset 0 0 18px rgb(29 151 178 / 0.5);
 	}
@@ -335,6 +335,35 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		width: min(82vw, calc(64vh * var(--ds-ratio)));
 	}
 	.ds-letters,
+	/*
+	 * The JPL logo in the site's palette, as in the header (scripts/make-logo-theme.py) and the JPL intro: the drone
+	 * intro is always dark, so the dark wordmark (paper and yellow); the badge is the same everywhere.
+	 */
+	[data-splash="drone"] [fill="#18A2C3"],
+	[data-splash="drone"] [fill="#1AA0C5"] {
+		fill: #f5d042;
+	}
+	[data-splash="drone"] [fill="#F0F9FC"] {
+		fill: #f2eedf;
+	}
+	[data-splash="drone"] [fill="#F0F8FC"] {
+		fill: #fffae6;
+	}
+	[data-splash="drone"] [fill="#0D3F4D"] {
+		fill: #1b2d6e;
+	}
+	[data-splash="drone"] [fill="#071F23"] {
+		fill: #071038;
+	}
+	[data-splash="drone"] [stroke="#1AA0C5"] {
+		stroke: #f5d042;
+	}
+	[data-splash="drone"] [stroke="#F0F8FC"] {
+		stroke: #fffae6;
+	}
+	[data-splash="drone"] .ds-badge-svg stop {
+		stop-color: #f5d042;
+	}
 	.ds-badge-svg {
 		position: absolute;
 		inset: 0;

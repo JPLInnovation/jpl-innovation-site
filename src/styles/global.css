@@ -104,6 +104,24 @@
 	--accent-brand: #f5d042;
 	--mark: #f5d042;
 
+	/*
+	 * The older names again: a var() in a custom property is resolved where it is declared, so a section that forces
+	 * the dark look inside the light theme (the drone and FRC chapters) needs them restated here, or it would keep the
+	 * light theme's navy text on its dark ground.
+	 */
+	--background: var(--field);
+	--foreground: var(--ink);
+	--card: var(--sheet);
+	--card-foreground: var(--ink);
+	--popover: var(--sheet);
+	--popover-foreground: var(--ink);
+	--secondary: var(--field-2);
+	--secondary-foreground: var(--ink);
+	--muted: var(--field-2);
+	--muted-foreground: var(--ink-soft);
+	--accent: var(--mark);
+	--accent-foreground: #0a174e;
+	--highlight: var(--accent-brand);
 	--primary: var(--mark); /* the yellow action, navy text on it */
 	--primary-foreground: #0a174e;
 	--destructive: #f0596b;

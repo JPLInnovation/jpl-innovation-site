@@ -243,6 +243,23 @@ from the team site; 4 Members, About, 404; 5 motion and smooth scroll; 6 the 3D 
   closes as before (Escape, outside tap, link tap). Expected: PASS.
 - [ ] **Step 6: Commit** `git commit -m "Look: the header as a glass strip with the liquid pill"`
 
+### Task 6b: Every logo in the palette (added by the owner mid-phase)
+
+The owner: "everything to be fit in the theme, including all the logos ... if you change the theme then you have to
+render all of the logo again", and "the logo in the refresh animation looks like some part ripped off".
+
+- `scripts/make-logo-theme.py` (Python; replaces `make-logo-assets.mjs`) renders every logo file from the original
+  artwork: `jpl-logo-{dark,light}.png` and `-480.webp` (header, studio wall, desk badge, member badges), favicon and
+  touch icon; trimmed exactly to the intro SVG's view box (687 x 248) so the intro lands without a jump.
+  Dark: "JPL" paper, "INNOVATION" yellow; light: navy and gold `#A98500`; the badge navy, cream and yellow in both.
+- The intro's vector logo, the drone intro's badge and stacked wordmark: the artwork's fills mapped to the same colours
+  in CSS; the JPL intro on the site's own field in each theme; its cards and text on the theme's ink; no monospace.
+- The torn look: letters now rise 6 px and fade in whole on one baseline (no scale, no overshoot), and the typing bar
+  is gone.
+- Link preview (`make-og.mjs`) and the theme-colour tags in the new palette.
+- Found on the way: a forced-dark section inside the light theme kept navy text (contrast 1.07); `.dark` now restates
+  the older token names. Check `check_forced_dark` (RED 1.07, GREEN 15.54).
+
 ### Task 7: Phase gate
 
 **Files:** none new.

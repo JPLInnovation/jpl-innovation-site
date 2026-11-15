@@ -7,7 +7,8 @@
  *            as the screen lights up behind it, so it never disappears into the navy.
  *   boot     the ring draws itself round, the monitor outline draws on and fills, the screen flickers on
  *            with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
- *   type-on  J P L, a short pause, I N N O V A T I O N, with a cyan cursor that blinks twice.
+ *   type-on  J P L, a short pause, I N N O V A T I O N: each whole letter rises a few pixels and fades in on the
+ *            word's baseline (no scale, no overshoot, no cursor: mid-way, the word must never look torn).
  *   slogan   "Sketch it. Build it. Secure it." comes in under the logo.
  *   hold     the opening page: the timeline stops (ctx.hold). A first visit on a computer that could run the 3D is
  *            asked 3D or Classic here (BaseLayout put html.choose-experience on); later visits pause for a beat.
@@ -213,54 +214,18 @@ function play(ctx: SplashContext) {
 	/* ---------- Type-on (design 1.8–2.6 s) ---------- */
 	const letterIds = ["J", "P", "L", "I1", "N1", "N2", "O1", "V", "A", "T", "I2", "O2", "N3"];
 	const letterStart = (k: number) => (k < 3 ? 1.8 + k * 0.05 : 2.04 + (k - 3) * 0.045);
-	const boxes = letterIds.map((id) => $(id)!.getBBox());
 	letterIds.forEach((id, k) => {
 		tween(
 			$(id),
 			[
-				{ opacity: 0, translate: "0 14px", scale: "0.8" },
-				{ opacity: 1, translate: "0 0", scale: "1" },
+				{ opacity: 0, translate: "0 6px" },
+				{ opacity: 1, translate: "0 0" },
 			],
 			letterStart(k),
-			0.34,
-			E.outBackSoft,
+			0.3,
+			E.out,
 		);
 	});
-	// Cursor: glides to just after each new letter, blinks twice after the last one, then fades.
-	// (Left out of the fast version: its blinks are the slow part.)
-	const cursor = ctx.mode === "full" ? $("cursor") : null;
-	if (cursor) {
-		const top = Math.min(...boxes.map((b) => b.y));
-		const bottom = Math.max(...boxes.map((b) => b.y + b.height));
-		cursor.setAttribute("y", String(top));
-		cursor.setAttribute("height", String(bottom - top));
-		cursor.setAttribute("width", "2.6");
-		const x = (k: number) => `${boxes[k].x + boxes[k].width + 6}px 0`;
-		const t0 = 1.74;
-		const t1 = 2.84;
-		const off = (t: number) => (t - t0) / (t1 - t0);
-		const glide: Frames = [{ translate: `${boxes[0].x - 8}px 0`, offset: 0, easing: E.out }];
-		letterIds.forEach((_, k) => glide.push({ translate: x(k), offset: off(letterStart(k) + 0.06), easing: E.out }));
-		glide.push({ translate: x(letterIds.length - 1), offset: 1 });
-		tween(cursor, glide, t0, t1 - t0, "linear");
-		const blink: Array<[number, number]> = [
-			[1.74, 0],
-			[1.8, 1],
-			[2.5, 1],
-			[2.54, 0],
-			[2.6, 1],
-			[2.66, 0],
-			[2.72, 1],
-			[2.84, 0],
-		];
-		tween(
-			cursor,
-			blink.map(([t, o]) => ({ opacity: o, offset: off(t), easing: E.inOut })),
-			t0,
-			t1 - t0,
-			"linear",
-		);
-	}
 
 	/* ---------- Hand-off (design 2.96–3.78 s) ---------- */
 	tween(

@@ -2,7 +2,7 @@
 // Run with: node scripts/resize-images.mjs   (re-run after replacing one of these images)
 // The originals stay for "open full size" links; pages and the 3D textures use the copies.
 // Widths must match src/lib/images.ts (srcset), src/components/Logo.astro and the texture paths in
-// src/lib/three/models/badges.ts and frc-robot.ts. (sharp comes with Astro, as in make-logo-assets.mjs.)
+// src/lib/three/models/badges.ts and frc-robot.ts. (sharp comes with Astro.)
 import sharp from "sharp";
 
 // The last width of each photo is its full-size WebP copy (used for the largest srcset entry and 3D textures).

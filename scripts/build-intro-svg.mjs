@@ -6,7 +6,7 @@
 // Those vertices are in AE comp space; this converts them back to pixels of the 770x315 JPL_INNOVATION.png
 // (the same file the navbar logo is cropped from), rounds to 0.1 px and writes compact relative path data.
 //
-// The viewBox (49 40 687 248) is exactly the crop that scripts/make-logo-assets.mjs gives the navbar
+// The viewBox (49 40 687 248) is exactly the crop that scripts/make-logo-theme.py gives the navbar
 // PNG (sharp trim offset), so the SVG and the navbar logo line up pixel for pixel at any size.
 //
 // Run:  node scripts/build-intro-svg.mjs ["path/to/build_logo_vector.jsx"] ["path/to/trace_report.json"]
@@ -32,7 +32,7 @@ const C = {
 	ink: report.palette.ink, // #0D3F4D frame, stand base, waves, wrench
 	silver: "#D6D6D6", // "JPL"
 	cyan: "#0CBDDC", // "INNOVATION"
-	navy: "#0E1B2C", // "JPL" in the light-theme navbar logo (make-logo-assets.mjs INK)
+	navy: "#0E1B2C", // "JPL" in the light-theme navbar logo (the light theme's navy, scripts/make-logo-theme.py)
 	metal: "#DCE3EA",
 };
 

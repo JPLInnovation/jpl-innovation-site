@@ -238,21 +238,47 @@ def check_header(browser, base):
     page.goto(base + "/work/", wait_until="load")
     page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
     page.wait_for_timeout(500)
-    is_open = lambda: page.evaluate("document.querySelector('[data-site-header]').hasAttribute('data-menu-open')")
-    page.click("[data-menu-button]"); page.wait_for_timeout(300); a = is_open()
-    page.keyboard.press("Escape"); page.wait_for_timeout(300); b = not is_open()
-    page.click("[data-menu-button]"); page.wait_for_timeout(300)
+    OPEN = "document.querySelector('[data-site-header]').hasAttribute('data-menu-open')"
+
+    def becomes(state):
+        try:
+            page.wait_for_function(OPEN if state else f"!({OPEN})", timeout=2000)
+            page.wait_for_timeout(350)  # let the panel's own transition finish before the next step
+            return True
+        except Exception:
+            return False
+
+    page.click("[data-menu-button]"); a = becomes(True)
+    page.keyboard.press("Escape"); b = becomes(False)
+    page.click("[data-menu-button]"); becomes(True)
     # an outside tap on empty ground (not a link), as a thumb would
-    page.evaluate("document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))"); page.wait_for_timeout(300); c = not is_open()
-    page.click("[data-menu-button]"); page.wait_for_timeout(300)
+    page.evaluate("document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))"); c = becomes(False)
+    page.click("[data-menu-button]"); becomes(True)
     try:
-        page.locator("#mobile-menu a").nth(1).click(timeout=5000)
-        page.wait_for_timeout(800)
-        d = not is_open()
+        # tap the link where it is, as a thumb does: Playwright's click() would scroll it into view first, and the menu
+        # closes itself on scroll by design, so the tap would land on a closed menu
+        x, y = page.evaluate("(() => { const r = document.querySelectorAll('#mobile-menu a')[1].getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; })()")
+        page.mouse.click(x, y)
+        d = becomes(False)
     except Exception as error:
-        print("   menu state:", page.evaluate("(() => { const p = document.getElementById('mobile-menu'); return [p.className, getComputedStyle(p).visibility, document.querySelector('[data-site-header]').hasAttribute('data-menu-open')]; })()"), str(error).splitlines()[0])
+        print("   menu state:", page.evaluate(OPEN), str(error).splitlines()[0])
         d = False
     report(a and b and c and d, f"390 px: the phone menu opens, and closes on Escape, an outside tap and a link tap ({a} {b} {c} {d})")
+    page.close()
+
+
+def check_forced_dark(browser, base):
+    """Sections that force the dark look inside the light theme (the drone chapter) keep light text on their ground."""
+    page = open_page(browser, base, "/work/drone/", "light")
+    r = page.evaluate("""() => { const el = document.querySelector('.dark h1, .dark h2');
+      if (!el) return null; let bg = el, c;
+      while (bg && ((c = getComputedStyle(bg).backgroundColor) === 'rgba(0, 0, 0, 0)' || c === 'transparent')) bg = bg.parentElement;
+      return { text: getComputedStyle(el).color, back: bg ? getComputedStyle(bg).backgroundColor : 'rgb(255, 255, 255)', words: el.textContent.trim().slice(0, 40) }; }""")
+    if r is None:
+        report(False, "/work/drone/ light: no forced-dark heading found")
+    else:
+        ratio = contrast(page.evaluate(RESOLVE, r["text"]), page.evaluate(RESOLVE, r["back"]))
+        report(ratio >= 4.5, f"/work/drone/ light: forced-dark heading {r['words']!r} contrast {ratio:.2f} (>= 4.5)")
     page.close()
 
 
@@ -303,6 +329,7 @@ def main():
                 check_field(browser, base)
                 check_living(browser, base)
                 check_header(browser, base)
+                check_forced_dark(browser, base)
             browser.close()
     finally:
         if proc:

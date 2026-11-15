@@ -15,7 +15,7 @@ const logo = await sharp("public/assets/jpl-logo-dark-480.webp").resize({ width:
 const logoMeta = await sharp(logo).metadata();
 // A navy wash from the top (solid over the wall's own logo), so the big logo reads and the desk shows below it.
 const wash = Buffer.from(
-	`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050a1f" stop-opacity="1"/><stop offset="0.42" stop-color="#050a1f" stop-opacity="0.98"/><stop offset="0.6" stop-color="#050a1f" stop-opacity="0.55"/><stop offset="1" stop-color="#050a1f" stop-opacity="0"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/></svg>`,
+	`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a174e" stop-opacity="1"/><stop offset="0.42" stop-color="#0a174e" stop-opacity="0.98"/><stop offset="0.6" stop-color="#0a174e" stop-opacity="0.55"/><stop offset="1" stop-color="#0a174e" stop-opacity="0"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/></svg>`,
 );
 await sharp(room)
 	.composite([

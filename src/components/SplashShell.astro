@@ -154,6 +154,30 @@ const boot = `(() => {
 		inset: 0;
 		background: radial-gradient(120% 90% at 50% 45%, #1e5bb8 0%, #123a7d 38%, #0a1a3a 78%);
 	}
+	/* The JPL intro sits on the site's own field in either theme (the redesign's palette), lit a little in the middle. */
+	[data-splash="jpl"] .splash-bg {
+		background: radial-gradient(120% 90% at 50% 45%, var(--sheet) 0%, var(--field) 48%, var(--field-2) 82%);
+	}
+	[data-splash="jpl"] .splash-grid {
+		background-image:
+			linear-gradient(color-mix(in oklab, var(--ink) 8%, transparent) 1px, transparent 1px),
+			linear-gradient(90deg, color-mix(in oklab, var(--ink) 8%, transparent) 1px, transparent 1px);
+	}
+	[data-splash="jpl"] .splash-trace {
+		background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent-brand) 60%, transparent), transparent);
+	}
+	[data-splash="jpl"] .splash-trace--v {
+		background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--accent-brand) 55%, transparent), transparent);
+	}
+	[data-splash="jpl"] .splash-skip {
+		border-color: color-mix(in oklab, var(--ink) 22%, transparent);
+		background: color-mix(in oklab, var(--field) 55%, transparent);
+		color: var(--ink);
+	}
+	[data-splash="jpl"] .splash-skip:hover {
+		background: color-mix(in oklab, var(--ink) 10%, transparent);
+		color: var(--ink);
+	}
 	/* The FRC intro sits on the site's dark navy, like the page header it lands in. */
 	[data-splash="frc"] .splash-bg {
 		background: radial-gradient(120% 90% at 50% 42%, #0f2150 0%, #081333 45%, #050a1f 80%);
