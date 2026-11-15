@@ -48,9 +48,9 @@ It speaks Vietnamese and English, and comes in two styles (Glass and Classic) wi
 
 Each computer's owner or user chooses what to share with sharing switches, and nothing beyond that is sent. Lifetime never records screens, keystrokes, browsing or file contents: only awake time, device health and hardware information. All the data stays on the customer's own server, on their own network. There is no cloud service.
 
-## Coming in version 1.2
+## Coming in version 1.2.0
 
-Still being built:
+Development is finished; version 1.2.0 will be released after a short test round. It adds:
 
 - **Energy and cost**: kWh and money (in VND by default, with an editable price per kWh) worked out from real awake hours. Measured where a computer reports real power readings, and estimated from a typical wattage the admin sets otherwise.
 - **Left on after hours**: which computers stayed awake outside school or office hours, and how much energy and money that wasted. An optional per-group policy sends the normal Sleep command only to computers whose owner allowed it, and stops if someone is using the computer.
@@ -58,4 +58,4 @@ Still being built:
 
 ## Where it is now
 
-Pilot deployments, with testing on real customer machines in progress. The server runs on Windows Server or a Windows 10/11 PC; the computers run Windows 10/11.
+The current public version is 1.1.0. Pilot deployments, with testing on real customer machines in progress. The server runs on Windows Server or a Windows 10/11 PC; the computers run Windows 10/11.
