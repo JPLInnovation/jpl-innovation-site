@@ -12,8 +12,9 @@ large empty areas: the marks of a template.
 
 ## References the owner gave
 
-Each reference is the bar to beat, not a model to copy. (Seven in all: Studio Unlmtd, Lifetime Glass, Yeah Right,
-Pradip Labs, Puture, Levi Gavrilut, Forge Automotive, RIY3; each is described where it is used.)
+Each reference is the bar to beat, not a model to copy. (Twelve in all: Studio Unlmtd, Lifetime Glass, Yeah Right, Pradip
+Labs, Puture, Levi Gavrilut, Forge Automotive, RIY3, and for Members Tom de Koning, Jaspreet Singh, Douglus Nguyen,
+JarnKet; each is described where it is used.)
 
 - **Studio Unlmtd** (studio-unlmtd.com, an award site): gigantic heavy headlines set tight, with living colour flowing
   inside the letters (drawn in WebGL canvases); smooth momentum scrolling (Lenis); hard switches between black and
@@ -128,7 +129,7 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 | Drone, Mini drone | general arrangement sheets | the render as a full plate; the title block; the parts lists as real tables; the specs as a total with its receipt (real numbers only) |
 | FRC | the competition sheet | team photo plate, the events as a route, the robot CAD plate; the outreach rows kept |
 | Cybersecurity | the network diagram sheet | the topology as the plate; the CCNA lab kept |
-| Members | the "drawn by / checked by" block | each person as a signature row with a large portrait and their role |
+| Members | the crew sheet | see section 10 |
 | About | the founder's letter | a letter on a glass sheet with a tear-off strip carrying the email |
 | 404 | a missing sheet | "This sheet isn't in the set", with the register to find your way |
 | Footer | the back of the sheet | uncovered as the page slides up; the name at full width in living colour |
@@ -167,7 +168,36 @@ story of a team, told with its real photographs, CAD and builds.
 - **Later, if wanted:** a Vietnamese version of the site (Tiếng Việt), and a narrator voice made in the chat. Both are
   large; not part of this redesign unless the owner asks.
 
-### 10. The hook: Pre-flight (both modes, 2D)
+### 10. Members: the crew sheet, and one sheet per person
+
+References: **Tom de Koning** (his cut-out portrait in a panel of orange light in front of a giant name; a details table
+with one fun true stat, "craft beers discovered"; his name scrolling huge in the footer), **Jaspreet Singh** (a
+cinematic photograph of him that turns from sunset to a starry night as you scroll; a handwritten name; his real life
+and the quotes he lives by), **Douglus Nguyen** (from Saigon: his silhouette filled with ink-wash watercolour, huge
+words split around his body; "From Vietnam with Love"), **JarnKet** (Laos: the greeting "ສະບາຍດີ", Lao weaving as the
+whole design system, a hand-drawn map of Laos beside his intro, skills as a toolkit board, experience as a table). The
+lesson of all four: every one is made from that person's own life. **Ours goes further:** two people on one engineering
+sheet, each with their own journey drawn on the map of Vietnam, signed like engineers sign drawings.
+
+- **Members page, the crew sheet:** two large cut-out portraits, each standing in a beam of the site's blue-gold light in
+  front of their giant name; their roles (JPL and FRC 10951) in the drawing's "Drawn by / Checked by" block, each with a
+  handwritten signature (the site's Caveat). Hover or focus on a person: their light comes up, the other dims to a
+  silhouette, and their name runs across the sheet. Click: their own sheet opens from the portrait.
+- **Each person's own page:**
+  - "Xin chào, mình là Jayden." as the greeting, then the name at full width;
+  - a hand-drawn map of Vietnam marking their places (Jayden: Quảng Trị and Nghệ An, the family's towns, and Saigon) with
+    their path drawn along it as a route (Jayden: LEGO Mindstorms → Python → C++ → CCNA at VnPro);
+  - a cinematic photograph of them that goes from day to night as you scroll (a real photograph only);
+  - skills as a toolkit board with their real levels; achievements as a table; sports as their own panel (team, sport);
+  - one fun true stat each, only from facts the owner gives (none invented);
+  - the story from their file, revealed word by word.
+- **Needed from the owner:** a real portrait of Khoa (today his page uses the team logo), a second, wider photograph of
+  each (for the day-to-night picture), and the fun facts. Portraits are cut out from their background (Higgsfield's
+  remove-background in the chat, or done here). Until a portrait arrives, Khoa's sheet shows his signature and initials
+  large, never a made-up face.
+- Text stays in `src/text/members/*.md`; new fields (places, fun fact, greeting) are added there for the owner to edit.
+
+### 11. The hook: Pre-flight (both modes, 2D)
 
 Reference: **Yeah Right** (yeahright.co): an elevator counter climbs to 100 and you click to enter; its city's greeting
 "Ey up!" splits open; a line grows into the site's frame; a spinning sticker; jokes in his own voice; Pong in the
@@ -257,6 +287,6 @@ change, frame rates measured on the RTX.
 2. The Pre-flight hook, the footer and its game, Home (classic).
 2b. The showcases in their element: the F450 in the sky, the KitBot on the field.
 3. Work and the four project pages.
-4. Members, About with "Play the story", 404.
+4. Members (the crew sheet and each person's sheet), About with "Play the story", 404.
 5. Motion pass, smoothness pass, both themes, phones.
 6. Part 2, the 3D studio: light, real objects, the devices you can enter, the window.
