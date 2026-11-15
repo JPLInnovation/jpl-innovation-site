@@ -4,6 +4,7 @@ The redesign's page checks (docs/superpowers/plans/2026-11-15-redesign-phase1-fo
     npm run build
     python scripts/check-look.py                 starts `astro preview` on port 4391 itself, and stops it after
     python scripts/check-look.py --url URL       or checks a server that is already running
+    python scripts/check-look.py --port 4401     its own preview on another port (for runs side by side)
 
 Each check prints PASS or FAIL with what it measured; the exit code is the number of failures.
 """
@@ -462,11 +463,11 @@ def make_stills(browser, base):
         page.close()
 
 
-def serve():
-    proc = subprocess.Popen("npx astro preview --port 4391", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+def serve(port=4391):
+    proc = subprocess.Popen(f"npx astro preview --port {port}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(60):
         try:
-            urllib.request.urlopen("http://localhost:4391/", timeout=1)
+            urllib.request.urlopen(f"http://localhost:{port}/", timeout=1)
             return proc
         except Exception:
             time.sleep(0.5)
@@ -477,10 +478,11 @@ def serve():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url")
+    parser.add_argument("--port", type=int, default=4391, help="port for the preview it starts (parallel runs need different ones)")
     parser.add_argument("--make-stills", action="store_true", help="write public/look/field-still-*.webp and stop")
     args = parser.parse_args()
-    proc = None if args.url else serve()
-    base = (args.url or "http://localhost:4391").rstrip("/")
+    proc = None if args.url else serve(args.port)
+    base = (args.url or f"http://localhost:{args.port}").rstrip("/")
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=False)
