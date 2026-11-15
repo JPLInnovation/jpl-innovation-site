@@ -12,6 +12,8 @@ large empty areas: the marks of a template.
 
 ## References the owner gave
 
+Each reference is the bar to beat, not a model to copy.
+
 - **Studio Unlmtd** (studio-unlmtd.com, an award site): gigantic heavy headlines set tight, with living colour flowing
   inside the letters (drawn in WebGL canvases); smooth momentum scrolling (Lenis); hard switches between black and
   white sections; full-width project pictures; very large portraits. Taken: the scale, the living colour in the type,
@@ -113,6 +115,54 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 The 3D studio's own home page is a separate project (Poly Haven models and the chat prompts); its header, footer and
 other pages are these.
 
+### 8. The hook: Pre-flight (both modes, 2D)
+
+Reference: **Yeah Right** (yeahright.co): an elevator counter climbs to 100 and you click to enter; its city's greeting
+"Ey up!" splits open; a line grows into the site's frame; a spinning sticker; jokes in his own voice; Pong in the
+footer. It works because every piece is about him. **Ours goes further:** the counter is a real flight, the greeting is
+Saigon's, the hand-off lands inside the 3D studio, and the footer game is a drone to land.
+
+1. **Arming.** Near-black field, one ink. A rolling ALTITUDE counter in giant wide type climbs 000 → 120 m, "climbing",
+   then "cruise altitude"; under it the real F450 numbers tick by (4G link, 720p at 60 fps). Optional sound, off by
+   default: a soft rotor spin-up.
+2. **Take off.** "Click, scroll or press any key to take off." Anything the visitor does enters.
+3. **"XIN CHÀO!"** at full width splits open sideways (the letters part like the doors of a hangar).
+4. Behind it: **SKETCH IT. BUILD IT. SECURE IT.**, with a spinning sticker "JPL INNOVATION · BUILDING STUFF IN SAIGON
+   SINCE 2023" (the year to be confirmed).
+5. A line draws itself into the edge of the first glass sheet, and the page is there. In 3D mode the altitude ends as
+   the camera drops into the studio, one continuous move.
+
+Rules: once per visit; skippable at any moment; reduce-motion gets a one-second still; it replaces today's logo intro;
+nothing heavy loads during it; under 4 seconds before the take-off prompt.
+
+**Personality lines,** in the site's own voice, only true ones, approved by the owner before they go live (suggestions:
+"Powered by bánh mì", "We break drones so you don't have to", "Bench tested, not yet flown"). Stored in `src/text/`.
+
+**Footer game: Land the drone.** In the footer, a small F450 drawn in line: hold Space (or press and hold on a phone)
+for throttle, let go to drop, land it on the H pad gently. Best landing kept for the visit. Plain link fallback without
+script.
+
+## Part 2: the 3D studio (after the classic redesign, same approval)
+
+Reference: **Pradip Labs** (pradiplabs.dev): one desk floating in warm darkness, lit by a lamp; soft rounded objects;
+the devices are the navigation, and clicking one flies the camera in until its screen becomes a real working interface;
+"back to the desk"; small delights (a diary, a speaker, a record player). It looks real not because of detail but
+because of **light and restraint**. **Ours goes further:** the devices do real engineering, the room is a whole studio
+with a city outside, and the Pre-flight hook flies you in.
+
+- **Light first.** Warm pools of light from the desk lamp and the bench lamps, soft contact shadows, the rest of the room
+  falling into darkness (dark theme) or soft daylight (light theme). Fewer, better objects in each view.
+- **Real objects.** Poly Haven scans (done by Claude Code) and Higgsfield models (`assets-src/room/CHAT-PROMPT.md`),
+  slimmed to keep 240 fps on the RTX and 60 on a laptop. Rounded edges everywhere; nothing blocky.
+- **Devices you can enter** (click, the camera flies in, the screen becomes live HTML at full size, "Back to the studio"):
+  - the **desk monitor**: the site's own Work register and pages;
+  - the **test bench laptop**: the F450 ground station with live simulated telemetry, and the simulated flight;
+  - the **network rack**: the CCNA terminal (the existing one), where visitors type real router commands;
+  - the **FRC cart**: the robot's real CAD, which turns and explodes into its parts.
+- **Small delights, JPL's own:** arm the drone on the bench (its props spin up, it never lifts off: it has not flown);
+  the sketchbook draws itself; the whiteboard writes itself; the city's traffic below the window.
+- **The window:** the generated Saigon panorama (night and dusk) from the chat prompt.
+
 ## Kept, without exception
 
 Every section, link and form; the FRC outreach rows; the CCNA lab; the parts tables; the model viewers; the logo
@@ -149,7 +199,8 @@ change, frame rates measured on the RTX.
 ## Order of work (after approval)
 
 1. Tokens, type, the background field, glass and the header (seen on every page at once).
-2. Footer and Home (classic).
+2. The Pre-flight hook, the footer and its game, Home (classic).
 3. Work and the four project pages.
 4. Members, About, 404.
 5. Motion pass, smoothness pass, both themes, phones.
+6. Part 2, the 3D studio: light, real objects, the devices you can enter, the window.
