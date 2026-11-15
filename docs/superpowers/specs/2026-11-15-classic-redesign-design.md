@@ -12,7 +12,8 @@ large empty areas: the marks of a template.
 
 ## References the owner gave
 
-Each reference is the bar to beat, not a model to copy.
+Each reference is the bar to beat, not a model to copy. (Seven in all: Studio Unlmtd, Lifetime Glass, Yeah Right,
+Pradip Labs, Puture, Levi Gavrilut, Forge Automotive, RIY3; each is described where it is used.)
 
 - **Studio Unlmtd** (studio-unlmtd.com, an award site): gigantic heavy headlines set tight, with living colour flowing
   inside the letters (drawn in WebGL canvases); smooth momentum scrolling (Lenis); hard switches between black and
@@ -101,6 +102,11 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
   framed picture to the full screen on each project page; the liquid pill.
 - Every section: heading, text and picture rise in turn (60 to 90 ms apart), once. Big statements reveal word by word
   out of a soft blur, with their key words marked in the accent. Every control: press, hover, focus.
+- **Lights up from darkness** (reference: Forge Automotive): renders and photographs start dark and come up as if
+  studio lights switched on, one after another; headlines wipe in letter by letter through a soft fade, with one word
+  taking the accent; image panels slide past one another at different speeds; a picture opens from its frame.
+- **Decoding headlines** on the project pages (reference: RIY3): a headline scrambles from random characters into its
+  words, once, in under a second; big figures ("720p at 60 fps", "450 mm") count up.
 - A small chapter marker bottom-left (the sheet's name, e.g. "Welcome", "Build", "Work") updates as you scroll.
 - Transform and opacity only; reduce-motion keeps the content and drops the travel.
 
@@ -130,20 +136,54 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 The 3D studio's own home page is a separate project (Poly Haven models and the chat prompts); its header, footer and
 other pages are these.
 
-### 8. The hook: Pre-flight (both modes, 2D)
+### 8. The showcases, in their element (owner's request)
+
+Today the drone and the robot turn in front of a dark backdrop. Reference: **RIY3** (riy3.com), whose drone flies above a
+city at night, through clouds at dusk, with live HUD telemetry and labelled close-ups of its parts: the machine in the
+place it works. **Ours goes further:** both machines are real (their CAD), the sky is Saigon's, and the robot plays.
+
+- **The F450 in the sky:** the drone chapter (`DroneChapter`, `drone-chapter.ts`) flies the F450 above Saigon at dusk:
+  the generated sky and city below (chat prompt), soft cloud layers drifting past at different depths, the city's
+  lights far below; a HUD in the corner with live simulated telemetry (altitude, heading, speed, 4G signal, the real
+  720p at 60 fps); close-ups with labelled parts (flight controller, ESCs, Pi 4, camera) from its real CAD.
+- **The KitBot on the FRC field:** the robot chapter (`FrcChapter`, `frc-chapter.ts`) stands the KitBot on a real FRC
+  field: the 2026 field's carpet and lines (from `public/assets/2026-playing-field-page.webp`), a few of the season's
+  field elements, the arena's lights and a softly blurred crowd behind (generated backdrop, chat prompt); the robot
+  drives a short path and scores, then turns for its labelled close-ups (Krakens, hopper, intake, Limelight).
+- Same rules as the rest: the backdrops are layered pictures with a little depth, not a heavy 3D scene; the model's
+  own lighting matches the place (dusk sky, arena lights); 240 fps on the RTX, 60 on a laptop, a still on phones.
+
+### 9. "Play the story" (About)
+
+Reference: **Levi Gavrilut** (levigav.com): the visitor chooses an edition (two complete looks) and a language, then a
+documentary plays: the camera flies over his mountains while subtitles write themselves ("This is Levi. He's
+sixteen…"), and comes down into his room at night; chapters, a narrator, "Skip intro". **Ours goes further:** it is the
+story of a team, told with its real photographs, CAD and builds.
+
+- On About, **"Play the story"**: the founding of JPL in 2025 told as a short film, subtitles writing themselves over the
+  real photographs, the sketchbook, the CAD and the builds; chapters (Saigon · the first sketch · the drone · the team ·
+  next); "Skip"; it never blocks reading the page (the same story is on the page as text).
+- **Editions:** the Glass / Solid switch (section 2) is our edition choice, offered once in the hook's last screen.
+- **Later, if wanted:** a Vietnamese version of the site (Tiếng Việt), and a narrator voice made in the chat. Both are
+  large; not part of this redesign unless the owner asks.
+
+### 10. The hook: Pre-flight (both modes, 2D)
 
 Reference: **Yeah Right** (yeahright.co): an elevator counter climbs to 100 and you click to enter; its city's greeting
 "Ey up!" splits open; a line grows into the site's frame; a spinning sticker; jokes in his own voice; Pong in the
 footer. It works because every piece is about him. **Ours goes further:** the counter is a real flight, the greeting is
 Saigon's, the hand-off lands inside the 3D studio, and the footer game is a drone to land.
 
-1. **Arming.** Near-black field, one ink. A rolling ALTITUDE counter in giant wide type climbs 000 → 120 m, "climbing",
-   then "cruise altitude"; under it the real F450 numbers tick by (4G link, 720p at 60 fps). Optional sound, off by
-   default: a soft rotor spin-up.
+1. **Arming.** Near-black field, one ink. The F450's real wireframe (from its CAD) draws itself part by part, each part
+   labelled as it appears, while a rolling ALTITUDE counter in giant wide type climbs 000 → 120 m ("climbing", then
+   "cruise altitude"). A boot log runs in the corner with the drone's real checks: "frame 450 mm ok · ESC 4 of 4 · GPS
+   lock · 4G link up · camera 720p60". (Reference: RIY3's loading screen, a drone wireframe with callouts and a boot
+   log; ours is the real drone and its real numbers, and it ends in a flight, not a progress bar.) Optional sound, off
+   by default: a soft rotor spin-up.
 2. **Take off.** "Click, scroll or press any key to take off." Anything the visitor does enters.
 3. **"XIN CHÀO!"** at full width splits open sideways (the letters part like the doors of a hangar).
 4. Behind it: **SKETCH IT. BUILD IT. SECURE IT.**, with a spinning sticker "JPL INNOVATION · BUILDING STUFF IN SAIGON
-   SINCE 2023" (the year to be confirmed).
+   SINCE 2025".
 5. A line draws itself into the edge of the first glass sheet, and the page is there. In 3D mode the altitude ends as
    the camera drops into the studio, one continuous move.
 
@@ -215,7 +255,8 @@ change, frame rates measured on the RTX.
 
 1. Tokens, type, the background field, glass and the header (seen on every page at once).
 2. The Pre-flight hook, the footer and its game, Home (classic).
+2b. The showcases in their element: the F450 in the sky, the KitBot on the field.
 3. Work and the four project pages.
-4. Members, About, 404.
+4. Members, About with "Play the story", 404.
 5. Motion pass, smoothness pass, both themes, phones.
 6. Part 2, the 3D studio: light, real objects, the devices you can enter, the window.

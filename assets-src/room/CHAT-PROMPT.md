@@ -61,6 +61,19 @@ photo into a 3D model (GLB). Realistic materials, game-ready: under 40,000 trian
     Nano board with a small NRF24L01 radio module, four coreless motors with propellers and a little LiPo cell, sitting on a dark workbench next to
     a soldering iron, shallow depth of field, deep navy and warm gold light. No people, no text, no logos.
 
-At the end: the list of file name and download link, all 21.
+**Backdrops for the drone and robot showcases (GPT Image 2.6, aspect 21:9, 4k, high quality, photorealistic)**
+
+22. `show-sky-dusk.png`: the view from a drone flying at about 150 m above Ho Chi Minh City at dusk, looking slightly
+    down and ahead: the city's lights coming on far below along a wide river, soft layers of cloud at the drone's
+    height in the foreground, warm peach and lavender sky above fading to deep blue. No aircraft, no drone, no text,
+    no logos. Lots of calm sky in the upper half.
+23. `show-clouds.png`: a layer of soft cumulus clouds at dusk lit warm from below, on a **transparent background**, wide
+    and thin, to drift in front of the camera. PNG.
+24. `show-frc-arena.png`: the inside of a FIRST Robotics Competition arena during a match, seen from the field at robot
+    height: bright arena lights, the clear polycarbonate field walls, blue and red alliance colours, a big crowd in the
+    stands softly out of focus, haze in the light beams. **No robots, no people in focus, no readable text, no logos.**
+    The middle of the image calm and slightly darker, where a robot will stand.
+
+At the end: the list of file name and download link, all 24.
 
 ---
