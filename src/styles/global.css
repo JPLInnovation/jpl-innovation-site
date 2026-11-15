@@ -213,10 +213,11 @@
 	letter-spacing: -0.03em;
 }
 
-/* Card surface: slightly see-through over the animated background, with a soft blue-tinted shadow. */
+/* Card surface: slightly see-through over the animated background. Depth comes from the lighter card colour and a
+   hairline alpha edge, not a drop shadow (dark mode especially: a lighter surface reads as nearer). */
 @utility surface {
 	background-color: color-mix(in oklab, var(--card) 88%, transparent);
-	box-shadow: var(--shadow-soft);
+	box-shadow: inset 0 0 0 1px var(--sheet-edge);
 }
 
 /* Page gutter + max width, used by every section. */
