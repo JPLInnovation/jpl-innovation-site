@@ -13,12 +13,13 @@ const current = links
 ---
 
 <!--
-	Always on screen. Logo at the left (once the page scrolls it rolls into just its badge, Logo.astro), the menu in the
-	middle, Settings and the glass "Let's talk" button at the right. Theme lives in Settings now.
+	Always on screen: a glass strip (global.css .sheet; filled in Solid). Logo at the left (once the page scrolls it rolls
+	into just its badge, Logo.astro), the menu in the middle with the liquid pill under the current page (it stretches
+	towards the link you point at: src/lib/look/pill.ts), Settings and the "Let's talk" button at the right.
 -->
 <header
 	data-site-header
-	class="site-header sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-xl backdrop-saturate-150 data-[menu-open]:border-border/70 data-[menu-open]:bg-background/95 data-[scrolled]:border-border/70 data-[scrolled]:bg-background/92"
+	class="site-header sheet top-0 z-50"
 >
 	<div class="wrapper grid h-18 grid-cols-[1fr_auto] items-center gap-3 md:grid-cols-[1fr_auto_1fr]">
 		<a href="/" class="press flex w-fit items-center rounded-md" aria-label="JPL Innovation home">
@@ -26,7 +27,8 @@ const current = links
 		</a>
 		<!-- Tablet and up: links in the middle -->
 		<nav aria-label="Main" class="hidden md:block">
-			<ul class="flex items-center">
+			<ul class="relative flex items-center" data-nav>
+				<span class="nav-pill" data-pill aria-hidden="true"></span>
 				{
 					links.map((l) => (
 						<li>
@@ -34,7 +36,7 @@ const current = links
 								href={l.href}
 								data-astro-prefetch="viewport"
 								aria-current={l.href === current ? "page" : undefined}
-								class="press relative inline-flex h-11 items-center px-3.5 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground after:absolute after:inset-x-3.5 after:bottom-2 after:h-[3px] after:rounded-full after:bg-primary dark:after:bg-accent after:opacity-0 aria-[current=page]:after:opacity-100"
+								class="press relative z-[1] inline-flex h-11 items-center px-4 text-[15px] font-medium text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
 							>
 								{l.label}
 							</a>
@@ -92,9 +94,44 @@ const current = links
 
 <style>
 	.site-header {
-		transition:
-			border-color 0.3s,
-			background-color 0.3s;
+		position: sticky;
+		border-radius: 0;
+		box-shadow: none;
+		transition: background-color 0.3s;
+	}
+	/* Scrolled, or the phone menu open: one step more film, no line (depth by thickness). */
+	.site-header[data-scrolled],
+	.site-header[data-menu-open] {
+		background-color: color-mix(in oklab, var(--sheet) 84%, transparent);
+	}
+	/* The liquid pill: a drop of film under the current page, a bead of the accent beneath it. */
+	.nav-pill {
+		position: absolute;
+		left: 0;
+		top: 50%;
+		height: 2.25rem;
+		width: 0;
+		margin-top: -1.125rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--ink) 9%, transparent);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+		opacity: 0;
+		pointer-events: none;
+		will-change: transform, width;
+	}
+	.nav-pill::after {
+		content: "";
+		position: absolute;
+		left: 50%;
+		bottom: -0.45rem;
+		width: 0.35rem;
+		height: 0.35rem;
+		margin-left: -0.175rem;
+		border-radius: 50%;
+		background: var(--accent-brand);
+	}
+	.nav-pill[data-on] {
+		opacity: 1;
 	}
 
 	/* Two bars that fold into an X when the menu is open. */
@@ -169,6 +206,9 @@ const current = links
 </style>
 
 <script>
+	import { pillAt, type Span } from "@/lib/look/pill";
+	import { reducedMotion } from "@/lib/prefs";
+
 	let cleanup: (() => void) | undefined;
 
 	function init() {
@@ -184,6 +224,56 @@ const current = links
 		const COMPACT = 48;
 		const compact = () => header.toggleAttribute("data-compact", scrollY > COMPACT);
 		compact();
+
+		// The liquid pill: rests under the current page; stretches to the link pointed at or focused, and back.
+		const nav = header.querySelector<HTMLElement>("[data-nav]");
+		const pill = header.querySelector<HTMLElement>("[data-pill]");
+		const links = nav ? [...nav.querySelectorAll<HTMLAnchorElement>("a")] : [];
+		const spanOf = (a: HTMLAnchorElement): Span => ({ x: a.offsetLeft, w: a.offsetWidth });
+		const home = () => links.find((a) => a.getAttribute("aria-current") === "page");
+		let shown: Span | null = null;
+		let anim = 0;
+		const draw = (s: Span) => {
+			shown = s;
+			if (!pill) return;
+			pill.style.transform = `translateX(${s.x}px)`;
+			pill.style.width = `${s.w}px`;
+			pill.toggleAttribute("data-on", true);
+		};
+		const ease = (t: number) => 1 - Math.pow(1 - t, 4); // close to cubic-bezier(0.32, 0.72, 0, 1)
+		const goTo = (target: HTMLAnchorElement | undefined) => {
+			cancelAnimationFrame(anim);
+			if (!target) {
+				pill?.removeAttribute("data-on");
+				shown = null;
+				return;
+			}
+			const to = spanOf(target);
+			const from = shown;
+			if (!from || reducedMotion()) return draw(to);
+			const start = performance.now();
+			const step = (now: number) => {
+				const t = Math.min(1, (now - start) / 380);
+				draw(pillAt(from, to, ease(t)));
+				if (t < 1) anim = requestAnimationFrame(step);
+			};
+			anim = requestAnimationFrame(step);
+		};
+		goTo(home());
+		const onEnter = (event: Event) => goTo(event.currentTarget as HTMLAnchorElement);
+		const onLeave = () => goTo(home());
+		for (const a of links) {
+			a.addEventListener("pointerenter", onEnter);
+			a.addEventListener("focus", onEnter);
+			a.addEventListener("blur", onLeave);
+		}
+		nav?.addEventListener("pointerleave", onLeave);
+		const onResize = () => {
+			const h = home();
+			if (h) draw(spanOf(h));
+		};
+		addEventListener("resize", onResize);
+		document.fonts?.ready.then(onResize);
 
 		const button = header.querySelector<HTMLButtonElement>("[data-menu-button]")!;
 		const panel = header.querySelector<HTMLElement>("[data-menu-panel]")!;
@@ -228,6 +318,8 @@ const current = links
 			document.removeEventListener("pointerdown", onPointerDown);
 			document.removeEventListener("keydown", onKey);
 			desktop.removeEventListener("change", onBreakpoint);
+			removeEventListener("resize", onResize);
+			cancelAnimationFrame(anim);
 		};
 	}
 

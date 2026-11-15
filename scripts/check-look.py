@@ -192,6 +192,70 @@ def check_living(browser, base):
         page.close()
 
 
+BOX = """(sel) => { const r = document.querySelector(sel).getBoundingClientRect(); return [r.left, r.right]; }"""
+LINK = """(label) => { const a = [...document.querySelectorAll('[data-nav] a')].find((x) => x.textContent.trim() === label);
+  const r = a.getBoundingClientRect(); return [r.left, r.right, r.top + r.height / 2]; }"""
+
+
+def check_header(browser, base):
+    page = open_page(browser, base, "/work/drone/", "dark")
+    pill = page.evaluate(BOX, "[data-pill]")
+    work = page.evaluate(LINK, "Work")
+    report(abs(pill[0] - work[0]) <= 2 and abs(pill[1] - work[1]) <= 2, f"/work/drone/: the pill rests under Work ({pill} vs {work[:2]})")
+    about = page.evaluate(LINK, "About")
+    page.mouse.move(about[0] - 400, about[2] + 300)  # start away from the nav
+    page.wait_for_timeout(100)
+    # sample the pill's widest point while it travels (the drop), then where it lands
+    page.evaluate("""() => { window.__pillMax = 0; const p = document.querySelector('[data-pill]');
+      const tick = () => { window.__pillMax = Math.max(window.__pillMax, p.getBoundingClientRect().width); if (performance.now() - t0 < 700) requestAnimationFrame(tick); };
+      const t0 = performance.now(); requestAnimationFrame(tick); }""")
+    page.mouse.move((about[0] + about[1]) / 2, about[2], steps=4)
+    page.wait_for_timeout(700)
+    mid = [0, page.evaluate("window.__pillMax")]
+    there = page.evaluate(BOX, "[data-pill]")
+    report(mid[1] - mid[0] > (work[1] - work[0]) + 20 and abs(there[1] - about[1]) <= 2,
+           f"pointing at About: the pill stretches ({mid}) and reaches it ({there} vs {about[:2]})")
+    page.mouse.move(700, 600)
+    page.wait_for_timeout(600)
+    back = page.evaluate(BOX, "[data-pill]")
+    report(abs(back[0] - work[0]) <= 2, f"pointer gone: the pill settles back under Work ({back})")
+    # keyboard: Tab until a nav link has focus; the pill follows it
+    followed = False
+    for _ in range(12):
+        page.keyboard.press("Tab")
+        focused = page.evaluate("document.activeElement && document.activeElement.closest('[data-nav]') ? document.activeElement.textContent.trim() : null")
+        if focused:
+            page.wait_for_timeout(500)
+            link = page.evaluate(LINK, focused)
+            box = page.evaluate(BOX, "[data-pill]")
+            followed = abs(box[0] - link[0]) <= 2
+            break
+    report(followed, f"keyboard: Tab reaches the nav and the pill follows focus ({focused})")
+    page.close()
+    # phones: the menu opens and closes as before
+    page = browser.new_page(viewport={"width": 390, "height": 844})
+    page.add_init_script(INIT % {"theme": "dark", "extra": ""})
+    page.goto(base + "/work/", wait_until="load")
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
+    page.wait_for_timeout(500)
+    is_open = lambda: page.evaluate("document.querySelector('[data-site-header]').hasAttribute('data-menu-open')")
+    page.click("[data-menu-button]"); page.wait_for_timeout(300); a = is_open()
+    page.keyboard.press("Escape"); page.wait_for_timeout(300); b = not is_open()
+    page.click("[data-menu-button]"); page.wait_for_timeout(300)
+    # an outside tap on empty ground (not a link), as a thumb would
+    page.evaluate("document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))"); page.wait_for_timeout(300); c = not is_open()
+    page.click("[data-menu-button]"); page.wait_for_timeout(300)
+    try:
+        page.locator("#mobile-menu a").nth(1).click(timeout=5000)
+        page.wait_for_timeout(800)
+        d = not is_open()
+    except Exception as error:
+        print("   menu state:", page.evaluate("(() => { const p = document.getElementById('mobile-menu'); return [p.className, getComputedStyle(p).visibility, document.querySelector('[data-site-header]').hasAttribute('data-menu-open')]; })()"), str(error).splitlines()[0])
+        d = False
+    report(a and b and c and d, f"390 px: the phone menu opens, and closes on Escape, an outside tap and a link tap ({a} {b} {c} {d})")
+    page.close()
+
+
 def make_stills(browser, base):
     """The blueprint space's still pictures (shown where the field can't run): the field alone, page content hidden."""
     from PIL import Image
@@ -238,6 +302,7 @@ def main():
                 check_surface(browser, base)
                 check_field(browser, base)
                 check_living(browser, base)
+                check_header(browser, base)
             browser.close()
     finally:
         if proc:
