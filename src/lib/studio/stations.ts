@@ -99,7 +99,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const dark = new MeshStandardMaterial({ color: 0x141a28, roughness: 0.5 });
 	const wood = woodMaterial("oak_veneer_01");
 	const themed: { mat: MeshStandardMaterial; dark: number; light: number }[] = [
-		{ mat: bench as MeshStandardMaterial, dark: 0x2a3550, light: 0xc9d3e6 },
+		{ mat: bench as MeshStandardMaterial, dark: 0x1b2d6e, light: 0xd9d2bc },
 	];
 
 	/** A workbench: a top on four legs, its top surface at `benchTop`. */
@@ -233,7 +233,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		{ y: 0.9, h: 0.3, ports: 4 },
 	];
 	const leds: { x: number; y: number; phase: number; rate: number; color: Color }[] = [];
-	const ledColors = [new Color(0x34d399), new Color(0x34d399), new Color(0xffc20e), new Color(0x22d3ee)];
+	const ledColors = [new Color(0x34d399), new Color(0x34d399), new Color(0xffc20e), new Color(0x2f7ce6)]; // link, link, activity, the brand blue
 	for (const [u, unit] of units.entries()) {
 		boxAt(rack, 0.6, unit.h, 0.5, deviceMat, rackX, unit.y, rackZ + 0.02, 0.004);
 		boxAt(rack, 0.6, unit.h, 0.006, faceMat, rackX, unit.y, rackFront - 0.03);
@@ -358,8 +358,8 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			g.stroke();
 		};
 		g.textBaseline = "alphabetic";
-		hand(benchBoard.title, 58, 118, 96, "#1d4ed8", -0.02);
-		stroke("#1d4ed8", 6, () => {
+		hand(benchBoard.title, 58, 118, 96, "#1f5fc4", -0.02);
+		stroke("#1f5fc4", 6, () => {
 			g.moveTo(58, 146);
 			g.bezierCurveTo(240, 160, 420, 132, 640, 144);
 		});
@@ -403,7 +403,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	);
 	wallBack.position.set(arc.x, 1.3, arc.z);
 	group.add(wallBack);
-	themed.push({ mat: wallBack.material as MeshStandardMaterial, dark: 0x0e1834, light: 0xd3dcec });
+	themed.push({ mat: wallBack.material as MeshStandardMaterial, dark: 0x0a174e, light: 0xe8e2cc });
 	// The panel under the pointer (-1: none) lifts toward the camera, glows at its edge and brightens; the others dim a little.
 	let hovered = -1;
 	let wallHover = 0;
@@ -425,7 +425,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		holder.add(frame);
 		const screen = new Mesh(cutCornerSurface(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
-		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
+		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
 		edge.position.z = -0.06;
 		holder.add(edge);
 		return { holder, base: holder.rotation.y, y, screen, edge, bx, bz, toward: [-Math.cos(angle), -Math.sin(angle)] as const, hover: 0 };
@@ -518,8 +518,8 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		};
 		g.textBaseline = "alphabetic";
 		write(() => {
-			hand(s.heading, 110, 170, 128, "#1d4ed8", -0.012);
-			pen("#1d4ed8", 9, () => {
+			hand(s.heading, 110, 170, 128, "#1f5fc4", -0.012);
+			pen("#1f5fc4", 9, () => {
 				g.moveTo(112, 206);
 				g.bezierCurveTo(500, 222, 900, 192, 1340, 208);
 			});
@@ -593,7 +593,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const shelfX = boardX + 1.75;
 	boxAt(group, 0.9, 0.03, 0.3, wood, shelfX, 1.0, z1 - 0.16);
 	boxAt(group, 0.9, 0.03, 0.3, wood, shelfX, 1.5, z1 - 0.16);
-	const binderColors = [0x1d4ed8, 0x0f766e, 0xb45309, 0x7c3aed, 0xbe123c, 0x1d4ed8, 0x334155];
+	const binderColors = [0x1f5fc4, 0x0a174e, 0xa98500, 0x2f7ce6, 0xf5d042, 0x1b2d6e, 0x3d4770]; // the palette
 	for (const [row, y] of [1.0, 1.5].entries())
 		binderColors.forEach((c, i) => {
 			if ((i + row) % 5 === 4) return;
@@ -617,7 +617,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	windowGlass.rotation.y = Math.PI;
 	group.add(windowGlass);
 	const frameMat = hardware({ color: 0x1b2440, roughness: 0.5, metalness: 0.3 }, "anodised");
-	themed.push({ mat: frameMat as MeshStandardMaterial, dark: 0x1b2440, light: 0xf2f5fa });
+	themed.push({ mat: frameMat as MeshStandardMaterial, dark: 0x13235f, light: 0xfffdf4 });
 	boxAt(group, winW + 0.12, 0.06, 0.1, frameMat, winX, winY + winH / 2 + 0.03, z1 - 0.05);
 	boxAt(group, winW + 0.2, 0.05, 0.22, frameMat, winX, winY - winH / 2 - 0.025, z1 - 0.1);
 	const panes = content.milestones.length || 6;
@@ -659,7 +659,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	boxAt(group, 2.2, 0.05, 0.95, woodMaterial("walnut_veneer"), tableX, 0.745, tableZ, 0.015);
 	for (const sx of [-1, 1]) boxAt(group, 0.06, 0.72, 0.8, steel, tableX + sx * 0.95, 0.36, tableZ);
 	boxAt(group, 0.3, 0.012, 0.22, hardware({ color: 0xf4efe2, roughness: 0.9 }, "printed"), tableX - 0.3, 0.776, tableZ - 0.1, 0.004).rotation.y = 0.2;
-	const tableMug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), hardware({ color: 0x1d4ed8, roughness: 0.35 }, "wrap"));
+	const tableMug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), hardware({ color: 0x2f7ce6, roughness: 0.35 }, "wrap"));
 	tableMug.position.set(tableX + 0.45, 0.82, tableZ - 0.15);
 	group.add(tableMug);
 	const chairFabric = hardware({ color: 0x1d2b4f, roughness: 0.9 }, "fabric");
@@ -738,7 +738,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	doorPivot.position.set(doorX + 0.5, 0, z1 - 0.05);
 	group.add(doorPivot);
 	const doorMat = hardware({ color: 0x24345e, roughness: 0.5 }, "plastic");
-	themed.push({ mat: doorMat as MeshStandardMaterial, dark: 0x24345e, light: 0x9fb2d6 });
+	themed.push({ mat: doorMat as MeshStandardMaterial, dark: 0x1b2d6e, light: 0x3d4770 });
 	boxAt(doorPivot, 0.98, 2.08, 0.045, doorMat, -0.49, 1.04, 0);
 	const handle = new Mesh(new CylinderGeometry(0.012, 0.012, 0.14, 10), toolMetal);
 	handle.rotation.z = Math.PI / 2;
@@ -749,8 +749,8 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		const { g } = sign;
 		g.fillStyle = "#06102a";
 		g.fillRect(0, 0, 720, 180);
-		g.fillStyle = "#67e8f9";
-		g.shadowColor = "#22d3ee";
+		g.fillStyle = "#f5d042";
+		g.shadowColor = "#f5d042";
 		g.shadowBlur = 28;
 		g.font = `900 92px ${FONT}`;
 		g.textAlign = "center";
@@ -777,7 +777,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0x5eead4, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
-		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0x9fdcff, dark: 3, light: 5, distance: 4, decay: 1.6 },
+		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0xffe6a8, dark: 3, light: 5, distance: 4, decay: 1.6 },
 	};
 
 	return {
@@ -841,7 +841,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			palette = p;
 			for (const panel of panels) {
 				const edge = panel.edge.material as MeshBasicMaterial;
-				edge.color.set(p.dark ? 0x67e8f9 : 0x1d4ed8);
+				edge.color.set(p.dark ? 0xf5d042 : 0x1f5fc4);
 				edge.blending = p.dark ? AdditiveBlending : NormalBlending;
 				edge.needsUpdate = true;
 			}
@@ -849,7 +849,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			robot?.applyPalette(p);
 			drawPeg(p.dark);
 			drawSky(p.dark);
-			(beyond.material as MeshBasicMaterial).color.set(p.dark ? 0x8fd8ff : 0xfff3d6);
+			(beyond.material as MeshBasicMaterial).color.set(p.dark ? 0xffe6a8 : 0xfff3d6);
 		},
 	};
 }

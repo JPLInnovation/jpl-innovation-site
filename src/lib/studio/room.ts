@@ -225,12 +225,12 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	// Real plaster and concrete (surface()), tinted by the theme (applyPalette).
 	const plaster = surface("painted_plaster_wall", 0.5);
 	const wallMat = new MeshStandardMaterial({ ...plaster, roughness: 0.92 });
-	tint(wallMat, 0x0c1631);
+	tint(wallMat, 0x0a174e);
 	// Matte, and plain: a clear coat would mirror the bright generated environment at grazing angles (a pale band).
 	const floorMat = new MeshStandardMaterial({ ...surface("concrete_floor_01", 0.7), roughness: 0.85, envMapIntensity: 0.35 });
-	tint(floorMat, 0x0a1022);
+	tint(floorMat, 0x071038);
 	const ceilingMat = new MeshStandardMaterial({ ...plaster, roughness: 1 });
-	tint(ceilingMat, 0x0a1228);
+	tint(ceilingMat, 0x081240);
 	const WALL_TILE = 2.4; // metres per repeat of the plaster
 	const floor = new Mesh(tiled(new PlaneGeometry(width, depth), 2), floorMat);
 	floor.rotation.x = -Math.PI / 2;
@@ -282,11 +282,11 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const trimMat = new MeshStandardMaterial({ color: 0x1b2a52, roughness: 0.6 });
 	boxAt(group, width, 0.08, 0.02, trimMat, 0, 0.04, z0 + 0.01);
 	boxAt(group, width, 0.08, 0.02, trimMat, 0, 0.04, z1 - 0.01);
-	const stripMat = new MeshBasicMaterial({ color: 0x9fdcff, toneMapped: false });
+	const stripMat = new MeshBasicMaterial({ color: 0xfff1c2, toneMapped: false }); // warm white
 	for (let x = -7; x <= 7; x += 3.5) boxAt(group, 2.4, 0.03, 0.08, stripMat, x, h - 0.02, 1.5);
 
 	/* ---------- Lights: a dim sky; the desk lamp does the work in scene 0, then the pooled lights (lights.ts) ---------- */
-	const sky = new HemisphereLight(0x8fb4ff, 0x0a1022, 0.4);
+	const sky = new HemisphereLight(0x8fb4ff, 0x071038, 0.4);
 	group.add(sky);
 
 	await tick();
@@ -440,7 +440,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const props = buildProps(group);
 
 	/* ---------- Fog: depth, and the far end of the room falls into navy ---------- */
-	ctx.scene.fog = new Fog(0x050a1f, 7, 19);
+	ctx.scene.fog = new Fog(0x050c2e, 7, 19);
 
 	let palette: Palette | undefined;
 	let lastTime = 0;
@@ -492,13 +492,13 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		applyPalette(p) {
 			palette = p;
 			const dark = p.dark;
-			tint(wallMat, dark ? 0x0c1631 : 0xdfe7f5);
-			tint(ceilingMat, dark ? 0x0a1228 : 0xeef3fb);
-			tint(floorMat, dark ? 0x0a1022 : 0xbfc9dc);
-			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
-			glassMat.color.set(dark ? 0x0b1424 : 0xdfe9f7);
+			tint(wallMat, dark ? 0x0a174e : 0xf2eedf); // the site's navy and paper
+			tint(ceilingMat, dark ? 0x081240 : 0xfaf7ec);
+			tint(floorMat, dark ? 0x071038 : 0xd9d2bc);
+			trimMat.color.set(dark ? 0x1b2d6e : 0xd6cfb6);
+			glassMat.color.set(dark ? 0x0a174e : 0xf5f1e4);
 			glassMat.opacity = dark ? 0.14 : 0.1;
-			mullionMat.color.set(dark ? 0x1b2440 : 0xf2f5fa);
+			mullionMat.color.set(dark ? 0x13235f : 0xfffdf4);
 			backdrop.applyPalette(dark);
 			bookMaterial.color.setScalar(dark ? 0.46 : 0.45);
 			deskSheetSet.applyPalette(dark);
@@ -507,12 +507,12 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			ambience.applyPalette(p);
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
-			(slogan.material as MeshBasicMaterial).color.set(dark ? 0xe6f6ff : 0x0a1124);
-			(ctx.scene.fog as Fog).color.set(dark ? 0x050a1f : 0xe6edf8);
+			(slogan.material as MeshBasicMaterial).color.set(dark ? 0xf2eedf : 0x0a174e);
+			(ctx.scene.fog as Fog).color.set(dark ? 0x050c2e : 0xf2eedf);
 			(ctx.scene.fog as Fog).near = dark ? 7 : 12;
 			(ctx.scene.fog as Fog).far = dark ? 19 : 32;
 			sky.color.set(dark ? 0x8fb4ff : 0xffffff);
-			sky.groundColor.set(dark ? 0x0a1022 : 0xb9c4d8);
+			sky.groundColor.set(dark ? 0x071038 : 0xd6cfb6);
 			// The stage's product lights ride on the camera; in a room they'd flatten it, so they stay low.
 			ctx.lights.key.intensity = dark ? 0.55 : 1.1;
 			ctx.lights.fill.intensity = dark ? 0.2 : 0.45;

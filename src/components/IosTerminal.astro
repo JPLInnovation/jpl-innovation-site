@@ -52,7 +52,7 @@ const lineHtml = (line: TerminalLine) =>
 	const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 	const promptHtml = (p = "") => `<span class="text-[#7cb4ff]">${esc(p)}</span> `;
 	const outHtml = (o: string) => `<span class="text-[#93a4bd]">${esc(o)}</span>`;
-	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#22d3ee] motion-safe:animate-pulse" aria-hidden="true"></span>`;
+	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#f5d042] motion-safe:animate-pulse" aria-hidden="true"></span>`;
 	const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 	let stopAll: Array<() => void> = [];

@@ -73,14 +73,14 @@ const { signal } = notFound;
 		z-index: -1;
 		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 		letter-spacing: 0.12em;
-		color: #67e8f9;
+		color: var(--mark);
 		pointer-events: none;
 	}
 	.lost-corner {
 		position: absolute;
 		width: 1.75rem;
 		height: 1.75rem;
-		border: 0 solid #67e8f9;
+		border: 0 solid var(--mark);
 		opacity: 0.8;
 	}
 	.lost-tl { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
@@ -92,7 +92,7 @@ const { signal } = notFound;
 	.lost-cam { position: absolute; top: 0.5rem; right: 2.5rem; }
 	.lost-status { position: absolute; bottom: 0.5rem; left: 2.5rem; color: #f87171; animation: lost-blink 1.1s steps(2, jump-none) infinite; }
 	/* A small crosshair, off-centre as if the gimbal had drifted. */
-	.lost-cross { position: absolute; right: 14%; bottom: 22%; width: 1.5rem; height: 1.5rem; opacity: 0.5; background: linear-gradient(#67e8f9, #67e8f9) center / 100% 1px no-repeat, linear-gradient(#67e8f9, #67e8f9) center / 1px 100% no-repeat; }
+	.lost-cross { position: absolute; right: 14%; bottom: 22%; width: 1.5rem; height: 1.5rem; opacity: 0.5; background: linear-gradient(var(--mark), var(--mark)) center / 100% 1px no-repeat, linear-gradient(var(--mark), var(--mark)) center / 1px 100% no-repeat; }
 	.lost-content {
 		display: flex;
 		flex-direction: column;
@@ -105,7 +105,7 @@ const { signal } = notFound;
 		font: 500 13px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		color: #67e8f9;
+		color: var(--mark);
 	}
 	.lost-title {
 		position: relative;
@@ -115,7 +115,7 @@ const { signal } = notFound;
 		line-height: 0.95;
 		letter-spacing: -0.03em;
 		color: #fff;
-		text-shadow: 3px 0 0 rgb(244 63 94 / 0.7), -3px 0 0 rgb(34 211 238 / 0.7);
+		text-shadow: 3px 0 0 rgb(245 208 66 / 0.7), -3px 0 0 rgb(47 124 230 / 0.7);
 	}
 	.lost-lede {
 		max-width: 34ch;
@@ -145,7 +145,7 @@ const { signal } = notFound;
 			text-shadow: none;
 		}
 		html:not(.reduce-motion) .lost-title::before {
-			color: #22d3ee;
+			color: var(--mark);
 			clip-path: inset(0 0 62% 0);
 			animation: lost-slip-a 3.4s steps(1, end) infinite;
 		}

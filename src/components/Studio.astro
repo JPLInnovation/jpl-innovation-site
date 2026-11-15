@@ -261,7 +261,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	/* The cyan accent is for the dark theme; on the light one the current tick and number are blue (3:1 and 4.5:1 or more). */
 	.studio-ruler button[aria-current] .tick {
 		height: 1.5rem;
-		background: #1d4ed8;
+		background: var(--primary);
 	}
 	.dark .studio-ruler button[aria-current] .tick {
 		background: var(--accent);
@@ -272,7 +272,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		color: var(--muted-foreground);
 	}
 	.studio-ruler-label [data-ruler-index] {
-		color: #1d4ed8;
+		color: var(--primary);
 	}
 	.dark .studio-ruler-label [data-ruler-index] {
 		color: var(--accent);
@@ -610,7 +610,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.dark .studio-scene .studio-tag,
 	.dark .studio-scene .studio-kicker,
 	.dark .studio-scene .studio-hint {
-		color: #67e8f9;
+		color: var(--mark);
 	}
 	.studio-scene .studio-big {
 		font-size: 1.15rem;

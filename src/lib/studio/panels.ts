@@ -146,7 +146,7 @@ export function projectFace(project: PanelProject) {
 			g.strokeStyle = "rgba(34,211,238,0.55)";
 			g.lineWidth = 3;
 			g.stroke();
-			g.fillStyle = "#22d3ee";
+			g.fillStyle = "#f5d042";
 			g.beginPath();
 			g.arc(m + 56, row - 20, 13, 0, Math.PI * 2);
 			g.fill();

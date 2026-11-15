@@ -47,21 +47,21 @@ const POOLS: Record<string, { at: [number, number]; size: number; color: number 
 	test: { at: [-4.0, -1.8], size: 3.2, color: 0x9fc8ff },
 	robotics: { at: [-0.6, -2.0], size: 3.6, color: 0x2dd4bf },
 	drones: { at: [1.4, -1.9], size: 3.4, color: 0xffc20e },
-	networks: { at: [3.3, -2.0], size: 3.2, color: 0x22d3ee },
-	web: { at: [-2.6, -1.9], size: 3.4, color: 0x8b5cf6 },
+	networks: { at: [3.3, -2.0], size: 3.2, color: 0x2f7ce6 },
+	web: { at: [-2.6, -1.9], size: 3.4, color: 0xf5d042 },
 	wall: { at: [5.6, 1.0], size: 4.4, color: 0x6d6dff },
 	standards: { at: [5.0, 5.2], size: 4.2, color: 0xfff4e0 },
 	timeline: { at: [1.2, 5.6], size: 5.4, color: 0x5b7fd6 },
 	crew: { at: [-2.4, 4.9], size: 4.2, color: 0xffd9a0 },
-	contact: { at: [-5.6, 5.4], size: 3.4, color: 0x9fdcff },
+	contact: { at: [-5.6, 5.4], size: 3.4, color: 0xffe6a8 },
 };
 
 /** LED strips under the benches: where (x, y, z), how long, colour. */
 const STRIPS: [number, number, number, number, number][] = [
 	[-0.6, 0.1, -2.1, 1.1, 0x2dd4bf],
 	[1.4, 0.8, -2.2, 1.5, 0xffc20e],
-	[3.3, 0.04, -2.64, 0.62, 0x22d3ee],
-	[-2.6, 0.8, -2.2, 1.5, 0x8b5cf6],
+	[3.3, 0.04, -2.64, 0.62, 0x2f7ce6],
+	[-2.6, 0.8, -2.2, 1.5, 0xf5d042],
 	[-6, 0.72, -2.0, 2.2, 0xffb869],
 ];
 

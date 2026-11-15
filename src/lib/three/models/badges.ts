@@ -47,8 +47,8 @@ const SPACING = 0.86;
 const TEX_W = 600;
 const TEX_H = 900;
 const NAVY = "#0a1a33";
-const BLUE = "#1d4ed8"; // --primary
-const CYAN = "#22d3ee"; // --accent
+const BLUE = "#1f5fc4"; // --primary (light)
+const CYAN = "#f5d042"; // --mark (the brand yellow; the name is historical)
 const SLOT = "#1b2c4d";
 const FONT = '"Archivo Variable", "Arial Black", sans-serif';
 

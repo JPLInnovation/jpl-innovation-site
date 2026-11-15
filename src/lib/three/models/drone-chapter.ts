@@ -57,7 +57,7 @@ export const LOOK = {
 	} satisfies Record<string, Light>,
 	keyColor: "#fff4e8",
 	/** The site's cyan accent (--accent). */
-	rimColor: "#22d3ee",
+	rimColor: "#f5d042",
 	/** The bench grid: line brightness, and how far out (metres) it has faded to nothing. */
 	grid: 0.2,
 	gridReach: 1.3,

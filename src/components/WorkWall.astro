@@ -194,7 +194,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		color: #1e3a9f;
 	}
 	.dark .wall-hint {
-		color: #67e8f9;
+		color: var(--mark);
 	}
 	.wall-ruler {
 		position: absolute;
@@ -242,7 +242,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 	/* The cyan accent is for the dark theme; on the light one the current tick and number are blue (3:1 and 4.5:1 or more). */
 	.wall-ruler button[aria-current] .tick {
 		height: 1.5rem;
-		background: #1d4ed8;
+		background: var(--primary);
 	}
 	.dark .wall-ruler button[aria-current] .tick {
 		background: var(--accent);
@@ -253,7 +253,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		color: var(--muted-foreground);
 	}
 	.wall-ruler-label [data-wall-index] {
-		color: #1d4ed8;
+		color: var(--primary);
 	}
 	.dark .wall-ruler-label [data-wall-index] {
 		color: var(--accent);

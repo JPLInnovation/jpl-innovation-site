@@ -47,7 +47,7 @@ export const HOOK_LOOK = {
 	/** The collapse into the line: how long (s) from its words, and the glow behind the line at its brightest. */
 	collapse: { time: 1.6, glow: 0.55 },
 	/** After the lamp line (s): the blueprint spreading out, and the reassembly. `spread`: how far apart it starts (m). */
-	blueprint: { from: 0.3, to: 1.5, opacity: 0.85, colour: 0x7fe0ff, ink: 0x1d4ed8 },
+	blueprint: { from: 0.3, to: 1.5, opacity: 0.85, colour: 0x8fb8f5, ink: 0x1f5fc4 },
 	assemble: { from: 1.4, to: 4.6, spread: 0.32 },
 	/** The faint blueprint on the wall, right of the logo: where, how big (m), how bright with the lamp on. */
 	wall: { x: -4.45, y: 2.3, width: 0.95, height: 0.55, opacity: 0.45 },

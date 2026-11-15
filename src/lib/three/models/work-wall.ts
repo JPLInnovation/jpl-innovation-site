@@ -53,7 +53,7 @@ export default function createWall(ctx: StageContext, projects: PanelProject[], 
 	}
 	const glowTexture = new CanvasTexture(glowCanvas);
 	glowTexture.colorSpace = SRGBColorSpace;
-	const glowMaterial = new MeshBasicMaterial({ map: glowTexture, color: 0x22d3ee, transparent: true, opacity: 0.35, depthWrite: false, blending: AdditiveBlending });
+	const glowMaterial = new MeshBasicMaterial({ map: glowTexture, color: 0xf5d042, transparent: true, opacity: 0.35, depthWrite: false, blending: AdditiveBlending });
 	const glow = new Mesh(new PlaneGeometry(5.2, 3.6), glowMaterial);
 	glow.position.set(0, 0, -R - 0.4);
 	group.add(glow);
@@ -64,7 +64,7 @@ export default function createWall(ctx: StageContext, projects: PanelProject[], 
 	const panels = projects.map((project) => {
 		const holder = new Group();
 		group.add(holder);
-		const edge = new Mesh(edgeGeometry, new MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0, depthWrite: false }));
+		const edge = new Mesh(edgeGeometry, new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false }));
 		edge.position.z = -0.004;
 		holder.add(edge);
 		const frame = new Mesh(frameGeometry, new MeshBasicMaterial({ color: 0x0b1226 }));
@@ -168,7 +168,7 @@ export default function createWall(ctx: StageContext, projects: PanelProject[], 
 		},
 		applyPalette(p: Palette) {
 			dark = p.dark;
-			glowMaterial.color.set(dark ? 0x22d3ee : 0x1d4ed8);
+			glowMaterial.color.set(dark ? 0xf5d042 : 0x1f5fc4);
 			glowMaterial.blending = dark ? AdditiveBlending : NormalBlending;
 			glowMaterial.needsUpdate = true;
 			layout();

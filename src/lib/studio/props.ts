@@ -30,7 +30,7 @@ export function buildProps(parent: Group): Props {
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
 	const wood = woodMaterial("oak_veneer_01");
 	const kraft = mat(0xb08a5a, 0.85, "printed");
-	const accents = [0x22d3ee, 0xffc20e, 0x8b5cf6, 0x34d399, 0xf0596b, 0x3b82f6].map((c) => mat(c, 0.5));
+	const accents = [0x2f7ce6, 0xf5d042, 0x1b2d6e, 0xa98500, 0xf2eedf, 0x3d4770].map((c) => mat(c, 0.5)); // the palette
 
 	/** A potted plant: a tapered pot and a handful of leaves. */
 	const plant = (x: number, y: number, z: number, scale = 1) => {
@@ -73,7 +73,7 @@ export function buildProps(parent: Group): Props {
 	boxAt(parent, 0.36, 0.28, 0.28, accents[0], sx - 0.2, 0.28, sz, 0.02);
 	boxAt(parent, 0.36, 0.28, 0.28, accents[2], sx + 0.2, 0.28, sz, 0.02);
 	// Second: a row of binders.
-	[0x1d4ed8, 0x0f766e, 0xb45309, 0x7c3aed, 0xbe123c, 0x334155].forEach((c, i) => boxAt(parent, 0.07, 0.3, 0.24, mat(c, 0.55), sx - 0.33 + i * 0.1, 0.72, sz, 0.005));
+	[0x1f5fc4, 0x0a174e, 0xa98500, 0x2f7ce6, 0xf5d042, 0x3d4770].forEach((c, i) => boxAt(parent, 0.07, 0.3, 0.24, mat(c, 0.55), sx - 0.33 + i * 0.1, 0.72, sz, 0.005));
 	// Third: cardboard boxes.
 	boxAt(parent, 0.3, 0.22, 0.26, kraft, sx - 0.22, 1.12, sz, 0.01);
 	boxAt(parent, 0.26, 0.16, 0.26, kraft, sx + 0.18, 1.09, sz, 0.01);
@@ -91,7 +91,7 @@ export function buildProps(parent: Group): Props {
 		const { g } = rugFace;
 		g.fillStyle = "#16213f";
 		g.fillRect(0, 0, 512, 352);
-		g.strokeStyle = "#22d3ee";
+		g.strokeStyle = "#f5d042";
 		g.globalAlpha = 0.55;
 		g.lineWidth = 5;
 		g.strokeRect(24, 24, 464, 304);
