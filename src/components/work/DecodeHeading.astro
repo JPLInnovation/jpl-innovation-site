@@ -1,0 +1,118 @@
+---
+/**
+ * A headline that decodes (the spec's section 5, after RIY3): the first time it comes into view it scrambles from
+ * random characters into its words, once, in under a second. The frames come from src/lib/look/decode.ts (tested).
+ * Screen readers and search engines always get the plain words; without script, with reduced motion (the system
+ * setting or html.reduce-motion) the words are simply there. Transform-free: each letter keeps its own width while it
+ * scrambles, so the line never reflows.
+ *
+ *   <DecodeHeading text="CCNA in motion" />                                         an h2
+ *   <DecodeHeading as="h1" text={title} class="living my-title" id="page-title" />  any level, any classes (living colour too)
+ *   <DecodeHeading as="p" text="…" />                                                not a heading
+ */
+interface Props {
+	text: string;
+	as?: "h1" | "h2" | "h3" | "p";
+	class?: string;
+	id?: string;
+}
+const { text, as: Tag = "h2", class: className, id } = Astro.props;
+---
+
+<Tag class:list={["decode", className]} id={id} data-decode>{text}</Tag>
+
+<style is:global>
+	/* each letter in its own box while it scrambles, so a wide noise glyph never pushes the line */
+	.decode__char {
+		display: inline-block;
+		text-align: center;
+		white-space: pre;
+	}
+	.decode__word {
+		white-space: nowrap;
+	}
+	/* the noise is set in ink; the living colour flows back in when the words settle */
+	.decode[data-decoding] {
+		background-image: none !important;
+		color: var(--ink) !important;
+	}
+</style>
+
+<script>
+	import { decodeFrame } from "@/lib/look/decode";
+
+	const DURATION = 820; // ms, the whole decode
+	const STEP = 45; // ms between noise changes (any faster and it reads as flicker, not letters)
+	let observers: IntersectionObserver[] = [];
+
+	function play(el: HTMLElement) {
+		const text = el.textContent ?? "";
+		el.dataset.decoded = "";
+		// the words for assistive tech, the noise for the eye
+		const said = document.createElement("span");
+		said.className = "sr-only";
+		said.textContent = text;
+		const face = document.createElement("span");
+		face.setAttribute("aria-hidden", "true");
+		const chars: HTMLElement[] = [];
+		text.split(/(\s+)/).forEach((part) => {
+			if (!part) return;
+			if (/^\s+$/.test(part)) return face.append(part);
+			const word = document.createElement("span");
+			word.className = "decode__word";
+			for (const ch of part) {
+				const c = document.createElement("span");
+				c.className = "decode__char";
+				c.textContent = ch;
+				word.append(c);
+				chars.push(c);
+			}
+			face.append(word);
+		});
+		el.replaceChildren(said, face);
+		// one read of every width, then only writes
+		const widths = chars.map((c) => c.getBoundingClientRect().width);
+		chars.forEach((c, i) => (c.style.width = `${widths[i]}px`));
+		el.setAttribute("data-decoding", "");
+		const letters = [...text].filter((ch) => !/\s/.test(ch));
+		const start = performance.now();
+		let lastStep = -1;
+		const frame = (now: number) => {
+			if (!el.isConnected) return;
+			const elapsed = now - start;
+			const step = Math.floor(elapsed / STEP);
+			if (step !== lastStep) {
+				lastStep = step;
+				const shown = [...decodeFrame(letters.join(""), Math.min(1, elapsed / DURATION))];
+				chars.forEach((c, i) => {
+					if (c.textContent !== shown[i]) c.textContent = shown[i];
+				});
+			}
+			if (elapsed < DURATION) return void requestAnimationFrame(frame);
+			el.textContent = text;
+			el.removeAttribute("data-decoding");
+		};
+		requestAnimationFrame(frame);
+	}
+
+	function init() {
+		observers.forEach((o) => o.disconnect());
+		observers = [];
+		const root = document.documentElement;
+		if (matchMedia("(prefers-reduced-motion: reduce)").matches || root.classList.contains("reduce-motion")) return;
+		for (const el of document.querySelectorAll<HTMLElement>("[data-decode]:not([data-decoded])")) {
+			const io = new IntersectionObserver(
+				([entry]) => {
+					if (!entry.isIntersecting) return;
+					io.disconnect();
+					play(el);
+				},
+				{ rootMargin: "0px 0px -15% 0px" },
+			);
+			io.observe(el);
+			observers.push(io);
+		}
+	}
+
+	document.addEventListener("astro:page-load", init);
+</script>

@@ -3,26 +3,26 @@
 	     Content stays within y≈150–600 so a 21:9 crop keeps it all. -->
 	<defs>
 		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-			<stop offset="0" stop-color="#0d1526"/>
-			<stop offset="1" stop-color="#090b11"/>
+			<stop offset="0" stop-color="#0a174e"/>
+			<stop offset="1" stop-color="#071038"/>
 		</linearGradient>
 		<radialGradient id="glow" cx="0.45" cy="0.5" r="0.6">
-			<stop offset="0" stop-color="#1683c2" stop-opacity="0.4"/>
-			<stop offset="1" stop-color="#1683c2" stop-opacity="0"/>
+			<stop offset="0" stop-color="#2f7ce6" stop-opacity="0.4"/>
+			<stop offset="1" stop-color="#2f7ce6" stop-opacity="0"/>
 		</radialGradient>
 		<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-			<path d="M32 0H0v32" fill="none" stroke="#5cc8ff" stroke-opacity="0.08"/>
+			<path d="M32 0H0v32" fill="none" stroke="#f2eedf" stroke-opacity="0.06"/>
 		</pattern>
 		<style>
-			.link { fill: none; stroke: #5cc8ff; stroke-opacity: 0.55; stroke-width: 3; }
-			.node { fill: #1b2433; stroke: #6474a2; stroke-width: 3; }
-			.glyph { fill: none; stroke: #c3cadb; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
-			.label { fill: #a3acc8; font-size: 20px; text-anchor: middle; }
-			.packet { fill: #5cc8ff; }
+			.link { fill: none; stroke: #8fb8f5; stroke-opacity: 0.55; stroke-width: 3; }
+			.node { fill: #13235f; stroke: #3a5592; stroke-width: 3; }
+			.glyph { fill: none; stroke: #f2eedf; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+			.label { fill: #bcc1d6; font-size: 20px; text-anchor: middle; }
+			.packet { fill: #f5d042; }
 			@media (prefers-reduced-motion: reduce) { .packet { display: none; } }
 		</style>
 		<marker id="head" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
-			<path d="M0 0 10 5 0 10z" fill="#c3cadb"/>
+			<path d="M0 0 10 5 0 10z" fill="#f2eedf"/>
 		</marker>
 	</defs>
 
@@ -51,8 +51,8 @@
 	<text class="label" x="160" y="440">Internet</text>
 
 	<!-- ACL / firewall shield on the incoming link -->
-	<path d="M300 322l42 15v34c0 28-19 45-42 56-23-11-42-28-42-56v-34z" fill="#0f2a1f" stroke="#34d399" stroke-width="3.5"/>
-	<path d="M283 373l12 12 23-25" fill="none" stroke="#34d399" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+	<path d="M300 322l42 15v34c0 28-19 45-42 56-23-11-42-28-42-56v-34z" fill="#071038" stroke="#f5d042" stroke-width="3.5"/>
+	<path d="M283 373l12 12 23-25" fill="none" stroke="#f5d042" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
 	<text class="label" x="300" y="460">ACL</text>
 
 	<!-- Router (circle with four arrows) -->
@@ -79,21 +79,21 @@
 	<text class="label" x="930" y="530">L2 switch</text>
 
 	<!-- PCs -->
-	<g fill="#1b2433" stroke="#6474a2" stroke-width="3">
+	<g fill="#13235f" stroke="#3a5592" stroke-width="3">
 		<rect x="1077" y="212" width="58" height="38" rx="5"/><rect x="1077" y="292" width="58" height="38" rx="5"/>
 		<rect x="1077" y="422" width="58" height="38" rx="5"/><rect x="1077" y="502" width="58" height="38" rx="5"/>
 	</g>
-	<g stroke="#6474a2" stroke-width="3" stroke-linecap="round">
+	<g stroke="#3a5592" stroke-width="3" stroke-linecap="round">
 		<path d="M1094 258h24M1094 338h24M1094 468h24M1094 548h24"/>
 	</g>
 
 	<!-- Windows server -->
 	<rect class="node" x="642" y="492" width="76" height="100" rx="8"/>
-	<g fill="#1daef1">
+	<g fill="#2f7ce6">
 		<rect x="662" y="512" width="16" height="16"/><rect x="682" y="512" width="16" height="16"/>
 		<rect x="662" y="532" width="16" height="16"/><rect x="682" y="532" width="16" height="16"/>
 	</g>
-	<path d="M656 568h48M656 578h48" stroke="#6474a2" stroke-width="3" stroke-linecap="round"/>
+	<path d="M656 568h48M656 578h48" stroke="#3a5592" stroke-width="3" stroke-linecap="round"/>
 	<text class="label" x="626" y="548" style="text-anchor:end">Windows Server</text>
-	<text class="label" x="626" y="574" style="text-anchor:end; font-size:17px; fill:#6474a2">AD · DNS · DHCP</text>
+	<text class="label" x="626" y="574" style="text-anchor:end; font-size:17px; fill:#8fb8f5">AD · DNS · DHCP</text>
 </svg>

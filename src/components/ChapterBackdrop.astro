@@ -1,8 +1,9 @@
 ---
 /**
  * The opening of a project chapter: slow footage of the project's own station in the studio (the same renders as the
- * home page's read mode, public/studio/scenes/), behind the page's first screen, fading into the page. A scrim from the
- * text's side keeps the words' contrast (measured, not guessed: see docs/SHOWCASE.md). Decorative: no alt text.
+ * home page's read mode, public/studio/scenes/), behind the page's first screen. It lights up from darkness once, as
+ * if the studio's lights came on, then drifts. The picture itself fades out towards the words and the page (a mask,
+ * not a scrim), so the text keeps its contrast without a gradient laid over anything. Decorative: no alt text.
  * Put it first inside <BaseLayout>; the layout's <main> is its frame.
  */
 interface Props {
@@ -23,7 +24,6 @@ const scene = scenes[Astro.props.project] ?? "sketch";
 		alt=""
 		fetchpriority="low"
 	/>
-	<div class="chapter-scrim"></div>
 </div>
 
 <style is:global>
@@ -31,19 +31,34 @@ const scene = scenes[Astro.props.project] ?? "sketch";
 		position: absolute;
 		inset: 0 0 auto 0;
 		z-index: -1;
-		height: min(90svh, 820px);
+		height: min(92svh, 860px);
 		overflow: hidden;
 		pointer-events: none;
-		-webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
-		mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+		/* fades towards the words (left) and into the page (bottom): two masks, kept where both keep it */
+		-webkit-mask-image:
+			linear-gradient(to right, transparent 8%, #000 62%),
+			linear-gradient(to bottom, #000 35%, transparent 100%);
+		-webkit-mask-composite: source-in;
+		mask-image:
+			linear-gradient(to right, transparent 8%, #000 62%),
+			linear-gradient(to bottom, #000 35%, transparent 100%);
+		mask-composite: intersect;
 	}
 	.chapter-backdrop img {
 		width: 100%;
 		height: 100%;
 		object-fit: cover;
-		opacity: 0.2;
+		opacity: var(--backdrop-lit);
 		transform-origin: 70% 40%;
-		animation: chapter-drift 36s ease-in-out infinite alternate;
+		animation:
+			chapter-lights 2.2s cubic-bezier(0.3, 0, 0.2, 1) 0.3s backwards,
+			chapter-drift 36s ease-in-out infinite alternate;
+	}
+	:root {
+		--backdrop-lit: 0.22;
+	}
+	.dark {
+		--backdrop-lit: 0.5;
 	}
 	/* The drone page (two columns, 1024 px and up): the drone is small and low in its shot, and the page's text and 3D
 	   card cover the rest, so the shot is zoomed in on the landing pad and moved up behind the top of the page, like the
@@ -58,25 +73,22 @@ const scene = scenes[Astro.props.project] ?? "sketch";
 			top: -61%;
 		}
 	}
-	.dark .chapter-backdrop img {
-		opacity: 0.4;
-	}
-	html:not(.dark) .chapter-backdrop img {
-		opacity: 0.16;
-	}
-	/* From the side the words are on, so they keep their contrast over the brightest part of the picture. */
-	.chapter-scrim {
-		position: absolute;
-		inset: 0;
-		background: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 80%, transparent) 50%, transparent 100%);
-	}
-	html:not(.dark) .chapter-scrim {
-		background: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 92%, transparent) 55%, transparent 100%);
-	}
+	/* Phones: the words run over the whole picture, so it only fades into the page, and stays dimmer. */
 	@media (max-width: 767px) {
-		.chapter-scrim,
-		html:not(.dark) .chapter-scrim {
-			background: color-mix(in oklab, var(--background) 78%, transparent);
+		.chapter-backdrop {
+			-webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+			mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+		}
+		:root {
+			--backdrop-lit: 0.12;
+		}
+		.dark {
+			--backdrop-lit: 0.3;
+		}
+	}
+	@keyframes chapter-lights {
+		from {
+			opacity: 0;
 		}
 	}
 	@keyframes chapter-drift {

@@ -1,83 +1,227 @@
 ---
 /**
- * A Cisco IOS console that types out real configs (VLANs, inter-VLAN routing, an ACL, SSH hardening).
- * Scripts live in src/text/projects/cybersecurity-terminal.ts. Without JS it shows the first config in full; with reduced motion,
- * each tab shows its full text instantly.
+ * The CCNA lab's Cisco IOS console. It types out real configs (VLANs, inter-VLAN routing, an ACL, SSH hardening) from
+ * src/text/projects/cybersecurity-terminal.ts, then hands over: visitors type real IOS commands on the lab's Layer 3
+ * switch and get IOS's replies (the device: src/lib/look/ios.ts, tested). Without JS it shows the first config in
+ * full; with reduced motion each config shows in full at once and the typing works the same.
  */
-import { terminalScenes, type TerminalLine } from "@/text/projects/cybersecurity-terminal";
+import { labHosts, terminalScenes, type TerminalLine } from "@/text/projects/cybersecurity-terminal";
 import { cyberPage } from "@/text/projects/cybersecurity";
 
 const first = terminalScenes[0];
+const text = cyberPage.ccna;
 const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 const lineHtml = (line: TerminalLine) =>
-	line.out !== undefined
-		? `<span class="text-[#93a4bd]">${esc(line.out)}</span>`
-		: `<span class="text-[#7cb4ff]">${esc(line.prompt ?? "")}</span> ${esc(line.cmd ?? "")}`;
+	line.out !== undefined ? `<span class="t-out">${esc(line.out)}</span>` : `<span class="t-prompt">${esc(line.prompt ?? "")}</span> ${esc(line.cmd ?? "")}`;
 ---
 
-<div data-ios-terminal class="overflow-hidden rounded-xl border border-[#1b2c4d] bg-hero-field text-[#e6edf8] shadow-[var(--shadow-lift)]">
-	<div class="flex items-center gap-2 border-b border-[#1b2c4d] px-4 py-3">
-		<span class="size-3 rounded-full bg-[#f0596b]" aria-hidden="true"></span>
-		<span class="size-3 rounded-full bg-[#ffc20e]" aria-hidden="true"></span>
-		<span class="size-3 rounded-full bg-[#34d399]" aria-hidden="true"></span>
-		<span class="ml-2 text-xs font-medium text-[#93a4bd]">{cyberPage.ccna.consoleTitle}</span>
+<div data-ios-terminal class="ios">
+	<div class="ios__bar">
+		<span class="ios__title">{text.consoleTitle}</span>
+		<div role="tablist" aria-label={text.scenesLabel} class="ios__tabs">
+			{
+				terminalScenes.map((scene, i) => (
+					<button type="button" role="tab" data-scene={i} aria-selected={i === 0 ? "true" : "false"} aria-controls="ios-screen" class="ios__tab">
+						{scene.label}
+					</button>
+				))
+			}
+		</div>
 	</div>
-	<div role="tablist" aria-label="Configuration" class="flex flex-wrap gap-1 border-b border-[#1b2c4d] px-2 py-2">
-		{
-			terminalScenes.map((scene, i) => (
-				<button
-					type="button"
-					role="tab"
-					data-scene={i}
-					aria-selected={i === 0 ? "true" : "false"}
-					class="min-h-9 rounded-md px-3 text-[13px] font-semibold text-[#93a4bd] transition-colors duration-200 hover:bg-[#0f2150] hover:text-[#e6edf8] aria-selected:bg-[#12275a] aria-selected:text-[#22d3ee]"
-				>
-					{scene.label}
-				</button>
-			))
-		}
-	</div>
-	<pre
-		data-screen
-		class="h-[23rem] overflow-y-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-[12.5px] leading-[1.7] md:text-[13.5px]"
-		set:html={first.lines.map(lineHtml).join("\n")}
-	></pre>
-	<p data-note class="min-h-[3.25rem] border-t border-[#1b2c4d] px-4 py-3 text-sm text-[#93a4bd]">{first.note}</p>
+	<pre id="ios-screen" data-screen class="ios__screen" tabindex="-1" set:html={first.lines.map(lineHtml).join("\n")}></pre>
+	<form class="ios__input" data-cli hidden autocomplete="off">
+		<label for="ios-command" class="sr-only">{text.inputLabel}</label>
+		<span class="t-prompt" data-cli-prompt aria-hidden="true">L3SW#</span>
+		<input id="ios-command" name="command" type="text" maxlength="200" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="send" placeholder={text.placeholder} />
+	</form>
+	<p data-note class="ios__note">{first.note}</p>
+	<p class="sr-only" aria-live="polite" data-cli-said></p>
 	<script is:inline type="application/json" data-scenes set:html={JSON.stringify(terminalScenes)}></script>
+	<script is:inline type="application/json" data-hosts set:html={JSON.stringify(labHosts)}></script>
+	<script is:inline type="application/json" data-words set:html={JSON.stringify({ handover: text.handover, yourTurn: text.yourTurn })}></script>
 </div>
 
+<style is:global>
+	/* A console is dark in both themes: the lab's own navy, the brand's paper and blue for the text, yellow for the cursor. */
+	.ios {
+		overflow: hidden;
+		border-radius: 1.5rem;
+		background: #071038;
+		color: #f2eedf;
+		box-shadow: inset 0 0 0 1px rgb(242 238 223 / 0.12);
+	}
+	.ios__bar {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem 1rem;
+		padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+		border-bottom: 1px solid rgb(242 238 223 / 0.12);
+	}
+	.ios__title {
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: #bcc1d6;
+	}
+	.ios__tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem;
+	}
+	.ios__tab {
+		min-height: 2.25rem;
+		padding-inline: 0.85rem;
+		border-radius: 999px;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: #bcc1d6;
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+	}
+	.ios__tab:hover {
+		color: #f2eedf;
+		background: rgb(242 238 223 / 0.08);
+	}
+	.ios__tab[aria-selected="true"] {
+		color: #071038;
+		background: #f5d042;
+	}
+	.ios__tab:focus-visible {
+		outline-color: #f5d042;
+	}
+	.ios__screen {
+		height: 24rem;
+		overflow-y: auto;
+		padding: 1.1rem 1.25rem;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+		font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+		font-size: 13px;
+		line-height: 1.7;
+		scrollbar-color: rgb(242 238 223 / 0.25) transparent;
+	}
+	@media (min-width: 768px) {
+		.ios__screen {
+			height: 27rem;
+			font-size: 13.5px;
+		}
+	}
+	.ios__screen:focus-visible {
+		outline-offset: -3px;
+	}
+	.t-prompt {
+		color: #8fb8f5;
+	}
+	.t-out {
+		color: #bcc1d6;
+	}
+	.t-err {
+		color: #f5d042;
+	}
+	.t-cursor {
+		display: inline-block;
+		width: 0.55em;
+		height: 1.1em;
+		margin-left: 1px;
+		vertical-align: -0.2em;
+		background: #f5d042;
+		animation: ios-blink 1s steps(1) infinite;
+	}
+	@keyframes ios-blink {
+		50% {
+			opacity: 0;
+		}
+	}
+	.ios__input {
+		display: flex;
+		align-items: center;
+		gap: 0.6ch;
+		padding: 0.25rem 1.25rem;
+		border-top: 1px solid rgb(242 238 223 / 0.12);
+		font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+		font-size: 16px; /* 16 px: phones don't zoom into the field */
+	}
+	.ios__input[hidden] {
+		display: none;
+	}
+	.ios__input input {
+		flex: 1;
+		min-width: 0;
+		min-height: 3rem;
+		background: transparent;
+		color: #f2eedf;
+		caret-color: #f5d042;
+		font: inherit;
+	}
+	.ios__input input:focus {
+		outline: none;
+	}
+	.ios__input:focus-within {
+		box-shadow: inset 0 0 0 2px #f5d042;
+	}
+	.ios__note {
+		min-height: 3.25rem;
+		padding: 0.85rem 1.25rem 1rem;
+		border-top: 1px solid rgb(242 238 223 / 0.12);
+		font-size: var(--step-small);
+		color: #bcc1d6;
+		text-wrap: pretty;
+	}
+</style>
+
 <script>
+	import { lab, prompt, run } from "@/lib/look/ios";
 	import type { TerminalLine, TerminalScene } from "@/text/projects/cybersecurity-terminal";
 
 	const esc = (s: string) => s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-	const promptHtml = (p = "") => `<span class="text-[#7cb4ff]">${esc(p)}</span> `;
-	const outHtml = (o: string) => `<span class="text-[#93a4bd]">${esc(o)}</span>`;
-	const cursor = `<span class="ml-px inline-block h-[1.1em] w-[0.55em] translate-y-[0.2em] bg-[#f5d042] motion-safe:animate-pulse" aria-hidden="true"></span>`;
+	const promptHtml = (p = "") => `<span class="t-prompt">${esc(p)}</span> `;
+	/** IOS's complaints (and the ^ under the bad word) in yellow; everything else it says in the output colour. */
+	const ERROR = /^(\s*\^$|% (Invalid|Incomplete|Ambiguous|Unknown|Unrecognized|Please)|Bad mask)/;
+	const outHtml = (o: string) => `<span class="${ERROR.test(o) ? "t-err" : "t-out"}">${esc(o)}</span>`;
+	const cursor = `<span class="t-cursor" aria-hidden="true"></span>`;
 	const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+	const MAX_LINES = 400;
 
 	let stopAll: Array<() => void> = [];
 
 	function init() {
 		stopAll.forEach((stop) => stop());
 		stopAll = [];
-		const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+		const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-motion");
 
 		for (const root of document.querySelectorAll<HTMLElement>("[data-ios-terminal]")) {
-			const scenes: TerminalScene[] = JSON.parse(root.querySelector("[data-scenes]")!.textContent ?? "[]");
+			const json = <T,>(sel: string): T => JSON.parse(root.querySelector(sel)!.textContent ?? "null");
+			const scenes = json<TerminalScene[]>("[data-scenes]");
+			const words = json<{ handover: string; yourTurn: string }>("[data-words]");
 			const screen = root.querySelector<HTMLElement>("[data-screen]")!;
 			const note = root.querySelector<HTMLElement>("[data-note]")!;
 			const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-scene]")];
-			let run = 0; // bump to cancel the running animation
+			const form = root.querySelector<HTMLFormElement>("[data-cli]")!;
+			const input = form.querySelector("input")!;
+			const promptEl = root.querySelector<HTMLElement>("[data-cli-prompt]")!;
+			const said = root.querySelector<HTMLElement>("[data-cli-said]")!;
+			const device = lab({ hosts: json<string[]>("[data-hosts]") });
+			const history: string[] = [];
+			let back = 0; // how far up the history the arrow keys are
+			let run_ = 0; // bump to cancel the running animation
 			let onScreen = false;
+			let typing = false; // the visitor has taken over: no more auto-advance
 
-			const full = (i: number) =>
-				(screen.innerHTML = scenes[i].lines
-					.map((l: TerminalLine) => (l.out !== undefined ? outHtml(l.out) : promptHtml(l.prompt) + esc(l.cmd ?? "")))
-					.join("\n"));
+			form.hidden = false;
+			const full = (i: number) => (screen.innerHTML = scenes[i].lines.map((l: TerminalLine) => (l.out !== undefined ? outHtml(l.out) : promptHtml(l.prompt) + esc(l.cmd ?? ""))).join("\n"));
+			const append = (html: string) => {
+				const row = document.createElement("div");
+				row.innerHTML = html;
+				screen.appendChild(row);
+				while (screen.childElementCount > MAX_LINES) screen.firstElementChild!.remove();
+			};
+
 			const play = async (i: number) => {
-				const id = ++run;
-				const alive = () => id === run;
-				// Waits while scrolled away; gives up as soon as this run is cancelled (tab click, navigation).
+				const id = ++run_;
+				const alive = () => id === run_;
+				// Waits while scrolled away; gives up as soon as this run is cancelled (tab click, typing, navigation).
 				const untilVisible = async () => {
 					while (!onScreen && alive()) await sleep(250);
 				};
@@ -103,13 +247,9 @@ const lineHtml = (line: TerminalLine) =>
 					screen.scrollTop = screen.scrollHeight;
 				}
 				if (!alive()) return;
-				const last = [...scenes[i].lines].reverse().find((l) => l.prompt)?.prompt ?? "";
-				const tail = document.createElement("div");
-				tail.innerHTML = promptHtml(last) + cursor;
-				screen.appendChild(tail);
 				await sleep(2800);
 				await untilVisible();
-				if (alive()) select((i + 1) % scenes.length);
+				if (alive() && !typing) select((i + 1) % scenes.length);
 			};
 
 			const select = (i: number) => {
@@ -118,20 +258,56 @@ const lineHtml = (line: TerminalLine) =>
 				if (reduced) full(i);
 				else play(i);
 			};
-
 			tabs.forEach((tab, i) => tab.addEventListener("click", () => select(i)));
+
+			/** The visitor's first key: the scene stops where it is (shown whole), and the console is theirs. */
+			const takeOver = () => {
+				if (typing) return;
+				typing = true;
+				const playing = tabs.findIndex((t) => t.getAttribute("aria-selected") === "true");
+				run_++;
+				full(Math.max(0, playing));
+				append(`<span class="t-out">${esc(words.handover)}</span>`);
+				note.textContent = words.yourTurn;
+			};
+			input.addEventListener("keydown", (event) => {
+				if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+					if (!history.length) return;
+					event.preventDefault();
+					back = Math.max(0, Math.min(history.length, back + (event.key === "ArrowUp" ? 1 : -1)));
+					input.value = back ? history[history.length - back] : "";
+				} else if (event.key.length === 1 || event.key === "Enter") takeOver();
+			});
+			form.addEventListener("submit", (event) => {
+				event.preventDefault();
+				takeOver();
+				const line = input.value;
+				input.value = "";
+				back = 0;
+				if (line.trim()) history.push(line);
+				append(promptHtml(prompt(device)) + esc(line));
+				const out = run(device, line);
+				out.forEach((o) => append(outHtml(o)));
+				said.textContent = out.join(". ");
+				promptEl.textContent = prompt(device);
+				screen.scrollTop = screen.scrollHeight;
+			});
+			// a click on the console's screen is a click into its command line
+			screen.addEventListener("click", () => {
+				if (!getSelection()?.toString()) input.focus({ preventScroll: true });
+			});
 
 			let started = false;
 			const observer = new IntersectionObserver(([entry]) => {
 				onScreen = entry.isIntersecting;
 				if (onScreen && !started && !reduced) {
 					started = true;
-					select(0);
+					if (!typing) select(0);
 				}
 			});
 			observer.observe(root);
 			stopAll.push(() => {
-				run++;
+				run_++;
 				observer.disconnect();
 			});
 		}
