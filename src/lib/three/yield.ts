@@ -3,7 +3,7 @@
  * frame can be drawn and a click answered between them, instead of the page freezing for the whole build. That is what
  * keeps a page change smooth when the next page builds a 3D scene while the old one is still fading out.
  */
-import type { Camera, Mesh, Object3D, Scene, WebGLRenderTarget, WebGLRenderer } from "three";
+import type { Camera, Material, Mesh, Object3D, Scene, ShaderMaterial, Texture, WebGLRenderTarget, WebGLRenderer } from "three";
 type WithScheduler = { scheduler?: { yield?: () => Promise<void> } };
 
 const channel = typeof MessageChannel === "undefined" ? undefined : new MessageChannel();
@@ -47,5 +47,31 @@ export async function compileInSlices(renderer: WebGLRenderer, scene: Scene, cam
 		const compiled = renderer.compileAsync(mesh, camera, scene); // (the programs are chosen synchronously, in this call)
 		renderer.setRenderTarget(before);
 		await compiled;
+	}
+}
+
+/**
+ * Sends a scene's textures to the GPU ahead of time, one per frame. three.js otherwise uploads a texture in the frame its
+ * object first comes into view, and a few large ones together (canvases, photos) froze that frame for 100 ms or more.
+ */
+export async function uploadInSlices(renderer: WebGLRenderer, scene: Scene) {
+	const textures = new Set<Texture>();
+	const take = (value: unknown) => {
+		const t = value as Texture | null;
+		if (t?.isTexture && t.image && !(t as { isRenderTargetTexture?: boolean }).isRenderTargetTexture) textures.add(t);
+	};
+	scene.traverse((o) => {
+		const mesh = o as Mesh;
+		if (!mesh.material) return;
+		for (const m of ([] as Material[]).concat(mesh.material)) {
+			for (const value of Object.values(m)) take(value);
+			for (const uniform of Object.values((m as ShaderMaterial).uniforms ?? {})) take(uniform?.value);
+		}
+	});
+	for (const texture of textures) {
+		if ((renderer.properties.get(texture) as { __webglInit?: boolean }).__webglInit) continue;
+		await new Promise((resolve) => requestAnimationFrame(resolve));
+		if (renderer.getContext().isContextLost()) return; // the page moved on and the stage was let go of
+		renderer.initTexture(texture);
 	}
 }

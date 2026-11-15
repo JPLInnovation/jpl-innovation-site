@@ -227,10 +227,15 @@ export function pageScreen({ page: name, size, scene, address, background, reduc
 	const load = (i: number) => {
 		if (i < 0 || i >= count || tiles.has(i)) return;
 		tiles.set(i, null);
-		loadImage(page.files[i]).then(
+		loadImage(page.files[i])
+			// Decoded and flipped off the main thread: uploading the 4K <img> itself made the browser do both in the
+			// frame it first showed (~140 ms). The bitmap comes flipped already, so the texture must not flip it again.
+			.then((img) => createImageBitmap(img, { imageOrientation: "flipY" }))
+			.then(
 			(img) => {
-				if (!tiles.has(i)) return; // let go of while it was loading
+				if (!tiles.has(i)) return img.close(); // let go of while it was loading
 				const texture = new Texture(img);
+				texture.flipY = false;
 				texture.colorSpace = SRGBColorSpace;
 				texture.anisotropy = 8;
 				texture.needsUpdate = true;

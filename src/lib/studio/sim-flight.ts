@@ -15,7 +15,7 @@
  *
  * Drawn only while the scroll changes it. Its files load when the camera comes near.
  */
-import { compileInSlices } from "../three/yield";
+import { compileInSlices, uploadInSlices } from "../three/yield";
 import {
 	BoxGeometry,
 	BufferAttribute,
@@ -38,7 +38,6 @@ import {
 	Object3D,
 	PerspectiveCamera,
 	PlaneGeometry,
-	PMREMGenerator,
 	Points,
 	PointsMaterial,
 	Quaternion,
@@ -404,10 +403,11 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 		const [env, ...ridges] = await Promise.all(["/chapter/drone/env.webp", "/chapter/drone/dusk-1.webp", "/chapter/drone/dusk-2.webp", "/chapter/drone/dusk-3.webp", "/chapter/drone/dusk-4.webp"].map(load));
 		rig = await loadDrone();
 		env.mapping = EquirectangularReflectionMapping;
-		const pmrem = new PMREMGenerator(renderer);
-		world.environment = pmrem.fromEquirectangular(env).texture;
+		// The stage's own reflection maker, and env.webp 1024 px wide on purpose (a 256 px cube, as the room's): then the
+		// reflection shader is the one already built. A new maker, or any other size, compiles it again, which froze the
+		// page for ~300 ms (Direct3D) as the flight was prepared.
+		world.environment = ctx.pmrem.fromEquirectangular(env).texture;
 		world.environmentIntensity = 0.9;
-		pmrem.dispose();
 		world.add(new HemisphereLight(0xc9d6ff, 0x2b2230, 0.8));
 		const sun = new DirectionalLight(0xffd2a6, 2.2);
 		sun.position.set(-4, 3, -6);
@@ -462,6 +462,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 		// Build its shaders now, so the first frame of the flight never stutters.
 		rig.animate(0, 0.0001, 0.03);
 		await compileInSlices(renderer, world, view, target);
+		await uploadInSlices(renderer, world);
 
 		state = "ready";
 		dirty = true;

@@ -55,6 +55,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { qualityPref, reducedMotion as prefersReducedMotion } from "../prefs";
 import { setDetail, simplify } from "./finish";
+import { uploadInSlices } from "./yield";
 
 /** Site colours (from the CSS custom properties in global.css), as Three.js colours. */
 export interface Palette {
@@ -136,6 +137,8 @@ export interface StageView {
 export interface StageContext {
 	/** For a model that draws a picture of its own (src/lib/studio/sim-flight.ts). */
 	renderer: WebGLRenderer;
+	/** The stage's reflection maker, kept for the stage's life: another one would build its ~300 ms shader again. */
+	pmrem: PMREMGenerator;
 	scene: Scene;
 	/** Add the model here; the stage turns this group for the idle spin. */
 	root: Group;
@@ -349,7 +352,6 @@ export async function mountStage(
 	const pmrem = new PMREMGenerator(renderer);
 	const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 	scene.environment = environment;
-	pmrem.dispose();
 
 	const camera = new PerspectiveCamera(view.fov ?? 35, 1, view.near ?? 0.01, 40);
 	camera.position.set(...view.camera);
@@ -409,6 +411,7 @@ export async function mountStage(
 
 	const ctx: StageContext = {
 		renderer,
+		pmrem,
 		scene,
 		root,
 		camera,
@@ -426,6 +429,7 @@ export async function mountStage(
 		render: () => render(),
 		precompile() {
 			renderer.compileAsync(scene, camera).then(invalidate, () => undefined);
+			void uploadInSlices(renderer, scene);
 		},
 		lights: { key, fill, rim },
 		occlusion: 1,
@@ -477,6 +481,7 @@ export async function mountStage(
 	} catch {
 		/* the first frame compiles them instead */
 	}
+	void uploadInSlices(renderer, scene); // and their textures, one a frame, before they come into view
 	let scale = 1; // dynamic resolution (see time())
 	const pixelRatio = () => {
 		const ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
@@ -843,6 +848,7 @@ export async function mountStage(
 		});
 		textures.forEach((t) => t.dispose());
 		environment.dispose();
+		pmrem.dispose();
 		renderer.dispose();
 		renderer.forceContextLoss();
 	};
