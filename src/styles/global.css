@@ -18,50 +18,62 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * JPL Innovation theme — blue primary, cyan accent, violet highlight, cool neutral surfaces.
- * Every colour is a variable here, so the theme can be changed in one place.
- *   --primary    blue: buttons, links, indicators (white text on it passes WCAG AA in both modes)
- *   --accent     cyan: highlights and "live" markers; always paired with --accent-foreground
- *   --highlight  violet: only in gradients (buttons, contact band, background glow)
- *   --hero-field deep blue behind photo overlays, the terminal and the 3D badges
- *   --glow-*, --bg-star*, --bg-shoot, --cursor-glow  the animated background (src/scripts/background.ts); kept faint
- *                so text stays AA even with a dot or glow directly behind it
+ * JPL Innovation theme: the drawing set on glass (docs/superpowers/specs/2026-11-15-classic-redesign-design.md).
+ * The brand's own colours, one ground, one ink, one accent per theme:
+ *   --field         the ground behind the glass (the blueprint space draws over it)
+ *   --field-2       one tone step from the field
+ *   --sheet         the drawing sheets (frosted film in Glass, filled in Solid)
+ *   --ink, --ink-soft  text; running text is always --ink
+ *   --accent-brand  the one accent (dark: brand yellow, light: brand blue)
+ *   --mark          brand yellow, the one mark per screen (both themes)
+ * The older names below (--background, --card, --primary ...) point at these, so every component follows.
  * The two FRC alliance colours and the chart hues stay as they were (data colours, validated).
+ * No violet anywhere (the spec's "not wanted" list).
  */
 :root {
 	--radius: 0.75rem;
 
-	--background: #eef3fd;
-	--foreground: #0a1a33;
-	--card: #ffffff;
-	--card-foreground: #0a1a33;
-	--popover: #ffffff;
-	--popover-foreground: #0a1a33;
-	--primary: #1d4ed8;
+	--field: #f2eedf;
+	--field-2: #e8e2cc;
+	--sheet: #ffffff;
+	--sheet-edge: rgb(10 23 78 / 0.12);
+	--ink: #0a174e;
+	--ink-soft: #3d4770;
+	--accent-brand: #2f7ce6;
+	--mark: #f5d042;
+
+	--background: var(--field);
+	--foreground: var(--ink);
+	--card: var(--sheet);
+	--card-foreground: var(--ink);
+	--popover: var(--sheet);
+	--popover-foreground: var(--ink);
+	--primary: #1f5fc4; /* the brand blue one step darker: white text on it passes AA */
 	--primary-foreground: #ffffff;
-	--secondary: #e2eafb;
-	--secondary-foreground: #0a1a33;
-	--muted: #e5ecfa;
-	--muted-foreground: #475569;
-	--accent: #22d3ee;
-	--accent-foreground: #04202b;
-	--highlight: #7c3aed;
+	--secondary: var(--field-2);
+	--secondary-foreground: var(--ink);
+	--muted: var(--field-2);
+	--muted-foreground: var(--ink-soft);
+	--accent: var(--mark);
+	--accent-foreground: var(--ink);
+	--highlight: var(--accent-brand);
 	--destructive: #c8283a;
-	--border: #cfdaef;
-	--input: #cfdaef;
-	--ring: #1d4ed8;
+	--border: #d6cfb6;
+	--input: #d6cfb6;
+	--ring: var(--accent-brand);
 
-	--hero-field: #071433;
-	--shadow-soft: 0 1px 2px rgb(16 42 90 / 0.06), 0 12px 32px -16px rgb(16 42 90 / 0.28);
-	--shadow-lift: 0 2px 6px rgb(16 42 90 / 0.08), 0 24px 48px -20px rgb(16 42 90 / 0.4);
+	--hero-field: #071038;
+	--shadow-soft: 0 1px 2px rgb(10 23 78 / 0.06), 0 12px 32px -16px rgb(10 23 78 / 0.26);
+	--shadow-lift: 0 2px 6px rgb(10 23 78 / 0.08), 0 24px 48px -20px rgb(10 23 78 / 0.38);
 
-	--glow-1: rgb(37 99 235 / 0.16);
-	--glow-2: rgb(124 58 237 / 0.13);
-	--glow-3: rgb(56 140 255 / 0.1);
-	--bg-star: rgb(29 78 216 / 0.42);
-	--bg-star-alt: rgb(124 58 237 / 0.4);
-	--bg-shoot: rgb(124 58 237 / 0.55);
-	--cursor-glow: rgb(124 58 237 / 0.15);
+	/* The old animated background (until the blueprint space replaces it): blue and gold only. */
+	--glow-1: rgb(47 124 230 / 0.14);
+	--glow-2: rgb(245 208 66 / 0.14);
+	--glow-3: rgb(47 124 230 / 0.08);
+	--bg-star: rgb(10 23 78 / 0.38);
+	--bg-star-alt: rgb(184 138 20 / 0.42);
+	--bg-shoot: rgb(47 124 230 / 0.5);
+	--cursor-glow: rgb(245 208 66 / 0.16);
 
 	--alliance-red: #c8283a;
 	--alliance-blue: #1f5fd1;
@@ -72,41 +84,44 @@
 	--chart-3: #7a4bd0;
 	--chart-4: #c8283a;
 
+	/* Type: five steps, no more (the spec). Display is Archivo's extra-wide cut. */
+	--step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+	--step-body: clamp(1rem, 0.96rem + 0.2vw, 1.1875rem);
+	--step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+	--step-head: clamp(2rem, 1.3rem + 3.2vw, 4.5rem);
+	--step-display: clamp(3.5rem, 1rem + 11vw, 15rem);
+
 	color-scheme: light;
 }
 
 .dark {
-	--background: #050a1f;
-	--foreground: #e6edf8;
-	--card: #0b1531;
-	--card-foreground: #e6edf8;
-	--popover: #0b1531;
-	--popover-foreground: #e6edf8;
-	--primary: #2563eb;
-	--primary-foreground: #ffffff;
-	--secondary: #111e3e;
-	--secondary-foreground: #e6edf8;
-	--muted: #0e1a39;
-	--muted-foreground: #94a3b8;
-	--accent: #22d3ee;
-	--accent-foreground: #04202b;
-	--highlight: #8b5cf6;
-	--destructive: #f0596b;
-	--border: #1a2a50;
-	--input: #233661;
-	--ring: #38bdf8;
+	--field: #0a174e;
+	--field-2: #071038;
+	--sheet: #13235f;
+	--sheet-edge: rgb(242 238 223 / 0.14);
+	--ink: #f2eedf;
+	--ink-soft: #bcc1d6;
+	--accent-brand: #f5d042;
+	--mark: #f5d042;
 
-	--hero-field: #050c28;
+	--primary: var(--mark); /* the yellow action, navy text on it */
+	--primary-foreground: #0a174e;
+	--destructive: #f0596b;
+	--border: #26377a;
+	--input: #2c3f86;
+	--ring: var(--mark);
+
+	--hero-field: #050c2e;
 	--shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 34px -18px rgb(0 0 0 / 0.7);
 	--shadow-lift: 0 2px 6px rgb(0 0 0 / 0.4), 0 26px 50px -22px rgb(0 0 0 / 0.8);
 
-	--glow-1: rgb(37 99 235 / 0.22);
-	--glow-2: rgb(139 92 246 / 0.18);
-	--glow-3: rgb(56 140 255 / 0.1);
-	--bg-star: rgb(214 228 255 / 0.85);
-	--bg-star-alt: rgb(196 172 255 / 0.8);
-	--bg-shoot: rgb(221 214 255 / 0.9);
-	--cursor-glow: rgb(139 92 246 / 0.2);
+	--glow-1: rgb(47 124 230 / 0.2);
+	--glow-2: rgb(245 208 66 / 0.12);
+	--glow-3: rgb(47 124 230 / 0.1);
+	--bg-star: rgb(242 238 223 / 0.8);
+	--bg-star-alt: rgb(245 208 66 / 0.75);
+	--bg-shoot: rgb(242 238 223 / 0.85);
+	--cursor-glow: rgb(245 208 66 / 0.14);
 
 	--alliance-red: #f0596b;
 	--alliance-blue: #6d9bf2;
@@ -163,6 +178,21 @@
 }
 @utility font-semiwide {
 	font-stretch: 112%;
+}
+/* The two display steps: the page title (largest) and section headings. */
+@utility text-display {
+	font-stretch: 125%;
+	font-weight: 800;
+	font-size: var(--step-display);
+	line-height: 0.88;
+	letter-spacing: -0.04em;
+}
+@utility text-head {
+	font-stretch: 125%;
+	font-weight: 760;
+	font-size: var(--step-head);
+	line-height: 0.95;
+	letter-spacing: -0.03em;
 }
 
 /* Card surface: slightly see-through over the animated background, with a soft blue-tinted shadow. */
@@ -305,7 +335,7 @@
 
 /*
  * Animated site background (BaseLayout + src/scripts/background.ts): a fixed layer behind everything.
- *   .site-bg__mesh  three soft blue/violet washes drifting very slowly (transform-only, so it stays on the GPU)
+ *   .site-bg__mesh  three soft blue and gold washes drifting very slowly (transform-only, so it stays on the GPU)
  *   .site-bg__net   a canvas starfield, drawn by the script
  *   .site-bg__glow  a soft purple light that trails the mouse (positioned by the script; mouse/trackpad only)
  * Reduced motion: the washes stop, the script draws one still frame and the glow stays hidden.
@@ -371,17 +401,17 @@
 
 /*
  * Pointer effects (src/scripts/hover-fx.ts). Mouse and trackpad only, never under reduced motion.
- *   .glint        a blue-to-violet light (cyan-to-violet on dark) that follows the pointer across a big heading;
+ *   .glint        a blue-to-gold light (gold-to-blue on dark) that follows the pointer across a big heading;
  *                 outside it the letters are the normal text colour. Both stops keep 3:1+ for large text.
  *   [data-tilt]   cards that tilt toward the pointer (the script sets `rotate`), with a soft highlight under it.
  */
 :root {
-	--glint-a: #1d4ed8;
-	--glint-b: #7c3aed;
+	--glint-a: #1f5fc4;
+	--glint-b: #b88a14;
 }
 .dark {
-	--glint-a: #22d3ee;
-	--glint-b: #8b5cf6;
+	--glint-a: #f5d042;
+	--glint-b: #8fb8f5;
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
 	.glint {
