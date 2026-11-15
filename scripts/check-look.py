@@ -171,6 +171,27 @@ def check_field(browser, base):
     page.close()
 
 
+TITLE = """() => { const h = document.querySelector('main h1'); const cs = getComputedStyle(h);
+  return { clip: cs.backgroundClip || cs.webkitBackgroundClip, color: cs.color, text: h.textContent.trim(), image: cs.backgroundImage }; }"""
+
+
+def check_living(browser, base):
+    for style in ("glass", "solid"):
+        page = open_page(browser, base, "/work/", "dark", f"localStorage.setItem('surface', '{style}');")
+        t = page.evaluate(TITLE)
+        ink = page.evaluate(RESOLVE, "var(--ink)")
+        report(bool(t["text"]), f"{style}: the page title still has its words ({t['text']!r})")
+        if style == "glass":
+            report("text" in t["clip"] and "gradient" in t["image"], f"glass: the page title carries living colour (clip {t['clip']})")
+            report("rgba(0, 0, 0, 0)" in t["color"] or "transparent" in t["color"], f"glass: letters show the light ({t['color']})")
+            violet = any(v in t["image"] for v in ("124, 58, 237", "139, 92, 246", "rgb(128, 0, 255)"))
+            report(not violet, "glass: no violet in the living colour")
+        else:
+            col = page.evaluate(RESOLVE, t["color"])
+            report(t["image"] == "none" and close(col, ink), f"solid: the page title is plain ink ({col} vs {ink}, image {t['image']})")
+        page.close()
+
+
 def make_stills(browser, base):
     """The blueprint space's still pictures (shown where the field can't run): the field alone, page content hidden."""
     from PIL import Image
@@ -216,6 +237,7 @@ def main():
                 check_tokens(browser, base)
                 check_surface(browser, base)
                 check_field(browser, base)
+                check_living(browser, base)
             browser.close()
     finally:
         if proc:

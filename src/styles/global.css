@@ -547,3 +547,74 @@ html.solid .sheet::before {
 		display: none;
 	}
 }
+
+/*
+ * Living colour (the spec's section 3): the brand's blue and gold light drifting slowly inside the letters of the page
+ * title. CSS only (two registered properties animate the lights' positions), no script. Both lights keep large-text
+ * contrast (3:1 or more) on their theme's field. Solid, reduce motion and browsers without background-clip: text get
+ * the plain ink.
+ */
+@property --live-x {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 20%;
+}
+@property --live-y {
+	syntax: "<percentage>";
+	inherits: false;
+	initial-value: 30%;
+}
+:root {
+	--live-1: #2f7ce6;
+	--live-2: #94700c;
+}
+.dark {
+	--live-1: #8fb8f5;
+	--live-2: #f5d042;
+}
+@utility living {
+	color: var(--ink);
+	@supports (background-clip: text) or (-webkit-background-clip: text) {
+		background-image:
+			radial-gradient(55% 120% at var(--live-x) var(--live-y), var(--live-1), transparent 72%),
+			radial-gradient(50% 110% at calc(100% - var(--live-x)) calc(100% - var(--live-y)), var(--live-2), transparent 72%),
+			linear-gradient(var(--ink), var(--ink));
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		animation: living-drift 16s ease-in-out infinite alternate;
+	}
+}
+@keyframes living-drift {
+	0% {
+		--live-x: 12%;
+		--live-y: 20%;
+	}
+	50% {
+		--live-x: 58%;
+		--live-y: 70%;
+	}
+	100% {
+		--live-x: 92%;
+		--live-y: 35%;
+	}
+}
+html.solid .living,
+html.reduce-motion .living {
+	background-image: none;
+	color: var(--ink);
+	animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+	.living {
+		background-image: none;
+		color: var(--ink);
+		animation: none;
+	}
+}
+@media (forced-colors: active) {
+	.living {
+		background: none;
+		color: CanvasText;
+	}
+}
