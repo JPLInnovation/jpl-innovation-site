@@ -177,6 +177,20 @@ def check_field(browser, base):
     report(page.evaluate("window.__field && window.__field.paused === true"), "home in 3D mode: the field is paused under the studio")
     page.close()
     check_blueprint(browser, base)
+    check_cases(browser, base)
+
+
+def check_cases(browser, base):
+    """Every project page opens with its case: the problem, the struck-out alternatives, our answer, what it gets you."""
+    for name in ("drone", "mini-drone", "frc", "cybersecurity", "lifetime"):
+        page = open_page(browser, base, f"/work/{name}/", "dark")
+        got = page.evaluate("""() => { const c = document.querySelector('.case'); if (!c) return null;
+          return { problem: !!c.querySelector('h2'), struck: c.querySelectorAll('.case-struck').length,
+            answer: !!c.querySelector('.sheet h2'), pros: c.querySelectorAll('.case-pro').length,
+            first: [...document.querySelectorAll('main section')].indexOf(c) }; }""")
+        ok = bool(got) and got["problem"] and got["struck"] >= 2 and got["answer"] and got["pros"] >= 3
+        report(ok, f"/work/{name}/ opens with its case ({got})")
+        page.close()
 
 
 SCROLL_TO = "(at) => scrollTo(0, (document.documentElement.scrollHeight - innerHeight) * at)"

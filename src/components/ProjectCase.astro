@@ -1,0 +1,129 @@
+---
+/**
+ * The case at the top of a project page: the problem, the obvious alternatives struck out like rejected options on a
+ * drawing, our answer on a glass sheet with what it gets you, and the partner who takes it to people (when there is
+ * one). The words: src/text/projects/hooks.ts. Renders nothing for a project without a case.
+ */
+import { ArrowUpRight } from "lucide-react";
+import { caseLabels, hooks } from "@/text/projects/hooks";
+
+interface Props {
+	/** The project's id (the file name in src/text/projects/). */
+	project: string;
+}
+const story = hooks[Astro.props.project];
+const id = `case-${Astro.props.project}`;
+---
+
+{
+	story && (
+		<section class="case wrapper flex flex-col gap-14 py-16 md:gap-20 md:py-24" aria-labelledby={`${id}-problem`}>
+			<div class="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-20">
+				<div class="flex flex-col gap-5" data-reveal>
+					<p class="case-kicker">{caseLabels.problem}</p>
+					<h2 id={`${id}-problem`} class="font-wide text-[clamp(2rem,4.6vw,3.6rem)] font-[850] leading-[1.02] text-balance">
+						{story.problem.title}
+					</h2>
+					<p class="max-w-[52ch] text-lg md:text-xl">{story.problem.text}</p>
+				</div>
+				<div class="flex flex-col gap-2" data-reveal data-reveal-delay="150">
+					<p class="case-kicker">{caseLabels.alternatives}</p>
+					<ul class="flex flex-col">
+						{story.alternatives.map((a) => (
+							<li class="flex flex-col gap-1.5 border-t py-5">
+								<span class="case-struck w-fit text-lg font-semibold md:text-xl">{a.option}</span>
+								<span class="max-w-[48ch] text-muted-foreground">{a.catch}</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+
+			<div class="sheet flex flex-col gap-10 rounded-3xl p-7 md:p-12" data-reveal aria-labelledby={`${id}-answer`}>
+				<div class="flex max-w-4xl flex-col gap-4">
+					<p class="case-kicker">{caseLabels.answer}</p>
+					<h2 id={`${id}-answer`} class="living font-wide text-[clamp(2rem,4.6vw,3.6rem)] font-[850] leading-[1.02] text-balance">
+						{story.answer.title}
+					</h2>
+					<p class="max-w-[60ch] text-lg md:text-xl">{story.answer.text}</p>
+				</div>
+				<div class="flex flex-col gap-4">
+					<p class="case-kicker">{caseLabels.pros}</p>
+					<ul class="grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+						{story.pros.map((p) => (
+							<li class="case-pro flex flex-col gap-1.5 pt-4">
+								<h3 class="text-lg font-semibold">{p.title}</h3>
+								<p class="text-muted-foreground">{p.text}</p>
+							</li>
+						))}
+					</ul>
+				</div>
+				{story.partner && (
+					<div class="flex flex-col gap-5 border-t pt-8 md:flex-row md:items-end md:justify-between">
+						<div class="flex max-w-[62ch] flex-col gap-2">
+							<p class="case-kicker">
+								{caseLabels.partner} · {story.partner.role}
+							</p>
+							<p class="font-wide text-[clamp(1.8rem,3.6vw,2.75rem)] font-[850] leading-none">{story.partner.name}</p>
+							<p class="text-lg">{story.partner.text}</p>
+						</div>
+						<a
+							href={story.partner.href}
+							target="_blank"
+							rel="noopener"
+							class="press inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-full border px-5 font-semibold hover:bg-foreground/5"
+						>
+							{story.partner.link} <ArrowUpRight className="size-4" aria-hidden="true" />
+						</a>
+					</div>
+				)}
+			</div>
+		</section>
+	)
+}
+
+<style>
+	.case-kicker {
+		font-size: var(--step-small, 0.875rem);
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		color: var(--primary);
+	}
+	/* A rejected option, struck through with a pen line that draws across as it comes into view. */
+	.case-struck {
+		position: relative;
+	}
+	.case-struck::after {
+		content: "";
+		position: absolute;
+		left: -0.15em;
+		right: -0.15em;
+		top: 55%;
+		height: 0.12em;
+		border-radius: 1em;
+		background: var(--accent-brand);
+		transform: rotate(-1.5deg);
+		transform-origin: left;
+	}
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			.case-struck::after {
+				animation: case-strike linear both;
+				animation-timeline: view();
+				animation-range: entry 40% cover 45%;
+			}
+		}
+	}
+	@keyframes case-strike {
+		from {
+			transform: rotate(-1.5deg) scaleX(0);
+		}
+		to {
+			transform: rotate(-1.5deg) scaleX(1);
+		}
+	}
+	/* Each benefit hangs from a short accent rule, like a callout on a drawing. */
+	.case-pro {
+		border-top: 2px solid color-mix(in srgb, var(--accent-brand) 70%, transparent);
+	}
+</style>

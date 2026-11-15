@@ -130,10 +130,19 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 | Drone, Mini drone | general arrangement sheets | the render as a full plate; the title block; the parts lists as real tables; the specs as a total with its receipt (real numbers only) |
 | FRC | the competition sheet | see section 12 |
 | Cybersecurity | the network diagram sheet | the topology as the plate; the CCNA lab kept |
+| Lifetime | the software sheet | its real screenshots as the plates; the product's facts only (v1.2 marked as being built); COBACOM as partner |
 | Members | the crew sheet | see section 10 |
 | About | the founder's letter | a letter on a glass sheet with a tear-off strip carrying the email |
 | 404 | a missing sheet | "This sheet isn't in the set", with the register to find your way |
 | Footer | the back of the sheet | uncovered as the page slides up; the name at full width in living colour |
+
+**Every project page opens with its case** (owner, 15 Nov 2026: "every project needs a hook first"), right after the
+page's own opening (its intro or 3D chapter) and before the details. In this order: **the problem** (what goes wrong
+without it); **why not just…** (the obvious alternatives, struck through like rejected options on a drawing, each with
+its catch, named by kind, never by brand); **our answer** (one line in living colour, one paragraph); **what it gets
+you** (the benefits as callouts); and **the partner** who takes it to people, when there is one (Lifetime: COBACOM).
+Every claim comes from the project's own facts; no invented numbers, customers or comparisons. One component
+(`ProjectCase.astro`), the words in `src/text/projects/hooks.ts`; a new project adds its case there.
 
 The 3D studio's own home page is a separate project (Poly Haven models and the chat prompts); its header, footer and
 other pages are these.

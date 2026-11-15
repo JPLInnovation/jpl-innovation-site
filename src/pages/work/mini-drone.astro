@@ -1,4 +1,5 @@
 ---
+import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight, ExternalLink } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
@@ -79,6 +80,9 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 			<img src={entry.data.img} alt={text.heroImgAlt} class="aspect-square w-full rounded-lg object-cover" />
 		</figure>
 	</header>
+
+	<!-- The case: the problem, why not the alternatives, our answer (src/text/projects/hooks.ts). -->
+	<ProjectCase project="mini-drone" />
 
 	<!-- Progress -->
 	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">

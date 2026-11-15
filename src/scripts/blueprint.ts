@@ -138,6 +138,7 @@ out vec2 vLocal;
 out vec2 vAtlas;
 out float vLight;
 out float vDepth;
+out float vEdge;
 void main() {
 	float depth = (aTile.z - 1.0) / 2.0;
 	vec2 c = aTile.xy;
@@ -155,6 +156,8 @@ void main() {
 	p.xy /= 1.0 - p.z * 1.2;
 	vec2 pos = c + p.xy;
 	gl_Position = vec4(pos.x * uRes.y / uRes.x, pos.y, 0.0, 1.0);
+	// Where the page's content column is (about the middle 80%), a card is only a ghost; in the margins, full.
+	vEdge = mix(0.22, 1.0, smoothstep(0.6, 0.86, abs(gl_Position.x)));
 	vLocal = aCorner;
 	vAtlas = (vec2(mod(aMore.y, 4.0), floor(aMore.y / 4.0)) + 0.5 + aCorner * vec2(0.46, -0.46)) / 4.0;
 	vLight = 0.5 + 0.5 * sin(ry - rx + 0.6);
@@ -167,6 +170,7 @@ in vec2 vLocal;
 in vec2 vAtlas;
 in float vLight;
 in float vDepth;
+in float vEdge;
 uniform sampler2D uAtlas;
 uniform float uNight;
 out vec4 outColor;
@@ -187,7 +191,7 @@ void main() {
 	vec3 rim = mix(vec3(0.184, 0.486, 0.902), vec3(1.0, 0.97, 0.88), uNight);
 	col = col * (1.0 - rimA) + rim * rimA;
 	a = a * (1.0 - rimA) + rimA;
-	outColor = vec4(col, a) * inside * mix(0.95, 0.5, vDepth);
+	outColor = vec4(col, a) * inside * mix(0.95, 0.5, vDepth) * vEdge;
 }`;
 
 declare global {

@@ -1,4 +1,5 @@
 ---
+import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
 import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
@@ -28,6 +29,9 @@ const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 	<ChapterBackdrop project="drone" />
 	<!-- The chapter, beats 1 to 4: one pinned 3D stage the scroll moves the camera through (Classic: an ordinary page). -->
 	<DroneChapter />
+
+	<!-- The case: the problem, why not the alternatives, our answer (src/text/projects/hooks.ts). -->
+	<ProjectCase project="drone" />
 
 	<!-- Progress -->
 	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">

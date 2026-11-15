@@ -1,4 +1,5 @@
 ---
+import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
@@ -69,6 +70,9 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 
 	<!-- The whole team, growing to fill the screen as the page scrolls (src/components/TeamReveal.astro). -->
 	<TeamReveal photo={teamPhoto} words={teamPhoto.caption} meta={teamPhoto.meta} />
+
+	<!-- The case: the problem, why not the alternatives, our answer (src/text/projects/hooks.ts). -->
+	<ProjectCase project="frc" />
 
 	<!-- The rookie season in eight scenes: it plays by itself until the visitor steps through it. -->
 	<section class="wrapper flex flex-col gap-8 pb-20 md:pb-28" aria-labelledby="story-heading">
