@@ -38,16 +38,29 @@ CAD render, to the real drone. The three verbs of the line in one picture.
 
 ## What changes, all of it (for approval)
 
-### 1. The background: a living blueprint (new, every page)
+### 1. The background: blueprint space (new, every page)
 
-- A slow WebGL field in the brand's deep blue and gold, like light moving through drafting film: depth, not blobs. It
-  drifts very slowly, bends a little towards the pointer, and changes its light with the scroll (deeper blue on the
-  drawings, warmer gold near the contact).
-- Very faint drafting detail in it at the edges of the screen only: a fine grid that fades in where the light is, so it
-  reads as a blueprint without ever sitting behind text.
-- Cheap by design: one full-screen draw at reduced resolution, paused when the tab is hidden or the visitor asked for
-  less motion, a still image on phones that can't keep up. It replaces today's animated mesh and network canvas.
-- Light theme: the same field in paper, pale blue and warm gold, as Lifetime's light glass.
+Reference: **Puture** (puture.co.kr), the closest to JPL in content: one continuous WebGL world for the whole page; an
+endless blueprint grid floor with + marks; glossy tiles floating in it; a beam of blue light; the camera moves through
+chapters as you scroll; the world flips from night to day at the Work chapter; projects stand on the floor as large
+tilted screens that turn into view; words reveal one by one out of a blur with key words highlighted. Its weakness: the
+floating tiles are generic app icons. **Ours goes further:** the floating pieces are JPL's real parts, and they assemble.
+
+- **One world behind every page:** an endless drafting grid floor with + marks fading into depth, a slow beam of brand
+  blue and gold light, the blue-to-gold field above it. The camera drifts through it with the scroll and leans a
+  little towards the pointer.
+- **Real parts, not icons:** small glass tiles float in the space, each carrying a real part of JPL's builds (the
+  F450's motors, propellers, flight controller, Raspberry Pi 4, camera; the robot's Krakens and Limelight; the network
+  switches), drawn from the real CAD and photographs in one texture atlas.
+- **"Build it" in front of you:** on the home page's Build chapter the parts fly together and assemble into the real
+  F450 (the exploded CAD the site already has), then hand over to the sheet about it.
+- **Night and day:** the world flips from the dark blueprint (night) to paper and pale blue (day) at chosen chapters,
+  the hard section switch, and the theme setting decides which one the page starts in.
+- **The drawing sheets stand in this world:** on Work, each project's glass sheet stands on the grid floor and turns
+  to face you as you pass it.
+- Cheap by design: one canvas for the whole site, instanced tiles (60 at most), one draw for the grid, reduced
+  resolution, paused when hidden or with reduce-motion, a still picture on devices that can't keep up. It replaces
+  today's animated mesh and network canvas.
 
 ### 2. Glass, better than Lifetime's (new)
 
@@ -86,7 +99,9 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 - **Hard section switches** like Studio Unlmtd: some sections flip the page from dark glass to paper and back.
 - Signature moves: the **curtain footer** (the page slides up to uncover the footer); the **plate that opens** from a
   framed picture to the full screen on each project page; the liquid pill.
-- Every section: heading, text and picture rise in turn (60 to 90 ms apart), once. Every control: press, hover, focus.
+- Every section: heading, text and picture rise in turn (60 to 90 ms apart), once. Big statements reveal word by word
+  out of a soft blur, with their key words marked in the accent. Every control: press, hover, focus.
+- A small chapter marker bottom-left (the sheet's name, e.g. "Welcome", "Build", "Work") updates as you scroll.
 - Transform and opacity only; reduce-motion keeps the content and drops the travel.
 
 ### 6. Pictures
