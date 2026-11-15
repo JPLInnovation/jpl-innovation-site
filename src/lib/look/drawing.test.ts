@@ -43,6 +43,7 @@ test("each page draws its own subject on the floor; pages with none get the badg
 	assert.deepEqual(fieldFor("/work/mini-drone"), { drawing: "mini", parts: "drone" });
 	assert.deepEqual(fieldFor("/work/cybersecurity/"), { drawing: "network", parts: "none" });
 	assert.deepEqual(fieldFor("/work/frc/"), { drawing: "badge", parts: "robot" });
+	assert.deepEqual(fieldFor("/work/lifetime/"), { drawing: "badge", parts: "none" }, "software: the monitor badge, no hardware parts");
 	assert.deepEqual(fieldFor("/about/"), { drawing: "badge", parts: "all" });
 	assert.deepEqual(fieldFor("/members/khoa/"), { drawing: "badge", parts: "all" });
 });

@@ -28,10 +28,11 @@ export function fieldFor(pathname: string): { drawing: "f450" | "mini" | "networ
 	if (path === "/work/mini-drone") return { drawing: "mini", parts: "drone" };
 	if (path === "/work/cybersecurity") return { drawing: "network", parts: "none" };
 	if (path === "/work/frc") return { drawing: "badge", parts: "robot" };
+	if (path === "/work/lifetime") return { drawing: "badge", parts: "none" };
 	return { drawing: "badge", parts: "all" };
 }
 
-export type Tile ={ x: number; y: number; z: number; size: number; spin: number };
+export type Tile = { x: number; y: number; z: number; size: number; spin: number };
 
 /**
  * Where the glass tiles float, in the field's screen space (x and y from -1 to 1 times the aspect, z its depth for

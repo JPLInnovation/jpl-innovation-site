@@ -114,7 +114,8 @@ void main() {
 				float drawn = smoothstep(uReveal + 0.002, uReveal - 0.002, order);
 				float fresh = exp(-max(uReveal - order, 0.0) * 70.0) * drawn * step(0.001, uReveal);
 				vec3 accent = mix(vec3(0.184, 0.486, 0.902), vec3(0.961, 0.816, 0.259), uNight);
-				float near = exp(-dist * 0.009) * mix(0.75, 1.0, smoothstep(0.2, 0.9, length(vUv * vec2(0.9, 1.0))));
+				// Faint where text sits (the middle of the screen), full strength towards the edges.
+				float near = exp(-dist * 0.009) * mix(0.28, 1.0, smoothstep(0.15, 0.85, length(vUv * vec2(0.9, 1.0))));
 				col = mix(col, ink, d.a * (1.0 - drawn) * 0.14 * near);
 				col = mix(col, accent, min(0.75, d.a * drawn * (0.7 + 0.3 * fresh) * near * 1.5));
 				col = mix(col, mix(accent, vec3(1.0), 0.5 * uNight), d.a * fresh * (0.75 + 0.25 * sin(uTime * 4.0)) * near);
