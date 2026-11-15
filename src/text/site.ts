@@ -90,6 +90,10 @@ export const experience = {
 	},
 };
 
+/**
+ * The footer: the back of the sheet, uncovered as the page slides up off it (src/components/SiteFooter.astro). It
+ * carries the contact (`contact` below), the game (`landing`), the name at full width and these.
+ */
 export const footer = {
 	blurb:
 		"A student-founded engineering startup in Ho Chi Minh City. We design, build and secure real technology: robots, drones, networks and the web.",
@@ -98,6 +102,7 @@ export const footer = {
 		{ label: "Services", href: "/#services" },
 		{ label: "Work", href: "/work/" },
 		{ label: "F450 4G Drone", href: "/work/drone/" },
+		{ label: "Lifetime", href: "/work/lifetime/" },
 		{ label: "Cybersecurity", href: "/work/cybersecurity/" },
 		{ label: "FIRST Robotics", href: "/work/frc/" },
 		{ label: "Members", href: "/members/" },
@@ -108,7 +113,7 @@ export const footer = {
 	copyright: "JPL Innovation",
 };
 
-/** The blue box at the bottom of every page. The email address goes between `before` and `after`. */
+/** The contact, at the top of the footer on every page. The email address goes between `before` and `after`. */
 export const contact = {
 	heading: "Let’s work together.",
 	before: "Have a project in mind, or want to learn more about what we do at JPL Innovation? Reach out at",
@@ -117,6 +122,40 @@ export const contact = {
 	/** Subject line filled in when someone opens their mail app from this box. */
 	subject: "Project enquiry for JPL Innovation",
 };
+
+/**
+ * "Land the drone", the game in the footer (src/components/footer/LandingGame.astro). {speed} and {fuel} are filled in
+ * by the game; keep them.
+ */
+export const landing = {
+	heading: "Land the drone",
+	/** How to play, under the drawing (a landing's result takes its place until the next flight). Shown only when the
+	 *  game can run; without script, only the link below shows. */
+	howTo: "Hold Space, or press and hold, to throttle. Let go to drop. Set it down on the H gently.",
+	/** The play area's name for screen readers. */
+	stageLabel: "The F450 over its pad. Hold Space, or press and hold, to throttle.",
+	altitude: "Altitude",
+	speed: "Speed",
+	fuel: "Fuel",
+	soft: "Soft landing at {speed} m/s, {fuel} s of fuel left.",
+	hard: "Hard landing at {speed} m/s. Press again to fly again.",
+	/** Before the best landing of this visit. */
+	best: "Best this visit",
+	bestNone: "no soft landing yet",
+	/** The plain link under the game, to the real drone. */
+	link: "The real F450",
+	href: "/work/drone/",
+};
+
+/**
+ * Lines in the site's own voice (spec §11). Only lines with `approved: true` appear (at the foot of the footer); the
+ * owner approves each one. Keep them true.
+ */
+export const personality = [
+	{ text: "Powered by bánh mì", approved: false },
+	{ text: "We break drones so you don’t have to", approved: false },
+	{ text: "Bench tested, not yet flown", approved: false },
+];
 
 /** The pop-up that opens from any "Email us" button. */
 export const emailPopup = {
