@@ -248,7 +248,7 @@ from the team site; 4 Members, About, 404; 5 motion and smooth scroll; 6 the 3D 
 The owner: "everything to be fit in the theme, including all the logos ... if you change the theme then you have to
 render all of the logo again", and "the logo in the refresh animation looks like some part ripped off".
 
-- `scripts/make-logo-theme.py` (Python; replaces `make-logo-assets.mjs`) renders every logo file from the original
+- `scripts/make-logo-theme.mjs` (Python; replaces `make-logo-assets.mjs`) renders every logo file from the original
   artwork: `jpl-logo-{dark,light}.png` and `-480.webp` (header, studio wall, desk badge, member badges), favicon and
   touch icon; trimmed exactly to the intro SVG's view box (687 x 248) so the intro lands without a jump.
   Dark: "JPL" paper, "INNOVATION" yellow; light: navy and gold `#A98500`; the badge navy, cream and yellow in both.
