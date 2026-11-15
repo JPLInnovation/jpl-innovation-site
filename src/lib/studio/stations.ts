@@ -39,7 +39,7 @@ import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
 import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
-import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial } from "./room";
+import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial, woodMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
 import type { LightSpec } from "./lights";
 import { cover, cutCorners, cutCornerSurface, projectFace } from "./panels";
@@ -97,7 +97,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const bench = hardware({ color: 0x2a3550, roughness: 0.6 }, "plastic");
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
 	const dark = new MeshStandardMaterial({ color: 0x141a28, roughness: 0.5 });
-	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
+	const wood = woodMaterial("oak_veneer_01");
 	const themed: { mat: MeshStandardMaterial; dark: number; light: number }[] = [
 		{ mat: bench as MeshStandardMaterial, dark: 0x2a3550, light: 0xc9d3e6 },
 	];
@@ -441,6 +441,31 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	themed.push({ mat: whiteboard.material as MeshStandardMaterial, dark: 0xffffff, light: 0xb2b8c2 }); // (as the easel's)
 	whiteboard.rotation.y = Math.PI;
 	group.add(whiteboard);
+	// The board is drawn once, written out in full; the writing appears in the shader instead, a front moving down the
+	// rows, then across the sticky notes. (Redrawing and uploading the 2400 px canvas per step stalled frames ~30 ms.)
+	const boardWrite = { value: 0 };
+	{
+		const m = whiteboard.material as MeshStandardMaterial;
+		const before = m.onBeforeCompile;
+		const notesTop = 838 / 1320; // the sticky notes' row, with the red circle (drawBoard), as a share of the height
+		const rows = 2 + content.standards.items.length;
+		const split = rows / (rows + content.standards.steps.length);
+		m.onBeforeCompile = (shader, renderer) => {
+			before.call(m, shader, renderer);
+			shader.uniforms.uWrite = boardWrite;
+			shader.fragmentShader = shader.fragmentShader.replace("void main() {", "uniform float uWrite;\nvoid main() {").replace(
+				"#include <map_fragment>",
+				`#include <map_fragment>
+				float boardY = 1.0 - vMapUv.y;
+				float rowFront = uWrite / ${split.toFixed(4)} * ${(notesTop + 0.03).toFixed(4)};
+				float noteFront = (uWrite - ${split.toFixed(4)}) / ${(1 - split).toFixed(4)} * 1.06;
+				float boardHide = boardY < ${notesTop.toFixed(4)} ? smoothstep(rowFront - 0.03, rowFront, boardY) : smoothstep(noteFront - 0.06, noteFront, vMapUv.x);
+				diffuseColor.rgb = mix(diffuseColor.rgb, diffuse * vec3(0.930, 0.939, 0.965), boardHide); // the board's own white (#f7f8fb)`,
+			);
+		};
+		const key = m.customProgramCacheKey.bind(m);
+		m.customProgramCacheKey = () => key() + "|board-write";
+	}
 	boxAt(group, 2.38, 1.34, 0.03, steel, boardX, 1.55, z1 - 0.015);
 	boxAt(group, 2.0, 0.03, 0.08, steel, boardX, 0.89, z1 - 0.06);
 	for (const [i, c] of [0x1d4ed8, 0xc8283a, 0x111827].entries()) {
@@ -449,7 +474,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		marker.position.set(boardX - 0.6 + i * 0.16, 0.92, z1 - 0.07);
 		group.add(marker);
 	}
-	let boardDrawn = -1;
 	// Written in marker (the sketchbook's handwriting, Caveat): the standards with hand-drawn ticks, then the three steps
 	// on sticky notes, joined by hand-drawn arrows. Each line appears in turn, as if being written, as the scene opens.
 	const drawBoard = (progress: number) => {
@@ -526,12 +550,13 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				g.save();
 				g.translate(x + noteW / 2, top + noteH / 2);
 				g.rotate(tilt);
-				g.shadowColor = "rgba(15, 23, 42, 0.22)";
-				g.shadowBlur = 26;
-				g.shadowOffsetY = 12;
+				// The note's shadow: a few soft offset layers, not shadowBlur (a blur this size costs ~30 ms a redraw).
+				for (const [grow, alpha] of [[14, 0.04], [8, 0.06], [3, 0.08]]) {
+					g.fillStyle = `rgba(15, 23, 42, ${alpha})`;
+					g.fillRect(-noteW / 2 - grow, -noteH / 2 - grow + 12, noteW + grow * 2, noteH + grow * 2);
+				}
 				g.fillStyle = colours[i % colours.length];
 				g.fillRect(-noteW / 2, -noteH / 2, noteW, noteH);
-				g.shadowColor = "transparent";
 				g.fillStyle = "rgba(0, 0, 0, 0.05)"; // the sticky strip along the top
 				g.fillRect(-noteW / 2, -noteH / 2, noteW, 46);
 				g.fillStyle = "#111827";
@@ -562,8 +587,8 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		);
 		board.redraw();
 	};
-	drawBoard(0);
-	document.fonts?.load(`700 128px "Caveat"`).then(() => drawBoard(Math.max(0, boardDrawn)), () => undefined);
+	drawBoard(1);
+	document.fonts?.load(`700 128px "Caveat"`).then(() => drawBoard(1), () => undefined);
 	// The shelf of binders to the whiteboard's left (seen from the room).
 	const shelfX = boardX + 1.75;
 	boxAt(group, 0.9, 0.03, 0.3, wood, shelfX, 1.0, z1 - 0.16);
@@ -631,7 +656,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	const tableX = -2.4;
 	const tableZ = 5.1;
-	boxAt(group, 2.2, 0.05, 0.95, wood, tableX, 0.745, tableZ, 0.015);
+	boxAt(group, 2.2, 0.05, 0.95, woodMaterial("walnut_veneer"), tableX, 0.745, tableZ, 0.015);
 	for (const sx of [-1, 1]) boxAt(group, 0.06, 0.72, 0.8, steel, tableX + sx * 0.95, 0.36, tableZ);
 	boxAt(group, 0.3, 0.012, 0.22, hardware({ color: 0xf4efe2, roughness: 0.9 }, "printed"), tableX - 0.3, 0.776, tableZ - 0.1, 0.004).rotation.y = 0.2;
 	const tableMug = new Mesh(new CylinderGeometry(0.04, 0.036, 0.1, 20), hardware({ color: 0x1d4ed8, roughness: 0.35 }, "wrap"));
@@ -805,11 +830,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			});
 
 			// The whiteboard writes itself out.
-			const written = Math.round(Math.min(1, (near.standards ?? 0) * 1.2) * 60) / 60;
-			if (written !== boardDrawn) {
-				boardDrawn = written;
-				drawBoard(written);
-			}
+			boardWrite.value = Math.min(1, (near.standards ?? 0) * 1.2);
 
 			// The door opens a little as its scene comes in; the light beyond it comes up.
 			const door = near.contact ?? 0;

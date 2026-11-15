@@ -31,9 +31,11 @@ import {
 	PlaneGeometry,
 	SphereGeometry,
 	SpotLight,
+	RepeatWrapping,
 	SRGBColorSpace,
 	type Texture,
 	TextureLoader,
+	Vector2,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { hardware } from "../three/finish";
@@ -83,6 +85,39 @@ export function canvasSurface(width: number, height: number) {
 }
 
 const loader = new TextureLoader();
+
+/**
+ * A real surface (Poly Haven, CC0; public/studio/tex/, sources in assets-src/room/polyhaven/): its colour, bumps and
+ * shine, tiled. The floor's and the walls' colour maps are grey detail only, at a linear mean of 0.6, so the theme's
+ * own colours (applyPalette) still decide the room's colour: set those through `tint`, which makes up the 0.6.
+ */
+export function surface(name: string, normalScale = 1) {
+	const map = (kind: string, srgb: boolean) => {
+		const texture = loader.load(asset(`/studio/tex/${name}-${kind}.webp`));
+		texture.wrapS = texture.wrapT = RepeatWrapping;
+		texture.anisotropy = 8;
+		if (srgb) texture.colorSpace = SRGBColorSpace;
+		return texture;
+	};
+	return { map: map("diff", true), normalMap: map("nor", false), normalScale: new Vector2(normalScale, normalScale), roughnessMap: map("rough", false) };
+}
+const woods = new Map<string, MeshStandardMaterial>();
+/** Real wood (its own colour and grain), one material per kind for the whole room. */
+export function woodMaterial(kind: "oak_veneer_01" | "walnut_veneer") {
+	let material = woods.get(kind);
+	if (!material) woods.set(kind, (material = hardware({ color: 0xd8d2cc, roughness: 0.55, ...surface(kind, 0.6) }, "plastic")));
+	return material;
+}
+/** Sets a grey-detail surface's colour (a hex, as the theme gives it), making up for the detail map's 0.6. */
+export const tint = (material: MeshStandardMaterial, hex: number) => material.color.set(hex).multiplyScalar(1 / 0.6);
+/** Scales a plane's texture coordinates so its surface tiles every `tile` metres, whatever the plane's size. */
+export function tiled<T extends PlaneGeometry>(geometry: T, tile: number): T {
+	const { width, height } = geometry.parameters;
+	const uv = geometry.getAttribute("uv");
+	for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) * width) / tile, (uv.getY(i) * height) / tile);
+	return geometry;
+}
+
 export function imageTexture(path: string) {
 	const texture = loader.load(asset(path));
 	texture.colorSpace = SRGBColorSpace;
@@ -187,20 +222,26 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const depth = z1 - z0;
 
 	/* ---------- Shell ---------- */
-	const wallMat = new MeshStandardMaterial({ color: 0x0c1631, roughness: 0.92 });
+	// Real plaster and concrete (surface()), tinted by the theme (applyPalette).
+	const plaster = surface("painted_plaster_wall", 0.5);
+	const wallMat = new MeshStandardMaterial({ ...plaster, roughness: 0.92 });
+	tint(wallMat, 0x0c1631);
 	// Matte, and plain: a clear coat would mirror the bright generated environment at grazing angles (a pale band).
-	const floorMat = new MeshStandardMaterial({ color: 0x0a1022, roughness: 0.85, envMapIntensity: 0.35 });
-	const ceilingMat = new MeshStandardMaterial({ color: 0x0a1228, roughness: 1 });
-	const floor = new Mesh(new PlaneGeometry(width, depth), floorMat);
+	const floorMat = new MeshStandardMaterial({ ...surface("concrete_floor_01", 0.7), roughness: 0.85, envMapIntensity: 0.35 });
+	tint(floorMat, 0x0a1022);
+	const ceilingMat = new MeshStandardMaterial({ ...plaster, roughness: 1 });
+	tint(ceilingMat, 0x0a1228);
+	const WALL_TILE = 2.4; // metres per repeat of the plaster
+	const floor = new Mesh(tiled(new PlaneGeometry(width, depth), 2), floorMat);
 	floor.rotation.x = -Math.PI / 2;
 	floor.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
 	group.add(floor);
-	const ceiling = new Mesh(new PlaneGeometry(width, depth), ceilingMat);
+	const ceiling = new Mesh(tiled(new PlaneGeometry(width, depth), WALL_TILE), ceilingMat);
 	ceiling.rotation.x = Math.PI / 2;
 	ceiling.position.set((x0 + x1) / 2, h, (z0 + z1) / 2);
 	group.add(ceiling);
 	const wall = (w: number, x: number, z: number, turn: number) => {
-		const mesh = new Mesh(new PlaneGeometry(w, h), wallMat);
+		const mesh = new Mesh(tiled(new PlaneGeometry(w, h), WALL_TILE), wallMat);
 		mesh.position.set(x, h / 2, z);
 		mesh.rotation.y = turn;
 		group.add(mesh);
@@ -215,7 +256,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		[3.7, 7.4], // the whiteboard and the shelf of binders
 	];
 	const backPlane = (a: number, b: number, y0: number, y1: number, material: Material) => {
-		const mesh = new Mesh(new PlaneGeometry(b - a, y1 - y0), material);
+		const mesh = new Mesh(tiled(new PlaneGeometry(b - a, y1 - y0), WALL_TILE), material);
 		mesh.position.set((a + b) / 2, (y0 + y1) / 2, z1);
 		mesh.rotation.y = Math.PI;
 		group.add(mesh);
@@ -254,7 +295,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const deskX = DESK.x;
 	const deskZ = DESK.z;
 	const deskTop = DESK.top;
-	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
+	const wood = woodMaterial("oak_veneer_01");
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
 	boxAt(group, 2.3, 0.05, 0.9, wood, deskX, deskTop - 0.025, deskZ, 0.012);
 	for (const [dx, dz] of [[-1.08, -0.38], [1.08, -0.38], [-1.08, 0.38], [1.08, 0.38]]) boxAt(group, 0.05, deskTop - 0.05, 0.05, steel, deskX + dx, (deskTop - 0.05) / 2, deskZ + dz);
@@ -451,9 +492,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		applyPalette(p) {
 			palette = p;
 			const dark = p.dark;
-			wallMat.color.set(dark ? 0x0c1631 : 0xdfe7f5);
-			ceilingMat.color.set(dark ? 0x0a1228 : 0xeef3fb);
-			(floorMat as MeshStandardMaterial).color.set(dark ? 0x0a1022 : 0xbfc9dc);
+			tint(wallMat, dark ? 0x0c1631 : 0xdfe7f5);
+			tint(ceilingMat, dark ? 0x0a1228 : 0xeef3fb);
+			tint(floorMat, dark ? 0x0a1022 : 0xbfc9dc);
 			trimMat.color.set(dark ? 0x1b2a52 : 0xb8c5dd);
 			glassMat.color.set(dark ? 0x0b1424 : 0xdfe9f7);
 			glassMat.opacity = dark ? 0.14 : 0.1;

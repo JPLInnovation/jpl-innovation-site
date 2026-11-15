@@ -16,7 +16,7 @@ import {
 	TorusGeometry,
 } from "three";
 import { hardware } from "../three/finish";
-import { boxAt, canvasSurface, imageTexture, ROOM } from "./room";
+import { boxAt, canvasSurface, imageTexture, ROOM, woodMaterial } from "./room";
 import type { RoomState } from "./room";
 
 export interface Props {
@@ -28,7 +28,7 @@ const mat = (color: number, roughness = 0.6, finish: Parameters<typeof hardware>
 export function buildProps(parent: Group): Props {
 	const { z0, z1 } = ROOM;
 	const steel = hardware({ color: 0x2d3446, roughness: 0.4, metalness: 0.7 }, "anodised");
-	const wood = hardware({ color: 0x5b4636, roughness: 0.55 }, "plastic");
+	const wood = woodMaterial("oak_veneer_01");
 	const kraft = mat(0xb08a5a, 0.85, "printed");
 	const accents = [0x22d3ee, 0xffc20e, 0x8b5cf6, 0x34d399, 0xf0596b, 0x3b82f6].map((c) => mat(c, 0.5));
 
