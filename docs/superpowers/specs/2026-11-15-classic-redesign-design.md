@@ -330,10 +330,9 @@ showcases after.
 - **Lifetime sits between the F450 and FRC** everywhere projects are listed (done in the data: `order: 2`; the Work
   list, the 3D wall and the next-chapter loop follow it). The classic home rebuild adds Lifetime to its project plates
   and tracks in that same place (home.ts does not mention Lifetime yet).
-- **Replace the single cropped dashboard picture with the Lifetime photos**: the Work card and the Lifetime page use the
-  real screenshots as a set (Server fleet overview, a device's page, the desktop app's Overview, Activity and System;
-  Glass and Classic, light and dark: `D:\Dev\Lifetime-merge\docs\screenshots\`, `.qa\server-*`), never one picture
-  cut off at the edges. Any real photos of Lifetime running at a school or office go first when the owner gives them.
+- **Lifetime's picture is its logo** (owner: "Lifetime logo, I meant"): done, `public/assets/lifetime.svg`, the icon
+  redrawn as a vector in the brand palette (recolour it with the palette like every logo). The real screenshots
+  (`D:\Dev\Lifetime-merge\docs\screenshots\`, `.qa\server-*`) stay as the page's plates, never cropped at the edges.
 - **The Lifetime page becomes the most innovative page on the site.** Its live thing is the product itself, built in
   HTML with real-looking data that adds up (not a screenshot): a room of computers that wake and sleep through a
   school day as you scroll; the server going down mid-day and that time turning **Unknown** instead of being guessed;
