@@ -1,0 +1,143 @@
+---
+/**
+ * Skills as a toolkit board: a pegboard with one spanner per skill, hung from the same rail, and the spanner's size is
+ * its level, as in a real set (Advanced the largest, then Proficient, then Developing). The tag under each spanner
+ * gives the skill, its level in words and what it covers. Skills: `technical_skills` in src/text/members/<name>.md.
+ */
+interface Skill {
+	title: string;
+	level: string;
+	description: string;
+}
+interface Props {
+	skills: Skill[];
+	labelledby: string;
+}
+const { skills, labelledby } = Astro.props;
+/** The spanner's size for each level; a level the set doesn't know gets a middle size. */
+const sizes: Record<string, number> = { Advanced: 1, Proficient: 0.84, Developing: 0.7 };
+---
+
+<ul class="board" role="list" aria-labelledby={labelledby}>
+	{
+		skills.map((s) => {
+			const size = sizes[s.level] ?? 0.77;
+			return (
+				<li class="tool">
+					<svg class="tool__spanner" viewBox="0 0 80 300" style={`height:calc(var(--spanner) * ${size})`} aria-hidden="true">
+						{/* drawn twice: a thick stroke underneath gives the painted outline of a shadow board */}
+						{["tool__shadow", "tool__body"].map((cls) => (
+							<g class={cls}>
+								<path d="M29 54 L30.5 240 L49.5 240 L51 54 Z" />
+								<circle cx="40" cy="34" r="26" />
+								<path d="M29 287.7 A28 28 0 1 1 51 287.7 L51 258 A11 11 0 0 0 29 258 Z" transform="rotate(15 40 262)" />
+							</g>
+						))}
+						<path class="tool__groove" d="M35 76 L35.6 218 L44.4 218 L45 76 Z" />
+						<path class="tool__hole" d="M40 21 L51.3 27.5 L51.3 40.5 L40 47 L28.7 40.5 L28.7 27.5 Z" />
+						<circle class="tool__peg" cx="40" cy="34" r="4.2" />
+					</svg>
+					<div class="tool__tag">
+						<h3 class="tool__name">{s.title}</h3>
+						<p class="tool__level">{s.level}</p>
+						<p class="tool__what">{s.description}</p>
+					</div>
+				</li>
+			);
+		})
+	}
+</ul>
+
+<style>
+	.board {
+		--spanner: clamp(12rem, 9rem + 8vw, 18rem);
+		--hole: rgb(10 23 78 / 0.16);
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+		grid-template-rows: auto auto;
+		gap: 0 clamp(1rem, 3vw, 2.5rem);
+		margin: 0;
+		padding: clamp(1.5rem, 3vw, 2.5rem) clamp(1.25rem, 3vw, 2.5rem) clamp(1.75rem, 3vw, 2.75rem);
+		list-style: none;
+		border-radius: 1.75rem;
+		background-color: var(--field-2);
+		/* the pegboard: a hole every 24 px */
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='2.6' fill='%230a174e' fill-opacity='.16'/%3E%3C/svg%3E");
+		background-size: 24px 24px;
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+	}
+	:global(.dark) .board {
+		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='2.6' fill='%23000' fill-opacity='.38'/%3E%3C/svg%3E");
+	}
+	.tool {
+		display: grid;
+		grid-row: span 2;
+		grid-template-rows: subgrid;
+		justify-items: start;
+	}
+	.tool__spanner {
+		width: auto;
+		overflow: visible;
+		margin-left: -0.4rem;
+		align-self: start;
+	}
+	.tool__shadow {
+		fill: none;
+		stroke: var(--paint);
+		stroke-width: 9;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+	.board {
+		--paint: rgb(47 124 230 / 0.32);
+	}
+	:global(.dark) .board {
+		--paint: rgb(245 208 66 / 0.3);
+	}
+	.tool__body {
+		fill: var(--sheet);
+		stroke: var(--ink);
+		stroke-width: 1.6;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+	.tool__groove {
+		fill: none;
+		stroke: var(--ink);
+		stroke-opacity: 0.35;
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+	.tool__hole {
+		fill: var(--field-2);
+		stroke: var(--ink);
+		stroke-width: 1.2;
+		vector-effect: non-scaling-stroke;
+	}
+	.tool__peg {
+		fill: var(--ink);
+	}
+	.tool__tag {
+		padding-top: 1.25rem;
+		max-width: 30ch;
+	}
+	.tool__name {
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 112%;
+		line-height: 1.1;
+	}
+	.tool__level {
+		margin-top: 0.3rem;
+		font-weight: 650;
+		color: var(--accent-brand);
+	}
+	:global(html:not(.dark)) .tool__level {
+		color: #1f5fc4;
+	}
+	.tool__what {
+		margin-top: 0.4rem;
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+</style>

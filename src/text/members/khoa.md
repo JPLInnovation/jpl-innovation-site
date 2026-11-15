@@ -1,7 +1,8 @@
 ---
 title: Khoa Le
-img: /assets/10951.jpg
-img_alt: Team 10951 Saigon South Dragons logo
+img: /assets/members/khoa-768.webp
+img_alt: Khoa Le portrait, in the workshop in front of the tool wall
+greeting: Xin chào, mình là Khoa.
 leadership:
   jpl: COO
   frc: Electrical Lead
@@ -11,10 +12,23 @@ tags:
 - Software Developer
 - Technology Enthusiast
 - Student
+# The map of Vietnam on his page (lat = degrees north, lon = degrees east).
+# [CHECK] his hometown or other places, if he wants them on the map (only Saigon for now).
+places:
+- name: Saigon
+  note: home of JPL Innovation
+  lat: 10.78
+  lon: 106.7
+# [CHECK] his path so far, in order (e.g. which language came first), drawn as a route on his map. Empty: no route.
+path: []
+# [CHECK] one fun true figure, e.g. { label: "…", value: "…" }. Empty: not shown.
 achievements:
-- Qualified for the Southern Regional Round of the Vietnam Tin Học Trẻ Competition
-- HKICO Grade-level Champion
-- Participated in Lotus Hacks 2026
+- title: Vietnam Tin Học Trẻ Competition, Southern Regional Round
+  result: Qualified
+- title: HKICO
+  result: Grade-level Champion
+- title: Lotus Hacks 2026
+  result: Participated
 sports:
 - sport: Badminton
   team: SSIS B team
