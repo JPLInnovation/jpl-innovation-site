@@ -103,12 +103,32 @@ const splash = splashFor(Astro.url.pathname);
 				document.documentElement.classList.toggle("dark", dark);
 			};
 			applyTheme();
+			// Glass or Solid (src/lib/look/surface.ts holds the same rule, tested; keep the two in step). html.lens: the
+			// refracting edge, only where backdrop-filter takes an SVG filter (Chromium).
+			const applySurface = () => {
+				const root = document.documentElement;
+				let stored = null;
+				try {
+					stored = localStorage.getItem("surface");
+				} catch {}
+				const nav = navigator;
+				const solid =
+					stored === "solid" ||
+					(stored !== "glass" &&
+						(matchMedia("(prefers-reduced-motion: reduce)").matches ||
+							nav.connection?.saveData === true ||
+							(nav.deviceMemory !== undefined && nav.deviceMemory <= 4)));
+				root.classList.toggle("solid", solid);
+				root.classList.toggle("lens", !solid && CSS.supports("backdrop-filter", "url(#jpl-lens)"));
+			};
+			applySurface();
 			// Client-side navigation swaps <html> attributes, so re-apply after each swap.
 			if (!window.__jplThemeHook) {
 				document.addEventListener("astro:after-swap", () => {
 					applyTheme();
 					applyMotion();
 					applyExperience();
+					applySurface();
 				});
 				window.__jplThemeHook = true;
 			}
@@ -132,6 +152,14 @@ const splash = splashFor(Astro.url.pathname);
 		>
 			Skip to content
 		</a>
+		<!-- The glass lens (global.css .lens): bends what is behind a sheet at its edges, like thick glass. -->
+		<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+			<filter id="jpl-lens" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+				<feTurbulence type="fractalNoise" baseFrequency="0.008" numOctaves="1" seed="7" result="noise" />
+				<feGaussianBlur in="noise" stdDeviation="2" result="soft" />
+				<feDisplacementMap in="SourceGraphic" in2="soft" scale="18" xChannelSelector="R" yChannelSelector="G" />
+			</filter>
+		</svg>
 		<SiteHeader />
 		<main id="main" class="relative flex-1">
 			<slot />
@@ -145,6 +173,7 @@ const splash = splashFor(Astro.url.pathname);
 			import "@/scripts/hover-fx";
 			import "@/scripts/warm";
 			import "@/scripts/tool-links";
+			import "@/scripts/rim";
 		</script>
 	</body>
 </html>

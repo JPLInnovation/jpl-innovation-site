@@ -60,6 +60,8 @@ export const settings = {
 		note: "Read mode shows every page as one ordinary page: no 3D camera, no animation.",
 	},
 	sound: { label: "Sound", off: "Off", on: "On", note: "Sound comes later: room tone and the sounds of the bench, all recorded by us." },
+	/** Glass (frosted, see-through sheets) or Solid (filled sheets: lighter on older computers). */
+	style: { label: "Style", glass: "Glass", solid: "Solid", note: "Glass shows the blueprint through the page. Solid is lighter on older computers." },
 	quality: { label: "3D quality", auto: "Auto", high: "High", low: "Low", note: "Auto picks the best your device can draw smoothly." },
 	/** Plays the opening page, the logo and the studio's first words again, and asks Classic or 3D again. */
 	replay: "Replay the opening",

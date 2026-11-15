@@ -96,6 +96,52 @@ def check_tokens(browser, base):
             page.close()
 
 
+# A sheet over the field, composited the way the eye sees it (the field behind, the sheet's own colour on top).
+SHEET_ON_FIELD = """() => {
+  const field = getComputedStyle(document.body).backgroundColor;
+  const sheet = document.createElement('div');
+  sheet.className = 'sheet';
+  sheet.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:100px';
+  document.body.appendChild(sheet);
+  const fill = getComputedStyle(sheet).backgroundColor;
+  const ink = getComputedStyle(sheet).color;
+  sheet.remove();
+  const ctx = document.createElement('canvas').getContext('2d');
+  const px = (...styles) => { ctx.clearRect(0, 0, 1, 1); for (const s of styles) { ctx.fillStyle = s; ctx.fillRect(0, 0, 1, 1); } return [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+  return { back: px(field, fill), ink: px(ink), fill };
+}"""
+
+
+def check_surface(browser, base):
+    # (a) a stored Solid holds before the first paint
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script(INIT % {"theme": "dark", "extra": "localStorage.setItem('surface', 'solid');"})
+    page.add_init_script("document.addEventListener('DOMContentLoaded', () => { window.__solidAtDcl = document.documentElement.classList.contains('solid'); });")
+    page.goto(base + "/work/", wait_until="load")
+    report(page.evaluate("window.__solidAtDcl === true"), "stored surface=solid: html.solid already set at DOMContentLoaded")
+    page.close()
+    # (b) the lens on Chrome; without backdrop-filter url() support, plain frosted glass, never opaque
+    page = open_page(browser, base, "/work/", "dark", "localStorage.setItem('surface', 'glass');")
+    report(page.evaluate("document.documentElement.classList.contains('lens')"), "Chrome with glass: html.lens on")
+    page.close()
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script("const s = CSS.supports.bind(CSS); CSS.supports = (p, v) => (typeof v === 'string' && v.includes('url(') ? false : s(p, v));")
+    page.add_init_script(INIT % {"theme": "dark", "extra": "localStorage.setItem('surface', 'glass');"})
+    page.goto(base + "/work/", wait_until="load")
+    fill = page.evaluate(SHEET_ON_FIELD)["fill"]
+    report(not page.evaluate("document.documentElement.classList.contains('lens')"), "no url() support: no html.lens")
+    report("/ 1)" not in fill and fill.count(",") >= 3 or "0." in fill, f"no url() support: the sheet stays see-through ({fill})")
+    page.close()
+    # (c) ink on a sheet, every theme and style
+    for theme in ("light", "dark"):
+        for style in ("glass", "solid"):
+            page = open_page(browser, base, "/work/", theme, f"localStorage.setItem('surface', '{style}');")
+            r = page.evaluate(SHEET_ON_FIELD)
+            ratio = contrast(r["ink"], r["back"])
+            report(ratio >= 4.5, f"{theme} + {style}: ink on a sheet over the field {ratio:.2f} (>= 4.5)")
+            page.close()
+
+
 def serve():
     proc = subprocess.Popen("npx astro preview --port 4391", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(60):
@@ -118,6 +164,7 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=False)
             check_tokens(browser, base)
+            check_surface(browser, base)
             browser.close()
     finally:
         if proc:
