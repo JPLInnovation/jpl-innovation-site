@@ -140,11 +140,14 @@ const splash = splashFor(Astro.url.pathname);
 		<ClientRouter />
 	</head>
 	<body>
-		<!-- Animated background (global.css + src/scripts/background.ts). Persisted so it doesn't restart on navigation. -->
+		<!--
+			Blueprint space (global.css + src/scripts/blueprint.ts): the world behind every page. Persisted, so it keeps
+			going across page changes. The stills show where it can't run (no WebGL2, reduce motion, a slow device).
+		-->
 		<div class="site-bg" aria-hidden="true" transition:persist="site-bg">
-			<div class="site-bg__mesh"></div>
-			<canvas class="site-bg__net" data-site-bg></canvas>
-			<div class="site-bg__glow" data-site-glow></div>
+			<img class="site-bg__still site-bg__still--light" src="/look/field-still-light.webp" alt="" decoding="async" fetchpriority="low" />
+			<img class="site-bg__still site-bg__still--dark" src="/look/field-still-dark.webp" alt="" decoding="async" fetchpriority="low" />
+			<canvas class="site-bg__field" data-blueprint></canvas>
 		</div>
 		<a
 			href="#main"
@@ -168,7 +171,7 @@ const splash = splashFor(Astro.url.pathname);
 		<EmailDialog />
 		<ExperienceChoice />
 		<script>
-			import "@/scripts/background";
+			import "@/scripts/blueprint";
 			import "@/scripts/motion";
 			import "@/scripts/hover-fx";
 			import "@/scripts/warm";

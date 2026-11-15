@@ -78,6 +78,8 @@ def open_page(browser, base, path, theme, extra=""):
     page = browser.new_page(viewport={"width": 1440, "height": 900})
     page.add_init_script(INIT % {"theme": theme, "extra": extra})
     page.goto(base + path, wait_until="load")
+    # the logo intro plays on every full load; wait for it to hand over (html.splash goes)
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
     page.wait_for_timeout(600)
     return page
 
@@ -142,6 +144,50 @@ def check_surface(browser, base):
             page.close()
 
 
+def check_field(browser, base):
+    # (a) a classic page: drawing
+    page = open_page(browser, base, "/work/", "dark")
+    a = page.evaluate("window.__field && window.__field.frames")
+    page.mouse.move(400, 300)
+    page.mouse.wheel(0, 300)
+    page.wait_for_timeout(700)
+    b = page.evaluate("window.__field && window.__field.frames")
+    report(page.evaluate("window.__field && window.__field.paused === false") and b > a, f"/work/ classic: the field is drawing ({a} -> {b} frames)")
+    # (c) a hidden tab: paused
+    page.evaluate("Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }); document.dispatchEvent(new Event('visibilitychange'))")
+    page.wait_for_timeout(300)
+    c = page.evaluate("window.__field.frames")
+    page.wait_for_timeout(500)
+    report(page.evaluate("window.__field.paused") and page.evaluate("window.__field.frames") == c, "hidden tab: the field is paused and draws nothing")
+    page.close()
+    # (b) the 3D studio: paused under it
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script("try { localStorage.setItem('experience', '3d'); localStorage.setItem('hook-seen', '1'); localStorage.setItem('theme', 'dark'); } catch (e) {}")
+    page.goto(base + "/", wait_until="load")
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
+    page.wait_for_function("document.querySelector('[data-studio]:not([data-read])')", timeout=15000)
+    page.wait_for_timeout(800)
+    report(page.evaluate("window.__field && window.__field.paused === true"), "home in 3D mode: the field is paused under the studio")
+    page.close()
+
+
+def make_stills(browser, base):
+    """The blueprint space's still pictures (shown where the field can't run): the field alone, page content hidden."""
+    from PIL import Image
+    for theme in ("dark", "light"):
+        page = open_page(browser, base, "/work/", theme)
+        page.add_style_tag(content="body > *:not(.site-bg) { visibility: hidden !important; } html { scrollbar-width: none; }")
+        page.wait_for_timeout(1500)
+        page.screenshot(path=f"public/look/field-still-{theme}.png")
+        im = Image.open(f"public/look/field-still-{theme}.png").convert("RGB")
+        im.save(f"public/look/field-still-{theme}.webp", "WEBP", quality=70, method=6)
+        import os
+        os.remove(f"public/look/field-still-{theme}.png")
+        size = os.path.getsize(f"public/look/field-still-{theme}.webp")
+        report(size <= 120_000, f"still {theme}: {size // 1000} KB (<= 120 KB)")
+        page.close()
+
+
 def serve():
     proc = subprocess.Popen("npx astro preview --port 4391", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(60):
@@ -157,14 +203,19 @@ def serve():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--url")
+    parser.add_argument("--make-stills", action="store_true", help="write public/look/field-still-*.webp and stop")
     args = parser.parse_args()
     proc = None if args.url else serve()
     base = (args.url or "http://localhost:4391").rstrip("/")
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=False)
-            check_tokens(browser, base)
-            check_surface(browser, base)
+            if args.make_stills:
+                make_stills(browser, base)
+            else:
+                check_tokens(browser, base)
+                check_surface(browser, base)
+                check_field(browser, base)
             browser.close()
     finally:
         if proc:
