@@ -21,14 +21,14 @@ export function dayAt(sections: ReadonlyArray<{ top: number; bottom: number; day
 export type Parts = "all" | "drone" | "robot" | "none";
 
 /** Which drawing a page lays on the floor (public/look/drawings/{drawing}.png) and which parts float over it. */
-export function fieldFor(pathname: string): { drawing: "f450" | "mini" | "network" | "badge"; parts: Parts } {
+export function fieldFor(pathname: string): { drawing: "f450" | "mini" | "network" | "badge" | "lifetime"; parts: Parts } {
 	const path = pathname.replace(/\/+$/, "") || "/";
 	if (path === "/") return { drawing: "f450", parts: "all" };
 	if (path === "/work/drone") return { drawing: "f450", parts: "drone" };
 	if (path === "/work/mini-drone") return { drawing: "mini", parts: "drone" };
 	if (path === "/work/cybersecurity") return { drawing: "network", parts: "none" };
 	if (path === "/work/frc") return { drawing: "badge", parts: "robot" };
-	if (path === "/work/lifetime") return { drawing: "badge", parts: "none" };
+	if (path === "/work/lifetime") return { drawing: "lifetime", parts: "none" };
 	return { drawing: "badge", parts: "all" };
 }
 

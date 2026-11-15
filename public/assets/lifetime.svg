@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+	<!-- The Lifetime icon (D:\Dev\Lifetime-merge\assets\lifetime.png), redrawn from its measured geometry in the site's
+	     palette: field #0A174E, disc navy #071038, paper #F2EEDF, the brand yellow #F5D042. -->
+	<defs>
+		<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+			<stop offset="0" stop-color="#0a174e"/>
+			<stop offset="1" stop-color="#071038"/>
+		</linearGradient>
+		<radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+			<stop offset="0" stop-color="#2f7ce6" stop-opacity="0.32"/>
+			<stop offset="1" stop-color="#2f7ce6" stop-opacity="0"/>
+		</radialGradient>
+		<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+			<path d="M32 0H0v32" fill="none" stroke="#f2eedf" stroke-opacity="0.06" stroke-width="1"/>
+		</pattern>
+	</defs>
+
+	<rect width="800" height="600" fill="url(#bg)"/>
+	<rect width="800" height="600" fill="url(#grid)"/>
+	<rect width="800" height="600" fill="url(#glow)"/>
+
+	<!-- The icon, in its own 1280 px units, 300 px wide, centred (it survives a 21:9 crop). -->
+	<g transform="translate(250 150) scale(0.234375)">
+		<rect x="22" y="22" width="1236" height="1236" rx="245" fill="#071038" stroke="#3a5592" stroke-width="8"/>
+		<!-- The ring, open at the top right where the dot orbits. -->
+		<path d="M1052.1 506.2A429.5 429.5 0 1 1 740.4 227" fill="none" stroke="#f2eedf" stroke-width="67"/>
+		<circle cx="802.5" cy="262.5" r="47" fill="#f5d042"/>
+		<!-- The bar: two wings joined to a centre block. -->
+		<rect x="324" y="589" width="192" height="101" fill="#f2eedf"/>
+		<rect x="516" y="627" width="39" height="26" fill="#f2eedf"/>
+		<rect x="555" y="551" width="166" height="176" fill="#f2eedf"/>
+		<rect x="721" y="627" width="41" height="26" fill="#f2eedf"/>
+		<rect x="762" y="589" width="189" height="101" fill="#f2eedf"/>
+	</g>
+</svg>

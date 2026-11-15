@@ -25,6 +25,7 @@ DRAWINGS = {
     "mini": ROOT / "public/assets/mini-drone.svg",
     "network": ROOT / "public/assets/cybersecurity.svg",
     "badge": ROOT / "src/assets/intro/jpl-badge.svg",
+    "lifetime": ROOT / "public/assets/lifetime.svg",
 }
 PARTS = [
     "drone/overview", "drone/motors", "drone/flight-controller", "drone/camera", "drone/power",

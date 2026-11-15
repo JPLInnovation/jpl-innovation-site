@@ -1,7 +1,7 @@
 ---
 title: Lifetime
-img: /assets/lifetime/server.webp
-img_alt: Lifetime Server's fleet overview in the Glass style, with connected, offline and pending computers, daily awake hours and the device list
+img: /assets/lifetime.svg
+img_alt: "The Lifetime icon: a ring with a gap where a yellow dot orbits, around a small satellite"
 badge: Pilot deployments
 description: |
   Windows software that measures how long each computer is really awake, and brings every computer in a school or
