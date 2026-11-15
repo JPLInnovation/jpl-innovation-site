@@ -6,7 +6,7 @@ badge: Pilot deployments
 description: |
   Windows software that measures how long each computer is really awake, and brings every computer in a school or
   office onto one dashboard. Open source, and deployed in Vietnam by COBACOM.
-order: 5
+order: 2
 ---
 
 ## What it is

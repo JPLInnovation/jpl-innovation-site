@@ -6,7 +6,7 @@ badge: Build in progress
 description: |
   A palm-sized quadcopter built around an Arduino Pro Mini (ATmega328P), flown with a custom
   2.4GHz NRF24L01 radio link and a hand-built transmitter.
-order: 3
+order: 4
 ---
 
 <!--

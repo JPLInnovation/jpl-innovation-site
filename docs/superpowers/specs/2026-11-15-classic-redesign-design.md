@@ -321,3 +321,22 @@ change, frame rates measured on the RTX.
 4. Members (the crew sheet and each person's sheet), About with "Play the story", 404.
 5. Motion pass, smoothness pass, both themes, phones.
 6. Part 2, the 3D studio: light, real objects, the devices you can enter, the window.
+
+**Re-ordered by the owner (15 Nov 2026):** the page rebuilds come before the remaining motion pieces. Next: Home
+(classic), then Work and the project pages, then Members and About; the Pre-flight hook, the footer game and the
+showcases after.
+
+**Queued owner requests (15 Nov 2026), for the Home, Work and Lifetime rebuilds:**
+- **Lifetime sits between the F450 and FRC** everywhere projects are listed (done in the data: `order: 2`; the Work
+  list, the 3D wall and the next-chapter loop follow it). The classic home rebuild adds Lifetime to its project plates
+  and tracks in that same place (home.ts does not mention Lifetime yet).
+- **Replace the single cropped dashboard picture with the Lifetime photos**: the Work card and the Lifetime page use the
+  real screenshots as a set (Server fleet overview, a device's page, the desktop app's Overview, Activity and System;
+  Glass and Classic, light and dark: `D:\Dev\Lifetime-merge\docs\screenshots\`, `.qa\server-*`), never one picture
+  cut off at the edges. Any real photos of Lifetime running at a school or office go first when the owner gives them.
+- **The Lifetime page becomes the most innovative page on the site.** Its live thing is the product itself, built in
+  HTML with real-looking data that adds up (not a screenshot): a room of computers that wake and sleep through a
+  school day as you scroll; the server going down mid-day and that time turning **Unknown** instead of being guessed;
+  the Glass / Classic and light / dark switch working on the dashboard in front of you; the fleet gauge and daily
+  awake bars counting up. Then the case (ProjectCase), the screenshot set as whole-width plates, COBACOM, and
+  "Coming in version 1.2.0" while 1.1.0 is the public version. Facts only (src/text/projects/lifetime.md).
