@@ -104,6 +104,11 @@ const current = links
 	.site-header[data-menu-open] {
 		background-color: color-mix(in oklab, var(--sheet) 84%, transparent);
 	}
+	/* Solid: filled, scrolled or not (the rule above is more specific than html.solid .sheet). */
+	:global(html.solid) .site-header[data-scrolled],
+	:global(html.solid) .site-header[data-menu-open] {
+		background-color: var(--sheet);
+	}
 	/* The liquid pill: a drop of film under the current page, a bead of the accent beneath it. */
 	.nav-pill {
 		position: absolute;

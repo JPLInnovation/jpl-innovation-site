@@ -326,7 +326,7 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		margin: calc(var(--ds-ring, 40vmin) / -2) 0 0 calc(var(--ds-ring, 40vmin) / -2);
 		border: 2px solid #f5d042;
 		border-radius: 50%;
-		box-shadow: 0 0 18px rgb(29 151 178 / 0.8), inset 0 0 18px rgb(29 151 178 / 0.5);
+		box-shadow: 0 0 18px rgb(245 208 66 / 0.8), inset 0 0 18px rgb(245 208 66 / 0.5);
 	}
 
 	/* ---------- 4. The logo ---------- */
@@ -334,7 +334,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		position: relative;
 		width: min(82vw, calc(64vh * var(--ds-ratio)));
 	}
-	.ds-letters,
 	/*
 	 * The JPL logo in the site's palette, as in the header (scripts/make-logo-theme.mjs) and the JPL intro: the drone
 	 * intro is always dark, so the dark wordmark (paper and yellow); the badge is the same everywhere.
@@ -364,6 +363,7 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	[data-splash="drone"] .ds-badge-svg stop {
 		stop-color: #f5d042;
 	}
+	.ds-letters,
 	.ds-badge-svg {
 		position: absolute;
 		inset: 0;
@@ -379,12 +379,12 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	}
 	.ds-badge {
 		transform-origin: 0 0;
-		filter: drop-shadow(0 0 0.8vmin rgb(29 151 178 / 0.85)) drop-shadow(0 0 3vmin rgb(29 151 178 / 0.4));
+		filter: drop-shadow(0 0 0.8vmin rgb(245 208 66 / 0.85)) drop-shadow(0 0 3vmin rgb(245 208 66 / 0.4));
 		will-change: transform, opacity;
 	}
 	.ds-glow {
 		border-radius: 50%;
-		background: radial-gradient(closest-side, rgb(29 151 178 / 0.34), rgb(29 151 178 / 0.1) 62%, transparent);
+		background: radial-gradient(closest-side, rgb(245 208 66 / 0.34), rgb(245 208 66 / 0.1) 62%, transparent);
 		scale: 1.55;
 	}
 	.ds-ring,

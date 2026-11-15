@@ -4,14 +4,16 @@
  * fading into depth, and a slow beam. The scroll carries the camera forward over the floor; the pointer leans it.
  *
  * Kept cheap and out of the way:
- * - the decisions are src/lib/look/field.ts (tested): resolution steps down when frames run slow and back up when
- *   they don't; after three slow seconds at half resolution it gives up for the still picture;
+ * - the decisions are src/lib/look/field.ts (tested): the frame meter steps resolution down when frames run slow and
+ *   back up when they don't, judged against the screen's own rate; after three slow seconds at half resolution, or
+ *   anywhere under 25 fps, it gives up for the still picture (kept on the persisted .site-bg, so it survives page
+ *   changes);
  * - it draws only while the tab is visible, motion is allowed and the page shows no full-window 3D of its own (the
  *   studio, or anything marked [data-own-backdrop]); idle (no scroll or pointer for a second) it drops to 30 fps;
  * - the grid stays faint in the middle of the screen, where text is, and only shows itself towards the edges.
  * The canvas is persisted across page changes (BaseLayout). window.__field reports its state for the page checks.
  */
-import { cameraFor, nextScale, shouldAnimate, shouldFallBack } from "@/lib/look/field";
+import { cameraFor, newMeter, resetMeter, shouldAnimate, tickMeter } from "@/lib/look/field";
 
 const VERT = `#version 300 es
 in vec2 aPos;
@@ -111,10 +113,12 @@ function compile(gl: WebGL2RenderingContext, type: number, source: string) {
 function start(canvas: HTMLCanvasElement) {
 	const state = (window.__field = { paused: true, scale: 1, night: 1, frames: 0, fallback: false });
 	const root = document.documentElement;
+	const holder = canvas.closest<HTMLElement>(".site-bg");
 	const giveUp = () => {
 		state.fallback = true;
 		state.paused = true;
-		root.classList.add("field-still");
+		canvas.hidden = true;
+		holder?.setAttribute("data-still", "");
 	};
 	const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, depth: false, powerPreference: "high-performance" });
 	if (!gl) return giveUp();
@@ -140,18 +144,16 @@ function start(canvas: HTMLCanvasElement) {
 	const uRes = u("uRes"), uTime = u("uTime"), uNight = u("uNight"), uCam = u("uCam"), uLean = u("uLean");
 
 	const reducedQuery = matchMedia("(prefers-reduced-motion: reduce)");
-	const ownBackdrop = () => !!document.querySelector("[data-studio]:not([data-read]), [data-own-backdrop]");
+	const findOwnBackdrop = () => !!document.querySelector("[data-studio]:not([data-read]), [data-own-backdrop]");
+	let ownBackdrop = findOwnBackdrop(); // looked up on wake and when the page's markers change, not every frame
 	const pointer = { x: 0, y: 0 };
 	const eased = { x: 0, y: 0, scroll: 0 };
 	let lastInput = performance.now();
 	let night = root.classList.contains("dark") ? 1 : 0;
 	let raf = 0;
-	let last = 0;
-	let windowStart = 0;
-	let windowFrames = 0;
-	let windowMs = 0; // time spent on frames drawn at full rate (idle 30 fps frames say nothing about cost)
-	let baseline = Infinity; // the screen's own frame interval (the shortest seen)
-	let slowWindows = 0;
+	let last = 0; // the last frame drawn (for the idle 30 fps step)
+	let publishedNight = -1;
+	const meter = newMeter();
 
 	const resize = () => {
 		const ratio = Math.min(window.devicePixelRatio || 1, 1.5) * state.scale;
@@ -176,31 +178,21 @@ function start(canvas: HTMLCanvasElement) {
 			raf = requestAnimationFrame(frame);
 			return;
 		}
-		const interval = now - last;
 		last = now;
-		if (interval > 0 && interval < 100) baseline = Math.min(baseline, interval);
-		if (!idle && interval < 100) {
-			windowFrames++;
-			windowMs += interval;
-		}
-		if (now - windowStart >= 1000) {
-			if (windowFrames > 20 && Number.isFinite(baseline)) {
-				// Judged against the screen's own rate: 10 means "on time", whatever the refresh rate.
-				const average = windowMs / windowFrames;
-				const normalised = (10 * average) / baseline - 4;
-				const before = state.scale;
-				state.scale = nextScale(state.scale, normalised);
-				slowWindows = state.scale === 0.5 && normalised > 12 ? slowWindows + 1 : 0;
-				if (shouldFallBack(slowWindows)) return giveUp();
-				if (state.scale !== before) resize();
-			}
-			windowStart = now;
-			windowFrames = 0;
-			windowMs = 0;
+		const verdict = tickMeter(meter, now, !idle);
+		if (verdict === "fallback") return giveUp();
+		if (verdict === "rescale") {
+			state.scale = meter.scale;
+			resize();
 		}
 		const target = root.classList.contains("dark") ? 1 : 0;
 		night += (target - night) * 0.08;
 		state.night = night;
+		// For later phases' CSS: how far the field is towards night (1) or day (0).
+		if (Math.abs(night - publishedNight) > 0.01) {
+			publishedNight = night;
+			root.style.setProperty("--field-night", night.toFixed(2));
+		}
 		const max = document.documentElement.scrollHeight - innerHeight;
 		eased.scroll += ((max > 0 ? scrollY / max : 0) - eased.scroll) * 0.12;
 		eased.x += (pointer.x - eased.x) * 0.06;
@@ -217,16 +209,17 @@ function start(canvas: HTMLCanvasElement) {
 	};
 
 	const running = () =>
-		!state.fallback && shouldAnimate({ hidden: document.hidden, reduced: reducedQuery.matches || root.classList.contains("reduce-motion"), ownBackdrop: ownBackdrop() });
+		!state.fallback && shouldAnimate({ hidden: document.hidden, reduced: reducedQuery.matches || root.classList.contains("reduce-motion"), ownBackdrop });
 
 	const wake = () => {
+		ownBackdrop = findOwnBackdrop();
+		publishedNight = -1; // <html>'s inline style may have been replaced by a page change
 		state.paused = !running();
 		canvas.hidden = state.fallback || reducedQuery.matches;
 		if (!state.paused && !raf) {
-			last = performance.now();
-			windowStart = last;
-			windowFrames = 0;
-			windowMs = 0;
+			// The first frame after waking starts the clock (resetMeter); it is never itself measured.
+			resetMeter(meter);
+			last = 0;
 			resize();
 			raf = requestAnimationFrame(frame);
 		}
@@ -254,8 +247,9 @@ function start(canvas: HTMLCanvasElement) {
 	reducedQuery.addEventListener("change", wake);
 	document.addEventListener("astro:after-swap", wake);
 	new MutationObserver(wake).observe(root, { attributes: true, attributeFilter: ["class"] });
-	// The studio switches to 3D (drops data-read) after load; a page may mark its own full-window 3D.
-	new MutationObserver(wake).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-read", "data-own-backdrop"] });
+	// The studio switches to 3D (drops data-read) after load; a page may mark its own full-window 3D. Watched from <html>
+	// down: <body> is replaced on every page change, so an observer on it would go deaf after the first one.
+	new MutationObserver(wake).observe(root, { subtree: true, attributes: true, attributeFilter: ["data-read", "data-own-backdrop"] });
 	canvas.addEventListener("webglcontextlost", (event) => {
 		event.preventDefault();
 		giveUp();

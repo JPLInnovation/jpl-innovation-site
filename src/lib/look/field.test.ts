@@ -29,3 +29,55 @@ test("scrolling moves forward over the floor; the pointer leans the view", () =>
 	assert.ok(Math.abs(cameraFor(0, still).pitch - 0.18) < 1e-9);
 	assert.ok(Math.abs(cameraFor(1, still).pitch - 0.32) < 1e-9);
 });
+
+import { newMeter, resetMeter, tickMeter } from "./field.ts";
+
+/** Drives a meter through `seconds` of steady frames `ms` apart, active (scrolling) or idle; returns what it said. */
+function run(meter: ReturnType<typeof newMeter>, start: number, ms: number, seconds: number, active = true) {
+	const said = new Set<string>();
+	let t = start;
+	for (; t < start + seconds * 1000; t += ms) said.add(tickMeter(meter, t, active));
+	return { said, end: t };
+}
+
+test("the first frame after waking is not measured (a short first gap must not set the screen's rate)", () => {
+	const m = newMeter();
+	resetMeter(m);
+	tickMeter(m, 1000, true); // wake
+	const { said } = run(m, 1000.4, 16.67, 8); // the first gap is 0.4 ms, then a steady 60 Hz
+	assert.ok(!said.has("fallback"));
+	assert.equal(m.scale, 1);
+});
+test("a steady 240 Hz screen stays at full resolution", () => {
+	const m = newMeter();
+	resetMeter(m);
+	run(m, 0, 4.17, 6);
+	assert.equal(m.scale, 1);
+});
+test("the refresh rate dropping (240 to 60 Hz) never falls back and recovers full resolution", () => {
+	const m = newMeter();
+	resetMeter(m);
+	const a = run(m, 0, 4.17, 3);
+	const b = run(m, a.end, 16.67, 12);
+	assert.ok(!b.said.has("fallback"));
+	assert.equal(m.scale, 1);
+});
+test("a device under 25 fps steps down and then falls back to the still", () => {
+	const m = newMeter();
+	resetMeter(m);
+	const { said } = run(m, 0, 80, 12);
+	assert.ok(said.has("fallback"));
+});
+test("a device far under 10 fps falls back too (long frames are counted, not dropped)", () => {
+	const m = newMeter();
+	resetMeter(m);
+	const { said } = run(m, 0, 200, 20);
+	assert.ok(said.has("fallback"));
+});
+test("idle frames (30 fps on purpose) say nothing about cost", () => {
+	const m = newMeter();
+	resetMeter(m);
+	const { said } = run(m, 0, 33.3, 10, false);
+	assert.ok(!said.has("rescale") && !said.has("fallback"));
+	assert.equal(m.scale, 1);
+});

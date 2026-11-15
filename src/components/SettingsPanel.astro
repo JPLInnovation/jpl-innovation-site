@@ -229,7 +229,8 @@ const groups = [
 		} else if (name === "style") {
 			const solid = input.value === "solid";
 			document.documentElement.classList.toggle("solid", solid);
-			document.documentElement.classList.toggle("lens", !solid && lensSupported((p, v) => CSS.supports(p, v)));
+			const brands = (navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands.map((b) => b.brand);
+			document.documentElement.classList.toggle("lens", !solid && lensSupported((p, v) => CSS.supports(p, v), brands));
 			write(SURFACE_KEY, input.value);
 		} else if (name === "experience") {
 			write(EXPERIENCE_KEY, input.value);

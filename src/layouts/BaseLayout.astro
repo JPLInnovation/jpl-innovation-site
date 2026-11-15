@@ -119,7 +119,8 @@ const splash = splashFor(Astro.url.pathname);
 							nav.connection?.saveData === true ||
 							(nav.deviceMemory !== undefined && nav.deviceMemory <= 4)));
 				root.classList.toggle("solid", solid);
-				root.classList.toggle("lens", !solid && CSS.supports("backdrop-filter", "url(#jpl-lens)"));
+				const brands = nav.userAgentData && nav.userAgentData.brands ? nav.userAgentData.brands.map((b) => b.brand) : [];
+				root.classList.toggle("lens", !solid && brands.includes("Chromium") && CSS.supports("backdrop-filter", "url(#jpl-lens)"));
 			};
 			applySurface();
 			// Client-side navigation swaps <html> attributes, so re-apply after each swap.

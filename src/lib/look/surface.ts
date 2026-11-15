@@ -12,9 +12,13 @@ export function chooseSurface(o: { stored: string | null; reducedMotion: boolean
 	return "glass";
 }
 
-/** The refracting lens needs `backdrop-filter: url(#…)` (Chromium); elsewhere the glass is plain frosted. */
-export function lensSupported(supports: (prop: string, value: string) => boolean): boolean {
-	return supports("backdrop-filter", "url(#jpl-lens)");
+/**
+ * The refracting lens needs `backdrop-filter: url(#…)` drawn, which only Chromium does: Firefox and Safari accept the
+ * syntax (CSS.supports says yes) but draw nothing, so the browser's brands must name Chromium too. Elsewhere: plain
+ * frosted glass. `brands`: navigator.userAgentData?.brands (only Chromium browsers have it).
+ */
+export function lensSupported(supports: (prop: string, value: string) => boolean, brands: ReadonlyArray<string> | undefined): boolean {
+	return !!brands?.includes("Chromium") && supports("backdrop-filter", "url(#jpl-lens)");
 }
 
 /**

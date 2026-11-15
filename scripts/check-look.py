@@ -9,6 +9,7 @@ Each check prints PASS or FAIL with what it measured; the exit code is the numbe
 """
 
 import argparse
+import re
 import subprocess
 import sys
 import time
@@ -68,6 +69,12 @@ def contrast(a, b):
 
     la, lb = sorted((lum(a), lum(b)), reverse=True)
     return (la + 0.05) / (lb + 0.05)
+
+
+def alpha(css_colour):
+    """The alpha of a computed colour (rgb(), rgba(), oklab(... / a)); 1 when it has none."""
+    m = re.search(r"/\s*([\d.]+)\s*\)", css_colour) or re.search(r"rgba\([^)]*,\s*([\d.]+)\s*\)", css_colour)
+    return float(m.group(1)) if m else 1.0
 
 
 def close(a, b, tol=3):
@@ -132,7 +139,7 @@ def check_surface(browser, base):
     page.goto(base + "/work/", wait_until="load")
     fill = page.evaluate(SHEET_ON_FIELD)["fill"]
     report(not page.evaluate("document.documentElement.classList.contains('lens')"), "no url() support: no html.lens")
-    report("/ 1)" not in fill and fill.count(",") >= 3 or "0." in fill, f"no url() support: the sheet stays see-through ({fill})")
+    report(alpha(fill) < 1, f"no url() support: the sheet stays see-through ({fill})")
     page.close()
     # (c) ink on a sheet, every theme and style
     for theme in ("light", "dark"):
@@ -282,6 +289,95 @@ def check_forced_dark(browser, base):
     page.close()
 
 
+FOCUS_JS = """() => {
+  const transparent = (c) => c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c);
+  const a = document.activeElement;
+  const cs = getComputedStyle(a);
+  let d = a, bg = 'rgb(255, 255, 255)';
+  while (d) { const c = getComputedStyle(d).backgroundColor; if (!transparent(c)) { bg = c; break; } d = d.parentElement; }
+  return { outline: cs.outlineColor, style: cs.outlineStyle, back: bg };
+}"""
+
+
+def check_review_fixes(browser, base):
+    """The phase 1 review's findings, each pinned (docs/superpowers/plans/2026-11-15-redesign-phase1-foundation.md)."""
+    # 1. leaving the 3D home for a classic page, the field keeps drawing (it must not mistake the wake for a slow device)
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script("try { localStorage.setItem('experience', '3d'); localStorage.setItem('hook-seen', '1'); localStorage.setItem('theme', 'dark'); } catch (e) {}")
+    page.goto(base + "/", wait_until="load")
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
+    page.wait_for_timeout(1500)
+    page.click("[data-nav] a[href='/work/']")
+    page.wait_for_function("location.pathname === '/work/'", timeout=10000)
+    page.wait_for_timeout(800)
+    for _ in range(40):
+        page.mouse.wheel(0, 120)
+        page.wait_for_timeout(150)
+    f = page.evaluate("window.__field")
+    report(not f["fallback"] and not f["paused"], f"3D home -> /work/: after 6 s of scrolling the field still draws ({f})")
+    page.close()
+    # 5. a fallback (no WebGL2) keeps its still picture across a page change
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script("const g = HTMLCanvasElement.prototype.getContext; HTMLCanvasElement.prototype.getContext = function (t, ...a) { return t === 'webgl2' && this.matches('[data-blueprint]') ? null : g.call(this, t, ...a); };")
+    page.add_init_script(INIT % {"theme": "dark", "extra": ""})
+    page.goto(base + "/work/", wait_until="load")
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
+    page.click("[data-nav] a[href='/about/']")
+    page.wait_for_function("location.pathname === '/about/'", timeout=10000)
+    page.wait_for_timeout(900)
+    op = page.evaluate("getComputedStyle(document.querySelector('.site-bg__still--dark')).opacity")
+    report(op == "1", f"no WebGL2: the still picture survives a page change (opacity {op})")
+    page.close()
+    # 9. the field publishes its night/day for later phases; 3. the rim light follows the pointer (the header is a sheet)
+    page = open_page(browser, base, "/work/", "dark", "localStorage.setItem('surface', 'glass');")
+    page.mouse.move(300, 300)
+    page.wait_for_timeout(500)
+    night = page.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--field-night').trim()")
+    try:
+        ok = 0.9 <= float(night) <= 1
+    except ValueError:
+        ok = False
+    report(ok, f"--field-night is published ({night!r})")
+    page.mouse.move(700, 30)
+    page.wait_for_timeout(700)
+    rim = page.evaluate("getComputedStyle(document.querySelector('[data-site-header]'), '::before').getPropertyValue('--rim-strength').trim()")
+    report(float(rim or 0) > 0, f"the header's rim catches the pointer (::before --rim-strength {rim!r})")
+    page.close()
+    # 7. Solid: the scrolled header stays filled
+    page = open_page(browser, base, "/work/", "dark", "localStorage.setItem('surface', 'solid');")
+    page.mouse.wheel(0, 600)
+    page.wait_for_timeout(600)
+    bg = page.evaluate("getComputedStyle(document.querySelector('[data-site-header]')).backgroundColor")
+    report(alpha(bg) == 1, f"solid: the scrolled header is filled ({bg})")
+    page.close()
+    # 6. the lens only on Chromium (Firefox and Safari accept the syntax but don't draw it)
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script("Object.defineProperty(Navigator.prototype, 'userAgentData', { get: () => undefined });")
+    page.add_init_script(INIT % {"theme": "dark", "extra": "localStorage.setItem('surface', 'glass');"})
+    page.goto(base + "/work/", wait_until="load")
+    report(not page.evaluate("document.documentElement.classList.contains('lens')"), "a browser without Chromium's userAgentData: no lens")
+    page.close()
+    # 4 and 14. the drone intro: its letter layer keeps its box, and no teal is left
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.add_init_script(INIT % {"theme": "dark", "extra": ""})
+    page.goto(base + "/work/drone/", wait_until="domcontentloaded")
+    pos = page.evaluate("(() => { const e = document.querySelector('.ds-letters'); return e ? getComputedStyle(e).position : 'missing'; })()")
+    report(pos == "absolute", f"drone intro: the letter layer is placed absolutely ({pos})")
+    shadow = page.evaluate("(() => { const e = document.querySelector('.ds-ripple'); return e ? getComputedStyle(e).boxShadow : ''; })()")
+    teal = any(int(g) > int(r) + 40 and int(b) > int(r) + 40 for r, g, b in re.findall(r"rgba?\((\d+), (\d+), (\d+)", shadow))
+    report(not teal, f"drone intro: no teal glow on the ripple ({shadow[:60]})")
+    page.close()
+    # 10. light theme: the first-visit cards' focus ring is visible (3:1 on what is behind it)
+    page = open_page(browser, base, "/work/", "light")
+    page.evaluate("document.getElementById('experience-dialog').showModal()")
+    page.keyboard.press("Shift+Tab")  # the second card has autofocus; back to the first, from the keyboard
+    page.wait_for_timeout(200)
+    ring = page.evaluate(FOCUS_JS)
+    ratio = contrast(page.evaluate(RESOLVE, ring["outline"]), page.evaluate(RESOLVE, ring["back"]))
+    report(ring["style"] != "none" and ratio >= 3, f"light: the experience cards' focus ring {ratio:.2f} (>= 3, style {ring['style']})")
+    page.close()
+
+
 def make_stills(browser, base):
     """The blueprint space's still pictures (shown where the field can't run): the field alone, page content hidden."""
     from PIL import Image
@@ -330,6 +426,7 @@ def main():
                 check_living(browser, base)
                 check_header(browser, base)
                 check_forced_dark(browser, base)
+                check_review_fixes(browser, base)
             browser.close()
     finally:
         if proc:

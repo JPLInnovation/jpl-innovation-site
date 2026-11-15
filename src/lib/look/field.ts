@@ -40,3 +40,60 @@ export function cameraFor(scrollProgress: number, pointer: { x: number; y: numbe
 		lean: [pointer.x * 0.04, pointer.y * 0.04],
 	};
 }
+
+/**
+ * The frame meter: decides, a second of drawing at a time, whether the field should draw fewer pixels, more, or give up
+ * for the still picture. The screen's own frame interval is not known, so it is taken as a low percentile of the last
+ * frames (one stray short gap can't fake it, and a move to a slower screen is learnt within a second); frames are
+ * judged against it, so 60 Hz and 240 Hz screens are both "on time" at their own rate. Under 25 fps is slow whatever
+ * the screen. Long frames count (capped), they are never dropped: a device at 5 fps must fall back too.
+ */
+export type Meter = { scale: number; last: number; spent: number; frames: number; recent: number[]; slowWindows: number };
+
+const WINDOW_MS = 1000;
+const HISTORY = 60; // frames the screen's interval is learnt from
+const FLOOR_MS = 40; // an average frame slower than this (under 25 fps) is slow on any screen
+const CAP_MS = 250; // one frame counts at most this much (a hitch, not a pause: pauses reset the meter)
+const MIN_BASELINE_MS = 3.5; // no screen refreshes faster than ~285 Hz
+
+export function newMeter(scale = 1): Meter {
+	return { scale, last: 0, spent: 0, frames: 0, recent: [], slowWindows: 0 };
+}
+
+/** On every wake (tab shown again, a page change, motion allowed again): the next frame starts the clock. */
+export function resetMeter(m: Meter): void {
+	m.last = 0;
+	m.spent = 0;
+	m.frames = 0;
+	m.recent = [];
+	m.slowWindows = 0;
+}
+
+/** One frame at `now` (the frame's own timestamp). `active`: drawn at full rate (scrolling or pointing), not idle. */
+export function tickMeter(m: Meter, now: number, active: boolean): "ok" | "rescale" | "fallback" {
+	if (!m.last) {
+		m.last = now;
+		return "ok";
+	}
+	const interval = Math.min(CAP_MS, now - m.last);
+	m.last = now;
+	if (!active || interval <= 0) return "ok";
+	m.recent.push(interval);
+	if (m.recent.length > HISTORY) m.recent.shift();
+	m.spent += interval;
+	m.frames++;
+	if (m.spent < WINDOW_MS) return "ok";
+	const average = m.spent / m.frames;
+	m.spent = 0;
+	m.frames = 0;
+	const sorted = [...m.recent].sort((a, b) => a - b);
+	const baseline = Math.max(MIN_BASELINE_MS, sorted[Math.floor(sorted.length * 0.05)]);
+	// 10 means "on time" at the screen's own rate; nextScale steps down above 12 and up below 7.
+	let normalised = (10 * average) / baseline - 4;
+	if (average > FLOOR_MS) normalised = Math.max(normalised, 20);
+	const before = m.scale;
+	m.scale = nextScale(m.scale, normalised);
+	m.slowWindows = m.scale === 0.5 && normalised > SLOW_MS ? m.slowWindows + 1 : 0;
+	if (shouldFallBack(m.slowWindows)) return "fallback";
+	return m.scale !== before ? "rescale" : "ok";
+}
