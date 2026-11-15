@@ -1,7 +1,8 @@
 # Redesign: the drawing set on glass
 
 Date: 15 Nov 2026 · Branch: `classic-redesign` · Restore point: `jpl_site2` branch `rollback/before-redesign-2026-11-15`
-Status: **waiting for the owner's approval.** Nothing below is built yet.
+Status: **approved by the owner on 15 Nov 2026** ("I want a full redesign of the website"), with one change: the FRC page
+takes its inspiration from the team's own robotics site (section 12). Khoa's portrait received (`assets-src/members/khoa.jpg`).
 
 ## Why
 
@@ -127,7 +128,7 @@ If the blue-and-yellow light theme on its branch is kept later, only these token
 | Home (classic) | the title sheet | the name at full width in living colour; the sketch → CAD → photo scrubber; the three verbs as three whole-screen plates (drone, robot, network) |
 | Work | the drawing register | a big register table (project, discipline, status, revision) whose rows open into whole-width picture plates |
 | Drone, Mini drone | general arrangement sheets | the render as a full plate; the title block; the parts lists as real tables; the specs as a total with its receipt (real numbers only) |
-| FRC | the competition sheet | team photo plate, the events as a route, the robot CAD plate; the outreach rows kept |
+| FRC | the competition sheet | see section 12 |
 | Cybersecurity | the network diagram sheet | the topology as the plate; the CCNA lab kept |
 | Members | the crew sheet | see section 10 |
 | About | the founder's letter | a letter on a glass sheet with a tear-off strip carrying the email |
@@ -196,6 +197,27 @@ sheet, each with their own journey drawn on the map of Vietnam, signed like engi
   remove-background in the chat, or done here). Until a portrait arrives, Khoa's sheet shows his signature and initials
   large, never a made-up face.
 - Text stays in `src/text/members/*.md`; new fields (places, fun fact, greeting) are added there for the owner to edit.
+
+### 12. FRC: from the team's own robotics site
+
+The owner's choice: the FRC page takes its inspiration from the Saigon South Dragons site the team already has (the
+claude.ai artifact `U2PC5mq6Ud9RcCE7EvPfqv`), instead of the drawing-set look; every other page follows this document.
+That site is a race weekend: an F1 "lights out" start; Anton display type in yellow `#f4b62a` and blue `#5b95f2` on
+near-black; column lines drawn down the page as you scroll; rolling letters on buttons; a custom cursor with labels;
+odometer counters; a statement with small photographs that come into colour as they pass; the robot in a draggable 3D
+view with a "built with" wall; the route (Vancouver, Istanbul, then Honolulu and Istanbul); pinned history chapters with
+a reel of photographs; a gallery slider; an agenda down which a car drives; the qualification ranks as a starting grid
+with the team's slot lit; a photograph that opens to the whole screen; partner, outreach, workshop and families sections.
+
+**Ours goes further, on the real page:** every section the page has today is kept (the FRC splash, the story, the
+outreach rows, the photographs); its look and devices come from the team site, and:
+- the car on the agenda is the **KitBot itself**, driving down the season's lane (its real CAD, small);
+- the **robot showcase on the real field** (section 8) replaces the plain 3D view;
+- the **starting grid** shows the real qualification ranks (19 of 44 in Vancouver, 16 of 40 in Istanbul) with
+  "first-round pick" lit;
+- the lights-out start becomes the page's own short intro (the existing FRC splash, restyled), skippable as all intros;
+- it sits inside the site's header, footer, glass and motion rules, so it feels like a special edition of the same
+  site, not another site. Fonts: Anton is added for this page only (self-hosted, display sizes only).
 
 ### 11. The hook: Pre-flight (both modes, 2D)
 
@@ -286,7 +308,7 @@ change, frame rates measured on the RTX.
 1. Tokens, type, the background field, glass and the header (seen on every page at once).
 2. The Pre-flight hook, the footer and its game, Home (classic).
 2b. The showcases in their element: the F450 in the sky, the KitBot on the field.
-3. Work and the four project pages.
+3. Work, the Drone, Mini drone and Cybersecurity pages; the FRC page from the team site (section 12).
 4. Members (the crew sheet and each person's sheet), About with "Play the story", 404.
 5. Motion pass, smoothness pass, both themes, phones.
 6. Part 2, the 3D studio: light, real objects, the devices you can enter, the window.
