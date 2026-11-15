@@ -18,7 +18,7 @@
 <ellipse id="jl-screen-glow" class="jl-part" fill="url(#jl-glow-grad)" cx="610.5" cy="147.5" rx="107.5" ry="70.4"/>
 </g>
 <g id="jl-stand">
-<path id="jl-stand-base" class="jl-part jl-stand" fill="#0D3F4D" d="M599 202H622A1.5 1.5 0 0 1 623.5 203.5V228A1.5 1.5 0 0 1 622 229.5H599A1.5 1.5 0 0 1 597.5 228V203.5A1.5 1.5 0 0 1 599 202Z"/>
+<path id="jl-stand-base" class="jl-part jl-stand" fill="#0D3F4D" d="M597 196H624A1.5 1.5 0 0 1 625.5 197.5V228A1.5 1.5 0 0 1 624 229.5H597A1.5 1.5 0 0 1 595.5 228V197.5A1.5 1.5 0 0 1 597 196Z"/>
 <path id="jl-stand-foot-l" class="jl-part jl-stand" fill="#ECF5F8" d="M535 237L543.5 229H552V237Z"/>
 <path id="jl-stand-block-l" class="jl-part jl-stand" fill="#ECF5F8" d="M558 229H566A1 1 0 0 1 567 230V236A1 1 0 0 1 566 237H558A1 1 0 0 1 557 236V230A1 1 0 0 1 558 229Z"/>
 <path id="jl-stand-plate" class="jl-part jl-stand" fill="#ECF5F8" d="M577.5 229H643.5A1.5 1.5 0 0 1 645 230.5V235.5A1.5 1.5 0 0 1 643.5 237H577.5A1.5 1.5 0 0 1 576 235.5V230.5A1.5 1.5 0 0 1 577.5 229Z"/>
@@ -26,19 +26,19 @@
 <path id="jl-stand-foot-r" class="jl-part jl-stand" fill="#ECF5F8" d="M686 237L677.5 229H669V237Z"/>
 </g>
 <g id="jl-waves">
-<path id="jl-wave-l3" class="jl-part jl-wave" fill="#0D3F4D" d="M568.03 180.68A53.9 53.9 0 0 1 568.03 114.32A2.9 2.9 0 0 1 572.6 117.89A48.1 48.1 0 0 0 572.6 177.11A2.9 2.9 0 0 1 568.03 180.68Z"/>
-<path id="jl-wave-l2" class="jl-part jl-wave" fill="#0D3F4D" d="M577.88 172.99A41.4 41.4 0 0 1 577.88 122.01A2.9 2.9 0 0 1 582.45 125.58A35.6 35.6 0 0 0 582.45 169.42A2.9 2.9 0 0 1 577.88 172.99Z"/>
-<path id="jl-wave-l1" class="jl-part jl-wave" fill="#0D3F4D" d="M587.73 165.29A28.9 28.9 0 0 1 587.73 129.71A2.9 2.9 0 0 1 592.3 133.28A23.1 23.1 0 0 0 592.3 161.72A2.9 2.9 0 0 1 587.73 165.29Z"/>
-<path id="jl-wave-r1" class="jl-part jl-wave" fill="#0D3F4D" d="M633.27 129.71A28.9 28.9 0 0 1 633.27 165.29A2.9 2.9 0 0 1 628.7 161.72A23.1 23.1 0 0 0 628.7 133.28A2.9 2.9 0 0 1 633.27 129.71Z"/>
-<path id="jl-wave-r2" class="jl-part jl-wave" fill="#0D3F4D" d="M643.12 122.01A41.4 41.4 0 0 1 643.12 172.99A2.9 2.9 0 0 1 638.55 169.42A35.6 35.6 0 0 0 638.55 125.58A2.9 2.9 0 0 1 643.12 122.01Z"/>
-<path id="jl-wave-r3" class="jl-part jl-wave" fill="#0D3F4D" d="M652.97 114.32A53.9 53.9 0 0 1 652.97 180.68A2.9 2.9 0 0 1 648.4 177.11A48.1 48.1 0 0 0 648.4 117.89A2.9 2.9 0 0 1 652.97 114.32Z"/>
+<path id="jl-wave-l3" class="jl-part jl-wave" fill="#0D3F4D" d="M565.2 180.42A56 56 0 0 1 565.2 114.58A3 3 0 0 1 570.05 118.11A50 50 0 0 0 570.05 176.89A3 3 0 0 1 565.2 180.42Z"/>
+<path id="jl-wave-l2" class="jl-part jl-wave" fill="#0D3F4D" d="M574.5 173.66A44.5 44.5 0 0 1 574.5 121.34A3 3 0 0 1 579.35 124.87A38.5 38.5 0 0 0 579.35 170.13A3 3 0 0 1 574.5 173.66Z"/>
+<path id="jl-wave-l1" class="jl-part jl-wave" fill="#0D3F4D" d="M583.8 166.9A33 33 0 0 1 583.8 128.1A3 3 0 0 1 588.66 131.63A27 27 0 0 0 588.66 163.37A3 3 0 0 1 583.8 166.9Z"/>
+<path id="jl-wave-r1" class="jl-part jl-wave" fill="#0D3F4D" d="M637.2 128.1A33 33 0 0 1 637.2 166.9A3 3 0 0 1 632.34 163.37A27 27 0 0 0 632.34 131.63A3 3 0 0 1 637.2 128.1Z"/>
+<path id="jl-wave-r2" class="jl-part jl-wave" fill="#0D3F4D" d="M646.5 121.34A44.5 44.5 0 0 1 646.5 173.66A3 3 0 0 1 641.65 170.13A38.5 38.5 0 0 0 641.65 124.87A3 3 0 0 1 646.5 121.34Z"/>
+<path id="jl-wave-r3" class="jl-part jl-wave" fill="#0D3F4D" d="M655.8 114.58A56 56 0 0 1 655.8 180.42A3 3 0 0 1 650.95 176.89A50 50 0 0 0 650.95 118.11A3 3 0 0 1 655.8 114.58Z"/>
 </g>
 <g id="jl-wrench-x" class="jl-part"><g id="jl-wrench-y"><g id="jl-wrench" class="jl-wrench" data-pivot="610.5 147.5">
-<path id="jl-wrench-body" class="jl-wrench-piece" fill="#0D3F4D" d="M605.3 130.79A17.5 17.5 0 1 0 615.7 130.79V140.15A9 9 0 1 1 605.3 140.15ZM606.9 160.5A2 2 0 0 0 604.9 162.5V229A2 2 0 0 0 606.9 231H614.1A2 2 0 0 0 616.1 229V162.5A2 2 0 0 0 614.1 160.5Z"/>
-<path id="jl-wrench-inner" class="jl-wrench-piece" fill="#ECF5F8" d="M610.5 167.5H610.5A1.7 1.7 0 0 1 612.2 169.2V217.3A1.7 1.7 0 0 1 610.5 219H610.5A1.7 1.7 0 0 1 608.8 217.3V169.2A1.7 1.7 0 0 1 610.5 167.5Z"/>
-<path id="jl-wrench-stripe" class="jl-wrench-piece" fill="#ECF5F8" d="M610.5 147.5Z"/>
-<path id="jl-wrench-accent" class="jl-wrench-piece" fill="#109DC0" d="M606.9 222H614.1A2 2 0 0 1 616.1 224V229A2 2 0 0 1 614.1 231H606.9A2 2 0 0 1 604.9 229V224A2 2 0 0 1 606.9 222Z"/>
-<path id="jl-wrench-metal" class="jl-metal" fill="url(#jl-metal-grad)" d="M605.3 130.79A17.5 17.5 0 1 0 615.7 130.79V140.15A9 9 0 1 1 605.3 140.15ZM606.9 160.5A2 2 0 0 0 604.9 162.5V229A2 2 0 0 0 606.9 231H614.1A2 2 0 0 0 616.1 229V162.5A2 2 0 0 0 614.1 160.5Z"/>
+<path id="jl-wrench-body" class="jl-wrench-piece" fill="#0D3F4D" d="M610.5 125A23 23 0 1 1 610.5 171A23 23 0 1 1 610.5 125ZM602.5 160H618.5A3 3 0 0 1 621.5 163V220A3 3 0 0 1 618.5 223H602.5A3 3 0 0 1 599.5 220V163A3 3 0 0 1 602.5 160Z"/>
+<path id="jl-wrench-inner" class="jl-wrench-piece" fill="#ECF5F8" fill-rule="evenodd" d="M610.5 133A15 15 0 1 1 610.5 163A15 15 0 1 1 610.5 133ZM597.5 140.52A15 15 0 0 1 623.5 140.52V148L610.5 156L597.5 148ZM606.5 123H614.5V144L610.5 147L606.5 144Z"/>
+<path id="jl-wrench-stripe" class="jl-wrench-piece" fill="#ECF5F8" d="M610.5 170H610.5A3.5 3.5 0 0 1 614 173.5V217.5A3.5 3.5 0 0 1 610.5 221H610.5A3.5 3.5 0 0 1 607 217.5V173.5A3.5 3.5 0 0 1 610.5 170Z"/>
+<path id="jl-wrench-accent" class="jl-wrench-piece" fill="#109DC0" d="M607 208H614V217.5A3.5 3.5 0 0 1 607 217.5Z"/>
+<path id="jl-wrench-metal" class="jl-metal" fill="url(#jl-metal-grad)" d="M610.5 125A23 23 0 1 1 610.5 171A23 23 0 1 1 610.5 125ZM602.5 160H618.5A3 3 0 0 1 621.5 163V220A3 3 0 0 1 618.5 223H602.5A3 3 0 0 1 599.5 220V163A3 3 0 0 1 602.5 160Z"/>
 </g></g></g>
 </g>
 <g id="jl-letters">

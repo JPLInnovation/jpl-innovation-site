@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const C = { x: 610.9, y: 163.9 }; // the badge's centre (as the artwork)
-const H = { x: 610.5, y: 147.5 }; // the wrench head's centre: the pivot the intros turn the wrench and waves about
+const H = { x: 610.5, y: 147.5 }; // the pivot the intros turn the wrench and waves about (the wrench head's centre)
 const f = (n) => Number(n.toFixed(2));
 
 /** A rounded rectangle as a path, clockwise from the top-left corner. */
@@ -33,11 +33,23 @@ function arcBand(cx, cy, r, w, a0, a1) {
 	const large = Math.abs(a1 - a0) > 180 ? 1 : 0;
 	return `M${pt(r + w, a0)}A${r + w} ${r + w} 0 ${large} 1 ${pt(r + w, a1)}A${w} ${w} 0 0 1 ${pt(r - w, a1)}A${r - w} ${r - w} 0 ${large} 0 ${pt(r - w, a0)}A${w} ${w} 0 0 1 ${pt(r + w, a0)}Z`;
 }
-/** An open-ended wrench head: a ring with a jaw cut at the top. */
-function wrenchHead(cx, cy, ro, ri, jaw) {
-	const yo = Math.sqrt(ro * ro - jaw * jaw);
-	const yi = Math.sqrt(ri * ri - jaw * jaw);
-	return `M${f(cx - jaw)} ${f(cy - yo)}A${ro} ${ro} 0 1 0 ${f(cx + jaw)} ${f(cy - yo)}V${f(cy - yi)}A${ri} ${ri} 0 1 1 ${f(cx - jaw)} ${f(cy - yi)}Z`;
+/** The wrench's solid shape: the round head and the handle as one outline (both drawn the same way round). */
+function wrenchBody() {
+	// Both clockwise (circle() and rrect()): drawn opposite ways, their overlap would cancel out into a hole.
+	return `${circle(head.x, head.y, head.r)}${rrect(head.x - handle.half, handle.top, head.x + handle.half, handle.bottom, 3)}`;
+}
+/**
+ * Where the head is open, painted in the screen's cream (one path, even-odd): the ring's inside, minus the jaw (two
+ * prongs joined by a V), plus the jaw's slot. That leaves what the artwork shows: a thin U-shaped gap around the jaw,
+ * widest under its V, and the slot between the prongs.
+ */
+function wrenchCuts() {
+	const top = head.y - head.r - 2;
+	const inside = circle(head.x, head.y, rim.inner);
+	const dy = Math.sqrt(rim.inner * rim.inner - jaw.half * jaw.half);
+	const jawPath = `M${f(head.x - jaw.half)} ${f(head.y - dy)}A${rim.inner} ${rim.inner} 0 0 1 ${f(head.x + jaw.half)} ${f(head.y - dy)}V${jaw.bottom}L${head.x} ${jaw.apex}L${f(head.x - jaw.half)} ${jaw.bottom}Z`;
+	const slotPath = `M${f(head.x - slot.half)} ${f(top)}H${f(head.x + slot.half)}V${f(slot.bottom)}L${f(head.x)} ${f(slot.tip)}L${f(head.x - slot.half)} ${f(slot.bottom)}Z`;
+	return inside + jawPath + slotPath;
 }
 
 // The monitor: a cream bezel, a deep frame band inside it, the pale screen.
@@ -45,8 +57,15 @@ const bezel = { x0: 524.5, y0: 92, x1: 697.3, y1: 203, r: 9 };
 const frame = { x0: 531.5, y0: 99, x1: 690.3, y1: 196, r: 5 };
 const screen = { x0: 537.5, y0: 105, x1: 684.3, y1: 190, r: 3 };
 const ring = { r: 120.3, w: 4.6 };
-const wave = { w: 2.9, span: 38, radii: [26, 38.5, 51] };
-const handle = { w: 5.6, top: H.y + 16, bottom: 231 };
+// Measured from the original artwork (public/assets/JPL_INNOVATION.jpg, scanned row by row), so the redraw keeps its
+// proportions: a bold open-end wrench whose head is about twice the handle's width.
+const wave = { w: 3, span: 36, radii: [30, 41.5, 53] };
+const head = { x: 610.5, y: 148, r: 23 }; // the wrench head
+const slot = { half: 4, bottom: 144, tip: 147 }; // the jaw's opening at the top (8 wide, between two prongs), its floor a shallow V
+const rim = { inner: 15 }; // the head is a ring 8 thick; its inside is open around the jaw
+const jaw = { half: 13, bottom: 148, apex: 156 }; // the jaw inside it: two prongs joined by a V, pointing down
+const handle = { half: 11, top: 160, bottom: 223 }; // the handle, 22 wide, into the stand
+const channel = { half: 3.5, top: 170, bottom: 221, tip: 208 }; // the cream channel down it, a coloured tip at its foot
 
 /** Every part of the badge, ids prefixed (jl or ds), in the artwork's own colours (CSS maps them to the palette). */
 function badgeParts(p, col) {
@@ -75,7 +94,7 @@ function badgeParts(p, col) {
 		`<ellipse id="${p}-screen-glow" class="${p}-part" fill="url(#${p}-glow-grad)" cx="${H.x}" cy="${H.y}" rx="107.5" ry="70.4"/>`,
 		`</g>`,
 		`<g id="${p}-stand">`,
-		`<path id="${p}-stand-base" class="${p}-part ${p}-stand" fill="${col.deep}" d="${rrect(H.x - 13, bezel.y1 - 1, H.x + 13, 229.5, 1.5)}"/>`,
+		`<path id="${p}-stand-base" class="${p}-part ${p}-stand" fill="${col.deep}" d="${rrect(head.x - 15, frame.y1, head.x + 15, 229.5, 1.5)}"/>`,
 		`<path id="${p}-stand-foot-l" class="${p}-part ${p}-stand" fill="${col.light}" d="${footL}"/>`,
 		`<path id="${p}-stand-block-l" class="${p}-part ${p}-stand" fill="${col.light}" d="${rrect(557, 229, 567, 237, 1)}"/>`,
 		`<path id="${p}-stand-plate" class="${p}-part ${p}-stand" fill="${col.light}" d="${rrect(576, 229, f(2 * H.x - 576), 237, 1.5)}"/>`,
@@ -89,13 +108,13 @@ function badgeParts(p, col) {
 		p === "jl"
 			? `<g id="jl-wrench-x" class="jl-part"><g id="jl-wrench-y"><g id="jl-wrench" class="jl-wrench" data-pivot="${H.x} ${H.y}">`
 			: `<g id="ds-wrench-x" class="ds-part"><g id="ds-wrench">`,
-		// The wrench: the deep body (head and handle), a cream stripe down the handle, a short accent at its foot.
-		`<path id="${p}-wrench-body" class="${p}-wrench-piece" fill="${col.deep}" d="${wrenchHead(H.x, H.y, 17.5, 9, 5.2)}${rrectCCW(H.x - handle.w, handle.top - 3, H.x + handle.w, handle.bottom, 2)}"/>`,
-		`<path id="${p}-wrench-inner" class="${p}-wrench-piece" fill="${col.light}" d="${rrect(H.x - 1.7, handle.top + 4, H.x + 1.7, handle.bottom - 12, 1.7)}"/>`,
+		// The wrench: the deep body (head and handle), the cut-outs and the channel in the screen's cream, a coloured tip.
+		`<path id="${p}-wrench-body" class="${p}-wrench-piece" fill="${col.deep}" d="${wrenchBody()}"/>`,
+		`<path id="${p}-wrench-inner" class="${p}-wrench-piece" fill="${col.light}" fill-rule="evenodd" d="${wrenchCuts()}"/>`,
 		p === "ds" ? `<path id="ds-wrench-jaws" fill="${col.deep}" d="M${H.x} ${H.y}Z"/>` : "",
-		`<path id="${p}-wrench-stripe" class="${p}-wrench-piece" fill="${col.light}" d="M${H.x} ${H.y}Z"/>`,
-		`<path id="${p}-wrench-accent" class="${p}-wrench-piece" fill="${col.accent}" d="${rrect(H.x - handle.w, handle.bottom - 9, H.x + handle.w, handle.bottom, 2)}"/>`,
-		p === "jl" ? `<path id="jl-wrench-metal" class="jl-metal" fill="url(#jl-metal-grad)" d="${wrenchHead(H.x, H.y, 17.5, 9, 5.2)}${rrectCCW(H.x - handle.w, handle.top - 3, H.x + handle.w, handle.bottom, 2)}"/>` : "",
+		`<path id="${p}-wrench-stripe" class="${p}-wrench-piece" fill="${col.light}" d="${rrect(head.x - channel.half, channel.top, head.x + channel.half, channel.bottom, channel.half)}"/>`,
+		`<path id="${p}-wrench-accent" class="${p}-wrench-piece" fill="${col.accent}" d="M${f(head.x - channel.half)} ${channel.tip}H${f(head.x + channel.half)}V${f(channel.bottom - channel.half)}A${channel.half} ${channel.half} 0 0 1 ${f(head.x - channel.half)} ${f(channel.bottom - channel.half)}Z"/>`,
+		p === "jl" ? `<path id="jl-wrench-metal" class="jl-metal" fill="url(#jl-metal-grad)" d="${wrenchBody()}"/>` : "",
 		p === "jl" ? `</g></g></g>` : `</g></g>`,
 	]
 		.filter(Boolean)
@@ -128,6 +147,6 @@ writeFileSync(logoPath, replaceElement(logo, '<g id="jl-badge" class="jl-badge">
 const ds = { disc: "#071F23", deep: "#0D3F4D", light: "#F0F8FC", accent: "#1AA0C5" };
 const badgePath = "src/assets/intro/jpl-badge.svg";
 const badge = readFileSync(badgePath, "utf8");
-const head = badge.slice(0, badge.indexOf("</defs>") + "</defs>".length);
+const defsHead = badge.slice(0, badge.indexOf("</defs>") + "</defs>".length);
 writeFileSync(badgePath, `${head}\n${badgeParts("ds", ds)}\n</svg>\n`);
 console.log("badge redrawn in", logoPath, "and", badgePath);
