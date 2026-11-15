@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 import { Slot } from "radix-ui"
 
 const buttonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform] duration-150 outline-none active:scale-[0.97] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-[0.625rem] text-sm font-semibold [font-stretch:108%] whitespace-nowrap transition-[color,background-color,border-color,box-shadow,transform] duration-150 outline-none active:scale-[0.97] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -12,20 +12,20 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
-          "border bg-background shadow-xs hover:bg-secondary hover:text-secondary-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border border-[var(--sheet-edge)] bg-transparent hover:bg-[color-mix(in_oklch,var(--ink)_7%,transparent)]",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
           "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         signal:
-          "bg-[linear-gradient(135deg,var(--primary),color-mix(in_oklab,var(--primary)_70%,var(--highlight)))] font-semibold text-primary-foreground shadow-[var(--shadow-soft)] hover:-translate-y-px hover:shadow-[var(--shadow-lift)]",
+          "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.2)] hover:bg-[color-mix(in_oklch,var(--primary)_86%,var(--ink))]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         xs: "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-8 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
-        lg: "h-11 rounded-md px-5 text-[15px] has-[>svg]:px-4",
+        lg: "h-12 rounded-xl px-6 text-base has-[>svg]:px-5",
         icon: "size-9",
         "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
         "icon-sm": "size-8",

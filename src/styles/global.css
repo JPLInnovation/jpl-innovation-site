@@ -58,7 +58,7 @@
 	--accent-foreground: var(--ink);
 	--highlight: var(--accent-brand);
 	--destructive: #c8283a;
-	--border: #d6cfb6;
+	--border: rgb(10 23 78 / 0.16); /* alpha, not a solid grey: it takes the tint of what is under it */
 	--input: #d6cfb6;
 	--ring: #1f5fc4; /* the darker brand blue: focus rings keep 3:1 on paper and on tinted cards */
 
@@ -125,7 +125,7 @@
 	--primary: var(--mark); /* the yellow action, navy text on it */
 	--primary-foreground: #0a174e;
 	--destructive: #f0596b;
-	--border: #26377a;
+	--border: rgb(242 238 223 / 0.16);
 	--input: #2c3f86;
 	--ring: var(--mark);
 
