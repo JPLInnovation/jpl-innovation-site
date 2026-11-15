@@ -1,8 +1,8 @@
 ---
 /**
  * Contact section at the bottom of every page (id="contact", linked from the nav).
- * Words: src/text/site.ts (`contact`). The band uses fixed blues (not theme variables) so its
- * white text keeps AA contrast (≥ 6.7:1) in both light and dark mode.
+ * Words: src/text/site.ts (`contact`). The band is one flat brand blue (not a theme variable) so its white text
+ * keeps AA contrast (6.0:1) in both themes. Phase 2 of the redesign rebuilds it with the footer.
  */
 import EmailButton from "./EmailButton.astro";
 import { contact, site } from "@/text/site";
@@ -26,26 +26,8 @@ import { contact, site } from "@/text/site";
 </section>
 
 <style>
+	/* One flat field of the brand blue (the redesign: no gradients, no violet); white text on it is 6.0:1. */
 	.contact-band {
-		background: linear-gradient(120deg, #0b3fb8 0%, #1d4ed8 45%, #6d28d9 100%);
-	}
-	/* A slow sheen across the band; off for reduced motion. */
-	.contact-band::before {
-		content: "";
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background: radial-gradient(60% 120% at 85% 0%, rgb(34 211 238 / 0.28), transparent 60%);
-		animation: contact-sheen 14s ease-in-out infinite alternate;
-	}
-	@keyframes contact-sheen {
-		to {
-			transform: translateX(-18%);
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.contact-band::before {
-			animation: none;
-		}
+		background: #1f5fc4;
 	}
 </style>
