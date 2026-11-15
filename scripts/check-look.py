@@ -176,6 +176,56 @@ def check_field(browser, base):
     page.wait_for_timeout(800)
     report(page.evaluate("window.__field && window.__field.paused === true"), "home in 3D mode: the field is paused under the studio")
     page.close()
+    check_blueprint(browser, base)
+
+
+SCROLL_TO = "(at) => scrollTo(0, (document.documentElement.scrollHeight - innerHeight) * at)"
+
+
+def check_blueprint(browser, base):
+    """Phase 2's living blueprint: each page's drawing, drafted by the scroll; day sections; the still."""
+    page = open_page(browser, base, "/work/drone/", "dark")
+    page.mouse.move(700, 400)
+    page.wait_for_timeout(800)
+    top = page.evaluate("window.__field.reveal")
+    page.evaluate(SCROLL_TO, 0.6)
+    page.wait_for_timeout(1500)
+    mid = page.evaluate("window.__field.reveal")
+    report(page.evaluate("window.__field.drawing") == "f450" and top < 0.05 and mid > 0.5,
+           f"/work/drone/: the F450 is drafted as the page scrolls (reveal {top:.2f} -> {mid:.2f})")
+    page.close()
+    # A page with no drawing of its own: the badge, and never a black square (content hidden, sample the floor).
+    page = open_page(browser, base, "/about/", "dark")
+    page.add_style_tag(content="body > *:not(.site-bg) { visibility: hidden !important; }")
+    page.evaluate(SCROLL_TO, 0.95)
+    page.mouse.move(700, 400)
+    page.wait_for_timeout(2000)
+    from PIL import Image
+    import io
+    shot = Image.open(io.BytesIO(page.screenshot())).convert("RGB")
+    dark_px = sum(1 for x in range(0, 1440, 40) for y in range(450, 900, 40) if sum(shot.getpixel((x, y))) < 12)
+    report(page.evaluate("window.__field.drawing") == "badge" and dark_px == 0,
+           f"/about/: the badge drawing, no black square on the floor ({dark_px} black samples)")
+    page.close()
+    # A section marked data-field="day" turns the dark world to day while it is under the middle of the screen.
+    page = open_page(browser, base, "/work/", "dark")
+    page.evaluate("""() => { const s = document.createElement('section'); s.dataset.field = 'day'; s.style.height = '200vh';
+      document.querySelector('main').prepend(s); document.dispatchEvent(new Event('astro:after-swap')); }""")
+    page.mouse.move(700, 400)
+    page.mouse.wheel(0, 200)
+    page.wait_for_timeout(1500)
+    night = page.evaluate("window.__field.night")
+    report(night < 0.15, f"a data-field=day section turns the field to day (night {night:.2f})")
+    page.close()
+    # Reduced motion: the still picture (with the drawing complete, made by --make-stills), no canvas.
+    page = browser.new_page(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    page.add_init_script(INIT % {"theme": "dark", "extra": ""})
+    page.goto(base + "/about/", wait_until="load")
+    page.wait_for_timeout(1500)
+    still = page.evaluate("""() => { const c = document.querySelector('[data-blueprint]'); const img = document.querySelector('.site-bg__still--dark');
+      return { canvas: c ? !c.hidden && getComputedStyle(c).display !== 'none' : false, still: !!img && getComputedStyle(img).opacity === '1' && img.complete && img.naturalWidth > 0 }; }""")
+    report(not still["canvas"] and still["still"], f"reduced motion: the still picture instead of the field ({still})")
+    page.close()
 
 
 TITLE = """() => { const h = document.querySelector('main h1'); const cs = getComputedStyle(h);
@@ -382,9 +432,12 @@ def make_stills(browser, base):
     """The blueprint space's still pictures (shown where the field can't run): the field alone, page content hidden."""
     from PIL import Image
     for theme in ("dark", "light"):
-        page = open_page(browser, base, "/work/", theme)
+        page = open_page(browser, base, "/about/", theme)
         page.add_style_tag(content="body > *:not(.site-bg) { visibility: hidden !important; } html { scrollbar-width: none; }")
-        page.wait_for_timeout(1500)
+        # The end of the page: the flight's last view, the badge drawing complete.
+        page.evaluate(SCROLL_TO, 0.97)
+        page.mouse.move(720, 450)
+        page.wait_for_timeout(2500)
         page.screenshot(path=f"public/look/field-still-{theme}.png")
         im = Image.open(f"public/look/field-still-{theme}.png").convert("RGB")
         im.save(f"public/look/field-still-{theme}.webp", "WEBP", quality=70, method=6)

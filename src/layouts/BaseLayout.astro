@@ -8,6 +8,7 @@ import ExperienceChoice from "@/components/ExperienceChoice.astro";
 import FrcSplash from "@/components/FrcSplash.astro";
 import IntroSplash from "@/components/IntroSplash.astro";
 import { splashFor } from "@/lib/splash";
+import { fieldFor } from "@/lib/look/drawing";
 import "@/styles/global.css";
 // The subset almost every page's text uses. Preloading it lets the display headings render in Archivo
 // straight away instead of reflowing when the font arrives (layout shift).
@@ -34,6 +35,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
 // Which logo intro this page plays on a full load or refresh (FRC pages: FrcSplash; the drone page: DroneSplash;
 // everything else: IntroSplash).
 const splash = splashFor(Astro.url.pathname);
+// What the blueprint space draws on its floor under this page, and which real parts float over it.
+const field = fieldFor(Astro.url.pathname);
 ---
 
 <html lang="en">
@@ -165,7 +168,7 @@ const splash = splashFor(Astro.url.pathname);
 			</filter>
 		</svg>
 		<SiteHeader />
-		<main id="main" class="relative flex-1">
+		<main id="main" class="relative flex-1" data-field-drawing={field.drawing} data-field-parts={field.parts}>
 			<slot />
 		</main>
 		<SiteFooter />

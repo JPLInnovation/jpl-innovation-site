@@ -21,13 +21,16 @@ test("the field draws only when visible, allowed to move, and not under a page's
 	assert.equal(shouldAnimate({ hidden: false, reduced: true, ownBackdrop: false }), false);
 	assert.equal(shouldAnimate({ hidden: false, reduced: false, ownBackdrop: true }), false);
 });
-test("scrolling moves forward over the floor; the pointer leans the view", () => {
+test("scrolling flies the camera: forward, rising, turning, tilting down onto the drawing; the pointer leans it", () => {
 	const still = { x: 0, y: 0 };
-	assert.equal(cameraFor(0, still).drift, 0);
+	const a = cameraFor(0, still);
+	const b = cameraFor(1, still);
+	assert.equal(a.drift, 0);
 	assert.ok(cameraFor(1, still).drift > cameraFor(0.5, still).drift);
+	assert.ok(Math.abs(a.height - 1.6) < 1e-9 && Math.abs(b.height - 4.2) < 1e-9, "rises from 1.6 to 4.2");
+	assert.ok(Math.abs(a.pitch - 0.18) < 1e-9 && Math.abs(b.pitch - 0.62) < 1e-9, "tilts from 0.18 to 0.62");
+	assert.ok(Math.abs(a.yaw + 0.22) < 1e-9 && Math.abs(b.yaw - 0.3) < 1e-9, "turns from -0.22 to 0.3");
 	assert.ok(Math.abs(cameraFor(0.5, { x: 1, y: 0 }).lean[0] - 0.04) < 1e-9);
-	assert.ok(Math.abs(cameraFor(0, still).pitch - 0.18) < 1e-9);
-	assert.ok(Math.abs(cameraFor(1, still).pitch - 0.32) < 1e-9);
 });
 
 import { newMeter, resetMeter, tickMeter } from "./field.ts";

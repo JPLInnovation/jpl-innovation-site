@@ -28,15 +28,18 @@ export function shouldAnimate(s: { hidden: boolean; reduced: boolean; ownBackdro
 const smooth = (t: number) => t * t * (3 - 2 * t);
 
 /**
- * The camera over the grid floor: the scroll (0 to 1 down the page) carries it forward and tilts it a little further
- * down; the pointer (-1 to 1 each way) leans it.
+ * The camera's flight over the floor: the scroll (0 to 1 down the page) carries it forward, lifts it from eye height
+ * to over the drawing, tilts it down onto the drawing and turns it a little, so the page's end looks down at the drawing
+ * the pen has finished; the pointer (-1 to 1 each way) leans it.
  */
-export function cameraFor(scrollProgress: number, pointer: { x: number; y: number }): { height: number; pitch: number; drift: number; lean: [number, number] } {
+export function cameraFor(scrollProgress: number, pointer: { x: number; y: number }): { height: number; pitch: number; yaw: number; drift: number; lean: [number, number] } {
 	const p = Math.min(1, Math.max(0, scrollProgress));
+	const e = smooth(p);
 	return {
-		height: 1.6,
-		pitch: 0.18 + (0.32 - 0.18) * smooth(p),
-		drift: p * 40,
+		height: 1.6 + (4.2 - 1.6) * e,
+		pitch: 0.18 + (0.62 - 0.18) * e,
+		yaw: -0.22 + (0.3 + 0.22) * e,
+		drift: p * 26,
 		lean: [pointer.x * 0.04, pointer.y * 0.04],
 	};
 }
