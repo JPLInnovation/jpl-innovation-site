@@ -148,5 +148,5 @@ const ds = { disc: "#071F23", deep: "#0D3F4D", light: "#F0F8FC", accent: "#1AA0C
 const badgePath = "src/assets/intro/jpl-badge.svg";
 const badge = readFileSync(badgePath, "utf8");
 const defsHead = badge.slice(0, badge.indexOf("</defs>") + "</defs>".length);
-writeFileSync(badgePath, `${head}\n${badgeParts("ds", ds)}\n</svg>\n`);
+writeFileSync(badgePath, `${defsHead}\n${badgeParts("ds", ds)}\n</svg>\n`);
 console.log("badge redrawn in", logoPath, "and", badgePath);

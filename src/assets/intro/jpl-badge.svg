@@ -1,4 +1,5 @@
-[object Object]
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="482.9 35.900000000000006 256 256" class="ds-badge-svg" aria-hidden="true" focusable="false">
+<defs><radialGradient id="ds-glow-grad"><stop offset="0" stop-color="#7fe9ff" stop-opacity=".75"/><stop offset=".6" stop-color="#22d3ee" stop-opacity=".25"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></radialGradient></defs>
 <circle id="ds-badge-fill" class="ds-part" fill="#071F23" cx="610.9" cy="163.9" r="118.4"/>
 <path id="ds-ring-rim" class="ds-part ds-ring" fill="none" stroke="#000" stroke-opacity=".3" stroke-width="1.6" pathLength="1" d="M610.9 40.7A123.19999999999999 123.19999999999999 0 1 1 610.9 287.1A123.19999999999999 123.19999999999999 0 1 1 610.9 40.7Z"/>
 <path id="ds-ring" class="ds-part ds-ring" fill="none" stroke="#1AA0C5" stroke-width="4.6" pathLength="1" d="M610.9 43.6A120.3 120.3 0 1 1 610.9 284.2A120.3 120.3 0 1 1 610.9 43.6Z"/>
