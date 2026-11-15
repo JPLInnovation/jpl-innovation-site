@@ -1,0 +1,465 @@
+---
+/**
+ * The rookie season in eight scenes, as pinned chapters: the screen stays while you scroll, a reel of the team's photos
+ * runs down the middle (the scene's photo in colour, the rest in black and white), the scene's title rolls in on the
+ * left and its words and figure (its digits rolling) on the right, and the flight path on the map draws to the next
+ * city. A progress bar and a chequered-flag count along the bottom; "Skip the season" jumps past it.
+ * (src/components/frc/edition.ts). Without JavaScript, with reduced motion, it is an ordinary list of the eight scenes.
+ * Words: src/text/projects/frc.ts (seasonStory, edition.historySkip).
+ */
+import Odometer from "@/components/Odometer.astro";
+import { edition, frcPhotos, seasonStory, type FrcPhoto } from "@/text/projects/frc";
+
+const t = seasonStory;
+const n = t.scenes.length;
+const photo = (id: string) => frcPhotos[id as keyof typeof frcPhotos] as FrcPhoto;
+const img = (p: FrcPhoto) => ({
+	src: `/assets/frc/${p.id}-640.webp`,
+	srcset: `/assets/frc/${p.id}-640.webp 640w, /assets/frc/${p.id}.webp ${p.w}w`,
+	width: p.w,
+	height: p.h,
+});
+
+// The map: equirectangular, centred on the Pacific (150°E) so the flight to Vancouver doesn't wrap round the edge.
+const W = 1000;
+const H = 440;
+const at = (lat: number, lon: number) => ({ x: ((((lon - 150 + 180) % 360) + 360) % 360) * (W / 360), y: ((90 - lat) * H) / 180 + 40 });
+const CITY = [at(10.82, 106.63), at(49.28, -123.12), at(41.01, 28.98), at(21.31, -157.86)];
+const arc = (to: { x: number; y: number }) => {
+	const a = CITY[0];
+	const mx = (a.x + to.x) / 2;
+	const my = Math.min(a.y, to.y) - Math.abs(to.x - a.x) * 0.28;
+	return `M${a.x},${a.y} Q${mx},${my} ${to.x},${to.y}`;
+};
+const dots: string[] = [];
+for (let x = 10; x < W; x += 26) for (let y = 30; y < H + 40; y += 26) dots.push(`M${x} ${y}h0`);
+---
+
+<section id="season-story" class="fhis dark" aria-labelledby="hist-heading" data-frc-history data-route="0" style={`--n:${n}`}>
+	<div class="fhis-pin">
+		<h2 id="hist-heading" class="fhis-h">{t.heading}</h2>
+		<ol class="fhis-scenes">
+			{
+				t.scenes.map((s, i) => {
+					const p = photo(s.photo);
+					return (
+						<li class:list={["fhis-scene", i === 0 && "is-on"]} data-route={s.route}>
+							<div class="fhis-head">
+								<p class="fhis-when">{s.when}</p>
+								<h3 class="fhis-title">{s.title}</h3>
+							</div>
+							<div class="fhis-body">
+								<p class="fhis-text">{s.text}</p>
+								<p class="fhis-fig">
+									<Odometer value={s.big} class="fhis-big" wait />
+									<span>{s.small}</span>
+								</p>
+							</div>
+							<figure class="fhis-photo">
+								<img {...img(p)} sizes="(min-width: 861px) 40vw, 100vw" alt={p.alt} loading="lazy" decoding="async" />
+							</figure>
+						</li>
+					);
+				})
+			}
+		</ol>
+		<div class="fhis-reel" aria-hidden="true">
+			<div class="fhis-track">
+				{
+					t.scenes.map((s, i) => {
+						const p = photo(s.photo);
+						return (
+							<figure class:list={["fhis-frame", i === 0 && "is-on"]}>
+								<img {...img(p)} sizes="(min-width: 861px) 24vw, 100vw" alt="" loading={i < 2 ? "eager" : "lazy"} decoding="async" />
+								<span class="frc-mono" />
+							</figure>
+						);
+					})
+				}
+			</div>
+		</div>
+		<figure class="fhis-map">
+			<svg viewBox={`0 0 ${W} ${H + 60}`} role="img" aria-label={t.mapLabel}>
+				<path d={dots.join("")} stroke="rgb(238 241 246 / 0.16)" stroke-width="3.2" stroke-linecap="round" />
+				{[1, 2, 3].map((c) => <path class={`fhis-arc fhis-arc-${c}`} d={arc(CITY[c])} pathLength="1" />)}
+				{
+					CITY.map((p, c) => (
+						<g class={`fhis-city fhis-city-${c}`}>
+							<circle cx={p.x} cy={p.y} r="10" />
+							<text x={p.x} y={p.y - 24} text-anchor="middle">
+								{t.cities[c]}
+							</text>
+						</g>
+					))
+				}
+			</svg>
+		</figure>
+		<div class="fhis-foot" aria-hidden="true">
+			<span class="fhis-bar"><i></i></span>
+			<span class="fhis-count"><span class="fhis-flag"></span><span class="fhis-n">1</span> / {n}</span>
+		</div>
+		<a class="fhis-skip" href="#results">{edition.historySkip} <span aria-hidden="true">»</span></a>
+	</div>
+</section>
+
+<style>
+	/* ---------- Without the pin: the eight scenes as a list (no JavaScript, reduced motion) ---------- */
+	.fhis {
+		position: relative;
+		background: var(--frc-k);
+		color: var(--frc-w);
+		padding: clamp(5rem, 12svh, 8rem) clamp(1rem, 4vw, 2.5rem);
+	}
+	.fhis-h {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		text-transform: uppercase;
+		font-size: clamp(2.2rem, 5vw, 4.5rem);
+		line-height: 0.95;
+		letter-spacing: 0;
+		max-width: 14ch;
+		text-wrap: balance;
+	}
+	.fhis-scenes {
+		display: grid;
+		gap: 3.5rem;
+		margin-top: 3rem;
+	}
+	.fhis-scene {
+		display: grid;
+		gap: 1rem 2.5rem;
+	}
+	.fhis-when {
+		color: var(--frc-y);
+		font-weight: 650;
+	}
+	.fhis-title {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		text-transform: uppercase;
+		font-size: clamp(2rem, 3.4vw, 4rem);
+		line-height: 1;
+		letter-spacing: 0;
+		text-wrap: balance;
+	}
+	.fhis-text {
+		max-width: 40ch;
+		color: var(--frc-mute);
+		text-wrap: pretty;
+	}
+	.fhis-fig {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		margin-top: 1.25rem;
+	}
+	.fhis-fig > span {
+		color: var(--frc-mute);
+		font-size: var(--step-small);
+	}
+	.fhis-fig :global(.fhis-big) {
+		font-family: var(--frc-disp);
+		font-size: clamp(2.75rem, 5.5vw, 5rem);
+		line-height: 1;
+		color: var(--frc-w);
+	}
+	.fhis-photo {
+		margin: 0;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		border-radius: 0.5rem;
+	}
+	.fhis-photo img,
+	.fhis-frame img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	@media (min-width: 861px) {
+		.fhis-scene {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr);
+			align-items: start;
+		}
+	}
+	.fhis-reel,
+	.fhis-foot,
+	.fhis-skip {
+		display: none;
+	}
+	.fhis-map {
+		margin: 3rem 0 0;
+		max-width: 26rem;
+	}
+	.fhis-map svg {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.fhis-arc {
+		fill: none;
+		stroke: var(--frc-b);
+		stroke-width: 6;
+		stroke-linecap: round;
+		stroke-dasharray: 1;
+		stroke-dashoffset: 0;
+	}
+	.fhis-arc-3 {
+		stroke: var(--frc-y);
+	}
+	.fhis-city circle {
+		fill: var(--frc-b);
+	}
+	.fhis-city-0 circle {
+		fill: var(--frc-w);
+	}
+	.fhis-city-3 circle {
+		fill: var(--frc-y);
+	}
+	.fhis-city text {
+		fill: var(--frc-w);
+		font: 600 40px/1 var(--font-sans);
+	}
+
+	/* ---------- Pinned (edition.ts adds .is-live) ---------- */
+	.fhis.is-live {
+		height: calc(var(--n) * 72svh + 100svh);
+		padding: 0;
+	}
+	.is-live .fhis-pin {
+		position: sticky;
+		top: 0;
+		height: 100svh;
+		overflow: hidden;
+		display: grid;
+		grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.5fr) minmax(0, 2fr);
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0 clamp(1.25rem, 3.5vw, 3.5rem);
+		padding: clamp(5rem, 11svh, 7rem) clamp(1rem, 4vw, 3rem) clamp(1.25rem, 4svh, 2.5rem);
+	}
+	.is-live .fhis-h {
+		grid-column: 1 / -1;
+		grid-row: 1;
+		font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+		max-width: none;
+		color: var(--frc-mute);
+	}
+	.is-live .fhis-scenes,
+	.is-live .fhis-scene {
+		display: contents;
+	}
+	.is-live .fhis-photo {
+		display: none;
+	}
+	/* Every scene's head and body share one cell; only the current one shows. */
+	.is-live .fhis-head {
+		grid-column: 1;
+		grid-row: 2;
+		align-self: center;
+		overflow: hidden;
+		padding-bottom: 0.1em;
+	}
+	.is-live .fhis-body {
+		grid-column: 3;
+		grid-row: 2;
+		align-self: center;
+	}
+	.is-live .fhis-when,
+	.is-live .fhis-title,
+	.is-live .fhis-body {
+		transition:
+			transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+			opacity 0.5s;
+	}
+	.is-live .fhis-scene:not(.is-on) :is(.fhis-when, .fhis-title) {
+		transform: translateY(110%);
+		opacity: 0;
+		transition-duration: 0.45s, 0.3s;
+	}
+	.is-live .fhis-scene:not(.is-on) .fhis-body {
+		transform: translateY(1.25rem);
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			transform 0.4s,
+			opacity 0.3s,
+			visibility 0s 0.4s;
+	}
+	.is-live .fhis-title {
+		font-size: clamp(2.4rem, 4.2vw, 5rem);
+	}
+	.is-live .fhis-reel {
+		display: block;
+		grid-column: 2;
+		grid-row: 1 / -1;
+		align-self: stretch;
+		position: relative;
+		height: 100svh;
+		margin-top: calc(-1 * clamp(5rem, 11svh, 7rem));
+		-webkit-mask-image: linear-gradient(in oklch, transparent, #000 22%, #000 78%, transparent);
+		mask-image: linear-gradient(in oklch, transparent, #000 22%, #000 78%, transparent);
+	}
+	.fhis-track {
+		position: absolute;
+		inset: 0 0 auto;
+		display: grid;
+		gap: 5svh;
+		will-change: transform;
+	}
+	.fhis-frame {
+		position: relative;
+		margin: 0;
+		aspect-ratio: 4 / 5;
+		overflow: hidden;
+		border-radius: 0.5rem;
+	}
+	.fhis-frame img {
+		transform: scale(1.08);
+		transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.fhis-frame.is-on img {
+		transform: none;
+	}
+	.is-live .fhis-map {
+		grid-column: 3;
+		grid-row: 3;
+		align-self: end;
+		justify-self: end;
+		margin: 0;
+		width: min(17rem, 100%);
+	}
+	.is-live .fhis-arc {
+		stroke-dashoffset: 1;
+		transition: stroke-dashoffset 1.1s cubic-bezier(0.65, 0, 0.35, 1);
+	}
+	.is-live .fhis-city:not(.fhis-city-0) {
+		opacity: 0.35;
+		transition: opacity 0.6s;
+	}
+	.fhis[data-route="1"] :is(.fhis-arc-1),
+	.fhis[data-route="2"] :is(.fhis-arc-1, .fhis-arc-2),
+	.fhis[data-route="3"] :is(.fhis-arc-1, .fhis-arc-2, .fhis-arc-3) {
+		stroke-dashoffset: 0;
+	}
+	.fhis[data-route="1"] .fhis-city-1,
+	.fhis[data-route="2"] :is(.fhis-city-1, .fhis-city-2),
+	.fhis[data-route="3"] :is(.fhis-city-1, .fhis-city-2, .fhis-city-3) {
+		opacity: 1;
+	}
+	.is-live .fhis-foot {
+		display: flex;
+		grid-column: 1;
+		grid-row: 3;
+		align-items: center;
+		gap: 1.5rem;
+		align-self: end;
+	}
+	.fhis-bar {
+		position: relative;
+		width: min(13rem, 26vw);
+		height: 2px;
+		background: rgb(238 241 246 / 0.16);
+	}
+	.fhis-bar i {
+		position: absolute;
+		inset: 0;
+		background: var(--frc-y);
+		transform-origin: 0 50%;
+		transform: scaleX(var(--p, 0));
+	}
+	.fhis-count {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		font-family: var(--frc-disp);
+		font-size: 1.5rem;
+		font-variant-numeric: tabular-nums;
+	}
+	/* A chequered flag, drawn in CSS (two yellow squares of four). */
+	.fhis-flag {
+		width: 1.1rem;
+		height: 1.1rem;
+		background: conic-gradient(var(--frc-y) 25%, transparent 0 50%, var(--frc-y) 0 75%, transparent 0) 0 0 / 0.55rem 0.55rem;
+	}
+	.is-live .fhis-skip {
+		display: inline-flex;
+		grid-column: 2;
+		grid-row: 3;
+		justify-self: center;
+		align-self: end;
+		align-items: center;
+		gap: 0.4rem;
+		min-height: 44px;
+		padding: 0 1rem;
+		border-radius: 999px;
+		box-shadow: inset 0 0 0 1px rgb(238 241 246 / 0.22);
+		font-weight: 600;
+		font-size: var(--step-small);
+		position: relative;
+		z-index: 1;
+	}
+	.is-live .fhis-skip:hover {
+		background: var(--frc-y);
+		color: var(--frc-k);
+		box-shadow: none;
+	}
+	/* Phones and narrow tablets: one column; the reel becomes one photo that changes with the scene. */
+	@media (max-width: 860px) {
+		.is-live .fhis-pin {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+			align-items: start;
+			gap: 0.9rem;
+			padding-top: 4.75rem;
+		}
+		.is-live .fhis-head {
+			grid-row: 2;
+		}
+		.is-live .fhis-reel {
+			grid-column: 1;
+			grid-row: 3;
+			height: auto;
+			margin: 0;
+			-webkit-mask-image: none;
+			mask-image: none;
+		}
+		.is-live .fhis-track {
+			inset: 0;
+			display: block;
+			transform: none !important;
+		}
+		.is-live .fhis-frame {
+			position: absolute;
+			inset: 0;
+			aspect-ratio: auto;
+			opacity: 0;
+			transition: opacity 0.6s;
+		}
+		.is-live .fhis-frame.is-on {
+			opacity: 1;
+		}
+		.is-live .fhis-body {
+			grid-column: 1;
+			grid-row: 4;
+		}
+		.is-live .fhis-fig {
+			flex-direction: row;
+			align-items: baseline;
+			gap: 0.75rem;
+			margin-top: 0.5rem;
+		}
+		.is-live .fhis-fig :global(.fhis-big) {
+			font-size: 2.5rem;
+		}
+		.is-live .fhis-title {
+			font-size: clamp(1.9rem, 8vw, 2.6rem);
+		}
+		.is-live .fhis-map,
+		.is-live .fhis-skip {
+			display: none;
+		}
+		.is-live .fhis-foot {
+			grid-row: 5;
+		}
+	}
+</style>

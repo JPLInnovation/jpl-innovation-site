@@ -48,6 +48,37 @@ export const frcPage = {
 	},
 };
 
+/**
+ * The page's own race-weekend devices (the special edition, from the team's own site). Everything else they show comes
+ * from the season data further down.
+ */
+export const edition = {
+	/** The intro's line under the five start lights. */
+	lightsOut: 'Lights out and away we go.',
+	/** The two photos behind the top of the page, left and right (ids in `frcPhotos`). */
+	heroPhotos: ['ev-van', 'robot'] as FrcPhotoId[],
+	/** Words of `frcDeck.heading` set on a yellow mark in the statement (must be words of that heading). */
+	statementMarks: ['two continents'],
+	/** The small photos around the statement; each comes into colour as it passes. */
+	statementPhotos: ['st3', 'g7', 'b5', 'g9'] as FrcPhotoId[],
+	/** The pinned rookie-season chapters: the link that jumps past them. */
+	historySkip: 'Skip the season',
+	/** The starting grid under each regional's numbers. "P" + rank is the grid slot. */
+	gridHeading: 'Starting grid: the field in qualification order',
+	gridPlace: 'Qualified P',
+	firstRoundPick: 'First-round pick',
+	gridAbove: 'Ranked above us',
+	gridBelow: 'Ranked below us',
+	/** The calendar the KitBot drives down. */
+	agenda: {
+		heading: 'The calendar, lap by lap',
+		intro: 'From the first preseason workshop in September 2025 to the Marmara Regional in April 2027. Scroll, and the KitBot drives it.',
+		done: 'Done',
+	},
+	/** The pits gallery's slider. */
+	gallery: { hint: 'Drag the strip, or use the arrows', prev: 'Previous photos', next: 'Next photos' },
+};
+
 /** Headings and buttons in the season switcher (2027 / 2026 tabs). The season content itself is further down. */
 export const seasonsText = {
 	chooseSeason: 'Choose a season',
@@ -656,15 +687,16 @@ export const teamMore = {
 	tracks: { project: 'Project side', logistics: 'Logistics side' },
 	pickHint: 'Point at a sub-team, or tap one, to see what it owns.',
 	jobsHeading: 'First jobs this season',
-	/** The values the team works by (FIRST's core values), and how it behaves in the workshop. */
+	/** The values the team works by (FIRST's core values), and how it behaves in the workshop. `colour`: the bar that
+	 *  sweeps in when a value is pointed at, in the page's two colours (yellow #f4b62a, blue #5b95f2). */
 	valuesHeading: 'What we work by',
 	values: [
-		{ name: 'Discovery', colour: '#f08a24', text: 'We explore new skills and ideas.' },
+		{ name: 'Discovery', colour: '#f4b62a', text: 'We explore new skills and ideas.' },
 		{ name: 'Innovation', colour: '#5b95f2', text: 'We use creativity and persistence to solve problems.' },
-		{ name: 'Impact', colour: '#3dd68c', text: 'We apply what we learn to improve our world.' },
-		{ name: 'Inclusion', colour: '#b07cf0', text: 'We respect each other and embrace our differences.' },
-		{ name: 'Teamwork', colour: '#94a3b8', text: 'We are stronger when we work together.' },
-		{ name: 'Fun', colour: '#e5484d', text: 'We enjoy and celebrate what we do.' },
+		{ name: 'Impact', colour: '#f4b62a', text: 'We apply what we learn to improve our world.' },
+		{ name: 'Inclusion', colour: '#5b95f2', text: 'We respect each other and embrace our differences.' },
+		{ name: 'Teamwork', colour: '#f4b62a', text: 'We are stronger when we work together.' },
+		{ name: 'Fun', colour: '#5b95f2', text: 'We enjoy and celebrate what we do.' },
 	],
 	firstValues: [
 		{ name: 'Gracious Professionalism', text: 'High-quality work combined with real respect for people. We compete hard and treat every team, volunteer and opponent with kindness while we do it.' },

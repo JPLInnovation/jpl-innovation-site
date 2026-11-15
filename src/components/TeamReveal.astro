@@ -32,7 +32,7 @@ const { photo, words, meta } = Astro.props;
 					fetchpriority="high"
 				/>
 				<figcaption class="treveal-words">
-					<p class="font-wide">{words}</p>
+					<p>{words}</p>
 					{meta && <p class="treveal-meta">{meta}</p>}
 				</figcaption>
 			</figure>
@@ -53,7 +53,7 @@ const { photo, words, meta } = Astro.props;
 		height: 100svh;
 		overflow: hidden;
 	}
-	/* Full screen at --p 1, a little under half that at 0; the corners square off as it fills the screen. */
+	/* Full screen at --p 1, a little under half that at 0: a framed print that opens to the whole screen (transform only). */
 	.treveal-frame {
 		--p: 0;
 		position: relative;
@@ -64,7 +64,6 @@ const { photo, words, meta } = Astro.props;
 		aspect-ratio: var(--ratio);
 		max-height: 100svh;
 		overflow: hidden;
-		border-radius: calc((1 - var(--p)) * 2.5rem);
 		transform: scale(calc(0.62 + 0.38 * var(--p)));
 		will-change: transform;
 	}
@@ -82,7 +81,7 @@ const { photo, words, meta } = Astro.props;
 		flex-direction: column;
 		gap: 0.4rem;
 		padding: 6rem clamp(1.25rem, 5vw, 4.5rem) clamp(1.5rem, 5vh, 3.5rem);
-		background: linear-gradient(to top, rgb(3 7 14 / 0.92), rgb(3 7 14 / 0.6) 45%, transparent 88%);
+		background: linear-gradient(in oklch to top, rgb(7 11 18 / 0.92), rgb(7 11 18 / 0.55) 45%, rgb(7 11 18 / 0) 88%);
 		color: #fff;
 		opacity: clamp(0, (var(--p) - 0.62) / 0.22, 1);
 		transform: translateY(calc((1 - clamp(0, (var(--p) - 0.62) / 0.22, 1)) * 1.5rem));
@@ -90,16 +89,19 @@ const { photo, words, meta } = Astro.props;
 		scale: calc(1 / (0.62 + 0.38 * var(--p)));
 		transform-origin: bottom center;
 	}
+	/* The FRC page's display face (Anton, loaded by that page only: --frc-disp). */
 	.treveal-words p:first-child {
-		max-width: 22ch;
-		font-size: clamp(1.75rem, 4.6vw, 3.75rem);
-		font-weight: 880;
-		line-height: 1.02;
-		text-shadow: 0 2px 24px rgb(3 7 14 / 0.6);
+		max-width: 16ch;
+		font-family: var(--frc-disp);
+		font-size: clamp(2.6rem, 7vw, 7rem);
+		font-weight: 400;
+		line-height: 0.9;
+		text-transform: uppercase;
+		text-wrap: balance;
 	}
 	.treveal-meta {
 		font-size: 0.95rem;
-		color: rgb(255 255 255 / 0.75);
+		color: rgb(238 241 246 / 0.82);
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.treveal-track {

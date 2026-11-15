@@ -5,6 +5,8 @@
  * Markup and CSS: src/components/FrcSplash.astro (+ FrcLockup.astro); colour burn geometry: src/lib/frc-burn.ts.
  * Shared overlay, skip, versions, reduced motion and clean-up: src/scripts/splash-core.ts.
  *
+ *   0.2–2.2  the race start (the page's special edition): five start lights come on one by one over the build, and
+ *            all go out the moment the dragon breathes ("lights out and away we go").
  *   0.0–1.6  the FIRST mark builds: a red triangle drops in and bounces, a white circle rolls in, a blue square
  *            spins in and lands; they slide and rotate into the knot, lock with a "click", become the
  *            full-colour FIRST logo, and the wordmark wipes in.
@@ -148,6 +150,24 @@ function play(ctx: SplashContext) {
 	const badgeTop = g0.U.top + bty + g0.badge.dy * kBig;
 	const B = g0.badge.w * kBig;
 	const logo = { L: g0.U.left + btx + g0.first.dx * kBig, T: g0.U.top + bty + g0.first.dy * kBig, W: g0.first.w * kBig, H: g0.first.h * kBig };
+
+	/* ---------- 0. The race start: five lights on, one by one; all out as the dragon breathes ---------- */
+	el.querySelectorAll("[data-frc-lights] i").forEach((lamp, k) => {
+		const on = 0.16 + k * 0.24;
+		seq(lamp, [
+			[on, { opacity: 0 }, E.out],
+			[on + 0.05, { opacity: 1 }],
+			[FIRE_START - 0.02, { opacity: 1 }],
+			[FIRE_START + 0.02, { opacity: 0 }],
+		]);
+	});
+	fade(q("[data-frc-lights]"), 3.92, 4.2, 1, 0, E.out);
+	seq(q("[data-frc-lights-line]"), [
+		[0.2, { opacity: 0 }, E.out],
+		[0.6, { opacity: 1 }],
+		[3.9, { opacity: 1 }, E.out],
+		[4.2, { opacity: 0 }],
+	]);
 
 	/* ---------- 1. The FIRST mark builds (0.0–1.6 s) ---------- */
 	// Each shape layer covers the FIRST logo's box; percentages are of that box. "Rest" is where the shape lands
