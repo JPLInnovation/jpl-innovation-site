@@ -220,11 +220,19 @@ def shots(browser, base):
             page.wait_for_timeout(600)
             page.screenshot(path=os.path.join(out, f"{width}-{theme}-9-page.png"))
             context.close()
-    # The reduced-motion still.
+    # The reduced-motion still, and the question on the opening page (a first visit with no experience saved).
     context, page, errors = first_visit(browser, base, reduced_motion="reduce")
     page.wait_for_timeout(500)
     page.screenshot(path=os.path.join(out, "1440-dark-still.png"))
     context.close()
+    for theme in ("dark", "light"):
+        context, page, errors = first_visit(browser, base, theme=theme, experience="")
+        page.wait_for_function(PROMPT_UP, timeout=6000)
+        page.keyboard.press("Enter")
+        page.wait_for_selector(".splash-overlay[data-asking]", timeout=8000)
+        page.wait_for_timeout(600)
+        page.screenshot(path=os.path.join(out, f"1440-{theme}-asking.png"))
+        context.close()
     print(f"screenshots in {out}")
 
 

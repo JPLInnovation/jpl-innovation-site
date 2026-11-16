@@ -90,11 +90,6 @@ const still = [1, 2, 0];
 			))}
 
 			<div class="pf-arm" data-pf-arm>
-				<span class="pf-trim pf-trim--tl" data-pf-in />
-				<span class="pf-trim pf-trim--tr" data-pf-in />
-				<span class="pf-trim pf-trim--bl" data-pf-in />
-				<span class="pf-trim pf-trim--br" data-pf-in />
-
 				<div class="pf-log" data-pf-in>
 					<p class="pf-title">
 						<strong>{text.title}</strong> <span>{text.drone}</span>
@@ -265,33 +260,6 @@ const still = [1, 2, 0];
 		column-gap: 2rem;
 		padding: clamp(28px, 4.2vw, 64px);
 	}
-	.pf-trim {
-		position: absolute;
-		width: 18px;
-		height: 18px;
-		border: 0 solid color-mix(in oklch, var(--pf-ink) 45%, transparent);
-	}
-	.pf-trim--tl {
-		top: 14px;
-		left: 14px;
-		border-width: 1px 0 0 1px;
-	}
-	.pf-trim--tr {
-		top: 14px;
-		right: 14px;
-		border-width: 1px 1px 0 0;
-	}
-	.pf-trim--bl {
-		bottom: 14px;
-		left: 14px;
-		border-width: 0 0 1px 1px;
-	}
-	.pf-trim--br {
-		bottom: 14px;
-		right: 14px;
-		border-width: 0 1px 1px 0;
-	}
-
 	.pf-log {
 		grid-area: log;
 		font-size: 15px;
@@ -424,6 +392,7 @@ const still = [1, 2, 0];
 		display: block;
 		height: 1em;
 		overflow: hidden;
+		/* taste-skill-ignore: a mask, not a fill (the drums' rolling edges fade, the owner's masked-edges rule) */
 		-webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
 		mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
 	}

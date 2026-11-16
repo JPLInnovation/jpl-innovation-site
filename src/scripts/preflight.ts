@@ -102,7 +102,18 @@ export function preflight(ctx: SplashContext) {
 	// Behind the doors, the opening page: the verbs settle as the doors part, the logo comes up, the sticker lands.
 	tween($("[data-intro-verbs]"), [{ transform: "scale(1.07)" }, { transform: "scale(1)" }], t0 + AFTER.doors, 1, E.out);
 	appear($("[data-intro-logo]"), t0 + AFTER.logo, 0.4);
-	tween($("[data-pf-sticker]"), [{ transform: "scale(0) rotate(-140deg)" }, { transform: "scale(1) rotate(0deg)" }], t0 + AFTER.sticker, 0.6, E.outBackSoft);
+	// The sticker is slapped on: from above the page (larger), turning, pressed flat.
+	tween(
+		$("[data-pf-sticker]"),
+		[
+			{ transform: "scale(1.7) rotate(-50deg)", opacity: 0 },
+			{ transform: "scale(0.96) rotate(4deg)", opacity: 1, offset: 0.7 },
+			{ transform: "scale(1) rotate(0deg)", opacity: 1 },
+		],
+		t0 + AFTER.sticker,
+		0.45,
+		E.out,
+	);
 
 	return {
 		/** When the opening page is complete (timeline seconds, the prompt's wait not counted). */
