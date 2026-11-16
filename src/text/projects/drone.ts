@@ -81,9 +81,11 @@ export const dronePage = {
 
 /**
  * The drone chapter: the top of the page as numbered beats (src/components/DroneChapter.astro). In 3D they play on one
- * pinned stage that the scroll moves the camera through, with the chapter map at the side; in Classic (phones, reduced
- * motion, no WebGL, Classic chosen, a GPU too slow or lost) the same words are one ordinary page, in the same order.
- * Beats 5 to 9 come later. Only what the page already says: no new facts.
+ * pinned stage that the scroll moves the camera through, with the chapter map at the side: the F450 on its pad at dusk,
+ * then a SIMULATED flight of its real CAD over a made-up place (the studio's simulated flight, the same world), then
+ * its parts close up. In Classic (phones, reduced motion, no WebGL, Classic chosen, a GPU too slow or lost) the same
+ * words are one ordinary page, in the same order, with a still of the flight. Only what the page already says: no new
+ * facts (the telemetry in the flight is the simulation's own, and the HUD says so).
  */
 export const droneChapter = {
 	/** Read aloud by screen readers for the dots at the side. */
@@ -96,7 +98,8 @@ export const droneChapter = {
 		prologue: { number: '01', title: 'Prologue' },
 		stakes: { number: '02', title: 'The stakes' },
 		reveal: { number: '03', title: 'The reveal' },
-		anatomy: { number: '04', title: 'Anatomy' },
+		flight: { number: '04', title: 'The flight' },
+		anatomy: { number: '05', title: 'Anatomy' },
 	},
 	/** The status strip at the top: the drone's real state, the city and its live local time. */
 	hud: {
@@ -129,6 +132,28 @@ export const droneChapter = {
 	reveal: {
 		/** Above the drone's name: "Meet the / F450 4G Drone". */
 		kicker: 'Meet the',
+	},
+	/** Beat 4: the simulated flight. The drone hasn't flown: every word here has to keep saying so. */
+	flight: {
+		heading: 'The flight we’re building toward',
+		body: 'This is a simulation: the F450’s real CAD, flown over a made-up place of fields and ridges at dusk. The real drone hasn’t flown yet. Its first hover comes after the printed mounts.',
+		/** On screen through the whole 3D chapter (the place is made up from the first frame), and under the still in Classic. */
+		caption: 'Simulation of our real CAD · not flown yet',
+		/** Read aloud by screen readers for the still of the flight (Classic). */
+		still: 'A frame of the simulated flight: the 3D model of the F450 over farm fields at dusk, with ridges far off. A simulation, not a photograph: the drone has not flown.',
+	},
+	/** The flight's HUD in 3D: live, but simulated (src/lib/three/models/drone-chapter.ts works the numbers out). */
+	telemetry: {
+		/** Read aloud before the HUD's numbers. */
+		label: 'Simulated telemetry',
+		altitude: 'Altitude',
+		heading: 'Heading',
+		speed: 'Speed',
+		signal: '4G',
+		video: 'Video',
+		/** The units after the numbers. */
+		metres: 'm',
+		metresPerSecond: 'm/s',
 	},
 	anatomy: {
 		value: '450 mm',
