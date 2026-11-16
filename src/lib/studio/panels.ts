@@ -3,9 +3,9 @@
  * the site, drawn into a canvas texture at 2048 x 1440. Shared by the home studio's project wall (stations.ts, where
  * the panel itself has cut corners: `cutCorners`) and the Work page's wall (src/lib/three/models/work-wall.ts).
  *
- * The look: the picture sits inset in a navy frame, its top-right and bottom-left corners cut like the panel's; a
- * cyan line of light runs under it; the title in the site's wide display type; the status as a chip; the page's
- * address in mono, as on a gallery label.
+ * The look (the site's palette): the picture sits inset in a navy frame, its top-right and bottom-left corners cut like
+ * the panel's; a flat yellow rule under it; the title in the site's wide display type; the status after a short yellow
+ * rule, as on the Work register; the page's address small on the right, like a gallery label. No chips, no mono.
  */
 import { BufferAttribute, Shape, ShapeGeometry } from "three";
 import { canvasSurface, loadImage } from "./room";
@@ -21,7 +21,6 @@ export interface PanelProject {
 }
 
 export const PANEL_FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
-export const PANEL_MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
 /** The panel's cut corners, as a share of its width (the poster's picture follows the same cut). */
 export const CUT = 0.075;
@@ -81,13 +80,8 @@ export function projectFace(project: PanelProject) {
 	let img: HTMLImageElement | undefined;
 	const draw = () => {
 		const { g } = face;
-		// The frame: deep navy, a faint sheen from the top left.
-		g.fillStyle = "#0a1124";
-		g.fillRect(0, 0, W, H);
-		const sheen = g.createLinearGradient(0, 0, W, H);
-		sheen.addColorStop(0, "rgba(103,232,249,0.08)");
-		sheen.addColorStop(0.45, "rgba(103,232,249,0)");
-		g.fillStyle = sheen;
+		// The frame: the brand's deep navy.
+		g.fillStyle = "#071038";
 		g.fillRect(0, 0, W, H);
 
 		// The picture, inset, its corners cut like the panel's (the panel's own cut is CUT of its width).
@@ -100,32 +94,27 @@ export function projectFace(project: PanelProject) {
 		g.clip();
 		if (img) cover(g, img, m, m, pw, ph);
 		else {
-			g.fillStyle = "#16224a";
+			g.fillStyle = "#13235f";
 			g.fillRect(m, m, pw, ph);
 		}
 		const fade = g.createLinearGradient(0, m + ph * 0.62, 0, m + ph);
-		fade.addColorStop(0, "rgba(10,17,36,0)");
-		fade.addColorStop(1, "rgba(10,17,36,0.55)");
+		fade.addColorStop(0, "rgba(7,16,56,0)");
+		fade.addColorStop(1, "rgba(7,16,56,0.55)");
 		g.fillStyle = fade;
 		g.fillRect(m, m, pw, ph);
 		g.restore();
 		// A hairline round the picture.
-		g.strokeStyle = "rgba(255,255,255,0.14)";
+		g.strokeStyle = "rgba(242,238,223,0.14)";
 		g.lineWidth = 3;
 		cutPath(g, m, m, pw, ph, c);
 		g.stroke();
-		// The line of light under it.
-		const line = g.createLinearGradient(m, 0, m + pw, 0);
-		line.addColorStop(0, "rgba(34,211,238,0)");
-		line.addColorStop(0.18, "rgba(34,211,238,0.95)");
-		line.addColorStop(0.82, "rgba(34,211,238,0.95)");
-		line.addColorStop(1, "rgba(34,211,238,0)");
-		g.fillStyle = line;
+		// A flat yellow rule under it.
+		g.fillStyle = "#f5d042";
 		g.fillRect(m, m + ph + 26, pw, 5);
 
 		// The title, in the site's wide display type.
 		g.textBaseline = "alphabetic";
-		g.fillStyle = "#f3f6fc";
+		g.fillStyle = "#f2eedf";
 		let size = 132;
 		g.font = `900 expanded ${size}px ${PANEL_FONT}`;
 		while (g.measureText(project.title).width > pw - 40 && size > 80) {
@@ -134,28 +123,18 @@ export function projectFace(project: PanelProject) {
 		}
 		g.fillText(project.title, m + 8, m + ph + 196);
 
-		// The status chip, and the page's address on the right, like a gallery label.
+		// The status after a short yellow rule (as on the Work register), and the page's address on the right.
 		const row = m + ph + 318;
 		if (project.badge) {
-			g.font = `600 60px ${PANEL_MONO}`;
-			const tw = g.measureText(project.badge).width;
-			g.fillStyle = "rgba(34,211,238,0.16)";
-			g.beginPath();
-			g.roundRect(m + 8, row - 68, tw + 116, 96, 48);
-			g.fill();
-			g.strokeStyle = "rgba(34,211,238,0.55)";
-			g.lineWidth = 3;
-			g.stroke();
 			g.fillStyle = "#f5d042";
-			g.beginPath();
-			g.arc(m + 56, row - 20, 13, 0, Math.PI * 2);
-			g.fill();
-			g.fillStyle = "#e6f6ff";
-			g.fillText(project.badge, m + 88, row);
+			g.fillRect(m + 8, row - 28, 56, 7);
+			g.font = `600 62px ${PANEL_FONT}`;
+			g.fillStyle = "#f2eedf";
+			g.fillText(project.badge, m + 92, row);
 		}
 		if (project.href) {
-			g.font = `500 50px ${PANEL_MONO}`;
-			g.fillStyle = "rgba(197,206,224,0.7)";
+			g.font = `500 50px ${PANEL_FONT}`;
+			g.fillStyle = "rgba(188,193,214,0.75)";
 			g.textAlign = "right";
 			g.fillText(project.href, W - m - 8, row);
 			g.textAlign = "start";

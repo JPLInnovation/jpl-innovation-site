@@ -12,7 +12,7 @@
 | **Blue "Let's work together" box** (bottom of every page) | `site.ts` → `contact` |
 | **Contact email address** (everywhere) | `site.ts` → `email` |
 | **"Email us" pop-up** | `site.ts` → `emailPopup` |
-| **"Page not found" page** ("Signal lost") | `site.ts` → `notFound` |
+| **"Page not found" page** ("This sheet isn't in the set") | `site.ts` → `notFound` |
 | **Home page** is a 3D studio: the first scene's words | `home.ts` → `hero` |
 | Home: the studio's own words (screen reader description, ruler names, hints) | `studio.ts` |
 | The **first-visit question** (3D or Classic) | `site.ts` → `experience` |

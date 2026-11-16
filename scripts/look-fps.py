@@ -30,7 +30,7 @@ try:
             for theme in ("dark", "light"):
                 for path in paths:
                     pg = b.new_page(viewport={"width": w, "height": h})
-                    pg.add_init_script(f"try{{localStorage.setItem('experience','classic');localStorage.setItem('theme','{theme}')}}catch(e){{}}")
+                    pg.add_init_script(f"try{{localStorage.setItem('experience','classic');localStorage.setItem('theme','{theme}');['jpl','frc','drone'].forEach(k=>sessionStorage.setItem(k+'-intro-seen','1'))}}catch(e){{}}")
                     pg.goto(f"http://localhost:{PORT}/" + path, wait_until="load")
                     pg.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000); pg.wait_for_timeout(1500)
                     t = pg.evaluate(MEASURE); late = t[len(t)//3:]

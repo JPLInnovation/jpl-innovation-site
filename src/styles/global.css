@@ -81,7 +81,7 @@
 	/* Categorical chart hues, fixed order. Validated (dataviz validate_palette.js) on #ffffff. */
 	--chart-1: #1f5fd1;
 	--chart-2: #b87a00;
-	--chart-3: #7a4bd0;
+	--chart-3: #23856a; /* green: "allowed" traffic in the network legend; was violet */
 	--chart-4: #c8283a;
 
 	/* Type: five steps, no more (the spec). Display is Archivo's extra-wide cut. */
@@ -147,7 +147,7 @@
 	/* Dark steps of the same hues, validated on #122031. */
 	--chart-1: #4f84e6;
 	--chart-2: #bf8500;
-	--chart-3: #9474e4;
+	--chart-3: #4cc39a;
 	--chart-4: #e24a5b;
 
 	color-scheme: dark;

@@ -255,7 +255,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	});
 	rack.add(ledMesh);
 	// Patch cables between the patch panel and the switches, in the site's chart colours.
-	const cableColors = [0x1f5fd1, 0xb87a00, 0x7a4bd0, 0xc8283a, 0x1f5fd1, 0x34d399];
+	const cableColors = [0x1f5fd1, 0xb87a00, 0x8fb8f5, 0xc8283a, 0x1f5fd1, 0x34d399];
 	for (let c = 0; c < 10; c++) {
 		const from = rackX - 0.2 + c * 0.044;
 		const to = rackX - 0.21 + ((c * 7) % 10) * 0.046;

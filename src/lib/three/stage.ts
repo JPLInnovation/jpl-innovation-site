@@ -88,7 +88,7 @@ export function readPalette(): Palette {
 		chart: [
 			color("--chart-1", "#1f5fd1"),
 			color("--chart-2", "#b87a00"),
-			color("--chart-3", "#7a4bd0"),
+			color("--chart-3", "#23856a"),
 			color("--chart-4", "#c8283a"),
 		],
 	};

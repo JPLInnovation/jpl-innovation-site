@@ -219,7 +219,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		margin-right: 0.5em;
 		border-radius: 50%;
 		background: #f5d042;
-		box-shadow: 0 0 8px rgb(245 208 66 / 0.8);
 		vertical-align: 0.02em;
 	}
 	.ds-bars {
@@ -310,7 +309,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		height: 3px;
 		margin: -1.5px 0 0 -50vw;
 		background: linear-gradient(90deg, transparent, #fff1c2 18%, #fff 50%, #fff1c2 82%, transparent);
-		box-shadow: 0 0 12px 2px rgb(245 208 66 / 0.6);
 	}
 	.ds-crt-dot {
 		width: 14px;
@@ -318,7 +316,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		margin: -7px 0 0 -7px;
 		border-radius: 50%;
 		background: radial-gradient(circle, #fff 0 30%, #ffe58a 55%, transparent 72%);
-		box-shadow: 0 0 22px 8px rgb(245 208 66 / 0.7);
 	}
 	.ds-ripple {
 		width: var(--ds-ring, 40vmin);
@@ -326,7 +323,6 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		margin: calc(var(--ds-ring, 40vmin) / -2) 0 0 calc(var(--ds-ring, 40vmin) / -2);
 		border: 2px solid #f5d042;
 		border-radius: 50%;
-		box-shadow: 0 0 18px rgb(245 208 66 / 0.8), inset 0 0 18px rgb(245 208 66 / 0.5);
 	}
 
 	/* ---------- 4. The logo ---------- */
@@ -379,12 +375,11 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 	}
 	.ds-badge {
 		transform-origin: 0 0;
-		filter: drop-shadow(0 0 0.8vmin rgb(245 208 66 / 0.85)) drop-shadow(0 0 3vmin rgb(245 208 66 / 0.4));
 		will-change: transform, opacity;
 	}
 	.ds-glow {
 		border-radius: 50%;
-		background: radial-gradient(closest-side, rgb(245 208 66 / 0.34), rgb(245 208 66 / 0.1) 62%, transparent);
+		background: none; /* no halo behind the badge (the owner's unslop list: no glowing shadows) */
 		scale: 1.55;
 	}
 	.ds-ring,

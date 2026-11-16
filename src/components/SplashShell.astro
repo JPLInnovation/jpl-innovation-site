@@ -50,7 +50,7 @@ const boot = `(() => {
 		window.__splashNav = true;
 		// The moment of the click: until the next page has arrived there is nothing of its intro to show, so a plain
 		// cover in the intro's own background goes up at once, and the intro takes over from it without a seam.
-		const COVER = { frc: "radial-gradient(120% 90% at 50% 42%, #0f2150 0%, #081333 45%, #050a1f 80%)", drone: "#000" };
+		const COVER = { frc: "#070b12", drone: "#000" }; // the FRC edition's near-black, so arriving shows no navy flash
 		let cover;
 		const uncover = () => {
 			cover?.remove();
