@@ -31,6 +31,10 @@ const { text, as: Tag = "h2", class: className, id } = Astro.props;
 	.decode__word {
 		white-space: nowrap;
 	}
+	/* Until it decodes (motion on, script running) the line waits unseen, so it never shows words, then noise, then words. */
+	html.motion:not(.reduce-motion) [data-decode]:not([data-decoded]) {
+		opacity: 0;
+	}
 	/* the noise is set in ink; the living colour flows back in when the words settle */
 	.decode[data-decoding] {
 		background-image: none !important;
@@ -40,6 +44,7 @@ const { text, as: Tag = "h2", class: className, id } = Astro.props;
 
 <script>
 	import { decodeFrame } from "@/lib/look/decode";
+	import { afterIntro } from "@/lib/splash";
 
 	const DURATION = 820; // ms, the whole decode
 	const STEP = 45; // ms between noise changes (any faster and it reads as flicker, not letters)
@@ -47,7 +52,6 @@ const { text, as: Tag = "h2", class: className, id } = Astro.props;
 
 	function play(el: HTMLElement) {
 		const text = el.textContent ?? "";
-		el.dataset.decoded = "";
 		// the words for assistive tech, the noise for the eye
 		const said = document.createElement("span");
 		said.className = "sr-only";
@@ -75,18 +79,23 @@ const { text, as: Tag = "h2", class: className, id } = Astro.props;
 		chars.forEach((c, i) => (c.style.width = `${widths[i]}px`));
 		el.setAttribute("data-decoding", "");
 		const letters = [...text].filter((ch) => !/\s/.test(ch));
+		const paint = (t: number) => {
+			const shown = [...decodeFrame(letters.join(""), t)];
+			chars.forEach((c, i) => {
+				if (c.textContent !== shown[i]) c.textContent = shown[i];
+			});
+		};
+		paint(0); // noise from the first painted frame
+		el.dataset.decoded = "";
 		const start = performance.now();
-		let lastStep = -1;
+		let lastStep = 0;
 		const frame = (now: number) => {
 			if (!el.isConnected) return;
 			const elapsed = now - start;
 			const step = Math.floor(elapsed / STEP);
 			if (step !== lastStep) {
 				lastStep = step;
-				const shown = [...decodeFrame(letters.join(""), Math.min(1, elapsed / DURATION))];
-				chars.forEach((c, i) => {
-					if (c.textContent !== shown[i]) c.textContent = shown[i];
-				});
+				paint(Math.min(1, elapsed / DURATION));
 			}
 			if (elapsed < DURATION) return void requestAnimationFrame(frame);
 			el.textContent = text;
@@ -95,11 +104,12 @@ const { text, as: Tag = "h2", class: className, id } = Astro.props;
 		requestAnimationFrame(frame);
 	}
 
-	function init() {
+	async function init() {
 		observers.forEach((o) => o.disconnect());
 		observers = [];
 		const root = document.documentElement;
 		if (matchMedia("(prefers-reduced-motion: reduce)").matches || root.classList.contains("reduce-motion")) return;
+		await afterIntro(); // a headline already in view decodes when the logo intro has handed over, not under it
 		for (const el of document.querySelectorAll<HTMLElement>("[data-decode]:not([data-decoded])")) {
 			const io = new IntersectionObserver(
 				([entry]) => {

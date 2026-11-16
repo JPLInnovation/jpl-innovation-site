@@ -147,8 +147,49 @@ def check_kit(browser, base):
             page.close()
 
 
+def check_wall(browser, base):
+    """The Work page's 3D mode: the wall still comes up, its card follows the panel in front, the ruler moves it."""
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    errors = []
+    page.on("pageerror", lambda e: errors.append(str(e)))
+    page.add_init_script(cl.INIT % {"theme": "dark", "extra": "localStorage.setItem('experience', '3d');"})
+    page.goto(base + "/work/", wait_until="load")
+    page.wait_for_function("!document.documentElement.classList.contains('splash')", timeout=15000)
+    try:
+        page.wait_for_function("document.querySelector('[data-wall][data-live]')", timeout=20000)
+        live = True
+    except Exception:
+        live = False
+    card = page.evaluate("document.querySelector('[data-wall-card][data-active] .wall-card-title')?.textContent.trim()")
+    cl.report(live and card == TITLES[0], f"3D /work/: the wall is live, the card shows the first project ({live}, {card!r})")
+    page.click("[data-wall-goto='2']")
+    page.wait_for_timeout(2500)
+    name = page.inner_text("[data-wall-name]")
+    card = page.evaluate("document.querySelector('[data-wall-card][data-active] .wall-card-title')?.textContent.trim()")
+    cl.report(name == TITLES[2] and card == TITLES[2], f"3D /work/: the ruler moves the wall to {name!r}, the card follows ({card!r})")
+    cl.report(not errors, f"3D /work/: no script errors ({errors[:2]})")
+    os.makedirs(SHOTS, exist_ok=True)
+    page.screenshot(path=os.path.join(SHOTS, "wall-3d-dark-1440.png"))
+    page.close()
+
+
+def kit_shots(browser, base):
+    """The other project pages with the restyled kit: their case and their next chapter."""
+    os.makedirs(SHOTS, exist_ok=True)
+    for name in ("drone", "lifetime", "frc", "mini-drone"):
+        for theme in ("dark", "light"):
+            page = open_page(browser, base, f"/work/{name}/", theme)
+            for part in (".case", ".case__answer", ".next"):
+                page.evaluate(f"document.querySelector('{part}').scrollIntoView({{ block: 'start' }})")
+                page.mouse.move(700, 450)
+                page.wait_for_timeout(1400)
+                page.screenshot(path=os.path.join(SHOTS, f"kit-{name}-{theme}-{part.strip('.').replace('__', '-')}.png"))
+            page.close()
+
+
 def shots(browser, base):
     os.makedirs(SHOTS, exist_ok=True)
+    kit_shots(browser, base)
     for path, slug in (("/work/", "work"), ("/work/cybersecurity/", "cyber")):
         for theme in ("dark", "light"):
             for width, height in ((1440, 900), (768, 1024), (390, 844)):
@@ -182,6 +223,7 @@ def main():
                 check_register(browser, base)
                 check_cyber(browser, base)
                 check_kit(browser, base)
+                check_wall(browser, base)
             if args.shots or args.only_shots:
                 shots(browser, base)
             browser.close()
