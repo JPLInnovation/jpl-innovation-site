@@ -1028,6 +1028,10 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio:not([data-read]) .studio-panels > [data-scene][data-wide] {
 		width: min(42rem, calc(100vw - 2rem));
 	}
+	/* data-narrow: a third of the window at most, so a scene's subject (the wall of projects) has the same room at every width. */
+	.studio:not([data-read]) .studio-panels > [data-scene][data-narrow] {
+		width: min(30rem, 33vw, calc(100vw - 2rem));
+	}
 	.studio-years {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));

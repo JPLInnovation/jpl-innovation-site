@@ -112,9 +112,12 @@ const counts = [
 		border: 0;
 		padding: 0;
 	}
+	/* A figure never breaks (9.311.000 ₫ stays whole). */
+	.proof-counts dd {
+		white-space: nowrap;
+	}
 	.proof-line dd {
 		font-size: var(--step-body);
-		white-space: nowrap;
 	}
 	.proof-line dt {
 		font-size: var(--step-body);

@@ -457,7 +457,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* The wall: one panel per project, three above and two below, on an arc */
 	/* ================================================================== */
 	// The arc's centre is where the camera stands for this scene (scenes.ts), so every panel is the same distance away.
-	const arc = { x: 3.6, z: 1.0, r: 3.9, step: 0.196, y: 1.45, row: 0.62, scale: 0.58 };
+	const arc = { x: 3.6, z: 1.0, r: 3.9, step: 0.231, y: 1.45, row: 0.73, scale: 0.685 };
 	const wallBack = new Mesh(
 		new CylinderGeometry(arc.r + 0.2, arc.r + 0.2, 2.6, 48, 1, true, Math.PI / 2 - 0.6, 1.2),
 		new MeshStandardMaterial({ color: 0x0e1834, roughness: 0.9, side: DoubleSide }),
