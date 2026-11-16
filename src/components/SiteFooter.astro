@@ -201,6 +201,13 @@ const lines = personality.filter((l) => l.approved).map((l) => l.text);
 		margin-left: auto;
 		text-align: right;
 	}
+	/* phones and tablets: the logo and the year on one line, what JPL is under them */
+	@media (max-width: 48rem) {
+		.back__blurb {
+			order: 3;
+			flex-basis: 100%;
+		}
+	}
 	.back__voice {
 		font-weight: 600;
 		color: var(--ink);
