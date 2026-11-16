@@ -4,9 +4,7 @@ About and the 404, in real Chrome (the about worker's checks).
     npm run build
     python scripts/check-about.py [--port 4407]
 
-About: one h1; "Play the story" opens the film full screen and pauses the field; its subtitles write themselves
-(whole at once under reduced motion); Skip and Escape close it and focus returns to the button; at its end the
-edition choice drives Settings' Glass/Solid switch. The 404 (dist/404.html through the preview): the missing sheet,
+About: one h1, and no story film (the owner had it removed). The 404 (dist/404.html through the preview): the missing sheet,
 the address in its title block, the register. Both themes; no sideways scroll at 1440, 768 and 390.
 """
 import argparse, importlib.util, os, subprocess, sys
@@ -20,8 +18,6 @@ spec.loader.exec_module(cl)
 ap = argparse.ArgumentParser()
 ap.add_argument("--port", type=int, default=4407)
 args = ap.parse_args()
-OPEN = "document.querySelector('[data-film]').open"
-FOCUS_ON_PLATE = "document.activeElement && document.activeElement.matches('[data-film-open]')"
 
 
 def page_at(browser, base, path, theme, width=1440, height=900, **kw):
@@ -33,51 +29,10 @@ def page_at(browser, base, path, theme, width=1440, height=900, **kw):
     return page
 
 
-def check_film(browser, base, theme):
+def check_page(browser, base, theme):
     page = page_at(browser, base, "/about/", theme)
     cl.report(page.evaluate("document.querySelectorAll('h1').length") == 1, f"{theme} /about/: one h1")
-    page.click("[data-film-open]")
-    page.wait_for_timeout(400)
-    box = page.evaluate("(() => { const r = document.querySelector('[data-film]').getBoundingClientRect(); return [r.width, r.height, innerWidth, innerHeight]; })()")
-    cl.report(page.evaluate(OPEN) and box[0] == box[2] and box[1] == box[3], f"{theme}: Play the story opens the film over the whole screen ({box})")
-    page.wait_for_timeout(600)
-    cl.report(page.evaluate("window.__field ? window.__field.paused : true"), f"{theme}: the field behind is paused while it plays")
-    page.wait_for_timeout(2600)
-    typed = page.evaluate("[document.querySelector('[data-typed]').textContent, document.querySelector('[data-ghost]').textContent]")
-    cl.report(len(typed[0]) > 0, f"{theme}: a subtitle is writing itself ({typed[0]!r} + {len(typed[1])} to come)")
-    page.keyboard.press("Escape")
-    page.wait_for_timeout(300)
-    cl.report(not page.evaluate(OPEN) and page.evaluate(FOCUS_ON_PLATE), f"{theme}: Escape closes it and focus returns to the button")
-    page.click("[data-film-open]")
-    page.wait_for_timeout(1200)
-    page.click("[data-film-skip]")
-    page.wait_for_timeout(300)
-    cl.report(not page.evaluate(OPEN) and page.evaluate(FOCUS_ON_PLATE), f"{theme}: Skip closes it and focus returns to the button")
-    # the end: jump to the last chapter, let it run out
-    page.click("[data-film-open]")
-    page.wait_for_timeout(900)
-    page.click("[data-film-chapter='4']")
-    page.wait_for_function("!document.querySelector('[data-film-end]').hidden", timeout=20000)
-    cl.report(page.evaluate("document.activeElement && document.activeElement.id === 'film-end-heading'"), f"{theme}: at its end the edition choice shows and takes focus")
-    page.click("[data-edition='solid']")
-    page.wait_for_timeout(200)
-    solid = page.evaluate("[document.documentElement.classList.contains('solid'), localStorage.getItem('surface'), document.querySelector('[data-edition=solid]').getAttribute('aria-pressed')]")
-    cl.report(solid == [True, "solid", "true"], f"{theme}: Solid there is Settings' Solid (html.solid, stored, pressed: {solid})")
-    page.click("[data-edition='glass']")
-    page.wait_for_timeout(200)
-    cl.report(not page.evaluate("document.documentElement.classList.contains('solid')"), f"{theme}: and Glass switches back")
-    page.click("[data-film-close]")
-    page.wait_for_timeout(300)
-    cl.report(not page.evaluate(OPEN) and page.evaluate(FOCUS_ON_PLATE), f"{theme}: Back to the page closes it, focus on the button")
-    page.close()
-
-
-def check_reduced(browser, base):
-    page = page_at(browser, base, "/about/", "dark", reduced_motion="reduce")
-    page.click("[data-film-open]")
-    page.wait_for_timeout(2300)  # past the first chapter's name
-    typed = page.evaluate("[document.querySelector('[data-typed]').textContent, document.querySelector('[data-ghost]').textContent]")
-    cl.report(len(typed[0]) > 0 and typed[1] == "", f"reduced motion: a subtitle appears whole ({typed})")
+    cl.report(page.evaluate("!document.querySelector('[data-film], [data-film-open]')"), f"{theme} /about/: no story film (removed 16 Nov 2026)")
     page.close()
 
 
@@ -107,9 +62,8 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=False)
             for theme in ("dark", "light"):
-                check_film(browser, base, theme)
+                check_page(browser, base, theme)
                 check_404(browser, base, theme)
-            check_reduced(browser, base)
             check_widths(browser, base)
             browser.close()
     finally:

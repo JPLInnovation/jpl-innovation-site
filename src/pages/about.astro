@@ -1,13 +1,12 @@
 ---
 /**
- * About: the founders' letter (the spec's section 7). The sheet's title in living colour with its title block and the
- * film ("Play the story", src/components/about/StoryFilm.astro); the letter itself on the page's one big glass sheet,
+ * About: the founders' letter (the spec's section 7). The sheet's title in living colour with its title block; the
+ * letter itself on the page's one big glass sheet,
  * signed, with a strip at its foot you could tear off, carrying the email; what we work on, as the set's register;
  * the team; what we believe, set large. Words: src/text/about.ts (the team: src/text/members/*.md; the contact box and
  * the email address: src/text/site.ts).
  */
 import { ArrowRight, Scissors } from "lucide-react";
-import StoryFilm from "@/components/about/StoryFilm.astro";
 import EmailButton from "@/components/EmailButton.astro";
 import Leadership from "@/components/Leadership.astro";
 import Logo from "@/components/Logo.astro";
@@ -24,7 +23,7 @@ const last = story.paragraphs.length - 1;
 ---
 
 <BaseLayout title={aboutPage.seoTitle} description={aboutPage.seoDescription}>
-	<!-- The sheet's title, its title block, and the film. -->
+	<!-- The sheet's title and its title block. -->
 	<section class="hero wrapper" aria-labelledby="about-title">
 		<h1 id="about-title" class="hero__title living" data-reveal>{aboutPage.title}</h1>
 		<div class="hero__grid">
@@ -32,11 +31,10 @@ const last = story.paragraphs.length - 1;
 				<p class="hero__lede">{aboutPage.lede}</p>
 				<TitleBlock rows={titleBlock.rows} label={titleBlock.label} />
 			</div>
-			<StoryFilm />
 		</div>
 	</section>
 
-	<!-- The letter: the page's one big glass sheet. The same story the film tells. -->
+	<!-- The letter: the page's one big glass sheet. -->
 	<section class="wrapper letter-wrap" aria-labelledby="story-heading">
 		<article class="letter sheet lens">
 			<div class="letter__head">
@@ -187,23 +185,19 @@ const last = story.paragraphs.length - 1;
 	.hero__text :global(.title-block) {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
-	/* Narrower screens: the film comes straight under the title, so it is on the first screen. */
-	@media (max-width: 1023px) {
-		.hero__grid :global(.plate) {
-			order: -1;
-		}
-	}
 	.hero__lede {
 		max-width: 46ch;
 		font-size: var(--step-lead);
 		line-height: 1.4;
 		text-wrap: pretty;
 	}
+	/* Wide screens: the lede on the left, the title block on the right, under the title. */
 	@media (min-width: 1024px) {
-		.hero__grid {
-			grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-			gap: clamp(2rem, 4vw, 4rem);
-			align-items: start;
+		.hero__text {
+			display: grid;
+			grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+			gap: clamp(2rem, 5vw, 5rem);
+			align-items: end;
 		}
 	}
 
