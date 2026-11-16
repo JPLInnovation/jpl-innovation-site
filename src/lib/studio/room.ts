@@ -51,7 +51,7 @@ import { createLightPool, type LightSpec } from "./lights";
 import { BLANK, buildDeskSheets, type SheetPlace } from "./desk-sheets";
 import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { type PageScreen, pageScreen } from "./screens";
-import { buildStations } from "./stations";
+import { buildStations, type Stations } from "./stations";
 import { buildBench, type BuildBench } from "./build-bench";
 
 export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
@@ -282,6 +282,8 @@ export interface Room {
 	stationDrone(): DroneRig | undefined;
 	/** The build bench (build-bench.ts): the opening hook's drone stands on it, and says so with `occupied`. */
 	bench: BuildBench;
+	/** What the camera can fly into (devices.ts). */
+	parts: { monitor: PageScreen; robot: Stations["robot"]; rack: Stations["rack"]; laptop: Group; drone: Stations["bench"] };
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -533,7 +535,8 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		logo,
 		stationDrone: stations.drone,
 		bench,
-		busy: () => busy || bench.busy(),
+		parts: { monitor, robot: stations.robot, rack: stations.rack, laptop: stations.laptop, drone: stations.bench },
+		busy: () => busy || bench.busy() || stations.bench.busy(),
 		finishSketch() {
 			sketchDone = true;
 		},

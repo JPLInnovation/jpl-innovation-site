@@ -14,18 +14,24 @@
  * Nothing per frame goes through React or layout: the page's position is read from scrollY against offsets measured
  * on resize.
  */
-import { Box3, CatmullRomCurve3, type Mesh, Raycaster, Vector2, Vector3 } from "three";
+import { Box3, CatmullRomCurve3, type Mesh, Quaternion, Raycaster, Vector2, Vector3 } from "three";
 import type { Model, StageContext } from "../three/stage";
 import { createHookScene } from "./hook-scene";
 import { HOOK_3D } from "./hook-state";
 import { buildRoom, type RoomContent, type RoomState } from "./room";
 import type { SceneShot } from "./scenes";
 import { createSim } from "./sim-flight";
+import { createDevices, type Device, type DeviceId } from "./devices";
+import { PAD } from "../three/flight-world";
+import { type Sample, type Telemetry, telemetry } from "../look/telemetry";
 
 const FOLLOW = 10; // per second: the spring the camera follows the scroll through (critically damped)
 const SOFT = 0.7; // how much of each move is eased (0 = in step with the scroll, 1 = smoothstep, flat at both ends)
 const LEAVE_TIME = 0.45; // seconds for the push-in toward the project wall when a panel is clicked
 const LEAVE_PUSH = 1.3; // metres the camera moves forward in it
+const ENTER_TIME = 1.1; // seconds for the camera to fly into a device (and back out)
+const FLIGHT_TIME = 26; // seconds of the simulated flight, played on its own clock on the laptop's ground station
+const TURN_SPEED = 0.35; // radians a second the robot turns while you look at it
 const LAMP_TIME = 1.6; // seconds for the desk lamp to come on
 const OPEN_TIME = 3.6; // seconds of the opening shot: the camera starts back from the desk and slowly pushes in
 const OPEN_BACK = 0.9; // metres it starts back
@@ -62,6 +68,19 @@ export interface StudioHandle {
 	release(): void;
 	/** Where the logo on the wall is on the screen (CSS pixels), or null if it isn't in view. */
 	logoRect(): DOMRect | null;
+	/** The device under a point of the screen (client pixels) whose scene is in view, if any (devices.ts). */
+	pickDevice(clientX: number, clientY: number): DeviceId | undefined;
+	/** Fly into a device (resolves once the camera is there), and back out (resolves once it is back). */
+	enter(id: DeviceId): Promise<void>;
+	exit(): Promise<void>;
+	/** The robot, taken apart: 0 (whole) to 1. */
+	explode(amount: number): void;
+	/** The laptop's flight: playing or held, and where the drone is (for the ground station's telemetry). */
+	playFlight(on: boolean): void;
+	/** What the laptop's ground station reads off the simulated flight now (undefined until it has loaded). */
+	telemetry(): Telemetry | undefined;
+	/** Arm the F450 on the drones' bench (its props spin up, then down; it never lifts off). True if the point is on it. */
+	arm(clientX?: number, clientY?: number): boolean;
 }
 
 export async function drive(ctx: StageContext, { shots, content, position, onFrame }: StudioOptions): Promise<Model & StudioHandle> {
@@ -70,6 +89,20 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 	// The 3D under the opening words (hook-scene.ts). Off with the flag; with no words playing it changes nothing.
 	const hook = HOOK_3D ? createHookScene(ctx, room) : undefined;
 	const sim = createSim(ctx, room, shots.map((shot) => shot.id));
+	const devices = createDevices(room, sim);
+	// The device the camera is in (or flying to or from): 0 = at the scroll's shot, 1 = there.
+	let device: Device | undefined;
+	let deviceAmt = 0;
+	let deviceWant = 0;
+	let deviceDone: (() => void) | undefined;
+	const deviceAt = new Vector3();
+	const deviceQ = new Quaternion();
+	let turned = 0;
+	let apart = 0;
+	let apartWant = 0;
+	let flightClock = 0;
+	let flightOn = true;
+	let lastSample: Sample | undefined;
 	const n = shots.length;
 	const path = new CatmullRomCurve3(shots.map((s) => new Vector3(...s.camera)), true, "centripetal", 0.5);
 	// Each scene's view as a heading (around y) and a tilt (up or down).
@@ -133,6 +166,15 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		return screen && live.includes(screen) ? screen : undefined;
 	};
 	let hoverScreen: (typeof room.screens)[number] | undefined;
+	/** The device under a point (normalised device coordinates) whose scene is in view, if any. */
+	const deviceUnder = (x: number, y: number) => {
+		const live = Object.values(devices).filter((d) => (near[d.id] ?? 0) > 0.6);
+		if (!live.length) return undefined;
+		camera.updateMatrixWorld();
+		raycaster.setFromCamera(ndc.set(x, y), camera);
+		return live.find((d) => raycaster.intersectObjects(d.pick, true).length > 0)?.id;
+	};
+	let hoverDevice: DeviceId | undefined;
 	const onWheel = (event: WheelEvent) => {
 		if (leaving || event.ctrlKey || event.target !== ctx.canvas) return;
 		const screen = screenAt((event.clientX / innerWidth) * 2 - 1, -((event.clientY / innerHeight) * 2 - 1));
@@ -232,21 +274,52 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		place();
 		// While the opening words play, their 3D takes the camera (and hands it back); otherwise it does nothing.
 		hook?.update(dt, s);
+		// The device: its camera flies in (or out), the robot turns and comes apart, the laptop's flight plays.
+		if (deviceAmt !== deviceWant) {
+			deviceAmt = ctx.reducedMotion ? deviceWant : clamp(deviceAmt + Math.sign(deviceWant - deviceAmt) * (dt / ENTER_TIME), 0, 1);
+			if (deviceAmt === deviceWant) {
+				deviceDone?.();
+				deviceDone = undefined;
+				if (deviceAmt === 0) device = undefined;
+			}
+		}
+		const inRobot = device?.id === "robotics" ? deviceAmt : 0;
+		if (device?.id === "robotics" && deviceWant === 1 && !ctx.reducedMotion) turned += dt * TURN_SPEED;
+		apart += (apartWant * (deviceWant === 1 ? 1 : 0) - apart) * (1 - Math.exp(-6 * dt));
+		if (Math.abs(apart) < 0.001) apart = 0;
+		room.parts.robot.explode(Math.round(apart * 1000) / 1000);
+		room.parts.robot.turn(turned * smoothstep(inRobot));
+		if (inRobot === 0) turned = 0;
+		if (device?.id === "web" && deviceWant === 1) {
+			if (flightOn && !ctx.reducedMotion) flightClock += dt;
+			sim.play((flightClock / FLIGHT_TIME) % 1);
+		} else sim.play(null);
 		// Between the test scene and the laptop, the simulated flight takes the camera (sim-flight.ts).
 		sim.update(s);
+		if (device && deviceAmt > 0) {
+			device.pose(deviceAt, deviceQ, camera);
+			const e = smootherstep(deviceAmt);
+			camera.position.lerp(deviceAt, e);
+			camera.quaternion.slerp(deviceQ, e);
+		}
 		state.position = s;
 		state.lamp = lamp;
 		state.time = clock;
 		room.update(state);
 		// The wall's panels answer the pointer: the one under it lifts and glows, and the cursor says it opens.
-		const over = !leaving && (near.wall ?? 0) > 0.6 && pointer.over ? pickAt(pointer.x, pointer.y) : -1;
+		const over = !leaving && !device && (near.wall ?? 0) > 0.6 && pointer.over ? pickAt(pointer.x, pointer.y) : -1;
+		const overDevice = !leaving && !device && pointer.over ? deviceUnder(pointer.x, pointer.y) : undefined;
 		if (over !== hoverIndex) {
 			hoverIndex = over;
 			room.wall.hover(over);
-			ctx.canvas.style.cursor = over >= 0 ? "pointer" : "";
+			ctx.canvas.style.cursor = over >= 0 || overDevice ? "pointer" : "";
+		}
+		if (overDevice !== hoverDevice) {
+			hoverDevice = overDevice;
+			ctx.canvas.style.cursor = over >= 0 || overDevice ? "pointer" : "";
 		}
 		// A scrollable screen under the pointer shows its scrollbar and "Scroll to read".
-		const screen = !leaving && pointer.over ? screenAt(pointer.x, pointer.y) : undefined;
+		const screen = !leaving && !device && pointer.over ? screenAt(pointer.x, pointer.y) : undefined;
 		if (screen !== hoverScreen) {
 			hoverScreen?.hover(false);
 			screen?.hover(true);
@@ -263,7 +336,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			// Idle: the camera is at rest (and the opening push-in is over), so only the room's slow life is moving.
 			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
 			// (Never while the opening words' 3D plays: it moves every frame.)
-			api.idle = !hook?.busy() && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && !sim.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
+			api.idle = !hook?.busy() && !device && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && !sim.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
@@ -302,6 +375,56 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			speed = 0;
 			place();
 			if (shots[((scene % n) + n) % n].id === "sketch") room.finishSketch(); // (a jump to the book, or a picture of it: not the pen's show)
+		},
+		arm(clientX, clientY) {
+			if (clientX !== undefined && clientY !== undefined) {
+				if ((near.drones ?? 0) <= 0.6 || device) return false;
+				camera.updateMatrixWorld();
+				raycaster.setFromCamera(ndc.set((clientX / innerWidth) * 2 - 1, -((clientY / innerHeight) * 2 - 1)), camera);
+				if (!raycaster.intersectObject(room.parts.drone.holder, true).length) return false;
+			}
+			room.parts.drone.arm();
+			ctx.wake();
+			return true;
+		},
+		pickDevice(clientX, clientY) {
+			if (leaving || device) return undefined;
+			return deviceUnder((clientX / innerWidth) * 2 - 1, -((clientY / innerHeight) * 2 - 1));
+		},
+		enter(id) {
+			device = devices[id];
+			deviceWant = 1;
+			apartWant = 0;
+			flightOn = true;
+			ctx.wake();
+			if (deviceAmt === 1) return Promise.resolve();
+			return new Promise<void>((resolve) => (deviceDone = resolve));
+		},
+		exit() {
+			deviceWant = 0;
+			apartWant = 0;
+			ctx.wake();
+			if (deviceAmt === 0) {
+				device = undefined;
+				return Promise.resolve();
+			}
+			return new Promise<void>((resolve) => (deviceDone = resolve));
+		},
+		explode(amount) {
+			apartWant = clamp(amount, 0, 1);
+			ctx.wake();
+		},
+		playFlight(on) {
+			flightOn = on;
+			ctx.wake();
+		},
+		telemetry() {
+			const now = sim.sample();
+			if (!now) return undefined;
+			const sample: Sample = { ...now, t: flightClock };
+			const read = telemetry(lastSample, sample, PAD);
+			lastSample = sample;
+			return read;
 		},
 		pickWall(clientX, clientY) {
 			if ((near.wall ?? 0) <= 0.6 || leaving) return -1;

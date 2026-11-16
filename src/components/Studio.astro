@@ -18,6 +18,12 @@
  * `content` is what the room itself shows (the projects on the wall, the portraits...): src/lib/studio/room.ts.
  * In read mode, an element with the class `studio-still` inside a scene (a picture of that scene) is shown; in the
  * full studio it is hidden and, being lazy, never downloaded.
+ *
+ * Devices you can enter (src/lib/studio/devices.ts): a `<dialog data-device="research">` among the children, and a
+ * `<button data-enter="research">` in a scene's text (or a click on the device in the room) to open it. The camera flies
+ * in, then the dialog shows; "Back" (`[data-device-back]`) or Escape closes it, the camera flies back out and focus
+ * returns to the button. Inside: `[data-explode]` (a range) takes the robot apart, `[data-flight-toggle]` pauses the
+ * laptop's simulated flight, `[data-tel="altitude|speed|heading|toPad"]` show its telemetry.
  */
 import type { RoomContent } from "@/lib/studio/room";
 import { SHOTS } from "@/lib/studio/scenes";
@@ -269,12 +275,202 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		pointer-events: none;
 		transition: opacity 0.3s;
 	}
+	/* A device is open (or the camera is flying to it): the scene's words and the ruler step aside, the page holds still. */
+	.studio[data-entering] .studio-panels > [data-scene],
+	.studio[data-entering] .studio-ruler,
+	.studio[data-entering] .studio-skip {
+		opacity: 0 !important;
+		pointer-events: none !important;
+		transition: opacity 0.3s;
+	}
+	html.studio-in-device {
+		overflow: hidden;
+	}
 	.studio[data-capture] .studio-panels,
 	.studio[data-capture] .studio-ruler {
 		display: none;
 	}
 	.studio:not([data-read]) .studio-still {
 		display: none;
+	}
+
+	/* ---------- The devices you can enter ---------- */
+	.studio-device {
+		position: fixed;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		max-width: none;
+		max-height: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		opacity: 0;
+		transition: opacity 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.studio-device[data-on] {
+		opacity: 1;
+	}
+	.studio-device::backdrop {
+		background: transparent;
+	}
+	/* A screen: the page itself, the size of the window, as the device's screen was when the camera stopped. */
+	.studio-device-sheet[data-kind="screen"] {
+		position: absolute;
+		inset: clamp(0.5rem, 1.5vw, 1rem);
+		display: flex;
+		flex-direction: column;
+		border-radius: 1rem;
+		border: 1px solid var(--sheet-edge);
+		background: var(--field);
+		overflow: hidden;
+		transform: scale(0.985);
+		transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.studio-device[data-on] .studio-device-sheet {
+		transform: none;
+	}
+	.studio-device-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+		border-bottom: 1px solid var(--sheet-edge);
+	}
+	.studio-device-title {
+		font-stretch: 112%;
+		font-weight: 800;
+		font-size: 1.125rem;
+		line-height: 1.2;
+		text-wrap: balance;
+	}
+	.studio-device-body {
+		flex: 1;
+		overflow: auto;
+		overscroll-behavior: contain;
+		padding: clamp(1rem, 3vw, 2.5rem) 0;
+	}
+	.studio-device-console {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding-inline: clamp(1rem, 4vw, 3rem);
+	}
+	/* Beside a device that stays in 3D (the laptop's flight, the robot): a sheet on the right, the room in view. */
+	.studio-device-sheet[data-kind="side"] {
+		position: absolute;
+		right: clamp(1rem, 5vw, 4.5rem);
+		top: 50%;
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		width: min(23rem, calc(100vw - 2rem));
+		max-height: calc(100dvh - 2rem);
+		overflow: auto;
+		padding: 1.5rem 1.75rem;
+		border-radius: 1rem;
+		border: 1px solid var(--sheet-edge);
+		background: var(--field);
+		transform: translate3d(0, calc(-50% + 12px), 0);
+		transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.studio-device[data-on] .studio-device-sheet[data-kind="side"] {
+		transform: translate3d(0, -50%, 0);
+	}
+	.studio-device-sheet[data-kind="side"] .studio-device-title {
+		font-stretch: 125%;
+		font-weight: 850;
+		font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+		line-height: 1.05;
+	}
+	.studio-device-sheet p {
+		text-wrap: pretty;
+	}
+	.studio-device-back,
+	.studio-device-button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		padding: 0 1.1rem;
+		border-radius: 999px;
+		font-weight: 650;
+		cursor: pointer;
+	}
+	.studio-device-back {
+		background: var(--primary);
+		color: var(--primary-foreground);
+	}
+	.studio-device-sheet[data-kind="side"] .studio-device-back {
+		align-self: flex-start;
+	}
+	.studio-device-button {
+		align-self: flex-start;
+		border: 1px solid var(--sheet-edge);
+		color: var(--ink);
+	}
+	.studio-device-back:focus-visible,
+	.studio-device-button:focus-visible,
+	.studio-explode input:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 3px;
+	}
+	/* The ground station's numbers: a real table of label and value, the values in tabular figures. */
+	.studio-telemetry {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem 1rem;
+		margin: 0;
+	}
+	.studio-telemetry > div {
+		border-top: 1px solid var(--sheet-edge);
+		padding-top: 0.4rem;
+	}
+	.studio-telemetry dt {
+		font-size: 0.8125rem;
+		font-weight: 600;
+		color: var(--ink-soft);
+	}
+	.studio-telemetry dd {
+		margin: 0;
+		font-stretch: 112%;
+		font-weight: 800;
+		font-size: 1.5rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.studio-explode {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		font-weight: 650;
+	}
+	.studio-explode input {
+		width: 100%;
+		min-height: 44px;
+		accent-color: var(--accent-brand);
+	}
+	.studio-enter {
+		cursor: pointer;
+	}
+	/* Arming the F450: the button and, under it, the plain words that it stays on the bench. */
+	.studio-arm {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.studio-device,
+		.studio-device-sheet {
+			transition: none !important;
+		}
+	}
+	html.reduce-motion .studio-device,
+	html.reduce-motion .studio-device-sheet {
+		transition: none !important;
 	}
 
 	/* ---------- Read mode: one ordinary page ---------- */
@@ -294,6 +490,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	import { navigate } from "astro:transitions/client";
 	import { offerStart, setLive } from "@/lib/handoff";
 	import { afterIntro } from "@/lib/splash";
+	import type { DeviceId } from "@/lib/studio/devices";
 	import type { StudioHandle } from "@/lib/studio/engine";
 	import { warmRoom } from "@/lib/studio/prefetch";
 	import type { RoomContent } from "@/lib/studio/room";
@@ -419,6 +616,23 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					return;
 				}
 			}
+			if (event.target === canvas && handle && !leaving && !root.hasAttribute("data-read")) {
+				const id = handle.pickDevice(event.clientX, event.clientY);
+				if (id) {
+					openDevice(id, root.querySelector<HTMLElement>(`[data-enter="${id}"]`));
+					return;
+				}
+			}
+			if (event.target === canvas && handle?.arm(event.clientX, event.clientY)) return;
+			if ((event.target as Element).closest("[data-arm]") && handle) {
+				handle.arm();
+				return;
+			}
+			const enterButton = (event.target as Element).closest<HTMLElement>("[data-enter]");
+			if (enterButton && root.contains(enterButton)) {
+				openDevice(enterButton.dataset.enter as DeviceId, enterButton);
+				return;
+			}
 			const el = (event.target as Element).closest<HTMLElement>("[data-goto], [data-studio-restart], [data-studio-skip]");
 			if (!el || !root.contains(el)) return;
 			event.preventDefault();
@@ -435,6 +649,88 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			else goTo(Number(el.dataset.goto));
 		};
 		root.addEventListener("click", onClick);
+
+		// The devices you can enter: fly in, show the dialog; Back or Escape: hide it, fly out, focus back where it was.
+		let openId: DeviceId | undefined;
+		let busyDevice = false;
+		let returnTo: HTMLElement | null = null;
+		let telemetryTimer: number | undefined;
+		const dialogOf = (id: DeviceId) => root.querySelector<HTMLDialogElement>(`dialog[data-device="${id}"]`);
+		const readTelemetry = (dialog: HTMLDialogElement) => {
+			const cells = Object.fromEntries([...dialog.querySelectorAll<HTMLElement>("[data-tel]")].map((el) => [el.dataset.tel!, el]));
+			const read = handle?.telemetry();
+			if (!read) return;
+			cells.altitude.textContent = read.altitude.toFixed(1);
+			cells.speed.textContent = read.speed.toFixed(1);
+			cells.heading.textContent = String(read.heading).padStart(3, "0");
+			cells.toPad.textContent = String(read.toPad);
+		};
+		async function openDevice(id: DeviceId, from: HTMLElement | null) {
+			const dialog = dialogOf(id);
+			if (!handle || !dialog || openId || busyDevice || leaving) return;
+			busyDevice = true;
+			openId = id;
+			returnTo = from;
+			root.setAttribute("data-entering", "");
+			document.documentElement.classList.add("studio-in-device");
+			// (the camera may stall in a background tab: the dialog opens after a moment anyway)
+			await Promise.race([handle.enter(id), new Promise<void>((resolve) => setTimeout(resolve, 2500))]);
+			dialog.showModal();
+			requestAnimationFrame(() => dialog.setAttribute("data-on", ""));
+			if (id === "web") {
+				readTelemetry(dialog);
+				telemetryTimer = window.setInterval(() => readTelemetry(dialog), 200);
+			}
+			busyDevice = false;
+		}
+		async function closeDevice() {
+			const dialog = openId && dialogOf(openId);
+			if (!dialog || busyDevice) return;
+			busyDevice = true;
+			window.clearInterval(telemetryTimer);
+			dialog.removeAttribute("data-on");
+			const range = dialog.querySelector<HTMLInputElement>("[data-explode]");
+			if (range) range.value = "0";
+			const toggle = dialog.querySelector<HTMLButtonElement>("[data-flight-toggle]");
+			if (toggle) {
+				toggle.setAttribute("aria-pressed", "false");
+				toggle.textContent = toggle.dataset.pause ?? "";
+			}
+			await new Promise((resolve) => setTimeout(resolve, document.documentElement.classList.contains("reduce-motion") ? 0 : 220));
+			dialog.close();
+			returnTo?.focus({ preventScroll: true });
+			await Promise.race([handle?.exit(), new Promise<void>((resolve) => setTimeout(resolve, 2500))]);
+			root.removeAttribute("data-entering");
+			document.documentElement.classList.remove("studio-in-device");
+			openId = undefined;
+			busyDevice = false;
+		}
+		const onDeviceClick = (event: Event) => {
+			const target = event.target as Element;
+			if (target.closest("[data-device-back]")) closeDevice();
+			const toggle = target.closest<HTMLButtonElement>("[data-flight-toggle]");
+			if (toggle && handle) {
+				const paused = toggle.getAttribute("aria-pressed") !== "true";
+				toggle.setAttribute("aria-pressed", String(paused));
+				toggle.textContent = (paused ? toggle.dataset.play : toggle.dataset.pause) ?? "";
+				handle.playFlight(!paused);
+			}
+		};
+		const onDeviceInput = (event: Event) => {
+			const range = (event.target as Element).closest<HTMLInputElement>("[data-explode]");
+			if (range) handle?.explode(Number(range.value) / 100);
+		};
+		const onCancel = (event: Event) => {
+			event.preventDefault();
+			closeDevice();
+		};
+		const dialogs = [...root.querySelectorAll<HTMLDialogElement>("dialog[data-device]")];
+		for (const dialog of dialogs) {
+			dialog.addEventListener("click", onDeviceClick);
+			dialog.addEventListener("input", onDeviceInput);
+			dialog.addEventListener("cancel", onCancel);
+		}
+
 		// A link inside a scene's text gets focus: bring the camera to that scene.
 		const onFocus = (event: FocusEvent) => {
 			if (root.hasAttribute("data-read")) return;
@@ -483,6 +779,14 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		let cancelled = false;
 		let dispose: (() => void) | undefined;
 		const detach = () => {
+			window.clearInterval(telemetryTimer);
+			for (const dialog of dialogs) {
+				dialog.removeEventListener("click", onDeviceClick);
+				dialog.removeEventListener("input", onDeviceInput);
+				dialog.removeEventListener("cancel", onCancel);
+				if (dialog.open) dialog.close();
+			}
+			document.documentElement.classList.remove("studio-in-device");
 			removeEventListener("keydown", onKey);
 			removeEventListener("wheel", onPointer);
 			removeEventListener("touchstart", onPointer);

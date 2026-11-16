@@ -6,8 +6,10 @@
  * All the words: src/text/home.ts and src/text/site.ts (the studio's own: src/text/studio.ts). The projects on the
  * wall come from src/text/projects/*.md, the people at the table from src/text/members/*.md.
  */
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
+import IosTerminal from "@/components/IosTerminal.astro";
+import Register from "@/components/work/Register.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import ClassicHome from "@/components/ClassicHome.astro";
 import ProofCounts from "@/components/ProofCounts.astro";
@@ -20,7 +22,7 @@ import { HOME } from "@/lib/studio/scenes";
 import { hero, hook, journey, mission, pageHeading, services, servicesSection, teamSection, workSection } from "@/text/home";
 import { roadmap } from "@/text/projects/drone";
 import { contact, displayDomain, footer, site, talk } from "@/text/site";
-import { benchBoard, buildStory, sketchText, studio } from "@/text/studio";
+import { benchBoard, buildStory, devices, sketchText, studio } from "@/text/studio";
 
 const projects = await getProjects();
 const members = await getMembers();
@@ -40,6 +42,10 @@ const content: RoomContent = {
 
 // The work stations, one per service, text on alternate sides.
 const stations = ["web", "robotics", "drones", "networks"] as const;
+// The stations whose device you can enter (src/lib/studio/devices.ts), and their buttons.
+const enter: Record<string, string> = { web: devices.laptop.enter, robotics: devices.cart.enter, networks: devices.rack.enter };
+// The drones' station: arm the F450 on its bench (it never lifts off).
+const arm: Record<string, boolean> = { drones: true };
 // Each station's words sit on the side away from its subject.
 const onRight: Record<string, boolean> = { web: true, drones: true };
 
@@ -105,6 +111,7 @@ const organization = {
 			<img class="studio-still" {...still("research")} alt="" loading="lazy" width="1600" height="900" />
 			<h2 id="scene-research">{mission.processHeading}</h2>
 			<p><strong>{build.title}.</strong> {build.desc}</p>
+			<button type="button" class="studio-link studio-enter" data-enter="research">{devices.monitor.enter} <ArrowRight className="size-4" aria-hidden="true" /></button>
 		</section>
 
 		<!-- 2b Build: the F450 goes together on the bench, piece by piece -->
@@ -163,6 +170,19 @@ const organization = {
 								{servicesSection.linkPrefix} {s.proof.label}
 								<ArrowUpRight className="size-4" aria-hidden="true" />
 							</a>
+						)}
+						{arm[id] && (
+							<p class="studio-arm">
+								<button type="button" class="studio-link studio-enter" data-arm>
+									{devices.drone.arm} <ArrowRight className="size-4" aria-hidden="true" />
+								</button>
+								<span class="studio-role">{devices.drone.note}</span>
+							</p>
+						)}
+						{enter[id] && (
+							<button type="button" class="studio-link studio-enter" data-enter={id}>
+								{enter[id]} <ArrowRight className="size-4" aria-hidden="true" />
+							</button>
 						)}
 					</section>
 				);
@@ -259,6 +279,57 @@ const organization = {
 				</ul>
 			</nav>
 		</section>
+
+		<!-- The devices you can enter: the camera flies in, then the screen is this (src/lib/studio/devices.ts, Studio.astro) -->
+		<dialog class="studio-device" data-device="research" aria-labelledby="device-research">
+			<div class="studio-device-sheet" data-kind="screen">
+				<div class="studio-device-bar">
+					<h2 id="device-research" class="studio-device-title">{devices.monitor.title}</h2>
+					<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
+				</div>
+				<div class="studio-device-body"><Register projects={projects} /></div>
+			</div>
+		</dialog>
+		<dialog class="studio-device" data-device="networks" aria-labelledby="device-networks">
+			<div class="studio-device-sheet" data-kind="screen">
+				<div class="studio-device-bar">
+					<h2 id="device-networks" class="studio-device-title">{devices.rack.title}</h2>
+					<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
+				</div>
+				<div class="studio-device-body studio-device-console">
+					<IosTerminal />
+					<a href="/work/cybersecurity/" class="studio-link">{devices.rack.page} <ArrowUpRight className="size-4" aria-hidden="true" /></a>
+				</div>
+			</div>
+		</dialog>
+		<dialog class="studio-device" data-device="web" aria-labelledby="device-web">
+			<div class="studio-device-sheet" data-kind="side">
+				<h2 id="device-web" class="studio-device-title">{devices.laptop.title}</h2>
+				<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
+				<p>{devices.laptop.note}</p>
+				<dl class="studio-telemetry">
+					<div><dt>{devices.laptop.altitude}</dt><dd><span data-tel="altitude">–</span> {devices.laptop.metres}</dd></div>
+					<div><dt>{devices.laptop.speed}</dt><dd><span data-tel="speed">–</span> {devices.laptop.perSecond}</dd></div>
+					<div><dt>{devices.laptop.heading}</dt><dd><span data-tel="heading">–</span>°</dd></div>
+					<div><dt>{devices.laptop.toPad}</dt><dd><span data-tel="toPad">–</span> {devices.laptop.metres}</dd></div>
+				</dl>
+				<button type="button" class="studio-device-button" data-flight-toggle aria-pressed="false" data-play={devices.laptop.play} data-pause={devices.laptop.pause}>{devices.laptop.pause}</button>
+				<a href="/work/drone/camera-pov/" class="studio-link">{devices.laptop.page} <ArrowUpRight className="size-4" aria-hidden="true" /></a>
+				<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
+			</div>
+		</dialog>
+		<dialog class="studio-device" data-device="robotics" aria-labelledby="device-robotics">
+			<div class="studio-device-sheet" data-kind="side">
+				<h2 id="device-robotics" class="studio-device-title">{devices.cart.title}</h2>
+				<p>{devices.cart.body}</p>
+				<label class="studio-explode">
+					<span>{devices.cart.slider}</span>
+					<input type="range" min="0" max="100" step="1" value="0" data-explode />
+				</label>
+				<a href="/work/frc/" class="studio-link">{devices.cart.page} <ArrowUpRight className="size-4" aria-hidden="true" /></a>
+				<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
+			</div>
+		</dialog>
 	</Studio>
 	</div>
 	<div class="classic-home">

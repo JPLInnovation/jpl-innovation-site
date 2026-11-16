@@ -25,6 +25,52 @@ export const studio = {
 };
 
 /**
+ * THE DEVICES YOU CAN ENTER (src/lib/studio/devices.ts): click one in the room, or its button in the scene's text, and
+ * the camera flies in until its screen is the page. `enter` is the button, `title` heads what opens.
+ */
+export const devices = {
+	/** Closes any device and flies the camera back out. */
+	back: "Back to the studio",
+	monitor: {
+		enter: "Use the monitor",
+		title: "Our work, on the desk's monitor",
+	},
+	laptop: {
+		enter: "Open the ground station",
+		title: "F450 ground station",
+		/** Said plainly, above the numbers: they come from the simulation, not from a flight. */
+		note: "Simulated telemetry from our 3D model's flight. The F450 has not flown yet.",
+		altitude: "Altitude",
+		speed: "Ground speed",
+		heading: "Heading",
+		toPad: "To the far pad",
+		metres: "m",
+		perSecond: "m/s",
+		pause: "Pause the flight",
+		play: "Play the flight",
+		page: "The ground station's page",
+	},
+	rack: {
+		enter: "Open the console",
+		title: "CCNA lab console",
+		page: "The cybersecurity lab",
+	},
+	drone: {
+		/** A small delight on the drones' bench: the props spin up for a few seconds. */
+		arm: "Arm the F450 on the bench",
+		/** Said with it, so nobody reads it as a flight. */
+		note: "Its props spin up; it stays on the bench. It hasn't flown yet.",
+	},
+	cart: {
+		enter: "Take the robot apart",
+		title: "The KitBot, part by part",
+		body: "FRC Team 10951's robot, from its real CAD. Slide to take it apart; it turns while you look.",
+		slider: "Take it apart",
+		page: "The FRC robot",
+	},
+};
+
+/**
  * Each scene's name on the ruler, in order. The ids are fixed (the 3D camera and the page's links use them); change
  * the names freely.
  */

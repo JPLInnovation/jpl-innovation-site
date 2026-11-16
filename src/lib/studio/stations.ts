@@ -24,6 +24,7 @@ import {
 	ExtrudeGeometry,
 	Group,
 	InstancedMesh,
+	Matrix4,
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
@@ -59,6 +60,12 @@ export interface Stations {
 	screens: PageScreen[];
 	/** The drone bench's F450, once it has loaded (the opening hook's desk drone shares its geometry). */
 	drone(): DroneRig | undefined;
+	/** What the camera can fly into (src/lib/studio/devices.ts): the robot on its cart, the rack and the laptop. */
+	robot: { holder: Group; center: Vector3; explode(amount: number): void; turn(angle: number): void };
+	rack: { group: Group; center: Vector3 };
+	laptop: Group;
+	/** The F450 on its bench: arm it and its props spin up for a few seconds, then wind down. It never lifts off. */
+	bench: { holder: Group; arm(): void; busy(): boolean };
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -143,7 +150,44 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	boxAt(group, 0.5, 0.025, 0.12, steel, robotX, 1.15, z0 + 0.08); // a shelf
 	for (const [i, c] of [0xf5d042, 0x2f7ce6, 0xf2eedf].entries()) boxAt(group, 0.1, 0.07, 0.08, hardware({ color: c, roughness: 0.5 }, "plastic"), robotX - 0.15 + i * 0.15, 1.2, z0 + 0.08, 0.01);
 
-	let robot: { animate(t: number, dt: number): void; applyPalette(p: { dark: boolean }): void } | undefined;
+	let robot: { model: Group; animate(t: number, dt: number): void; applyPalette(p: { dark: boolean }): void } | undefined;
+	// Taking the robot apart (the cart's device): every CAD part's instance slides out from the robot's middle, along the
+	// line from the middle to the part, so the robot opens like an exploded drawing. The parts' poses are read once, on
+	// the first use, and put back exactly at 0.
+	let parts: { mesh: InstancedMesh; index: number; base: Matrix4; out: Vector3 }[] | undefined;
+	let explodedBy = 0;
+	const shifted = new Matrix4();
+	const explode = (amount: number) => {
+		if (!robot || amount === explodedBy) return;
+		if (!parts) {
+			parts = [];
+			const middle = new Vector3();
+			const centre = new Vector3();
+			const found: { mesh: InstancedMesh; index: number; base: Matrix4; at: Vector3 }[] = [];
+			robot.model.traverse((o) => {
+				const mesh = o as InstancedMesh;
+				if (!mesh.isInstancedMesh) return;
+				mesh.geometry.computeBoundingBox();
+				mesh.geometry.boundingBox!.getCenter(centre);
+				for (let i = 0; i < mesh.count; i++) {
+					const base = new Matrix4();
+					mesh.getMatrixAt(i, base);
+					const at = centre.clone().applyMatrix4(base);
+					middle.add(at);
+					found.push({ mesh, index: i, base, at });
+				}
+			});
+			middle.divideScalar(Math.max(1, found.length));
+			for (const f of found) parts.push({ mesh: f.mesh, index: f.index, base: f.base, out: f.at.sub(middle).multiply(new Vector3(0.75, 0.6, 0.75)) });
+		}
+		explodedBy = amount;
+		const e = amount * amount * (3 - 2 * amount);
+		for (const part of parts) {
+			part.mesh.setMatrixAt(part.index, shifted.makeTranslation(part.out.x * e, part.out.y * e + 0.12 * e, part.out.z * e).multiply(part.base));
+			part.mesh.instanceMatrix.needsUpdate = true;
+			if (amount > 0) part.mesh.frustumCulled = false; // (its bounds are the assembled robot's)
+		}
+	};
 	const robotHolder = new Group();
 	robotHolder.position.set(robotX + 0.04, cartTop, -2.55);
 	robotHolder.rotation.y = -0.55;
@@ -764,6 +808,9 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	let palette: Palette | undefined;
 	let clock = 0;
+	const ARMED_FOR = 4; // seconds the props run once armed
+	let armedUntil = -1;
+	let propSpin = 0;
 	const ledColor = new Color();
 	let ledTimer = 0;
 
@@ -779,6 +826,19 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		accents,
 		screens: [laptop],
 		drone: () => drone,
+		robot: {
+			holder: robotHolder,
+			center: new Vector3(robotX + 0.04, cartTop + 0.3, -2.55),
+			explode,
+			turn: (angle) => (robotHolder.rotation.y = -0.55 + angle),
+		},
+		rack: { group: rack, center: new Vector3(rackX, 1.45, rackFront) },
+		laptop: lid,
+		bench: {
+			holder: droneHolder,
+			arm: () => (armedUntil = clock + ARMED_FOR),
+			busy: () => propSpin > 0 || clock < armedUntil,
+		},
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {
@@ -789,12 +849,15 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			clock += dt;
 			const level = lamp * lamp * (3 - 2 * lamp);
 
-			// Robot: rollers turn while its scene is in view.
-			if (robot && (near.robotics ?? 0) > 0.05) robot.animate(clock, dt * (near.robotics ?? 0));
+			// Robot: rollers turn while its scene is in view (not while it is apart: they would snap back together).
+			if (robot && explodedBy === 0 && (near.robotics ?? 0) > 0.05) robot.animate(clock, dt * (near.robotics ?? 0));
 
 			// Drone: stays on its mat. The build is not finished and it has not flown, so the room does not show it flying:
-			// powered up on the bench, props still, the flight controller's LED blinking.
-			drone?.animate(clock, 0);
+			// powered up on the bench, the flight controller's LED blinking; armed, its props spin up, then wind down.
+			const armed = clock < armedUntil ? 1 : 0;
+			propSpin += (armed - propSpin) * (1 - Math.exp(-(armed ? 1.8 : 1.1) * dt));
+			if (propSpin < 0.004) propSpin = 0;
+			drone?.animate(clock, propSpin > 0 ? dt : 0, propSpin);
 
 			// Rack: the port lights blink (a few times a second, not every frame).
 			ledTimer += dt;
