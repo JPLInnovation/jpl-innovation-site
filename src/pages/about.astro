@@ -1,175 +1,550 @@
 ---
-import { ArrowRight } from "lucide-react";
+/**
+ * About: the founders' letter (the spec's section 7). The sheet's title in living colour with its title block and the
+ * film ("Play the story", src/components/about/StoryFilm.astro); the letter itself on the page's one big glass sheet,
+ * signed, with a strip at its foot you could tear off, carrying the email; what we work on, as the set's register;
+ * the team; what we believe, set large. Words: src/text/about.ts (the team: src/text/members/*.md; the contact box and
+ * the email address: src/text/site.ts).
+ */
+import { ArrowRight, Scissors } from "lucide-react";
+import StoryFilm from "@/components/about/StoryFilm.astro";
 import ContactSection from "@/components/ContactSection.astro";
+import EmailButton from "@/components/EmailButton.astro";
 import Leadership from "@/components/Leadership.astro";
-import PageIntro from "@/components/PageIntro.astro";
+import Logo from "@/components/Logo.astro";
+import TitleBlock from "@/components/TitleBlock.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getProjects } from "@/lib/content";
 import { srcset } from "@/lib/images";
-import { cn } from "@/lib/utils";
-// Words: src/text/about.ts (the team: src/text/members/*.md; the contact box: src/text/site.ts)
-import { aboutPage, focus, story, team, values } from "@/text/about";
+import { aboutPage, focus, letter, story, team, titleBlock, values } from "@/text/about";
+import { site } from "@/text/site";
 
-// Cards show and link to project pages that exist (src/text/projects/*.md).
+// Rows show and link to project pages that exist (src/text/projects/*.md).
 const projects = new Map((await getProjects()).map((p) => [p.id, p]));
-
-const sectionHeading = "font-wide text-3xl font-[850] md:text-4xl";
+const last = story.paragraphs.length - 1;
 ---
 
 <BaseLayout title={aboutPage.seoTitle} description={aboutPage.seoDescription}>
-	<!-- The opening statement, over slow footage: the studio's desk under its lamp (the same render as the home page's read mode). -->
-	<div class="about-hero relative isolate overflow-hidden">
-		<img
-			class="about-footage"
-			src="/studio/scenes/sketch-800.webp"
-			srcset="/studio/scenes/sketch-800.webp 800w, /studio/scenes/sketch.webp 1600w"
-			sizes="100vw"
-			width="1600"
-			height="900"
-			alt=""
-			aria-hidden="true"
-			fetchpriority="low"
-		/>
-		<!-- A scrim from the text's side, so the words keep their contrast over the brightest part of the picture. -->
-		<div class="about-scrim" aria-hidden="true"></div>
-		<PageIntro title={aboutPage.title} lede={aboutPage.lede} />
-	</div>
-
-	<!-- Our story. Reading text, so no entrance motion; the heading stays beside it on wide screens. -->
-	<section class="border-t" aria-labelledby="story-heading">
-		<div class="wrapper grid gap-8 py-16 md:grid-cols-[1fr_1.6fr] md:gap-16 md:py-24">
-			<h2 id="story-heading" class={cn(sectionHeading, "md:sticky md:top-28 md:self-start")}>{story.heading}</h2>
-			<div class="flex max-w-[65ch] flex-col gap-5 text-lg">
-				{
-					story.paragraphs.map((p, i) => (
-						<p class={cn(i === story.paragraphs.length - 1 ? "font-semiwide text-xl font-[760]" : "text-muted-foreground")}>
-							{p}
-						</p>
-					))
-				}
+	<!-- The sheet's title, its title block, and the film. -->
+	<section class="hero wrapper" aria-labelledby="about-title">
+		<h1 id="about-title" class="hero__title living" data-reveal>{aboutPage.title}</h1>
+		<div class="hero__grid">
+			<div class="hero__text">
+				<p class="hero__lede">{aboutPage.lede}</p>
+				<TitleBlock rows={titleBlock.rows} label={titleBlock.label} />
 			</div>
+			<StoryFilm />
 		</div>
 	</section>
 
-	<!-- What we work on: each project's own picture, linking to its page -->
-	<section class="border-t bg-card/70" aria-labelledby="focus-heading">
-		<div class="wrapper py-16 md:py-24">
-			<div class="mb-10 flex max-w-2xl flex-col gap-2">
-				<h2 id="focus-heading" class={sectionHeading}>{focus.heading}</h2>
-				<p class="text-lg text-muted-foreground">{focus.intro}</p>
+	<!-- The letter: the page's one big glass sheet. The same story the film tells. -->
+	<section class="wrapper letter-wrap" aria-labelledby="story-heading">
+		<article class="letter sheet lens">
+			<div class="letter__head">
+				<Logo class="letter__logo" />
+				<p class="letter__slogan">{site.slogan}</p>
 			</div>
-			<ul class="grid gap-5 lg:grid-cols-3" data-reveal>
-				{
-					focus.areas.map((a) => {
-						const project = projects.get(a.project);
-						return (
-							<li
-								data-tilt
-								class={cn(
-									"relative flex flex-col overflow-hidden rounded-xl border surface md:flex-row lg:flex-col",
-									project && "press group transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]",
-								)}
-							>
+			<div class="letter__body">
+				<h2 id="story-heading" class="heading">{story.heading}</h2>
+				<div class="letter__text">
+					{story.paragraphs.map((p, i) => <p class:list={["letter__p", { "letter__p--first": i === 0, "letter__p--last": i === last }]}>{p}</p>)}
+					<p class="letter__signoff">{letter.signOff}</p>
+					<div class="letter__signatures">
+						{
+							letter.signatures.map((s) => (
+								<p class="letter__sig">
+									<span class="letter__sig-name">{s.name}</span>
+									<span class="letter__sig-role">{s.role}</span>
+								</p>
+							))
+						}
+					</div>
+				</div>
+			</div>
+		</article>
+		<!-- The tear-off strip: it peels a little when you reach for it; the address opens the email pop-up. -->
+		<div class="strip sheet">
+			<p class="strip__tear"><Scissors className="strip__scissors" strokeWidth={1.75} aria-hidden="true" /><span>{letter.strip.tear}</span></p>
+			<p class="strip__note">{letter.strip.note}</p>
+			<EmailButton label={site.email} look="link" class="strip__email" />
+		</div>
+	</section>
+
+	<!-- What we work on: the set's register, each row the project's own picture and a link to its page. -->
+	<section class="wrapper tracks" aria-labelledby="focus-heading">
+		<div class="tracks__head">
+			<h2 id="focus-heading" class="heading">{focus.heading}</h2>
+			<p class="tracks__intro">{focus.intro}</p>
+		</div>
+		<ul class="tracks__list">
+			{
+				focus.areas.map((a) => {
+					const project = projects.get(a.project);
+					const picture = "picture" in a ? a.picture : undefined;
+					return (
+						<li class:list={["track", { "track--link": project }]}>
+							<h3 class="track__title">{a.title}</h3>
+							<div class="track__text">
+								<p>{a.desc}</p>
 								{project && (
+									// The whole row is clickable through this link's ::after.
+									<a href={`/work/${project.id}/`} class="track__link">
+										{focus.linkPrefix} {project.data.title}
+										<ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+									</a>
+								)}
+							</div>
+							{picture ? (
+								<img
+									class:list={["track__pic", { "track__pic--cut": "cut" in picture }]}
+									src={picture.small}
+									srcset={picture.small === picture.src ? undefined : `${picture.small} 800w, ${picture.src} ${picture.w}w`}
+									sizes="(min-width: 1024px) 18rem, (min-width: 768px) 14rem, calc(100vw - 2rem)"
+									width={picture.w}
+									height={picture.h}
+									alt=""
+									loading="lazy"
+									decoding="async"
+								/>
+							) : (
+								project && (
 									<img
+										class="track__pic"
 										src={project.data.img}
 										srcset={srcset(project.data.img)}
-										sizes="(min-width: 1024px) 380px, (min-width: 768px) 280px, 100vw"
+										sizes="(min-width: 1024px) 18rem, (min-width: 768px) 14rem, calc(100vw - 2rem)"
+										width="800"
+										height="500"
 										alt=""
 										loading="lazy"
-										class="aspect-[16/10] w-full shrink-0 bg-muted object-cover md:w-2/5 lg:w-full"
+										decoding="async"
 									/>
-								)}
-								<div class="flex flex-1 flex-col gap-3 p-6 md:p-7">
-									<h3 class="font-semiwide text-xl font-[760]">{a.title}</h3>
-									<p class="text-muted-foreground">{a.desc}</p>
-									{project && (
-										// The whole card is clickable through this link's ::after.
-										<a
-											href={`/work/${project.id}/`}
-											class="mt-auto inline-flex min-h-11 w-fit items-center gap-2 font-semibold underline-offset-4 transition-[gap] after:absolute after:inset-0 after:rounded-xl group-hover:gap-3 group-hover:underline"
-										>
-											{focus.linkPrefix} {project.data.title}
-											<ArrowRight className="size-4" aria-hidden="true" />
-										</a>
-									)}
-								</div>
-							</li>
-						);
-					})
-				}
-			</ul>
-		</div>
+								)
+							)}
+						</li>
+					);
+				})
+			}
+		</ul>
 	</section>
 
 	<!-- The team: names, titles and profile links from src/text/members/*.md -->
-	<section class="wrapper py-16 md:py-24" aria-labelledby="team-heading">
+	<section class="wrapper team" aria-labelledby="team-heading">
 		<Leadership lead="jpl" heading={team.heading} intro={team.intro} id="team" />
 	</section>
 
-	<!-- What we believe. Same 2 px rule as the home page timeline. -->
-	<section class="border-t bg-card/70" aria-labelledby="values-heading">
-		<div class="wrapper py-16 md:py-24">
-			<h2 id="values-heading" class={cn(sectionHeading, "mb-10")}>{values.heading}</h2>
-			<ul class="grid gap-10 md:grid-cols-3 md:gap-8">
-				{
-					values.items.map((v) => (
-						<li class="flex flex-col gap-3 border-t-2 border-foreground pt-6">
-							<h3 class="font-semiwide text-xl font-[760]">{v.title}</h3>
-							<p class="text-muted-foreground">{v.desc}</p>
-						</li>
-					))
-				}
-			</ul>
-		</div>
+	<!-- What we believe, set large. -->
+	<section class="wrapper beliefs" aria-labelledby="values-heading">
+		<h2 id="values-heading" class="heading">{values.heading}</h2>
+		<ul class="beliefs__list">
+			{
+				values.items.map((v) => (
+					<li class="belief">
+						<h3 class="belief__title">{v.title}</h3>
+						<p class="belief__desc">{v.desc}</p>
+					</li>
+				))
+			}
+		</ul>
 	</section>
 
 	<ContactSection />
 </BaseLayout>
 
-<style is:global>
-	/* The footage sits behind the heading and fades into the page; it drifts very slowly. */
-	.about-footage {
+<style>
+	.heading {
+		font-size: var(--step-head);
+		font-weight: 800;
+		font-stretch: 125%;
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+
+	/* ---- The title ---- */
+	.hero {
+		padding-top: clamp(2rem, 4vw, 3.5rem);
+		padding-bottom: clamp(4.5rem, 9vw, 8rem);
+	}
+	.hero__title {
+		/* "Innovation" has to fit the width on its own line: 10 wide letters at about 0.7em each */
+		font-size: min(var(--step-display), 13.2vw - 0.4rem);
+		font-weight: 850;
+		font-stretch: 125%;
+		line-height: 0.86;
+		letter-spacing: -0.045em;
+		text-wrap: balance;
+		padding-bottom: 0.06em; /* the clipped colour reaches the descenders */
+	}
+	.hero__grid {
+		display: grid;
+		gap: 2rem;
+		margin-top: clamp(1.75rem, 3.5vw, 3rem);
+	}
+	.hero__text {
+		display: flex;
+		flex-direction: column;
+		gap: 1.75rem;
+	}
+	.hero__text :global(.title-block) {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+	/* Narrower screens: the film comes straight under the title, so it is on the first screen. */
+	@media (max-width: 1023px) {
+		.hero__grid :global(.plate) {
+			order: -1;
+		}
+	}
+	.hero__lede {
+		max-width: 46ch;
+		font-size: var(--step-lead);
+		line-height: 1.4;
+		text-wrap: pretty;
+	}
+	@media (min-width: 1024px) {
+		.hero__grid {
+			grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+			gap: clamp(2rem, 4vw, 4rem);
+			align-items: start;
+		}
+	}
+
+	/* ---- The letter ---- */
+	.letter-wrap {
+		padding-bottom: clamp(5rem, 11vw, 10rem);
+	}
+	.letter {
+		--r: 1.75rem;
+		border-radius: var(--r) var(--r) 0 0;
+		padding: clamp(1.5rem, 5vw, 4.5rem);
+		padding-bottom: clamp(2rem, 5vw, 4rem);
+		/* the two half-holes of the perforation, cut from the letter's foot */
+		-webkit-mask:
+			radial-gradient(circle at 0 100%, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) bottom left / 51% 2rem no-repeat,
+			radial-gradient(circle at 100% 100%, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) bottom right / 51% 2rem no-repeat,
+			linear-gradient(#000 0 0) top / 100% calc(100% - 2rem) no-repeat;
+		mask:
+			radial-gradient(circle at 0 100%, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) bottom left / 51% 2rem no-repeat,
+			radial-gradient(circle at 100% 100%, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) bottom right / 51% 2rem no-repeat,
+			linear-gradient(#000 0 0) top / 100% calc(100% - 2rem) no-repeat;
+	}
+	.letter__head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 2rem;
+		padding-bottom: clamp(2rem, 5vw, 4rem);
+	}
+	.letter__head :global(.letter__logo) {
+		height: clamp(2.25rem, 3.4vw, 3rem);
+	}
+	.letter__slogan {
+		font-size: var(--step-small);
+		font-weight: 650;
+		font-stretch: 112%;
+		color: var(--ink-soft);
+	}
+	.letter__body {
+		display: grid;
+		gap: 2rem;
+	}
+	@media (min-width: 1024px) {
+		.letter__body {
+			grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+			gap: clamp(2rem, 5vw, 5rem);
+		}
+		.letter__body .heading {
+			position: sticky;
+			top: 7rem;
+			align-self: start;
+		}
+	}
+	.letter__text {
+		display: flex;
+		flex-direction: column;
+		gap: 1.3rem;
+		max-width: 62ch;
+	}
+	.letter__p {
+		font-size: var(--step-body);
+		line-height: 1.65;
+		text-wrap: pretty;
+	}
+	.letter__p--first {
+		font-size: var(--step-lead);
+		line-height: 1.45;
+	}
+	.letter__p--last {
+		padding-top: 0.5rem;
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 112%;
+		line-height: 1.3;
+	}
+	.letter__signoff {
+		padding-top: clamp(1rem, 3vw, 2rem);
+		color: var(--ink-soft);
+	}
+	.letter__signatures {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.25rem clamp(2rem, 6vw, 5rem);
+	}
+	.letter__sig {
+		display: flex;
+		flex-direction: column;
+	}
+	.letter__sig-name {
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 112%;
+		line-height: 1.2;
+	}
+	.letter__sig-role {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+
+	/* ---- The tear-off strip ---- */
+	.strip {
+		--r: 1.75rem;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.15rem;
+		padding: clamp(2.9rem, 5vw, 3.6rem) clamp(1.5rem, 5vw, 4.5rem) clamp(1.5rem, 4vw, 2.25rem);
+		border-radius: 0 0 var(--r) var(--r);
+		transform-origin: 100% 0;
+		transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+		-webkit-mask:
+			radial-gradient(circle at 0 0, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) top left / 51% 2rem no-repeat,
+			radial-gradient(circle at 100% 0, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) top right / 51% 2rem no-repeat,
+			linear-gradient(#000 0 0) bottom / 100% calc(100% - 2rem) no-repeat;
+		mask:
+			radial-gradient(circle at 0 0, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) top left / 51% 2rem no-repeat,
+			radial-gradient(circle at 100% 0, #0000 0.7rem, #000 calc(0.7rem + 0.5px)) top right / 51% 2rem no-repeat,
+			linear-gradient(#000 0 0) bottom / 100% calc(100% - 2rem) no-repeat;
+	}
+	/* The perforation: a row of holes between the letter and the strip. */
+	.strip::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		left: 1rem;
+		right: 1rem;
+		border-top: 2px dashed color-mix(in oklab, var(--ink-soft) 60%, transparent);
+	}
+	.strip__tear {
+		position: absolute;
+		top: 0.45rem;
+		left: clamp(1.5rem, 5vw, 4.5rem);
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding-inline: 0.35rem 0.6rem;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.strip__tear :global(.strip__scissors) {
+		width: 1.1rem;
+		height: 1.1rem;
+		transition: translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.strip__note {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.strip :global(.strip__email) {
+		width: fit-content;
+		max-width: 100%;
+		font-size: clamp(1.05rem, 0.35rem + 2.9vw, 3rem);
+		font-weight: 800;
+		font-stretch: 112%;
+		letter-spacing: -0.02em;
+		line-height: 1.15;
+		overflow-wrap: anywhere;
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 0.08em;
+		text-underline-offset: 0.18em;
+	}
+	@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+		:global(html:not(.reduce-motion)) .strip:hover,
+		:global(html:not(.reduce-motion)) .strip:focus-within {
+			transform: translateY(0.45rem) rotate(-1.4deg);
+		}
+		:global(html:not(.reduce-motion)) .strip:hover .strip__tear :global(.strip__scissors),
+		:global(html:not(.reduce-motion)) .strip:focus-within .strip__tear :global(.strip__scissors) {
+			translate: 0.6rem 0;
+		}
+	}
+
+	/* ---- What we work on: the register ---- */
+	.tracks {
+		padding-bottom: clamp(5rem, 11vw, 10rem);
+	}
+	.tracks__head {
+		display: grid;
+		gap: 1rem;
+		padding-bottom: clamp(2rem, 4vw, 3.5rem);
+	}
+	.tracks__intro {
+		font-size: var(--step-lead);
+		max-width: 34ch;
+		text-wrap: pretty;
+	}
+	@media (min-width: 1024px) {
+		.tracks__head {
+			grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+			align-items: end;
+		}
+	}
+	.tracks__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.track {
+		position: relative;
+		display: grid;
+		gap: 1rem 2rem;
+		padding-block: clamp(1.5rem, 3vw, 2.25rem);
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.track:last-child {
+		border-bottom: 1px solid var(--sheet-edge);
+	}
+	.track__title {
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 118%;
+		line-height: 1.15;
+		text-wrap: balance;
+	}
+	.track__text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+		max-width: 46ch;
+	}
+	.track__link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 2.75rem;
+		width: fit-content;
+		font-weight: 650;
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+		transition: text-decoration-color 0.25s;
+	}
+	.track__link::after {
+		content: "";
 		position: absolute;
 		inset: 0;
-		z-index: -1;
+	}
+	.track__link :global(svg) {
+		transition: translate 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.track__pic {
 		width: 100%;
-		height: 100%;
+		aspect-ratio: 16 / 10;
 		object-fit: cover;
-		opacity: 0.2;
-		-webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
-		mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
-		transform-origin: 30% 40%;
-		animation: about-drift 32s ease-in-out infinite alternate;
+		border-radius: 0.75rem;
+		background: var(--field-2);
+		transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
-	.dark .about-footage {
-		opacity: 0.42;
+	.track__pic--cut {
+		object-fit: contain;
+		background: transparent;
 	}
-	.about-scrim {
-		position: absolute;
-		inset: 0;
-		z-index: -1;
-		background: linear-gradient(90deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, transparent) 45%, transparent 100%);
+	.track--link:hover .track__link,
+	.track--link:focus-within .track__link {
+		text-decoration-color: var(--accent-brand);
 	}
-	@media (max-width: 767px) {
-		.about-scrim {
-			background: color-mix(in oklab, var(--background) 78%, transparent);
+	.track--link:hover .track__link :global(svg) {
+		translate: 0.25rem 0;
+	}
+	.track--link:hover .track__pic {
+		transform: scale(1.03);
+	}
+	@media (min-width: 768px) {
+		.track {
+			grid-template-columns: minmax(0, 1fr) 14rem;
+			grid-template-areas: "title pic" "text pic";
+			align-items: start;
+		}
+		.track__title {
+			grid-area: title;
+		}
+		.track__text {
+			grid-area: text;
+		}
+		.track__pic {
+			grid-area: pic;
 		}
 	}
-	@keyframes about-drift {
-		from {
-			transform: scale(1.12) translate3d(-1.5%, 0, 0);
+	@media (min-width: 1024px) {
+		.track {
+			grid-template-columns: minmax(0, 5fr) minmax(0, 5fr) 18rem;
+			grid-template-areas: "title text pic";
+			column-gap: clamp(2rem, 4vw, 4rem);
 		}
-		to {
-			transform: scale(1.02) translate3d(1.5%, -1%, 0);
+		.track__title {
+			font-size: clamp(1.6rem, 0.9rem + 1.6vw, 2.6rem);
+			line-height: 1.05;
+			letter-spacing: -0.02em;
 		}
 	}
-	html.reduce-motion .about-footage {
-		animation: none;
+
+	/* ---- The team: the shared block, its heading brought to this page's size ---- */
+	.team {
+		padding-bottom: clamp(5rem, 11vw, 10rem);
 	}
-	@media (prefers-reduced-motion: reduce) {
-		.about-footage {
-			animation: none;
+	.team :global(#team-heading) {
+		font-size: var(--step-head);
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+	}
+
+	/* ---- What we believe ---- */
+	.beliefs {
+		display: grid;
+		gap: 2.5rem;
+		padding-bottom: clamp(5rem, 11vw, 10rem);
+	}
+	.beliefs__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: clamp(2.5rem, 5vw, 4.5rem);
+	}
+	.belief {
+		display: grid;
+		gap: 0.9rem 2.5rem;
+	}
+	.belief__title {
+		font-size: var(--step-head);
+		font-weight: 800;
+		font-stretch: 125%;
+		line-height: 0.95;
+		letter-spacing: -0.035em;
+		text-wrap: balance;
+	}
+	.belief__desc {
+		max-width: 44ch;
+		font-size: var(--step-body);
+		text-wrap: pretty;
+	}
+	@media (min-width: 1024px) {
+		/* each belief the full width (two lines at most), its sentence under the second half */
+		.belief__desc {
+			margin-left: 50%;
 		}
 	}
 </style>
