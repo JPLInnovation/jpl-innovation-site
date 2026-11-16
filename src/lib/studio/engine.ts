@@ -88,6 +88,8 @@ export interface StudioHandle {
 	 * as it starts (0 to READY_STEPS - 1), for the loading screen.
 	 */
 	ready(step: (index: number) => void): Promise<void>;
+	/** Let the room be drawn (after `ready`, or when the loading screen gives up waiting for it). */
+	reveal(): void;
 }
 
 /** How many stages `ready` goes through (the loading screen's words: src/text/studio.ts, `loading.steps`). */
@@ -356,14 +358,24 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			}
 		},
 		applyPalette: (p) => room.applyPalette(p),
+		// Not drawn until `reveal` (the loading screen is over it): see Model.hold in stage.ts.
+		hold: true,
+		reveal() {
+			api.hold = false;
+			ctx.wake();
+		},
 		async ready(step) {
-			step(0);
-			await room.loaded;
+			// (Stage 0, the room itself, is built by the time this is called.) While the robot's and the drone's CAD come
+			// in, the room's own shaders are built and the simulated flight's world is made, all three side by side.
 			step(1);
 			prepared = true;
-			await sim.prepare();
+			const flight = sim.prepare();
+			const roomShaders = compileInSlices(ctx.renderer, ctx.scene, camera, null, 4);
+			await room.loaded;
 			step(2);
-			await compileInSlices(ctx.renderer, ctx.scene, camera);
+			await roomShaders;
+			await compileInSlices(ctx.renderer, ctx.scene, camera, null, 4); // the two models' own (the rest are ready: instant)
+			await flight;
 			step(3);
 			await uploadInSlices(ctx.renderer, ctx.scene);
 		},

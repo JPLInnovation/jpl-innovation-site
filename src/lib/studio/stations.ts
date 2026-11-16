@@ -16,7 +16,8 @@
  *   The crew   the table, two chairs, a portrait screen behind each
  *   Contact    the door, ajar, light beyond it, a lit sign over it
  *
- * The robot and the drone load their CAD in the background; the room is complete without them.
+ * The robot and the drone load their CAD in the background; the room is complete without them. Their shaders and
+ * textures are made ready with the room's (engine.ts, ready), which waits for both (`loaded`).
  */
 import {
 	CatmullRomCurve3,
@@ -204,7 +205,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		.then((rig) => {
 			robot = rig;
 			if (palette) rig.applyPalette(palette);
-			ctx.precompile();
 		})
 		.catch((error) => console.warn("Studio: the robot did not load.", error));
 
@@ -247,7 +247,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			drone = rig;
 			rig.model.position.y = -rig.floor;
 			droneHolder.add(rig.model);
-			ctx.precompile();
 		})
 		.catch((error) => console.warn("Studio: the drone did not load.", error));
 	// A battery charger and a spare pack beside it.

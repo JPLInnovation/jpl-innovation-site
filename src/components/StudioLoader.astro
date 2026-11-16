@@ -6,6 +6,14 @@
  * light over each station. A title block in the corner says what is loading. When it is all in, the plan lifts away
  * into the room.
  *
+ * It must keep moving while the page is busy building the room, so everything that moves here is a transform or an
+ * opacity on an HTML element (those run on the compositor, off the page's own thread): each stage is its own layer,
+ * wiped on from the left by a clip that slides one way while its drawing slides back the other (so the drawing stands
+ * still and the edge sweeps across it, a yellow line on the edge like a plotter's head). Never animate stroke-dashoffset,
+ * clip-path or anything inside the SVG here: those stop whenever the page's thread is busy. Nothing moves until the
+ * stage has made its renderer (Studio.astro sets data-loader-go right after): that one block stalls the compositor
+ * too, and it passes unseen on a still screen.
+ *
  * Measurements: the room's own (room.ts ROOM and DESK, stations.ts), in metres, x across, z into the room.
  * Words: src/text/studio.ts (`loading`).
  */
@@ -56,45 +64,53 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 <div class="sl" role="status" aria-live="polite" data-studio-loader>
 	<div class="sl-sheet">
 		<p class="sl-title">{t.heading}</p>
-		<svg class="sl-plan" viewBox="-9.2 -4.4 18.4 11.8" aria-hidden="true">
-			<!-- stage 0: the room -->
-			<g class="sl-g" data-loader-stage="0">
-				<path class="sl-wall" pathLength="1" d={`M${R.x0} ${R.z0}H${R.x1}V${R.z1}H${R.x0}Z`} />
-				<path class="sl-glass" pathLength="1" d={`M-4.6 ${R.z1}H3.9`} />
-				<path class="sl-thin" pathLength="1" d={`M-6.2 ${R.z1}A0.9 0.9 0 0 1 -5.3 5.5`} />
-				<path class="sl-wall" pathLength="1" d={wallArc} />
-				<path class="sl-thin" pathLength="1" d={`M3.85 ${R.z1 - 0.05}H6.15`} />
-				{boxes.filter((b) => b.stage === 0).map((b) => <path class="sl-thin" pathLength="1" d={rect(b)} />)}
-			</g>
-			<!-- stage 1: the KitBot and the F450 -->
-			<g class="sl-g" data-loader-stage="1">
-				{boxes.filter((b) => b.stage === 1).map((b) => <path class="sl-hot" pathLength="1" d={rect(b)} />)}
-				<path class="sl-hot" pathLength="1" d={`M${drone.x - drone.arm} ${drone.z - drone.arm}L${drone.x + drone.arm} ${drone.z + drone.arm}M${drone.x + drone.arm} ${drone.z - drone.arm}L${drone.x - drone.arm} ${drone.z + drone.arm}`} />
-				{[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => <circle class="sl-hot" pathLength="1" cx={drone.x + sx * drone.arm} cy={drone.z + sz * drone.arm} r="0.13" />)}
-			</g>
-			<!-- stage 2: the tour the camera takes -->
-			<g class="sl-g" data-loader-stage="2">
-				<path class="sl-tour" pathLength="1" d={tour} />
-				{stops.map(([x, , z], i) => <circle class="sl-stop" cx={x} cy={z} r="0.09" style={`--i:${i}`} />)}
-			</g>
-			<!-- stage 3: the lights -->
-			<g class="sl-g" data-loader-stage="3">
-				{pools.map(([x, z, r], i) => <circle class="sl-pool" cx={x} cy={z} r={r} style={`--i:${i}`} />)}
-			</g>
-			<!-- the labels, with their stage -->
+		<div class="sl-plan" aria-hidden="true">
 			{
-				[...boxes.filter((b) => b.label).map((b) => ({ x: b.x, z: b.above ? b.z - b.d / 2 - 0.16 : b.z + b.d / 2 + 0.38, text: b.label!, stage: b.stage })), ...labels].map((l) => (
-					<text class="sl-label" x={l.x} y={l.z} text-anchor="middle" data-loader-label={l.stage}>
-						{l.text}
-					</text>
+				[0, 1, 2, 3].map((stage) => (
+					<div class="sl-wipe" data-loader-stage={stage}>
+						<svg class="sl-layer" viewBox="-9.2 -4.4 18.4 11.8">
+							{stage === 0 && (
+								<>
+									<path class="sl-wall" d={`M${R.x0} ${R.z0}H${R.x1}V${R.z1}H${R.x0}Z`} />
+									<path class="sl-glass" d={`M-4.6 ${R.z1}H3.9`} />
+									<path class="sl-thin" d={`M-6.2 ${R.z1}A0.9 0.9 0 0 1 -5.3 5.5`} />
+									<path class="sl-wall" d={wallArc} />
+									<path class="sl-thin" d={`M3.85 ${R.z1 - 0.05}H6.15`} />
+								</>
+							)}
+							{stage === 1 && (
+								<>
+									<path class="sl-hot" d={`M${drone.x - drone.arm} ${drone.z - drone.arm}L${drone.x + drone.arm} ${drone.z + drone.arm}M${drone.x + drone.arm} ${drone.z - drone.arm}L${drone.x - drone.arm} ${drone.z + drone.arm}`} />
+									{[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => <circle class="sl-hot" cx={drone.x + sx * drone.arm} cy={drone.z + sz * drone.arm} r="0.13" />)}
+								</>
+							)}
+							{boxes.filter((b) => b.stage === stage).map((b) => <path class={stage === 0 ? "sl-thin" : "sl-hot"} d={rect(b)} />)}
+							{stage === 2 && (
+								<>
+									<path class="sl-tour" d={tour} />
+									{stops.map(([x, , z]) => <circle class="sl-stop" cx={x} cy={z} r="0.09" />)}
+								</>
+							)}
+							{stage === 3 && pools.map(([x, z, r]) => <circle class="sl-pool" cx={x} cy={z} r={r} />)}
+							{
+								[...boxes.filter((b) => b.label).map((b) => ({ x: b.x, z: b.above ? b.z - b.d / 2 - 0.16 : b.z + b.d / 2 + 0.38, text: b.label!, stage: b.stage })), ...labels]
+									.filter((l) => l.stage === stage)
+									.map((l) => (
+										<text class="sl-label" x={l.x} y={l.z} text-anchor="middle">
+											{l.text}
+										</text>
+									))
+							}
+						</svg>
+					</div>
 				))
 			}
-		</svg>
+		</div>
 		<dl class="sl-block">
 			<div><dt>{t.block.drawing}</dt><dd>{t.block.drawingValue}</dd></div>
 			<div><dt>{t.block.view}</dt><dd>{t.block.viewValue}</dd></div>
 			<div class="sl-status"><dt>{t.block.status}</dt><dd data-loading-step data-steps={t.steps.join("|")}>{t.steps[0]}</dd></div>
-			<span class="sl-bar" aria-hidden="true"><i data-loading-bar></i></span>
+			<span class="sl-bar" aria-hidden="true"><i data-loading-bar></i><b></b></span>
 		</dl>
 	</div>
 </div>
@@ -122,7 +138,7 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 	html.splash:not(.splash-hold) .studio:not([data-live]) .sl {
 		display: none;
 	}
-	/* Done: the plan lifts away into the room. */
+	/* Done: the plan lifts away into the room (opacity and transform: compositor). */
 	.studio[data-leaving-loader] .sl {
 		pointer-events: none;
 		animation: sl-leave 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
@@ -154,20 +170,101 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 		line-height: 1;
 	}
 	.sl-plan {
-		width: 100%;
-		max-height: 68svh;
-		overflow: visible;
+		position: relative;
+		width: min(100%, calc(68svh * 18.4 / 11.8));
+		aspect-ratio: 18.4 / 11.8;
+		margin-inline: auto;
 		transform-origin: 50% 55%;
 	}
-	.sl-plan :is(path, circle) {
-		fill: none;
-		stroke-dasharray: 1;
-		stroke-linecap: round;
-		stroke-dashoffset: 1;
-		transition: stroke-dashoffset 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+	/* One layer per stage. The clip slides in from the left while the drawing inside slides back by the same amount,
+	   both linear and started together, so the drawing stands still and its edge sweeps across. */
+	.sl-wipe {
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		transform: translateX(-101%);
+		will-change: transform;
 	}
-	.sl-g[data-on] :is(path, circle) {
-		stroke-dashoffset: 0;
+	.sl-layer {
+		display: block;
+		width: 100%;
+		height: 100%;
+		transform: translateX(101%);
+		will-change: transform;
+	}
+	/* the plotter's head: a yellow line on the sweeping edge, gone once the stage is drawn */
+	.sl-wipe::after {
+		content: "";
+		position: absolute;
+		inset: 0 0 0 auto;
+		width: 2px;
+		background: #f5d042;
+		opacity: 0;
+	}
+	.studio[data-loader-go] .sl-wipe[data-loader-stage="0"],
+	.sl-wipe[data-on] {
+		animation: sl-clip 1.3s linear var(--sl-wait, 0s) forwards;
+	}
+	.studio[data-loader-go] .sl-wipe[data-loader-stage="0"] > .sl-layer,
+	.sl-wipe[data-on] > .sl-layer {
+		animation: sl-back 1.3s linear var(--sl-wait, 0s) forwards;
+	}
+	.studio[data-loader-go] .sl-wipe[data-loader-stage="0"]::after,
+	.sl-wipe[data-on]::after {
+		animation: sl-head 1.3s linear var(--sl-wait, 0s) both;
+	}
+	/* the first stage waits a third of a second more: the room's first slice of building is the last bump */
+	.sl-wipe[data-loader-stage="0"] {
+		--sl-wait: 0.35s;
+	}
+	@keyframes sl-clip {
+		to {
+			transform: none;
+		}
+	}
+	@keyframes sl-back {
+		to {
+			transform: none;
+		}
+	}
+	@keyframes sl-head {
+		0% {
+			opacity: 0;
+		}
+		2%,
+		88% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+	/* the lights come up rather than being drawn */
+	.sl-wipe[data-loader-stage="3"] {
+		transform: none;
+		opacity: 0;
+	}
+	.sl-wipe[data-loader-stage="3"] > .sl-layer {
+		transform: scale(0.94);
+	}
+	.sl-wipe[data-loader-stage="3"][data-on] {
+		animation: sl-up 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	}
+	.sl-wipe[data-loader-stage="3"][data-on] > .sl-layer {
+		animation: sl-back 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	}
+	.sl-wipe[data-loader-stage="3"]::after {
+		display: none;
+	}
+	@keyframes sl-up {
+		to {
+			opacity: 1;
+		}
+	}
+	.sl-layer :is(path, circle) {
+		fill: none;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	.sl-wall {
 		stroke: #f2eedf;
@@ -188,41 +285,19 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 	.sl-tour {
 		stroke: #f5d042;
 		stroke-width: 0.045;
-		transition-duration: 2.4s;
 	}
-	.sl-plan .sl-stop {
+	.sl-layer .sl-stop {
 		fill: #f5d042;
 		stroke: none;
-		opacity: 0;
-		transition: opacity 0.3s calc(var(--i) * 0.13s);
 	}
-	.sl-g[data-on] .sl-stop {
-		opacity: 1;
-	}
-	.sl-plan .sl-pool {
+	.sl-layer .sl-pool {
 		fill: rgb(245 208 66 / 0.13);
 		stroke: none;
-		opacity: 0;
-		transform-box: fill-box;
-		transform-origin: center;
-		transform: scale(0.4);
-		transition:
-			opacity 0.8s calc(var(--i) * 0.09s),
-			transform 1s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i) * 0.09s);
-	}
-	.sl-g[data-on] .sl-pool {
-		opacity: 1;
-		transform: none;
 	}
 	.sl-label {
 		font-size: 0.3px;
 		font-weight: 600;
 		fill: rgb(242 238 223 / 0.72);
-		opacity: 0;
-		transition: opacity 0.6s 0.5s;
-	}
-	.sl-label[data-on] {
-		opacity: 1;
 	}
 	/* the title block, in the corner as on the site's drawing sheets */
 	.sl-block {
@@ -253,6 +328,7 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 		position: relative;
 		height: 3px;
 		background: rgb(242 238 223 / 0.12);
+		overflow: hidden;
 	}
 	.sl-bar i {
 		position: absolute;
@@ -261,6 +337,23 @@ const labels: { x: number; z: number; text: string; stage: number }[] = [
 		transform-origin: left center;
 		transform: scaleX(var(--done, 0.06));
 		transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+		will-change: transform;
+	}
+	/* a light running along the bar, always: the sign that nothing has stopped */
+	.sl-bar b {
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(90deg, transparent, rgb(242 238 223 / 0.75), transparent);
+		transform: translateX(-100%);
+		will-change: transform;
+	}
+	.studio[data-loader-go] .sl-bar b {
+		animation: sl-run 1.4s linear 0.35s infinite;
+	}
+	@keyframes sl-run {
+		to {
+			transform: translateX(100%);
+		}
 	}
 	@media (max-width: 760px) {
 		.sl-block {

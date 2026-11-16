@@ -74,7 +74,8 @@ export interface Palette {
 
 export function readPalette(): Palette {
 	const style = getComputedStyle(document.documentElement);
-	const color = (name: string, fallback: string) => new Color(style.getPropertyValue(name).trim() || fallback);
+	// (three.js reads #rrggbb, not #rrggbbaa: an alpha border's colour is taken without its alpha)
+	const color = (name: string, fallback: string) => new Color((style.getPropertyValue(name).trim() || fallback).replace(/^(#[0-9a-f]{6})[0-9a-f]{2}$/i, "$1"));
 	return {
 		dark: document.documentElement.classList.contains("dark"),
 		background: color("--background", "#eef1f4"),
@@ -159,11 +160,6 @@ export interface StageContext {
 	refreshShadows(): void;
 	/** Draw right now, so the canvas can be read back in the same task (canvas.toDataURL). */
 	render(): void;
-	/**
-	 * Build the shaders of everything in the scene now, off screen parts included, so the first time the camera reaches
-	 * a model that loaded late there is no pause while its shaders compile. Call after adding it.
-	 */
-	precompile(): void;
 	/** The light rig (it rides on the camera; positions are in the camera's space). For a light sweep. */
 	lights: { key: DirectionalLight; fill: DirectionalLight; rim: DirectionalLight };
 	/** 0..1: how much ambient occlusion to blend in (high tier). Lowered while the model is pulled apart. */
@@ -186,6 +182,12 @@ export interface Model {
 	 * other frame (about 30 a second), which halves the GPU's work while someone is reading and costs nothing to look at.
 	 */
 	idle?: boolean;
+	/**
+	 * True while the scene is covered and still loading (the studio's loading screen): the stage draws nothing. A draw
+	 * makes three.js wait for every shader it meets to finish linking (about a second of frozen page for the studio);
+	 * held, they are built in the background instead (compileAsync) and the first draw finds them ready.
+	 */
+	hold?: boolean;
 	/** Put the model in the state it moves in, for timing frames out of sight (`calibrate`). */
 	warming?(on: boolean): void;
 	dispose?(): void;
@@ -432,10 +434,6 @@ export async function mountStage(
 			invalidate();
 		},
 		render: () => render(),
-		precompile() {
-			renderer.compileAsync(scene, camera).then(invalidate, () => undefined);
-			void uploadInSlices(renderer, scene);
-		},
 		lights: { key, fill, rim },
 		occlusion: 1,
 		label(text, at, className = "") {
@@ -470,7 +468,9 @@ export async function mountStage(
 		try {
 			quality = await import("./quality");
 			shadows = quality.createContactShadows(renderer, scene);
-			shadows.update();
+			// (a held scene draws its shadows with its first frame: drawing them now would wait on its shaders)
+			if (model.hold) shadowsDirty = true;
+			else shadows.update();
 			// The ambient-occlusion pass is a full-screen post-process: off by default, only when High is chosen in Settings
 			// (or ?quality=high, as the stills script asks).
 			const aoChosen = qualityPref() === "high" || new URLSearchParams(location.search).get("quality") === "high";
@@ -481,12 +481,16 @@ export async function mountStage(
 		}
 	}
 	// Build every shader before the first frame (in parallel where the browser can), so nothing compiles mid-move.
-	try {
-		await renderer.compileAsync(scene, camera);
-	} catch {
-		/* the first frame compiles them instead */
+	// (A held scene does both itself, one at a time: asked for all together, the graphics process works through the
+	// whole queue at once and the screen stalls for it.)
+	if (!model.hold) {
+		try {
+			await renderer.compileAsync(scene, camera);
+		} catch {
+			/* the first frame compiles them instead */
+		}
+		void uploadInSlices(renderer, scene); // and their textures, one a frame, before they come into view
 	}
-	void uploadInSlices(renderer, scene); // and their textures, one a frame, before they come into view
 	let scale = 1; // dynamic resolution (see time())
 	const pixelRatio = () => {
 		const ratio = Math.min(window.devicePixelRatio, PIXEL_RATIO[tier], view.pixelRatio ?? Infinity);
@@ -571,6 +575,10 @@ export async function mountStage(
 	};
 
 	const render = () => {
+		if (model.hold) {
+			needsRender = true; // drawn once it lets go
+			return;
+		}
 		aim.position.copy(controls?.target ?? target);
 		if (shadowsDirty) {
 			shadows?.update();
@@ -707,6 +715,7 @@ export async function mountStage(
 			last = now;
 			elapsed += dt;
 			if (view.spin && now > idleAt) root.rotation.y += view.spin * dt;
+			if (model.hold) return; // covered and loading: nothing moves, nothing is drawn
 			const moving = controls?.update() ?? false;
 			const more = model.update?.(elapsed, dt);
 			// While nothing moves, draw every other frame (the model still advances every frame).

@@ -17,7 +17,7 @@
  */
 import { Color, Mesh, PlaneGeometry, ShaderMaterial, SRGBColorSpace, Texture, Vector4 } from "three";
 import { studio } from "../../text/studio";
-import { canvasSurface, loadImage } from "./room";
+import { asset, canvasSurface } from "./room";
 import pages from "./screens.json";
 
 export type PageName = keyof typeof pages;
@@ -227,10 +227,12 @@ export function pageScreen({ page: name, size, scene, address, background, reduc
 	const load = (i: number) => {
 		if (i < 0 || i >= count || tiles.has(i)) return;
 		tiles.set(i, null);
-		loadImage(page.files[i])
-			// Decoded and flipped off the main thread: uploading the 4K <img> itself made the browser do both in the
-			// frame it first showed (~140 ms). The bitmap comes flipped already, so the texture must not flip it again.
-			.then((img) => createImageBitmap(img, { imageOrientation: "flipY" }))
+		// Fetched as a blob and decoded from it: the browser then decodes and flips it off the main thread. (From an
+		// <img>, createImageBitmap did both on the main thread, ~140 ms a tile; uploading the <img> itself, the same in
+		// the frame it first showed.) The bitmap comes flipped already, so the texture must not flip it again.
+		fetch(asset(page.files[i]))
+			.then((response) => (response.ok ? response.blob() : Promise.reject(new Error(`${response.status}`))))
+			.then((blob) => createImageBitmap(blob, { imageOrientation: "flipY" }))
 			.then(
 			(img) => {
 				if (!tiles.has(i)) return img.close(); // let go of while it was loading

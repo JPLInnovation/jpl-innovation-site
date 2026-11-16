@@ -27,8 +27,10 @@ export function tick(): Promise<void> {
  * Builds a scene's shaders one at a time in the background. Asked for together, the GPU process works through the whole
  * queue and the page's next call to it waits for all of them (seconds, on large standard-material shaders).
  * `target`: where the scene will be drawn, since three.js picks a different shader for a render target than for the screen.
+ * `batch`: how many are asked for at a time. One is the gentlest on the graphics process; a few at a time is about that
+ * many times quicker and still leaves it room to put frames on the screen (the studio's loading screen: 4).
  */
-export async function compileInSlices(renderer: WebGLRenderer, scene: Scene, camera: Camera, target: WebGLRenderTarget | null = null) {
+export async function compileInSlices(renderer: WebGLRenderer, scene: Scene, camera: Camera, target: WebGLRenderTarget | null = null, batch = 1) {
 	const seen = new Set<string>();
 	const meshes: Object3D[] = [];
 	scene.traverse((o) => {
@@ -41,12 +43,13 @@ export async function compileInSlices(renderer: WebGLRenderer, scene: Scene, cam
 			meshes.push(mesh);
 		}
 	});
-	for (const mesh of meshes) {
+	for (let i = 0; i < meshes.length; i += batch) {
 		const before = renderer.getRenderTarget();
 		renderer.setRenderTarget(target);
-		const compiled = renderer.compileAsync(mesh, camera, scene); // (the programs are chosen synchronously, in this call)
+		// (the programs are chosen synchronously, in these calls)
+		const compiled = meshes.slice(i, i + batch).map((mesh) => renderer.compileAsync(mesh, camera, scene));
 		renderer.setRenderTarget(before);
-		await compiled;
+		await Promise.all(compiled);
 	}
 }
 
