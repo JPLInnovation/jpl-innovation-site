@@ -96,7 +96,7 @@ const SCENE_LAMPS: Record<string, { at: P3; aim: P3; power: number; angle: numbe
 	wall: { at: [5.8, 3.3, 0.9], aim: [7.4, 1.2, 0.3], power: 10, angle: 0.8 },
 	standards: { at: [5.0, 3.2, 5.0], aim: [5.0, 1.4, 6.35], power: 24, angle: 0.62 },
 	timeline: { at: [1.2, 3.2, 4.8], aim: [1.2, 0.9, 6.2], power: 8, angle: 0.7 },
-	contact: { at: [-5.6, 3.0, 5.4], aim: [-5.6, 1.0, 6.3], power: 14, angle: 0.6 },
+	contact: { at: [-5.6, 3.0, 5.4], aim: [-5.6, 1.0, 6.3], power: 9, angle: 0.6 },
 };
 
 /* ------------------------------------------------------------------ */

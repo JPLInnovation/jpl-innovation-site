@@ -778,7 +778,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const doorPivot = new Group();
 	doorPivot.position.set(doorX + 0.5, 0, z1 - 0.05);
 	group.add(doorPivot);
-	const doorMat = hardware({ color: 0x24345e, roughness: 0.5 }, "plastic");
+	const doorMat = hardware({ color: 0x24345e, roughness: 0.85 }, "plastic"); // matte: a painted door, no hotspot
 	themed.push({ mat: doorMat as MeshStandardMaterial, dark: 0x1b2d6e, light: 0x3d4770 });
 	boxAt(doorPivot, 0.98, 2.08, 0.045, doorMat, -0.49, 1.04, 0);
 	const handle = new Mesh(new CylinderGeometry(0.012, 0.012, 0.14, 10), toolMetal);
@@ -819,7 +819,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0xb8c8ff, dark: 0.5, light: 0.5, distance: 1.4, decay: 2 },
 		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
-		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0xffe6a8, dark: 3, light: 5, distance: 4, decay: 1.6 },
+		contact: { at: [doorX, 2.1, z1 - 1.8], color: 0xffe6a8, dark: 1.2, light: 3, distance: 4, decay: 1.6 },
 	};
 
 	return {
