@@ -18,6 +18,28 @@ export const studio = {
 	backToStart: "Back to the start",
 	/** Shown in the corner of read mode (phones, reduced motion, no 3D). */
 	readModeNote: "Read mode",
+	/** The loading screen, until the whole room is ready (the 3D waits for it, so nothing stutters once you are in). */
+	loading: {
+		heading: "Opening the studio",
+		/** One line per stage, in order (engine.ts, READY_STEPS); the plan draws that stage's part as it starts. */
+		steps: ["Building the room", "Bringing in the robot and the F450", "Tracing the tour through the room", "Setting up the lights"],
+		/** The labels on the plan. */
+		plan: {
+			desk: "Desk",
+			test: "Test bench",
+			software: "Lifetime",
+			rack: "Rack",
+			table: "The team's table",
+			robot: "KitBot",
+			drone: "F450",
+			projects: "Projects",
+			whiteboard: "Whiteboard",
+			window: "Window",
+			door: "Door",
+		},
+		/** The title block in the corner. */
+		block: { drawing: "Drawing", drawingValue: "The studio", view: "View", viewValue: "From above", status: "Now" },
+	},
 	/** The button in the corner during the simulated flight, for anyone who would rather not watch it. */
 	skipFlight: "Skip the flight",
 	/** On the monitor and the laptop when the pointer is on them: their pages scroll with the mouse wheel. */

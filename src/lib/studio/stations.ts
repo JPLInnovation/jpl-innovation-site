@@ -67,6 +67,8 @@ export interface Stations {
 	robot: { holder: Group; center: Vector3; explode(amount: number): void; turn(angle: number): void };
 	rack: { group: Group; center: Vector3 };
 	laptop: Group;
+	/** Settles once the robot's and the drone's CAD are in (or have failed): the studio's loading screen waits for it. */
+	loaded: Promise<unknown>;
 	/** The software stand's monitor (Lifetime on it): the camera flies in until it fills the window. */
 	software: Mesh;
 	/** The F450 on its bench: arm it and its props spin up for a few seconds, then wind down. It never lifts off. */
@@ -197,7 +199,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	robotHolder.position.set(robotX + 0.04, cartTop, -2.55);
 	robotHolder.rotation.y = -0.55;
 	group.add(robotHolder);
-	import("../three/models/frc-robot")
+	const robotLoaded = import("../three/models/frc-robot")
 		.then(({ buildRobot }) => buildRobot(robotHolder))
 		.then((rig) => {
 			robot = rig;
@@ -239,7 +241,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	droneHolder.rotation.y = 0.5;
 	group.add(droneHolder);
 	let drone: DroneRig | undefined;
-	import("../three/models/drone")
+	const droneLoaded = import("../three/models/drone")
 		.then(({ loadDrone }) => loadDrone())
 		.then((rig) => {
 			drone = rig;
@@ -905,6 +907,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		},
 		rack: { group: rack, center: new Vector3(rackX, 1.45, rackFront) },
 		laptop: lid,
+		loaded: Promise.allSettled([robotLoaded, droneLoaded]),
 		software: softScreen,
 		bench: {
 			holder: droneHolder,

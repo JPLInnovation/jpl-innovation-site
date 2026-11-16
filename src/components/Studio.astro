@@ -28,6 +28,7 @@
 import type { RoomContent } from "@/lib/studio/room";
 import { SHOTS } from "@/lib/studio/scenes";
 import { sceneNames, studio } from "@/text/studio";
+import StudioLoader from "@/components/StudioLoader.astro";
 
 interface Props {
 	scenes: string[];
@@ -64,13 +65,15 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				setTimeout(() => {
 					if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
 						el.setAttribute("data-read", "");
-						document.documentElement.classList.remove("studio-on");
+						document.documentElement.classList.remove("studio-on", "studio-loading");
 						console.warn("Studio: the 3D did not start in time, showing the plain page.");
 					}
 				}, 30000);
 			}
 		})();
 	</script>
+	<!-- The loading screen: the studio's plan drawing itself as the room loads (StudioLoader.astro, engine.ts ready). -->
+	<StudioLoader />
 	<div class="studio-stage">
 		<canvas role="img" aria-label={studio.canvasLabel}></canvas>
 	</div>
@@ -803,12 +806,14 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			detach();
 			root.setAttribute("data-read", "");
 			root.removeAttribute("data-live");
-			document.documentElement.classList.remove("studio-on");
+			document.documentElement.classList.remove("studio-on", "studio-loading");
 			setLive(undefined);
 			dispose?.();
 			dispose = undefined;
 			scrollTo({ top: 0, behavior: "instant" }); // the tall track is gone; start the ordinary page at its top
 		};
+		// While the room loads, the page holds still (and the room's opening waits: engine.ts).
+		document.documentElement.classList.add("studio-loading");
 		Promise.all([import("@/lib/three/stage"), import("@/lib/studio/engine"), afterIntro()])
 			.then(async ([stageModule, engine]) => {
 				// (read mode may already have been chosen by the failsafe timer, if everything was very slow)
@@ -828,6 +833,42 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 					dispose = undefined;
 					return;
 				}
+				// The loading screen stays until the whole room is ready (models, the flight, shaders, textures), so it
+				// comes up smoothly; 20 s at most, then in anyway.
+				const stepEl = root.querySelector<HTMLElement>("[data-loading-step]");
+				const bar = root.querySelector<HTMLElement>("[data-loading-bar]");
+				const words = (stepEl?.dataset.steps ?? "").split("|");
+				// Each stage draws its part of the plan (StudioLoader.astro): the room, the machines, the tour, the lights.
+				const draw = (upTo: number) => {
+					root.querySelectorAll<HTMLElement>("[data-loader-stage]").forEach((g) => g.toggleAttribute("data-on", Number(g.dataset.loaderStage) <= upTo));
+					root.querySelectorAll<HTMLElement>("[data-loader-label]").forEach((l) => l.toggleAttribute("data-on", Number(l.dataset.loaderLabel) <= upTo));
+				};
+				const show = (i: number) => {
+					if (stepEl && words[i]) stepEl.textContent = words[i];
+					bar?.style.setProperty("--done", String((i + 1) / (engine.READY_STEPS + 1)));
+					draw(i);
+				};
+				// Each stage stays up 0.7 s at least, so its part of the drawing can be seen (the last ones are quick).
+				let shownAt = 0;
+				let queue = Promise.resolve();
+				const pace = (i: number) => {
+					queue = queue.then(async () => {
+						const wait = shownAt + 700 - performance.now();
+						if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+						shownAt = performance.now();
+						show(i);
+					});
+				};
+				await Promise.race([handle?.ready(pace), new Promise((resolve) => setTimeout(resolve, 20000))]).catch(() => undefined);
+				pace(engine.READY_STEPS);
+				await queue;
+				if (cancelled || root.hasAttribute("data-read")) return;
+				bar?.style.setProperty("--done", "1");
+				draw(engine.READY_STEPS);
+				// The plan lifts away into the room (0.9 s), the room fading in under it.
+				root.setAttribute("data-leaving-loader", "");
+				window.setTimeout(() => root.removeAttribute("data-leaving-loader"), 950);
+				document.documentElement.classList.remove("studio-loading");
 				root.setAttribute("data-live", "");
 				setLive({ logoRect: () => handle?.logoRect() ?? null });
 				// ?studio=capture: the room alone, for read mode's pictures (scripts/studio-stills.py).
@@ -850,7 +891,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			window.clearTimeout(announceTimer);
 			detach();
 			dispose?.();
-			document.documentElement.classList.remove("studio-on");
+			document.documentElement.classList.remove("studio-on", "studio-loading");
 		};
 	}
 

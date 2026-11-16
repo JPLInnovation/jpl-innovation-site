@@ -274,6 +274,8 @@ export interface RoomContent {
 
 export interface Room {
 	group: Group;
+	/** Settles once the CAD models the room loads in the background are in (stations.ts). */
+	loaded: Promise<unknown>;
 	/** The project wall's panels, for the pointer (see Stations). */
 	wall: { screens: Mesh[]; hover(index: number): void };
 	/** The screens whose pages scroll with the mouse wheel (screens.ts), for the engine. */
@@ -559,6 +561,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	return {
 		group,
 		wall: stations.wall,
+		loaded: stations.loaded,
 		screens,
 		logo,
 		stationDrone: stations.drone,

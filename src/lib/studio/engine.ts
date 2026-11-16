@@ -23,6 +23,7 @@ import type { SceneShot } from "./scenes";
 import { createSim } from "./sim-flight";
 import { createDevices, type Device, type DeviceId } from "./devices";
 import { PAD } from "../three/flight-world";
+import { compileInSlices, uploadInSlices } from "../three/yield";
 import { type Sample, type Telemetry, telemetry } from "../look/telemetry";
 
 const FOLLOW = 10; // per second: the spring the camera follows the scroll through (critically damped)
@@ -81,7 +82,16 @@ export interface StudioHandle {
 	telemetry(): Telemetry | undefined;
 	/** Arm the F450 on the drones' bench (its props spin up, then down; it never lifts off). True if the point is on it. */
 	arm(clientX?: number, clientY?: number): boolean;
+	/**
+	 * Resolves once everything the visitor will meet is ready, so the room can be shown without a hitch: the CAD
+	 * models, the simulated flight's world, every shader, every texture on the graphics card. `step` hears each stage
+	 * as it starts (0 to READY_STEPS - 1), for the loading screen.
+	 */
+	ready(step: (index: number) => void): Promise<void>;
 }
+
+/** How many stages `ready` goes through (the loading screen's words: src/text/studio.ts, `loading.steps`). */
+export const READY_STEPS = 4;
 
 export async function drive(ctx: StageContext, { shots, content, position, onFrame }: StudioOptions): Promise<Model & StudioHandle> {
 	const { camera } = ctx;
@@ -244,9 +254,10 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 		fit();
 		// While the logo intro covers the page (the opening page), the opening shot waits: the camera stays back from the
 		// desk with the lamp off, so the intro's logo can land on the wall before the room comes up around it. The same
-		// while the home page's "why we exist" words play over the dark room (html.studio-dark, src/pages/index.astro).
+		// while the home page's "why we exist" words play over the dark room (html.studio-dark, src/pages/index.astro), and
+		// while the loading screen is up (html.studio-loading, Studio.astro).
 		const html = document.documentElement.classList;
-		const waiting = html.contains("splash") || html.contains("studio-dark");
+		const waiting = html.contains("splash") || html.contains("studio-dark") || html.contains("studio-loading");
 		if (!waiting) clock += dt;
 		const lean = 1 - Math.exp(-4 * dt);
 		px += (pxT - px) * lean;
@@ -341,10 +352,21 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			// The first rest (behind the opening, or still on the first view): build the flight's world then, not mid-move.
 			if (api.idle && !prepared) {
 				prepared = true;
-				sim.prepare();
+				void sim.prepare();
 			}
 		},
 		applyPalette: (p) => room.applyPalette(p),
+		async ready(step) {
+			step(0);
+			await room.loaded;
+			step(1);
+			prepared = true;
+			await sim.prepare();
+			step(2);
+			await compileInSlices(ctx.renderer, ctx.scene, camera);
+			step(3);
+			await uploadInSlices(ctx.renderer, ctx.scene);
+		},
 		dispose() {
 			hook?.dispose();
 			removeEventListener("wheel", onWheel);
