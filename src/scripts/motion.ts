@@ -98,13 +98,16 @@ function init() {
 		const vertical = el.dataset.draw === "y";
 		// A bar that starts at zero width has nothing for the scroll watcher to see (one of the roadmap bars was never
 		// drawn): data-draw-watch="parent" watches its track instead.
-		once(el.dataset.drawWatch === "parent" && el.parentElement ? el.parentElement : el, () =>
-			animate(el, vertical ? { scaleY: [0, 1] } : { scaleX: [0, 1] }, {
-				duration: Number(el.dataset.drawDuration ?? 1.2),
-				ease: el.dataset.drawEase === "linear" ? "linear" : [0.22, 1, 0.36, 1],
-				delay: Number(el.dataset.revealDelay ?? 0) / 1000,
-			}),
-		);
+		// The browser's own animation (not motion's), so SVG lines grow too: motion writes SVG transforms as attributes,
+		// which the CSS starting state (scaleX(0)) would keep overriding.
+		once(el.dataset.drawWatch === "parent" && el.parentElement ? el.parentElement : el, () => {
+			el.animate([{ transform: vertical ? "scaleY(0)" : "scaleX(0)" }, { transform: "none" }], {
+				duration: Number(el.dataset.drawDuration ?? 1.2) * 1000,
+				easing: el.dataset.drawEase === "linear" ? "linear" : "cubic-bezier(0.22, 1, 0.36, 1)",
+				delay: Number(el.dataset.revealDelay ?? 0),
+				fill: "both",
+			});
+		});
 	}
 
 	// Tilt toward the pointer on a spring; springs back (with a little bounce) when the pointer leaves.

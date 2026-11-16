@@ -5,7 +5,6 @@ import { type CollectionEntry, getCollection, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
 import { backToWork } from "@/text/work";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
-import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import PageIntro from "@/components/PageIntro.astro";
 import StatusTag from "@/components/StatusTag.astro";
@@ -49,5 +48,4 @@ const { data } = entry;
 	</article>
 
 	<NextChapter current={entry.id} />
-	<ContactSection />
 </BaseLayout>

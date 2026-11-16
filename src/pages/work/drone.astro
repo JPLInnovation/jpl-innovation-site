@@ -3,7 +3,6 @@ import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
 import { CircleCheck } from "lucide-react";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
-import ContactSection from "@/components/ContactSection.astro";
 import DroneChapter from "@/components/DroneChapter.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import Bom from "@/components/drone/Bom.astro";
@@ -65,7 +64,6 @@ const entry = (await getEntry("work", "drone"))!;
 	</section>
 
 	<NextChapter current={"drone"} />
-	<ContactSection />
 </BaseLayout>
 
 <style>

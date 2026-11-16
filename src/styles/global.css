@@ -330,6 +330,7 @@
 .motion [data-draw] {
 	transform: scaleX(0);
 	transform-origin: left center;
+	transform-box: fill-box; /* an SVG line grows from its own start, not the drawing's corner */
 }
 .motion [data-draw="y"] {
 	transform: scaleY(0);

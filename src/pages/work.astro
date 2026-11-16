@@ -1,5 +1,4 @@
 ---
-import ContactSection from "@/components/ContactSection.astro";
 import WorkWall from "@/components/WorkWall.astro";
 import Register from "@/components/work/Register.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -14,5 +13,4 @@ const projects = await getProjects();
 	<!-- The wall (3D, pinned while you scroll along it) or, in classic mode, the sheet's name and its title block; then the register of the same projects, every link real HTML. -->
 	<WorkWall projects={projects} />
 	<Register projects={projects} />
-	<ContactSection />
 </BaseLayout>

@@ -1,7 +1,6 @@
 ---
 import { type CollectionEntry, getCollection } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
-import ContactSection from "@/components/ContactSection.astro";
 import Toolkit from "@/components/members/Toolkit.astro";
 import VietnamMap from "@/components/members/VietnamMap.astro";
 import ModelViewer from "@/components/model-viewer";
@@ -189,7 +188,6 @@ const story = (entry.body ?? "")
 		<p class="story__sign" aria-hidden="true">{firstName}</p>
 	</article>
 
-	<ContactSection />
 </BaseLayout>
 
 <script>

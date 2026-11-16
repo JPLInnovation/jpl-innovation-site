@@ -9,7 +9,6 @@ import { getEntry } from "astro:content";
 import sharp from "sharp";
 import BackLink from "@/components/BackLink.astro";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
-import ContactSection from "@/components/ContactSection.astro";
 import LifetimeDay from "@/components/lifetime/LifetimeDay.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import PageIntro from "@/components/PageIntro.astro";
@@ -121,7 +120,6 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 	}
 
 	<NextChapter current="lifetime" />
-	<ContactSection />
 </BaseLayout>
 
 <style>

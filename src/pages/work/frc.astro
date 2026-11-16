@@ -17,7 +17,6 @@
 import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
 import Leadership from "@/components/Leadership.astro";
-import ContactSection from "@/components/ContactSection.astro";
 import NextChapter from "@/components/NextChapter.astro";
 import TeamReveal from "@/components/TeamReveal.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -492,7 +491,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 			<NextChapter current={"frc"} />
 		</div>
 	</div>
-	<ContactSection />
 </BaseLayout>
 
 <script>

@@ -1,5 +1,4 @@
 ---
-import ContactSection from "@/components/ContactSection.astro";
 import CrewSheet from "@/components/members/CrewSheet.astro";
 import ModelViewer from "@/components/model-viewer";
 import BaseLayout from "@/layouts/BaseLayout.astro";
@@ -35,7 +34,6 @@ const badges = members.map(toBadge);
 		<p class="badges__hint">{membersPage.badgesHint}</p>
 	</section>
 
-	<ContactSection />
 </BaseLayout>
 
 <style>
