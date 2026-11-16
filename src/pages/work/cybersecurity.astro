@@ -1,93 +1,254 @@
 ---
-import ProjectCase from "@/components/ProjectCase.astro";
+/**
+ * Cybersecurity: the network diagram sheet. The name decodes into place over the network rack's studio shot, with the
+ * sheet's title block; the topology is the plate (the lab network in 3D, opening from its frame to the whole width);
+ * then the case; the write-up as the sheet's notes; the CCNA lab, where visitors type real IOS commands.
+ */
 import { getEntry, render } from "astro:content";
 import BackLink from "@/components/BackLink.astro";
-import { backToWork } from "@/text/work";
-import IosTerminal from "@/components/IosTerminal.astro";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
+import IosTerminal from "@/components/IosTerminal.astro";
 import NextChapter from "@/components/NextChapter.astro";
-import ModelViewer from "@/components/model-viewer";
 import PageIntro from "@/components/PageIntro.astro";
-import StatusTag from "@/components/StatusTag.astro";
+import ProjectCase from "@/components/ProjectCase.astro";
 import SubnetSplit from "@/components/SubnetSplit.astro";
+import TitleBlock from "@/components/TitleBlock.astro";
+import DecodeHeading from "@/components/work/DecodeHeading.astro";
+import Plate from "@/components/work/Plate.astro";
+import ModelViewer from "@/components/model-viewer";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
 // Words: src/text/projects/cybersecurity.ts (title, intro and write-up: src/text/projects/cybersecurity.md)
 import { cyberPage } from "@/text/projects/cybersecurity";
+import { backToWork } from "@/text/work";
 const entry = (await getEntry("work", "cybersecurity"))!;
 const { Content } = await render(entry);
 const { data } = entry;
 
-const { model3d, ccna } = cyberPage;
+const { model3d, ccna, titleBlock } = cyberPage;
+const rows = [...titleBlock.rows.slice(0, 1), ...(data.badge ? [{ label: titleBlock.statusLabel, value: data.badge }] : []), ...titleBlock.rows.slice(1)];
 const legend = [
-	{ color: "bg-chart-1", label: model3d.legend.vlan10 },
-	{ color: "bg-chart-2", label: model3d.legend.vlan20 },
-	{ color: "bg-chart-3", label: model3d.legend.allowed },
-	{ color: "bg-chart-4", label: model3d.legend.dropped },
+	{ color: "var(--chart-1)", label: model3d.legend.vlan10 },
+	{ color: "var(--chart-2)", label: model3d.legend.vlan20 },
+	{ color: "var(--chart-3)", label: model3d.legend.allowed },
+	{ color: "var(--chart-4)", label: model3d.legend.dropped },
 ];
 ---
 
 <BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
 	<ChapterBackdrop project="cybersecurity" />
-	<PageIntro title={data.title} lede={data.description}>
-		<div slot="before" class="flex flex-col gap-4">
-			<BackLink href="/work/">{backToWork}</BackLink>
-			{data.badge && <StatusTag>{data.badge}</StatusTag>}
-		</div>
+	<PageIntro title={data.title} lede={data.description} decode>
+		<BackLink slot="before" href="/work/">{backToWork}</BackLink>
+		<TitleBlock rows={rows} label={titleBlock.label} wide class="cyber-title-block" />
 	</PageIntro>
+
+	<!-- The plate: the topology, the lab network in 3D (the recoloured diagram while it loads, or without WebGL). -->
+	<section class="cyber-plate" aria-labelledby="lab-heading">
+		<h2 id="lab-heading" class="sr-only">{model3d.heading}</h2>
+		<Plate ratio="21/9" class="cyber-plate__plate">
+			<ModelViewer client:visible model="network" label={model3d.description} className="size-full">
+				<img src={data.img} alt={data.img_alt ?? ""} transition:name={`project-${entry.id}`} class="size-full object-cover" />
+			</ModelViewer>
+		</Plate>
+		<div class="cyber-plate__key wrapper">
+			<ul class="cyber-legend">
+				{
+					legend.map((item) => (
+						<li>
+							<span style={`background: ${item.color}`} aria-hidden="true" />
+							{item.label}
+						</li>
+					))
+				}
+			</ul>
+			<p class="cyber-plate__caption">{model3d.caption}</p>
+		</div>
+	</section>
 
 	<!-- The case: the problem, why not the alternatives, our answer (src/text/projects/hooks.ts). -->
 	<ProjectCase project="cybersecurity" />
 
-	<section class="wrapper" aria-labelledby="lab-heading">
-		<h2 id="lab-heading" class="sr-only">{model3d.heading}</h2>
-		<figure class="flex flex-col gap-4" data-reveal data-reveal-delay="200">
-			<div class="overflow-hidden rounded-xl border surface">
-				<ModelViewer
-					client:visible
-					model="network"
-					label={model3d.description}
-					className="aspect-[4/3] w-full md:aspect-[21/10]"
-				>
-					<img src={data.img} alt={data.img_alt ?? ""} transition:name={`project-${entry.id}`} class="size-full object-cover" />
-				</ModelViewer>
-			</div>
-			<figcaption class="flex flex-col gap-3">
-				<ul class="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-					{
-						legend.map((item) => (
-							<li class="flex items-center gap-2">
-								<span class={`size-2.5 rounded-full ${item.color}`} aria-hidden="true" />
-								{item.label}
-							</li>
-						))
-					}
-				</ul>
-				<p class="text-sm text-muted-foreground">{model3d.caption}</p>
-			</figcaption>
-		</figure>
-	</section>
-
-	<article class="wrapper py-16 md:py-24">
-		<div class="prose prose-lg prose-site max-w-[68ch]" data-reveal>
-			<Content />
-		</div>
+	<!-- The write-up (cybersecurity.md), set as the sheet's notes. -->
+	<article class="cyber-notes wrapper" aria-label={cyberPage.notesHeading}>
+		<Content />
 	</article>
 
-	<section class="border-y bg-card/70" aria-labelledby="ccna-heading">
-		<div class="wrapper flex flex-col gap-10 py-20 md:py-28">
-			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-				<h2 id="ccna-heading" class="font-wide text-3xl font-[850] md:text-5xl">{ccna.heading}</h2>
-				<p class="text-lg text-muted-foreground">{ccna.intro}</p>
+	<section class="cyber-lab" aria-labelledby="ccna-heading" data-field="day">
+		<div class="wrapper cyber-lab__inner">
+			<div class="cyber-lab__head">
+				<DecodeHeading id="ccna-heading" text={ccna.heading} class="cyber-lab__heading" />
+				<p class="cyber-lab__intro">{ccna.intro}</p>
 			</div>
-			<div class="grid items-start gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-10">
-				<div data-reveal><IosTerminal /></div>
-				<div data-reveal data-reveal-delay="150"><SubnetSplit /></div>
-			</div>
+			<IosTerminal />
+			<SubnetSplit />
 		</div>
 	</section>
 
 	<NextChapter current={"cybersecurity"} />
 	<ContactSection />
 </BaseLayout>
+
+<style>
+	.cyber-plate {
+		padding-bottom: clamp(1rem, 0.5rem + 2vw, 2rem);
+	}
+	.cyber-plate :global(.cyber-plate__plate .plate__frame) {
+		background: #071038;
+	}
+	.cyber-plate__key {
+		display: grid;
+		gap: 0.75rem;
+		padding-top: 1.25rem;
+	}
+	@media (min-width: 1024px) {
+		.cyber-plate__key {
+			grid-template-columns: auto minmax(0, 1fr);
+			gap: 3rem;
+			align-items: baseline;
+		}
+	}
+	.cyber-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.5rem;
+		font-size: var(--step-small);
+		font-weight: 600;
+	}
+	.cyber-legend li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.cyber-legend span {
+		width: 0.65rem;
+		height: 0.65rem;
+		border-radius: 2px;
+	}
+	.cyber-plate__caption {
+		max-width: 60ch;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	:global(.cyber-title-block) {
+		margin-top: 0.75rem;
+	}
+
+	/* The notes: the write-up's headings big, its lists ruled like a drawing's notes column. */
+	.cyber-notes {
+		display: grid;
+		gap: 1.25rem;
+		padding-block: clamp(1rem, 0.5rem + 2vw, 2rem) clamp(4rem, 2rem + 6vw, 8rem);
+	}
+	@media (min-width: 900px) {
+		.cyber-notes {
+			grid-template-columns: 12rem minmax(0, 46rem);
+			column-gap: 2.5rem;
+		}
+		.cyber-notes > :global(*) {
+			grid-column: 2;
+		}
+		.cyber-notes > :global(h3) {
+			grid-column: 1;
+			margin-top: 2.6rem;
+			padding-top: 0.9rem;
+			border-top: 1px solid var(--sheet-edge);
+		}
+		.cyber-notes > :global(h3 + *) {
+			margin-top: 2.6rem;
+		}
+	}
+	.cyber-notes :global(h2) {
+		font-size: var(--step-head);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.98;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	.cyber-notes :global(h3) {
+		font-size: var(--step-small);
+		font-weight: 650;
+		line-height: 1.35;
+		color: var(--ink-soft);
+	}
+	.cyber-notes :global(p) {
+		font-size: var(--step-body);
+		line-height: 1.6;
+		text-wrap: pretty;
+	}
+	.cyber-notes > :global(p:first-of-type) {
+		font-size: var(--step-lead);
+		line-height: 1.4;
+	}
+	.cyber-notes :global(ul) {
+		display: grid;
+	}
+	@media (min-width: 640px) {
+		.cyber-notes :global(ul) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: 2rem;
+		}
+	}
+	.cyber-notes :global(li) {
+		padding-block: 0.7rem 0.8rem;
+		border-top: 1px solid var(--sheet-edge);
+		font-weight: 550;
+		text-wrap: pretty;
+	}
+
+	/* The lab: the section turns the world to day (the hard section switch), the console stays the lab's navy. */
+	.cyber-lab {
+		--field: #f2eedf;
+		--sheet: #ffffff;
+		--sheet-edge: rgb(10 23 78 / 0.12);
+		--ink: #0a174e;
+		--ink-soft: #3d4770;
+		--accent-brand: #2f7ce6;
+		--ring: #1f5fc4;
+		color: var(--ink);
+		border-block: 1px solid var(--sheet-edge);
+	}
+	/* in the dark theme the switch is hard: paper, at once, while the world turns to day behind it */
+	:global(.dark) .cyber-lab {
+		background: var(--field);
+	}
+	.cyber-lab :global(.subnet) {
+		--s1: #0a174e;
+		--s2: #2f7ce6;
+		--s3: #8fb8f5;
+		--s4: #f5d042;
+	}
+	.cyber-lab__inner {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+		padding-block: clamp(4.5rem, 3rem + 5vw, 8rem);
+	}
+	.cyber-lab__head {
+		display: grid;
+		gap: 1rem;
+	}
+	@media (min-width: 1024px) {
+		.cyber-lab__head {
+			grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+			gap: 4rem;
+			align-items: end;
+		}
+	}
+	.cyber-lab :global(.cyber-lab__heading) {
+		font-size: clamp(2.6rem, 1rem + 6.5vw, 7rem);
+		font-stretch: 125%;
+		font-weight: 850;
+		line-height: 0.88;
+		letter-spacing: -0.045em;
+		text-wrap: balance;
+	}
+	.cyber-lab__intro {
+		max-width: 44ch;
+		font-size: var(--step-lead);
+		line-height: 1.4;
+		text-wrap: pretty;
+	}
+</style>

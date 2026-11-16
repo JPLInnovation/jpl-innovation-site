@@ -1,4 +1,9 @@
 ---
+/**
+ * The way back up the drawing set ("← All work", "← Members"): an arrow that steps back when you point at it.
+ *
+ *   <BackLink href="/work/">All work</BackLink>
+ */
 import { ArrowLeft } from "lucide-react";
 
 interface Props {
@@ -7,7 +12,34 @@ interface Props {
 const { href } = Astro.props;
 ---
 
-<a href={href} class="-ml-1 inline-flex min-h-11 w-fit items-center gap-2 px-1 text-sm font-medium text-muted-foreground hover:text-foreground">
-	<ArrowLeft className="size-4" aria-hidden="true" />
+<a href={href} class="back-link">
+	<ArrowLeft className="back-link__arrow" strokeWidth={2} aria-hidden="true" />
 	<slot />
 </a>
+
+<style>
+	.back-link {
+		display: inline-flex;
+		width: fit-content;
+		min-height: 44px;
+		align-items: center;
+		gap: 0.5rem;
+		margin-left: -0.25rem;
+		padding-inline: 0.25rem;
+		font-size: var(--step-small);
+		font-weight: 650;
+		color: var(--ink-soft);
+		transition: color 0.2s;
+	}
+	.back-link:hover {
+		color: var(--ink);
+	}
+	.back-link :global(.back-link__arrow) {
+		width: 1.15em;
+		height: 1.15em;
+		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.back-link:hover :global(.back-link__arrow) {
+		transform: translateX(-0.3rem);
+	}
+</style>

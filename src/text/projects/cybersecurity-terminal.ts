@@ -17,6 +17,12 @@ export interface TerminalScene {
 	lines: TerminalLine[];
 }
 
+/**
+ * The lab the visitor types into (src/lib/look/ios.ts): the Layer 3 switch as the scenes leave it, and the four PCs
+ * of the 3D model, two on each VLAN, so `ping` has someone to answer. These are the simulator's addresses.
+ */
+export const labHosts = ["192.168.10.10", "192.168.10.11", "192.168.20.10", "192.168.20.11"];
+
 export const terminalScenes: TerminalScene[] = [
 	{
 		id: "vlans",

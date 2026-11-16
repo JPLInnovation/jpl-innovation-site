@@ -1,79 +1,231 @@
 ---
 /**
- * Subnetting, animated: 192.168.10.0/24 split into four /26 subnets.
- * The segments draw in one after another (data-draw); all numbers are computed, not typed.
+ * Subnetting, drawn: 192.168.10.0/24 split into four /26 subnets. The two figures that prove it count up (4 subnets,
+ * 62 usable hosts in each), the address line is drawn in four segments one after another (data-draw), and the table
+ * lists them. Every number is computed here, not typed.
  */
 // Words: src/text/projects/cybersecurity.ts (`subnet`)
 import { cyberPage } from "@/text/projects/cybersecurity";
 
 const text = cyberPage.subnet;
 const BASE = "192.168.10";
-const colors = ["bg-chart-1", "bg-chart-2", "bg-chart-3", "bg-chart-4"];
-const subnets = [0, 1, 2, 3].map((i) => {
-	const network = i * 64;
-	return {
-		cidr: `${BASE}.${network}/26`,
-		range: `.${network + 1} – .${network + 62}`,
-		broadcast: `${BASE}.${network + 63}`,
-		color: colors[i],
-	};
+const BORROWED = 2;
+const count = 2 ** BORROWED;
+const size = 256 / count;
+const subnets = Array.from({ length: count }, (_, i) => {
+	const network = i * size;
+	return { cidr: `${BASE}.${network}/26`, range: `.${network + 1} – .${network + size - 2}`, broadcast: `${BASE}.${network + size - 1}` };
 });
 ---
 
-<figure class="flex flex-col gap-6 rounded-xl border surface p-5 md:p-8">
-	<figcaption class="flex flex-col gap-2">
-		<h3 class="font-semiwide text-xl font-[780]">{text.heading}</h3>
-		<p class="max-w-[60ch] text-muted-foreground">{text.text}</p>
+<figure class="subnet">
+	<figcaption class="subnet__words">
+		<h3 class="subnet__heading">{text.heading}</h3>
+		<p class="subnet__text">{text.text}</p>
+		<dl class="subnet__figures">
+			<div>
+				<dt>{text.figures.subnets}</dt>
+				<dd data-count={count}>{count}</dd>
+			</div>
+			<div>
+				<dt>{text.figures.hosts}</dt>
+				<dd data-count={size - 2}>{size - 2}</dd>
+			</div>
+		</dl>
 	</figcaption>
 
-	<div class="flex flex-col gap-1.5 overflow-x-auto font-mono text-[13px] md:text-sm">
-		<p><span class="text-muted-foreground">Mask</span> 255.255.255.192</p>
-		<p class="whitespace-nowrap" aria-label="Binary mask: 24 network bits, 2 borrowed bits, 6 host bits">
-			<span>11111111.11111111.11111111.</span><span class="rounded-sm bg-accent px-0.5 font-bold text-accent-foreground">11</span><span class="text-muted-foreground">000000</span>
+	<div class="subnet__drawing">
+		<p class="subnet__mask" aria-label="Mask 255.255.255.192: 24 network bits, 2 borrowed bits, 6 host bits">
+			<span aria-hidden="true">255.255.255.192</span>
+			<span aria-hidden="true">11111111.11111111.11111111.<mark>11</mark><span class="subnet__host">000000</span></span>
 		</p>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<div class="flex justify-between text-xs text-muted-foreground" aria-hidden="true">
-			<span>{BASE}.0</span><span>{BASE}.255</span>
+		<div class="subnet__line" aria-hidden="true">
+			<div class="subnet__ends"><span>{BASE}.0</span><span>{BASE}.255</span></div>
+			<div class="subnet__bar">
+				{subnets.map((_, i) => <span class={`subnet__seg subnet__seg--${i + 1}`} data-draw data-draw-duration="0.9" data-reveal-delay={String(150 + i * 220)} />)}
+			</div>
+			<div class="subnet__ticks">{subnets.map(() => <span>/26</span>)}</div>
 		</div>
-		<div class="flex h-10 gap-1" aria-hidden="true">
-			{
-				subnets.map((s, i) => (
-					<span
-						class={`flex flex-1 origin-left items-center justify-center rounded-md text-xs font-bold text-white ${s.color}`}
-						data-draw
-						data-draw-duration="0.9"
-						data-reveal-delay={String(200 + i * 220)}
-					>
-						/26
-					</span>
-				))
-			}
-		</div>
+		<table class="subnet__table">
+			<thead>
+				<tr>
+					<th scope="col">{text.columns.subnet}</th>
+					<th scope="col">{text.columns.hosts}</th>
+					<th scope="col" class="subnet__wide">{text.columns.broadcast}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{
+					subnets.map((s, i) => (
+						<tr>
+							<td>
+								<span class={`subnet__dot subnet__seg--${i + 1}`} aria-hidden="true" />
+								{s.cidr}
+							</td>
+							<td>{s.range}</td>
+							<td class="subnet__wide">{s.broadcast}</td>
+						</tr>
+					))
+				}
+			</tbody>
+		</table>
 	</div>
-
-	<table class="w-full text-left text-sm">
-		<thead class="text-muted-foreground">
-			<tr>
-				<th scope="col" class="pb-2 font-medium">{text.columns.subnet}</th>
-				<th scope="col" class="pb-2 font-medium">{text.columns.hosts}</th>
-				<th scope="col" class="hidden pb-2 font-medium sm:table-cell">{text.columns.broadcast}</th>
-			</tr>
-		</thead>
-		<tbody data-reveal-group>
-			{
-				subnets.map((s) => (
-					<tr class="border-t">
-						<td class="py-2.5 pr-3 font-mono">
-							<span class={`mr-2 inline-block size-2.5 rounded-full ${s.color}`} aria-hidden="true" />
-							{s.cidr}
-						</td>
-						<td class="py-2.5 pr-3 font-mono">{s.range}</td>
-						<td class="hidden py-2.5 font-mono sm:table-cell">{s.broadcast}</td>
-					</tr>
-				))
-			}
-		</tbody>
-	</table>
 </figure>
+
+<style>
+	.subnet {
+		--s1: #0a174e;
+		--s2: #2f7ce6;
+		--s3: #8fb8f5;
+		--s4: #f5d042;
+		display: grid;
+		gap: 2.5rem;
+		margin: 0;
+	}
+	:global(.dark) .subnet {
+		--s1: #f2eedf;
+		--s2: #8fb8f5;
+		--s3: #2f7ce6;
+		--s4: #f5d042;
+	}
+	@media (min-width: 1024px) {
+		.subnet {
+			grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+			gap: 4rem;
+		}
+	}
+	.subnet__heading {
+		font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2.25rem);
+		font-stretch: 112%;
+		font-weight: 780;
+		line-height: 1.05;
+		text-wrap: balance;
+	}
+	.subnet__text {
+		max-width: 46ch;
+		margin-top: 0.9rem;
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.subnet__figures {
+		display: flex;
+		gap: 2.5rem;
+		margin-top: 2rem;
+	}
+	.subnet__figures div {
+		display: flex;
+		flex-direction: column-reverse;
+		gap: 0.35rem;
+	}
+	.subnet__figures dt {
+		max-width: 12ch;
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
+	}
+	.subnet__figures dd {
+		font-size: clamp(3.5rem, 2rem + 5vw, 6.5rem);
+		font-stretch: 125%;
+		font-weight: 850;
+		line-height: 0.85;
+		letter-spacing: -0.04em;
+		font-variant-numeric: tabular-nums;
+	}
+	.subnet__drawing {
+		display: flex;
+		flex-direction: column;
+		gap: 1.75rem;
+		min-width: 0;
+	}
+	.subnet__mask,
+	.subnet__ends,
+	.subnet__ticks,
+	.subnet__table {
+		font-family: ui-monospace, "Cascadia Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+	}
+	.subnet__mask {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		overflow-x: auto;
+		font-size: 0.875rem;
+		white-space: nowrap;
+	}
+	.subnet__mask mark {
+		padding-inline: 0.15em;
+		border-radius: 3px;
+		background: var(--mark);
+		color: #0a174e;
+		font-weight: 700;
+	}
+	.subnet__host {
+		color: var(--ink-soft);
+	}
+	.subnet__line {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	.subnet__ends,
+	.subnet__ticks {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.75rem;
+		color: var(--ink-soft);
+	}
+	.subnet__ticks span {
+		flex: 1;
+		text-align: center;
+	}
+	.subnet__bar {
+		display: flex;
+		gap: 4px;
+		height: 2.75rem;
+	}
+	.subnet__seg {
+		flex: 1;
+		border-radius: 0.4rem;
+		transform-origin: left center;
+	}
+	.subnet__seg--1 {
+		background: var(--s1);
+	}
+	.subnet__seg--2 {
+		background: var(--s2);
+	}
+	.subnet__seg--3 {
+		background: var(--s3);
+	}
+	.subnet__seg--4 {
+		background: var(--s4);
+	}
+	.subnet__table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.875rem;
+		text-align: left;
+	}
+	.subnet__table th {
+		padding-bottom: 0.6rem;
+		font-family: var(--font-sans);
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
+	}
+	.subnet__table td {
+		padding: 0.7rem 0.75rem 0.7rem 0;
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.subnet__dot {
+		display: inline-block;
+		width: 0.65rem;
+		height: 0.65rem;
+		margin-right: 0.6rem;
+		border-radius: 2px;
+	}
+	@media (max-width: 520px) {
+		.subnet__wide {
+			display: none;
+		}
+	}
+</style>

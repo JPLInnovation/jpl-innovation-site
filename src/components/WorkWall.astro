@@ -12,6 +12,7 @@ import type { CollectionEntry } from "astro:content";
 import { ArrowRight } from "lucide-react";
 import PageIntro from "./PageIntro.astro";
 import StatusTag from "./StatusTag.astro";
+import TitleBlock from "./TitleBlock.astro";
 import { copyUpTo } from "@/lib/images";
 import { workPage, projectCard, workWall } from "@/text/work";
 
@@ -19,6 +20,13 @@ interface Props {
 	projects: CollectionEntry<"work">[];
 }
 const { projects } = Astro.props;
+const tb = workPage.titleBlock;
+const titleRows = [
+	{ label: tb.set.label, value: tb.set.value },
+	{ label: tb.sheets.label, value: String(projects.length) },
+	{ label: tb.place.label, value: tb.place.value },
+	{ label: tb.line.label, value: tb.line.value },
+];
 const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.img, 1920), badge: p.data.badge, href: `/work/${p.id}/` }));
 ---
 
@@ -47,7 +55,9 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		})();
 	</script>
 	<div class="wall-read">
-		<PageIntro title={workPage.title} lede={workPage.lede} />
+		<PageIntro title={workPage.title} lede={workPage.lede}>
+			<TitleBlock rows={titleRows} label={tb.label} wide class="wall-title-block" />
+		</PageIntro>
 	</div>
 	<div class="wall-stage">
 		<canvas role="img" aria-label={workWall.canvasLabel}></canvas>
@@ -58,14 +68,16 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		<div class="wall-cards" aria-hidden="true">
 			{
 				projects.map((p, i) => (
-					<article class="wall-card glass" data-wall-card={i}>
-						{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}
+					<article class="wall-card sheet" data-wall-card={i}>
 						<p class="wall-card-title">{p.data.title}</p>
 						<p class="wall-card-text">{p.data.description}</p>
-						<a href={`/work/${p.id}/`} data-astro-prefetch="viewport" tabindex="-1" class="wall-card-link">
-							{`${projectCard.readMore} ${p.data.title}`}
-							<ArrowRight className="size-4" aria-hidden="true" />
-						</a>
+						<p class="wall-card-meta">
+							{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}
+							<a href={`/work/${p.id}/`} data-astro-prefetch="viewport" tabindex="-1" class="wall-card-link">
+								{`${projectCard.readMore} ${p.data.title}`}
+								<ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+							</a>
+						</p>
 					</article>
 				))
 			}
@@ -83,7 +95,7 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 					))
 				}
 			</ol>
-			<p class="wall-ruler-label" aria-hidden="true"><span data-wall-index>01</span> <span data-wall-name>{projects[0]?.data.title}</span></p>
+			<p class="wall-ruler-label" aria-hidden="true"><span data-wall-name>{projects[0]?.data.title}</span></p>
 		</nav>
 	</div>
 	<script type="application/json" data-wall-projects set:html={JSON.stringify(panels)} />
@@ -131,9 +143,14 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		gap: 0.75rem;
 		pointer-events: none;
 	}
+	.wall-head h1 {
+		font-size: clamp(3rem, 7vw, 7rem);
+		letter-spacing: -0.04em;
+	}
 	.wall-head p {
-		font-size: 1.05rem;
-		color: var(--muted-foreground);
+		font-size: var(--step-body);
+		color: var(--ink);
+		text-wrap: pretty;
 	}
 	.wall-cards {
 		position: absolute;
@@ -149,9 +166,9 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		width: 100%;
 		flex-direction: column;
 		align-items: flex-start;
-		gap: 0.6rem;
-		padding: 1.25rem 1.4rem;
-		border-radius: 1rem;
+		gap: 0.7rem;
+		padding: 1.5rem 1.6rem;
+		border-radius: 1.5rem;
 	}
 	.wall-card[data-active] {
 		display: flex;
@@ -168,13 +185,22 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 	}
 	.wall-card-title {
 		font-stretch: 125%;
-		font-weight: 800;
-		font-size: 1.35rem;
-		line-height: 1.1;
+		font-weight: 820;
+		font-size: clamp(1.4rem, 1rem + 1vw, 2rem);
+		line-height: 1;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
 	}
 	.wall-card-text {
-		font-size: 0.95rem;
-		color: color-mix(in oklab, var(--foreground) 82%, transparent);
+		font-size: var(--step-small);
+		color: var(--ink);
+		text-wrap: pretty;
+	}
+	.wall-card-meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 1.25rem;
 	}
 	.wall-card-link {
 		display: inline-flex;
@@ -189,12 +215,9 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		position: absolute;
 		left: clamp(1rem, 5vw, 4.5rem);
 		bottom: 2.1rem;
-		font: 500 12px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-		letter-spacing: 0.03em;
-		color: #1e3a9f;
-	}
-	.dark .wall-hint {
-		color: var(--mark);
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink);
 	}
 	.wall-ruler {
 		position: absolute;
@@ -207,13 +230,9 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		gap: 0.25rem;
 		padding: 0.35rem 1rem 0.5rem;
 		border-radius: 1.25rem;
-		/* A small glass pill, so the ticks and the project's name keep their contrast over the wall. */
-		background: color-mix(in oklab, var(--background) 80%, transparent);
-		-webkit-backdrop-filter: blur(10px);
-		backdrop-filter: blur(10px);
-	}
-	html:not(.dark) .wall-ruler {
-		background: color-mix(in oklab, var(--background) 90%, transparent);
+		/* solid, so the ticks and the project's name keep their contrast over the wall */
+		background: var(--sheet);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
 	}
 	.wall-ruler ol {
 		display: flex;
@@ -239,24 +258,19 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 	.wall-ruler button:hover .tick {
 		background: var(--foreground);
 	}
-	/* The cyan accent is for the dark theme; on the light one the current tick and number are blue (3:1 and 4.5:1 or more). */
 	.wall-ruler button[aria-current] .tick {
 		height: 1.5rem;
-		background: var(--primary);
-	}
-	.dark .wall-ruler button[aria-current] .tick {
-		background: var(--accent);
+		background: var(--accent-brand);
 	}
 	.wall-ruler-label {
-		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-		letter-spacing: 0.04em;
-		color: var(--muted-foreground);
+		font-size: var(--step-small);
+		font-weight: 650;
+		line-height: 1;
+		color: var(--ink);
 	}
-	.wall-ruler-label [data-wall-index] {
-		color: var(--primary);
-	}
-	.dark .wall-ruler-label [data-wall-index] {
-		color: var(--accent);
+	.wall-title-block {
+		max-width: 56rem;
+		margin-top: 0.75rem;
 	}
 	@media (max-width: 1100px) {
 		.wall-head {
@@ -299,7 +313,6 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		const canvas = stage.querySelector("canvas")!;
 		const cards = [...root.querySelectorAll<HTMLElement>("[data-wall-card]")];
 		const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-wall-goto]")];
-		const rulerIndex = root.querySelector<HTMLElement>("[data-wall-index]")!;
 		const rulerName = root.querySelector<HTMLElement>("[data-wall-name]")!;
 
 		// Offsets, measured on resize only. The wall's position is the page's scroll through the pinned stretch.
@@ -325,7 +338,6 @@ const panels = projects.map((p) => ({ title: p.data.title, img: copyUpTo(p.data.
 		const onFront = (index: number) => {
 			cards.forEach((card, i) => (i === index ? card.setAttribute("data-active", "") : card.removeAttribute("data-active")));
 			buttons.forEach((b, i) => (i === index ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
-			rulerIndex.textContent = String(index + 1).padStart(2, "0");
 			rulerName.textContent = projects[index].title;
 		};
 		onFront(0);

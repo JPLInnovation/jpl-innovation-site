@@ -1,15 +1,66 @@
 ---
+/**
+ * The opening of a sheet: the page's name set as large as the width allows (sized by its length, so "Work" and
+ * "Cybersecurity" both fill the line on any screen), in living colour, then the lede.
+ *
+ *   <PageIntro title="Members" lede="…" />
+ *   <PageIntro title={data.title} lede={data.description} decode>       the name decodes into place (project pages)
+ *     <BackLink slot="before" href="/work/">All work</BackLink>          above the name
+ *     <TitleBlock rows={…} />                                            under the lede
+ *   </PageIntro>
+ */
+import DecodeHeading from "./work/DecodeHeading.astro";
+
 interface Props {
 	title: string;
 	lede?: string;
+	/** The name scrambles into place once (src/components/work/DecodeHeading.astro). */
+	decode?: boolean;
 }
-const { title, lede } = Astro.props;
+const { title, lede, decode = false } = Astro.props;
+const chars = Math.max(4, [...title].length);
 ---
 
-<header class="wrapper flex flex-col gap-5 pb-10 pt-12 md:pb-14 md:pt-20">
+<header class="page-intro wrapper" style={`--chars: ${chars}`}>
 	<slot name="before" />
-	<!-- The floor shrinks below ~430 px wide so one-word titles like "Cybersecurity" still fit a phone. -->
-	<h1 data-reveal class="living font-wide text-[clamp(min(2.6rem,9.6vw),7vw,5.5rem)] font-[880] leading-[0.98]">{title}</h1>
-	{lede && <p data-reveal data-reveal-delay="120" class="max-w-[54ch] text-lg text-muted-foreground md:text-xl">{lede}</p>}
+	{
+		decode ? (
+			<DecodeHeading as="h1" text={title} class="page-intro__title living" />
+		) : (
+			<h1 data-reveal class="page-intro__title living">
+				{title}
+			</h1>
+		)
+	}
+	{lede && <p data-reveal data-reveal-delay="90" class="page-intro__lede">{lede}</p>}
 	<slot />
 </header>
+
+<style is:global>
+	.page-intro {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(1rem, 0.6rem + 1.2vw, 1.75rem);
+		padding-top: clamp(2.5rem, 1rem + 5vw, 6rem);
+		padding-bottom: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+	}
+	/* The line's width over the name's length: the name fills it, up to the display step. */
+	.page-intro__title {
+		--line: calc(min(100vw, 76rem) - 2 * clamp(1rem, 4vw, 2.5rem));
+		/* up to 15vw (7rem on phones, 15rem at most), never wider than the line */
+		font-size: min(clamp(7rem, 15vw, 15rem), calc(var(--line) / (var(--chars) * 0.74)));
+		font-stretch: 125%;
+		font-weight: 850;
+		line-height: 0.86;
+		letter-spacing: -0.045em;
+		margin-left: -0.04em; /* the wide cut's side bearing, so the stem lines up with the text below */
+		text-wrap: balance;
+	}
+	.page-intro__lede {
+		max-width: 46ch;
+		font-size: var(--step-lead);
+		line-height: 1.35;
+		color: var(--ink);
+		text-wrap: pretty;
+	}
+</style>

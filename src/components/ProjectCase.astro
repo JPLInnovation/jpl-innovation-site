@@ -1,10 +1,15 @@
 ---
 /**
- * The case at the top of a project page: the problem, the obvious alternatives struck out like rejected options on a
- * drawing, our answer on a glass sheet with what it gets you, and the partner who takes it to people (when there is
- * one). The words: src/text/projects/hooks.ts. Renders nothing for a project without a case.
+ * The case at the top of a project page (the spec: "every project page opens with its case"), laid out as a drawing's
+ * notes: the problem, its headline decoding into place; the obvious alternatives, struck out by a pen line like
+ * rejected options; our answer on the page's one glass sheet, in living colour, with what it gets you as a ruled
+ * list; and the partner who takes it to people, when there is one. Each part's name sits in the sheet's margin, beside
+ * its words, not above them. The words: src/text/projects/hooks.ts. Renders nothing for a project without a case.
+ *
+ *   <ProjectCase project="cybersecurity" />
  */
 import { ArrowUpRight } from "lucide-react";
+import DecodeHeading from "./work/DecodeHeading.astro";
 import { caseLabels, hooks } from "@/text/projects/hooks";
 
 interface Props {
@@ -17,64 +22,62 @@ const id = `case-${Astro.props.project}`;
 
 {
 	story && (
-		<section class="case wrapper flex flex-col gap-14 py-16 md:gap-20 md:py-24" aria-labelledby={`${id}-problem`}>
-			<div class="grid gap-12 lg:grid-cols-[1.15fr_1fr] lg:gap-20">
-				<div class="flex flex-col gap-5" data-reveal>
-					<p class="case-kicker">{caseLabels.problem}</p>
-					<h2 id={`${id}-problem`} class="font-wide text-[clamp(2rem,4.6vw,3.6rem)] font-[850] leading-[1.02] text-balance">
-						{story.problem.title}
-					</h2>
-					<p class="max-w-[52ch] text-lg md:text-xl">{story.problem.text}</p>
-				</div>
-				<div class="flex flex-col gap-2" data-reveal data-reveal-delay="150">
-					<p class="case-kicker">{caseLabels.alternatives}</p>
-					<ul class="flex flex-col">
-						{story.alternatives.map((a) => (
-							<li class="flex flex-col gap-1.5 border-t py-5">
-								<span class="case-struck w-fit text-lg font-semibold md:text-xl">{a.option}</span>
-								<span class="max-w-[48ch] text-muted-foreground">{a.catch}</span>
-							</li>
-						))}
-					</ul>
+		<section class="case wrapper" aria-labelledby={`${id}-problem`}>
+			<div class="case__zone">
+				<p class="case__margin">{caseLabels.problem}</p>
+				<div class="case__body">
+					<DecodeHeading id={`${id}-problem`} class="case__headline" text={story.problem.title} />
+					<p class="case__text">{story.problem.text}</p>
 				</div>
 			</div>
 
-			<div class="sheet flex flex-col gap-10 rounded-3xl p-7 md:p-12" data-reveal aria-labelledby={`${id}-answer`}>
-				<div class="flex max-w-4xl flex-col gap-4">
-					<p class="case-kicker">{caseLabels.answer}</p>
-					<h2 id={`${id}-answer`} class="living font-wide text-[clamp(2rem,4.6vw,3.6rem)] font-[850] leading-[1.02] text-balance">
-						{story.answer.title}
-					</h2>
-					<p class="max-w-[60ch] text-lg md:text-xl">{story.answer.text}</p>
+			<div class="case__zone">
+				<p class="case__margin">{caseLabels.alternatives}</p>
+				<ul class="case__body case__options">
+					{story.alternatives.map((a) => (
+						<li>
+							<span class="case-struck">{a.option}</span>
+							<span class="case__catch">{a.catch}</span>
+						</li>
+					))}
+				</ul>
+			</div>
+
+			<div class="case__answer sheet lens" aria-labelledby={`${id}-answer`}>
+				<div class="case__zone">
+					<p class="case__margin">{caseLabels.answer}</p>
+					<div class="case__body">
+						<h2 id={`${id}-answer`} class="case__headline living">
+							{story.answer.title}
+						</h2>
+						<p class="case__text">{story.answer.text}</p>
+					</div>
 				</div>
-				<div class="flex flex-col gap-4">
-					<p class="case-kicker">{caseLabels.pros}</p>
-					<ul class="grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+				<div class="case__zone">
+					<p class="case__margin">{caseLabels.pros}</p>
+					<ul class="case__body case__pros">
 						{story.pros.map((p) => (
-							<li class="case-pro flex flex-col gap-1.5 pt-4">
-								<h3 class="text-lg font-semibold">{p.title}</h3>
-								<p class="text-muted-foreground">{p.text}</p>
+							<li class="case-pro">
+								<h3>{p.title}</h3>
+								<p>{p.text}</p>
 							</li>
 						))}
 					</ul>
 				</div>
 				{story.partner && (
-					<div class="flex flex-col gap-5 border-t pt-8 md:flex-row md:items-end md:justify-between">
-						<div class="flex max-w-[62ch] flex-col gap-2">
-							<p class="case-kicker">
-								{caseLabels.partner} · {story.partner.role}
-							</p>
-							<p class="font-wide text-[clamp(1.8rem,3.6vw,2.75rem)] font-[850] leading-none">{story.partner.name}</p>
-							<p class="text-lg">{story.partner.text}</p>
+					<div class="case__zone case__partner">
+						<p class="case__margin">
+							{caseLabels.partner}
+							<br />
+							<span>{story.partner.role}</span>
+						</p>
+						<div class="case__body">
+							<p class="case__partner-name">{story.partner.name}</p>
+							<p class="case__text">{story.partner.text}</p>
+							<a href={story.partner.href} target="_blank" rel="noopener" class="case__partner-link">
+								{story.partner.link} <ArrowUpRight className="size-[1.1em]" strokeWidth={2} aria-hidden="true" />
+							</a>
 						</div>
-						<a
-							href={story.partner.href}
-							target="_blank"
-							rel="noopener"
-							class="press inline-flex min-h-11 w-fit shrink-0 items-center gap-1.5 rounded-full border px-5 font-semibold hover:bg-foreground/5"
-						>
-							{story.partner.link} <ArrowUpRight className="size-4" aria-hidden="true" />
-						</a>
 					</div>
 				)}
 			</div>
@@ -83,47 +86,150 @@ const id = `case-${Astro.props.project}`;
 }
 
 <style>
-	.case-kicker {
-		font-size: var(--step-small, 0.875rem);
-		font-weight: 700;
-		letter-spacing: 0.02em;
-		color: var(--primary);
+	.case {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(3.5rem, 2rem + 5vw, 7rem);
+		padding-block: clamp(4rem, 2rem + 6vw, 8rem);
 	}
-	/* A rejected option, struck through with a pen line that draws across as it comes into view. */
+	/* A zone of the sheet: its name in the margin, its words beside it. */
+	.case__zone {
+		display: grid;
+		gap: 1rem;
+	}
+	@media (min-width: 900px) {
+		.case__zone {
+			grid-template-columns: 12rem minmax(0, 1fr);
+			gap: 2.5rem;
+		}
+	}
+	.case__margin {
+		font-size: var(--step-small);
+		font-weight: 650;
+		line-height: 1.35;
+		color: var(--ink-soft);
+		padding-top: 0.9rem;
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.case__margin span {
+		font-weight: 500;
+	}
+	.case__body {
+		min-width: 0;
+	}
+	.case :global(.case__headline) {
+		max-width: 18ch;
+		font-size: var(--step-head);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.98;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	.case__text {
+		max-width: 56ch;
+		margin-top: 1.25rem;
+		font-size: var(--step-lead);
+		line-height: 1.4;
+		text-wrap: pretty;
+	}
+
+	/* The rejected options: big, struck through by a pen line that draws across as it comes into view. */
+	.case__options li {
+		display: grid;
+		gap: 0.4rem;
+		padding-block: 1.1rem 1.4rem;
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.case__options li:first-child {
+		border-top: 0;
+		padding-top: 0.5rem;
+	}
+	@media (min-width: 900px) {
+		.case__options li {
+			grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+			gap: 2.5rem;
+			align-items: baseline;
+		}
+	}
+	/* struck through on every line it wraps to, in the accent, like a rejected option on a drawing */
 	.case-struck {
-		position: relative;
+		width: fit-content;
+		text-decoration: line-through;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 0.1em;
+		font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.85rem);
+		font-stretch: 112%;
+		font-weight: 700;
+		line-height: 1.15;
+		color: var(--ink-soft);
+		text-wrap: balance;
 	}
-	.case-struck::after {
-		content: "";
-		position: absolute;
-		left: -0.15em;
-		right: -0.15em;
-		top: 55%;
-		height: 0.12em;
-		border-radius: 1em;
-		background: var(--accent-brand);
-		transform: rotate(-1.5deg);
-		transform-origin: left;
+	.case__catch {
+		max-width: 48ch;
+		color: var(--ink);
+		text-wrap: pretty;
 	}
-	@supports (animation-timeline: view()) {
-		@media (prefers-reduced-motion: no-preference) {
-			.case-struck::after {
-				animation: case-strike linear both;
-				animation-timeline: view();
-				animation-range: entry 40% cover 45%;
-			}
+
+	/* Our answer: the page's one glass sheet. Concentric corners: 2rem outside, its contents square. */
+	.case__answer {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(3rem, 2rem + 3vw, 5rem);
+		padding: clamp(1.5rem, 0.5rem + 4vw, 4rem);
+		border-radius: 2rem;
+	}
+	.case__answer .case__margin {
+		color: var(--ink);
+	}
+	/* What it gets you: a ruled list, like the notes column of a drawing. */
+	.case__pros {
+		display: grid;
+	}
+	@media (min-width: 640px) {
+		.case__pros {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: 2.5rem;
 		}
 	}
-	@keyframes case-strike {
-		from {
-			transform: rotate(-1.5deg) scaleX(0);
-		}
-		to {
-			transform: rotate(-1.5deg) scaleX(1);
-		}
-	}
-	/* Each benefit hangs from a short accent rule, like a callout on a drawing. */
 	.case-pro {
-		border-top: 2px solid color-mix(in srgb, var(--accent-brand) 70%, transparent);
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding-block: 1rem 1.35rem;
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.case-pro h3 {
+		font-size: 1.15rem;
+		font-stretch: 112%;
+		font-weight: 720;
+		line-height: 1.2;
+	}
+	.case-pro p {
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.case__partner-name {
+		font-size: clamp(2.2rem, 1.2rem + 4vw, 4.5rem);
+		font-stretch: 125%;
+		font-weight: 850;
+		line-height: 0.9;
+		letter-spacing: -0.03em;
+	}
+	.case__partner-link {
+		display: inline-flex;
+		min-height: 48px;
+		align-items: center;
+		gap: 0.45rem;
+		margin-top: 1.5rem;
+		padding-inline: 1.4rem;
+		border-radius: 999px;
+		font-weight: 650;
+		background: var(--ink);
+		color: var(--field);
+		transition: transform 0.2s;
+	}
+	.case__partner-link:hover {
+		transform: translateY(-2px);
 	}
 </style>

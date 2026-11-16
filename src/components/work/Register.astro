@@ -1,0 +1,510 @@
+---
+/**
+ * The drawing register (the spec's section 7, Work): every project as a row of a real table (project, discipline,
+ * status, revision) that opens into a whole-width plate. The plate is the project's sheet standing in the blueprint
+ * space: it lights up from darkness as it opens, and turns to face you as you scroll past it (the spec's section 1,
+ * in CSS 3D). One plate open at a time; Escape closes it. Every project link is a real link in the row itself, so
+ * nothing depends on script; without script the rows simply stay closed. With a mouse, the project's picture follows the
+ * pointer over a closed row (a peek at the plate).
+ * The words: src/text/work.ts (`register`, `workWall.listHeading`, `projectCard`).
+ *
+ *   <Register projects={await getProjects()} />
+ */
+import type { CollectionEntry } from "astro:content";
+import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
+import StatusTag from "../StatusTag.astro";
+import { srcset } from "@/lib/images";
+import { projectCard, register, workWall } from "@/text/work";
+
+interface Props {
+	projects: CollectionEntry<"work">[];
+}
+const { projects } = Astro.props;
+const { columns } = register;
+const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline: "", revision: "", picture: { src: p.data.img, alt: p.data.img_alt ?? "", fit: "cover" as const } } }));
+---
+
+<section class="register wrapper" aria-labelledby="register-heading" data-register>
+	<h2 id="register-heading" class="sr-only">{workWall.listHeading}</h2>
+	<table class="register__table" role="table" aria-labelledby="register-heading">
+		<thead>
+			<tr role="row">
+				<th scope="col" role="columnheader">{columns.project}</th>
+				<th scope="col" role="columnheader">{columns.discipline}</th>
+				<th scope="col" role="columnheader">{columns.status}</th>
+				<th scope="col" role="columnheader">{columns.revision}</th>
+				<th scope="col" role="columnheader"><span class="sr-only">{columns.open}</span></th>
+			</tr>
+		</thead>
+		{
+			rows.map(({ p, row }) => (
+				<tbody class="register__entry" role="rowgroup">
+					<tr class="register__row" role="row">
+						<th scope="row" role="rowheader" class="register__project">
+							<button type="button" class="register__toggle" aria-expanded="false" aria-controls={`plate-${p.id}`} data-register-toggle data-peek-src={row.picture.src} data-peek-fit={row.picture.fit}>
+								<span class="register__name">{p.data.title}</span>
+								<Plus className="register__plus" strokeWidth={2} aria-hidden="true" />
+							</button>
+						</th>
+						<td role="cell" class="register__discipline">{row.discipline}</td>
+						<td role="cell" class="register__status">{p.data.badge && <StatusTag>{p.data.badge}</StatusTag>}</td>
+						<td role="cell" class="register__revision">{row.revision}</td>
+						<td role="cell" class="register__go">
+							<a href={`/work/${p.id}/`} data-astro-prefetch="hover" aria-label={`${projectCard.readMore} ${p.data.title}`}>
+								<ArrowUpRight className="register__go-icon" strokeWidth={2} aria-hidden="true" />
+							</a>
+						</td>
+					</tr>
+					<tr class="register__plate-row" id={`plate-${p.id}`} role="row" hidden>
+						<td colspan="5" role="cell">
+							<div class="register__stand">
+								<div class="register__sheet">
+									<div class="register__picture" data-fit={row.picture.fit}>
+										<img
+											src={row.picture.src}
+											srcset={srcset(row.picture.src)}
+											sizes="(min-width: 1216px) 1136px, 100vw"
+											alt={row.picture.alt}
+											loading="lazy"
+											decoding="async"
+										/>
+										<div class="register__dark" aria-hidden="true" />
+									</div>
+									<div class="register__caption">
+										<p>{p.data.description}</p>
+										<a href={`/work/${p.id}/`} class="register__read">
+											{`${projectCard.readMore} ${p.data.title}`}
+											<ArrowRight className="register__read-icon" strokeWidth={2} aria-hidden="true" />
+										</a>
+									</div>
+								</div>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			))
+		}
+	</table>
+	<div class="register__peek" aria-hidden="true" data-peek><img alt="" decoding="async" /></div>
+</section>
+
+<style>
+	.register {
+		padding-block: clamp(1rem, 0.5rem + 2vw, 2.5rem) clamp(5rem, 3rem + 6vw, 9rem);
+	}
+	.register__table {
+		width: 100%;
+		border-collapse: collapse;
+		text-align: left;
+	}
+	thead th {
+		padding: 0 1rem 0.9rem 0;
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
+		border-bottom: 1px solid var(--sheet-edge);
+	}
+	.register__row {
+		position: relative; /* the toggle's hit area covers the whole row */
+		transition: background-color 0.25s;
+	}
+	.register__row > * {
+		padding: clamp(1rem, 0.6rem + 1.2vw, 1.75rem) 1rem clamp(1rem, 0.6rem + 1.2vw, 1.75rem) 0;
+		vertical-align: baseline;
+		border-bottom: 1px solid var(--sheet-edge);
+	}
+	.register__row > td {
+		font-size: var(--step-body);
+		color: var(--ink);
+	}
+	.register__discipline,
+	.register__revision {
+		color: var(--ink-soft) !important;
+	}
+	.register__project {
+		width: 44%;
+		font-weight: inherit;
+	}
+	/* inline-block: the name wraps like text and the plus follows its last word */
+	.register__toggle {
+		display: inline-block;
+		text-align: left;
+		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+		cursor: pointer;
+		color: var(--ink);
+	}
+	.register__toggle::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+	}
+	.register__toggle:focus-visible {
+		outline: none;
+	}
+	.register__toggle:focus-visible::after {
+		outline: 2px solid var(--ring);
+		outline-offset: -2px;
+		border-radius: 0.5rem;
+	}
+	.register__name {
+		font-size: clamp(1.5rem, 0.7rem + 2.6vw, 3.25rem);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 1;
+		letter-spacing: -0.035em;
+		text-wrap: balance;
+	}
+	@media (hover: hover) {
+		.register__row:hover {
+			background-color: color-mix(in oklab, var(--ink) 4%, transparent);
+		}
+		.register__row:hover .register__toggle {
+			transform: translateX(0.5rem);
+		}
+	}
+	.register__toggle :global(.register__plus) {
+		display: inline-block;
+		width: clamp(1.1rem, 0.8rem + 0.8vw, 1.6rem);
+		height: auto;
+		margin-left: 0.45em;
+		vertical-align: 0.05em;
+		color: var(--accent-brand);
+		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.register__toggle[aria-expanded="true"] :global(.register__plus) {
+		transform: rotate(45deg);
+	}
+	.register__go {
+		width: 3.5rem;
+		padding-right: 0 !important;
+		text-align: right;
+	}
+	.register__go a {
+		position: relative;
+		z-index: 1; /* above the row's toggle area */
+		display: inline-grid;
+		place-items: center;
+		width: 44px;
+		height: 44px;
+		border-radius: 999px;
+		color: var(--ink);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+		transition:
+			background-color 0.2s,
+			color 0.2s,
+			transform 0.3s;
+	}
+	.register__go a:hover {
+		background: var(--ink);
+		color: var(--field);
+		transform: rotate(45deg);
+	}
+	.register__go :global(.register__go-icon) {
+		width: 1.15rem;
+		height: 1.15rem;
+	}
+
+	/* The plate: the project's sheet, standing in the space, turning to face you as you pass. */
+	.register__plate-row > td {
+		padding: clamp(1rem, 0.5rem + 1.5vw, 2rem) 0 clamp(2rem, 1rem + 3vw, 4rem);
+		border-bottom: 1px solid var(--sheet-edge);
+		perspective: 1800px;
+	}
+	.register__stand {
+		transform-origin: 50% 100%;
+	}
+	@supports (animation-timeline: view()) {
+		:global(html.motion:not(.reduce-motion)) .register__stand {
+			animation: register-turn linear both;
+			animation-timeline: view();
+			animation-range: cover 0% cover 100%;
+		}
+	}
+	@keyframes register-turn {
+		0% {
+			transform: rotateX(9deg) rotateY(-12deg) scale(0.94);
+		}
+		38%,
+		62% {
+			transform: none;
+		}
+		100% {
+			transform: rotateX(-5deg) rotateY(9deg) scale(0.96);
+		}
+	}
+	.register__sheet {
+		display: grid;
+		gap: 1.25rem;
+	}
+	.register__picture {
+		position: relative;
+		overflow: hidden;
+		aspect-ratio: 21 / 9;
+		border-radius: 1.25rem;
+		/* half see-through: the sheet stands in the blueprint space, its grid floor showing behind the drawing */
+		background: color-mix(in oklab, var(--sheet) 55%, transparent);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+	}
+	.register__picture img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.register__picture[data-fit="contain"] img {
+		object-fit: contain;
+		padding: 3% 8%;
+	}
+	.register__dark {
+		position: absolute;
+		inset: 0;
+		background: #030820;
+		opacity: 0;
+		pointer-events: none;
+	}
+	.register__caption {
+		display: grid;
+		gap: 1rem;
+		align-items: baseline;
+	}
+	@media (min-width: 900px) {
+		.register__caption {
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 3rem;
+		}
+	}
+	.register__caption p {
+		max-width: 62ch;
+		font-size: var(--step-lead);
+		line-height: 1.4;
+		text-wrap: pretty;
+	}
+	.register__read {
+		display: inline-flex;
+		width: fit-content;
+		min-height: 48px;
+		align-items: center;
+		gap: 0.5rem;
+		padding-inline: 1.4rem;
+		border-radius: 999px;
+		font-weight: 650;
+		white-space: nowrap;
+		background: var(--ink);
+		color: var(--field);
+		transition: transform 0.25s;
+	}
+	.register__read:hover {
+		transform: translateY(-2px);
+	}
+	.register__read :global(.register__read-icon) {
+		width: 1.1em;
+		height: 1.1em;
+		transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.register__read:hover :global(.register__read-icon) {
+		transform: translateX(0.3rem);
+	}
+
+	/* The peek: the plate's picture following the pointer over a closed row. Mouse only; transform and opacity only. */
+	.register__peek {
+		position: fixed;
+		left: 0;
+		top: 0;
+		z-index: 5;
+		width: clamp(13rem, 20vw, 20rem);
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		border-radius: 1rem;
+		background: var(--sheet);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.25s;
+	}
+	.register__peek[data-on] {
+		opacity: 1;
+	}
+	.register__peek img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.register__peek[data-fit="contain"] img {
+		object-fit: contain;
+		padding: 6%;
+	}
+
+	/* Tablets and phones: each row stacks, name and arrow first, then its details on one line. */
+	@media (max-width: 899px) {
+		thead {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+		.register__row {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			grid-template-areas:
+				"name go"
+				"disc disc"
+				"status rev";
+			column-gap: 1rem;
+			row-gap: 0.4rem;
+			padding-block: 1.25rem;
+			border-bottom: 1px solid var(--sheet-edge);
+		}
+		.register__row > * {
+			padding: 0;
+			border: 0;
+		}
+		.register__project {
+			grid-area: name;
+			width: auto;
+		}
+		.register__go {
+			grid-area: go;
+			width: auto;
+			align-self: center;
+		}
+		.register__discipline {
+			grid-area: disc;
+			margin-top: 0.4rem;
+		}
+		.register__status {
+			grid-area: status;
+		}
+		.register__revision {
+			grid-area: rev;
+			text-align: right;
+			font-size: var(--step-small) !important;
+		}
+		.register__plate-row {
+			display: block;
+		}
+		.register__plate-row[hidden] {
+			display: none;
+		}
+		.register__plate-row > td {
+			display: block;
+		}
+		.register__picture {
+			aspect-ratio: 4 / 3;
+		}
+	}
+</style>
+
+<script>
+	let cleanup: (() => void) | undefined;
+
+	function init() {
+		cleanup?.();
+		cleanup = undefined;
+		const root = document.querySelector<HTMLElement>("[data-register]");
+		if (!root) return;
+		const toggles = [...root.querySelectorAll<HTMLButtonElement>("[data-register-toggle]")];
+		const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-motion");
+		const plateOf = (t: HTMLButtonElement) => document.getElementById(t.getAttribute("aria-controls")!)!;
+		const nameOf = (t: HTMLButtonElement) => t.querySelector<HTMLElement>(".register__name")!;
+
+		const close = (t: HTMLButtonElement) => {
+			if (t.getAttribute("aria-expanded") !== "true") return;
+			t.setAttribute("aria-expanded", "false");
+			nameOf(t).classList.remove("living");
+			plateOf(t).hidden = true;
+		};
+		const open = (t: HTMLButtonElement) => {
+			toggles.forEach((other) => other !== t && close(other));
+			t.setAttribute("aria-expanded", "true");
+			nameOf(t).classList.add("living");
+			root.querySelector("[data-peek]")?.removeAttribute("data-on");
+			const plate = plateOf(t);
+			plate.hidden = false;
+			if (still()) return;
+			// It rises into place and the studio lights come up on the picture (transform and opacity only).
+			const sheet = plate.querySelector<HTMLElement>(".register__sheet")!;
+			sheet.animate(
+				[
+					{ opacity: 0, transform: "translateY(-28px) rotateX(-14deg) scale(0.97)" },
+					{ opacity: 1, transform: "none" },
+				],
+				{ duration: 760, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
+			);
+			plate.querySelector<HTMLElement>(".register__dark")!.animate([{ opacity: 0.94 }, { opacity: 0 }], { duration: 1400, delay: 180, easing: "cubic-bezier(0.3, 0, 0.2, 1)", fill: "backwards" });
+			// bring the plate up if it opened below the fold
+			const box = plate.getBoundingClientRect();
+			if (box.bottom > innerHeight) scrollBy({ top: Math.min(box.bottom - innerHeight + 24, box.top - 96), behavior: "smooth" });
+		};
+
+		const onClick = (event: Event) => {
+			const t = (event.target as Element).closest<HTMLButtonElement>("[data-register-toggle]");
+			if (!t) return;
+			if (t.getAttribute("aria-expanded") === "true") close(t);
+			else open(t);
+		};
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key !== "Escape") return;
+			const t = toggles.find((x) => x.getAttribute("aria-expanded") === "true");
+			if (!t) return;
+			close(t);
+			t.focus();
+		};
+		root.addEventListener("click", onClick);
+		root.addEventListener("keydown", onKey);
+
+		// The peek follows the pointer with a little lag, drawn only while it moves.
+		const peek = root.querySelector<HTMLElement>("[data-peek]")!;
+		const peekImg = peek.querySelector("img")!;
+		const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+		const at = { x: 0, y: 0, tx: 0, ty: 0 };
+		let raf = 0;
+		let showing: HTMLButtonElement | undefined;
+		const draw = () => {
+			at.x += (at.tx - at.x) * 0.18;
+			at.y += (at.ty - at.y) * 0.18;
+			const tilt = Math.max(-6, Math.min(6, (at.tx - at.x) * 0.05));
+			peek.style.transform = `translate3d(${at.x}px, ${at.y}px, 0) rotate(${tilt}deg)`;
+			raf = Math.abs(at.tx - at.x) + Math.abs(at.ty - at.y) > 0.5 ? requestAnimationFrame(draw) : 0;
+		};
+		const onMove = (event: PointerEvent) => {
+			if (event.pointerType !== "mouse" || still()) return;
+			const t = (event.target as Element).closest(".register__row")?.querySelector<HTMLButtonElement>("[data-register-toggle]");
+			const on = !!t && t.getAttribute("aria-expanded") !== "true";
+			const w = peek.offsetWidth || 300;
+			const h = peek.offsetHeight || 225;
+			at.tx = event.clientX > innerWidth * 0.55 ? event.clientX - w - 28 : event.clientX + 28;
+			at.ty = Math.max(80, Math.min(innerHeight - h - 16, event.clientY - h / 2));
+			if (on && t !== showing) {
+				if (!showing) {
+					at.x = at.tx;
+					at.y = at.ty;
+				}
+				peekImg.src = t!.dataset.peekSrc!;
+				peek.dataset.fit = t!.dataset.peekFit;
+			}
+			showing = on ? t! : undefined;
+			peek.toggleAttribute("data-on", on);
+			if (!raf) raf = requestAnimationFrame(draw);
+		};
+		const onLeave = () => {
+			showing = undefined;
+			peek.removeAttribute("data-on");
+		};
+		const table = root.querySelector("table")!;
+		if (fine) {
+			table.addEventListener("pointermove", onMove);
+			table.addEventListener("pointerleave", onLeave);
+			addEventListener("scroll", onLeave, { passive: true });
+		}
+		cleanup = () => {
+			root.removeEventListener("click", onClick);
+			root.removeEventListener("keydown", onKey);
+			table.removeEventListener("pointermove", onMove);
+			table.removeEventListener("pointerleave", onLeave);
+			removeEventListener("scroll", onLeave);
+			cancelAnimationFrame(raf);
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+</script>

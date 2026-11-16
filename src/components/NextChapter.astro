@@ -1,14 +1,16 @@
 ---
 /**
- * The end of a project page: a card that leads to the next project, so the work reads as chapters one after another.
- * The last project leads back to the first. The order is the `order:` in src/text/projects/*.md; the words are in
- * src/text/work.ts (`nextChapter`).
+ * The end of a project page: the next sheet of the set, its name at full size and its plate, one link. The work reads
+ * as chapters one after another; the last project leads back to the first. The order is the `order:` in
+ * src/text/projects/*.md; the words are in src/text/work.ts (`nextChapter`, and the plate's picture in `register`).
+ *
+ *   <NextChapter current="cybersecurity" />
  */
 import { ArrowRight } from "lucide-react";
 import StatusTag from "./StatusTag.astro";
 import { getProjects } from "@/lib/content";
 import { srcset } from "@/lib/images";
-import { nextChapter } from "@/text/work";
+import { nextChapter, register } from "@/text/work";
 
 interface Props {
 	/** This page's project id ("drone", "frc", ...). */
@@ -19,39 +21,131 @@ const projects = await getProjects();
 const index = projects.findIndex((p) => p.id === current);
 const next = projects[(index + 1) % projects.length];
 const looped = index === projects.length - 1;
+const picture = next ? (register.rows[next.id]?.picture ?? { src: next.data.img, alt: "", fit: "cover" as const }) : undefined;
 ---
 
 {
-	index >= 0 && next && next.id !== current && (
-		<section class="border-t" aria-labelledby="next-chapter-heading">
-			<div class="wrapper py-14 md:py-20">
-				<a
-					href={`/work/${next.id}/`}
-					data-tilt
-					class="press group grid items-center gap-6 rounded-xl border surface p-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-10 md:p-8"
-				>
-					<img
-						src={next.data.img}
-						srcset={srcset(next.data.img)}
-						sizes="(min-width: 1216px) 475px, (min-width: 768px) 40vw, 100vw"
-						alt=""
-						loading="lazy"
-						class="aspect-[16/10] w-full rounded-lg bg-muted object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-					/>
-					<div class="flex flex-col items-start gap-3">
-						<p id="next-chapter-heading" class="font-mono text-[13px] font-medium tracking-wide text-primary uppercase dark:text-accent">
-							{looped ? nextChapter.loopLabel : nextChapter.label}
-						</p>
+	index >= 0 && next && picture && next.id !== current && (
+		<section class="next" aria-labelledby="next-chapter-heading">
+			<a href={`/work/${next.id}/`} class="next__link wrapper" data-astro-prefetch="viewport">
+				<div class="next__words">
+					<p class="next__label">{looped ? nextChapter.loopLabel : nextChapter.label}</p>
+					<h2 id="next-chapter-heading" class="next__title">
+						{next.data.title}
+					</h2>
+					<p class="next__text">{next.data.description}</p>
+					<p class="next__meta">
 						{next.data.badge && <StatusTag>{next.data.badge}</StatusTag>}
-						<h2 class="font-semiwide text-2xl font-[780] md:text-[2.25rem]">{next.data.title}</h2>
-						<p class="max-w-[58ch] text-muted-foreground">{next.data.description}</p>
-						<span class="mt-1 inline-flex min-h-11 items-center gap-2 font-semibold transition-[gap] group-hover:gap-3">
+						<span class="next__go">
 							{`${nextChapter.open} ${next.data.title}`}
-							<ArrowRight className="size-4" aria-hidden="true" />
+							<ArrowRight className="next__arrow" strokeWidth={2} aria-hidden="true" />
 						</span>
-					</div>
-				</a>
-			</div>
+					</p>
+				</div>
+				<div class="next__plate" data-fit={picture.fit}>
+					<img src={picture.src} srcset={srcset(picture.src)} sizes="(min-width: 1024px) 560px, 100vw" alt="" loading="lazy" decoding="async" />
+				</div>
+			</a>
 		</section>
 	)
 }
+
+<style>
+	.next {
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.next__link {
+		display: grid;
+		gap: 2rem;
+		padding-block: clamp(3.5rem, 2rem + 5vw, 7rem);
+	}
+	@media (min-width: 1024px) {
+		.next__link {
+			grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+			gap: 4rem;
+			align-items: center;
+		}
+	}
+	.next__words {
+		display: flex;
+		flex-direction: column;
+		gap: 1.1rem;
+	}
+	.next__label {
+		font-size: var(--step-small);
+		font-weight: 650;
+		color: var(--ink-soft);
+	}
+	.next__title {
+		font-size: clamp(2.6rem, 1rem + 6vw, 6.5rem);
+		font-stretch: 125%;
+		font-weight: 850;
+		line-height: 0.9;
+		letter-spacing: -0.04em;
+		margin-left: -0.04em; /* the wide cut's side bearing: the stem lines up with the words below */
+		text-wrap: balance;
+		transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.next__link:hover .next__title {
+		transform: translateX(0.6rem);
+	}
+	.next__text {
+		max-width: 52ch;
+		font-size: var(--step-body);
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.next__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.75rem;
+	}
+	.next__go {
+		display: inline-flex;
+		min-height: 44px;
+		align-items: center;
+		gap: 0.5rem;
+		font-weight: 650;
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+	}
+	.next__go :global(.next__arrow) {
+		width: 1.15em;
+		height: 1.15em;
+		transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.next__link:hover :global(.next__arrow) {
+		transform: translateX(0.35rem);
+	}
+	/* The plate: solid ground, the picture lit a little brighter when you point at the chapter. */
+	.next__plate {
+		overflow: hidden;
+		aspect-ratio: 4 / 3;
+		border-radius: 1.25rem;
+		background: var(--sheet);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+	}
+	.next__plate img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		transition:
+			transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 0.5s;
+		opacity: 0.88;
+	}
+	.next__plate[data-fit="contain"] img {
+		object-fit: contain;
+		padding: 6%;
+	}
+	.next__link:hover .next__plate img {
+		transform: scale(1.04);
+		opacity: 1;
+	}
+	.next__link:focus-visible {
+		outline-offset: -2px;
+	}
+</style>
