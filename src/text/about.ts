@@ -144,12 +144,15 @@ export const focus = {
 			project: "drone",
 			title: "F450 drone and C++ telemetry",
 			desc: "A quadcopter that streams live video over 4G, and a custom C++ telemetry system to go with it.",
-			picture: { src: "/showcase/drone/overview.webp", small: "/showcase/drone/overview-800.webp", w: 1600, h: 1200 },
+			picture: { src: "/showcase/drone/overview.webp", small: "/showcase/drone/overview-800.webp", w: 1600, h: 1200, cut: true },
 		},
 		{
 			project: "cybersecurity",
 			title: "Cybersecurity and networking",
 			desc: "Routing, switching and securing real networks through hands-on study and certification.",
+			// The project's network drawing (assets/cybersecurity.svg) drawn once into a picture: a vector this rich is
+			// redrawn on the page's own thread as it scrolls in, which stuttered the scroll.
+			picture: { src: "/about/cybersecurity-800.webp", small: "/about/cybersecurity-800.webp", w: 800, h: 500 },
 		},
 	],
 } as const;

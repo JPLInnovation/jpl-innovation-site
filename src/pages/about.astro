@@ -96,9 +96,9 @@ const last = story.paragraphs.length - 1;
 							</div>
 							{picture ? (
 								<img
-									class="track__pic track__pic--cut"
+									class:list={["track__pic", { "track__pic--cut": "cut" in picture }]}
 									src={picture.small}
-									srcset={`${picture.small} 800w, ${picture.src} ${picture.w}w`}
+									srcset={picture.small === picture.src ? undefined : `${picture.small} 800w, ${picture.src} ${picture.w}w`}
 									sizes="(min-width: 1024px) 18rem, (min-width: 768px) 14rem, calc(100vw - 2rem)"
 									width={picture.w}
 									height={picture.h}
@@ -152,15 +152,6 @@ const last = story.paragraphs.length - 1;
 </BaseLayout>
 
 <style>
-	/* Below the first screen: the browser skips laying out and painting what is far off screen. */
-	.letter-wrap,
-	.tracks,
-	.team,
-	.beliefs {
-		content-visibility: auto;
-		contain-intrinsic-size: auto 900px;
-	}
-
 	.heading {
 		font-size: var(--step-head);
 		font-weight: 800;
