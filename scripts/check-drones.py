@@ -146,8 +146,10 @@ def main():
                             body = norm(page.evaluate("document.body.textContent"))
                             missing = [h for h in heads + parts if norm(h) not in body]
                             cl.report(not missing, f"{name}: every heading and part is on the page ({len(heads)} headings, {len(parts)} parts) {missing[:4]}")
-                            hs = norm(" | ".join(page.evaluate("[...document.querySelectorAll('h2, h3')].map((h) => h.textContent)")))
-                            cl.report(all(norm(h) in hs for h in heads if h not in ("F450 4G Drone", "Mini Arduino Drone")), f"{name}: the headings are headings")
+                            # (the roadmap's steps were h3s; they are now the row headers of its table)
+                            hs = norm(" | ".join(page.evaluate("[...document.querySelectorAll('h1, h2, h3, .revs-table tbody th')].map((h) => h.textContent)")))
+                            lost = [h for h in heads if norm(h) not in hs]
+                            cl.report(not lost, f"{name}: the headings are still headings (or row headers) {lost[:4]}")
                             check_sums(page, name)
                             check_contrast(page, name, ".plate .title-block dd", "title block values")
                             check_contrast(page, name, ".plate .title-block dt", "title block labels")
