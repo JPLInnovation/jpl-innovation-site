@@ -62,9 +62,10 @@ const RADIO_RATES = [0, 1, 0, 2, 0];
  */
 const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number }> = {
 	// The FRC chapter's opening beats (src/components/FrcChapter.astro, ./frc-chapter.ts): low at the front in the dark,
-	// close on the launcher and its hood, then the other three-quarter view as the lights come up.
+	// then over the launcher's shoulder as it shoots at the HUB ahead, then the other three-quarter view as the lights
+	// come up.
 	prologue: { at: [0, -0.25, 0.2], from: [0.42, 0.1, 1.5], label: [0, 1.2, 0] },
-	stakes: { at: [0, 0.2, 0.3], from: [0.75, 0.38, 0.9], label: [0.6, 1.25, 0.4], distance: 0.95 },
+	stakes: { at: [0, 1.9, 2.2], from: [1.2, 1.6, -4.2], label: [0.6, 1.25, 0.4], distance: 6.1 }, // high behind its right shoulder, as a broadcast camera: the robot, the arc of the shot, the HUB, the field beyond
 	reveal: { at: [0, -0.1, 0], from: [-1.25, 0.7, 1.3], label: [-0.55, 1.1, 0.6] },
 	overview: { at: [0, -0.15, 0], from: [1.18, 0.78, 1.3], label: [0.55, 1.1, -0.6] }, // the 3D viewer's three-quarter view
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front
@@ -86,8 +87,8 @@ export const view: StageView = { camera: [1.3, 0.95, 1.45], target: [0, 0.22, 0]
 
 /** Where the FUEL is (seconds into its 5 s loop, see frc-robot.ts) in each stop's still. */
 const POSE: Record<string, number> = { overview: 2, intake: 0.85, hopper: 1.9, indexer: 2.55, stakes: 2.65, reveal: 2 };
-/** Stops that frame another stop's parts (the chapter's stakes look at the launcher). */
-const LOOKS_AT: Record<string, string> = { stakes: "shooter", 'hopper-close': 'extended-hopper' };
+/** Stops that frame another stop's parts. */
+const LOOKS_AT: Record<string, string> = { 'hopper-close': 'extended-hopper' };
 
 const inside = (p: RobotPart, lo: V3, hi: V3) => [0, 1, 2].every((d) => p.lo[d] >= lo[d] && p.hi[d] <= hi[d]);
 const touches = (a: RobotPart, b: RobotPart, gap: number) =>
@@ -124,8 +125,11 @@ function classify(parts: RobotPart[], battery: V3): string[] {
 	});
 }
 
+const WHEEL_R = 0.0762; // the six 6 in drive wheels
+const WHEEL_RATE = 4; // rad per second of rig.roll (./robot-exact.ts WHEEL_SPEED)
+
 /** `ids`: the features in the order the page shows them. */
-export default async function createRobotShowcase(ctx: StageContext, ids: string[]): Promise<ShowcaseModel> {
+export default async function createRobotShowcase(ctx: StageContext, ids: string[]): Promise<ShowcaseModel & { wheels(metres: number): void }> {
 	const groups = new Map<string, RobotPart[]>();
 	const rig = await buildRobot(ctx.root, (parts) => {
 		const names = classify(parts, robotAnchors.battery);
@@ -366,5 +370,7 @@ export default async function createRobotShowcase(ctx: StageContext, ids: string
 			hideFuel();
 		},
 		applyPalette: (p) => rig.applyPalette(p),
+		/** Rolls the wheels as far as the robot drove (the FRC chapter's drive on the field; negative: backwards). */
+		wheels: (metres) => rig.roll(metres / WHEEL_R / WHEEL_RATE),
 	};
 }
