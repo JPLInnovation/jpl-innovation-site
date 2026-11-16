@@ -116,11 +116,13 @@ const PARTS: Record<string, { look: string[]; also?: string[] }> = {
  * as an offset from `at` (y up, the drone's front, with the red arms and the camera, toward +z); how far back it sits
  * is worked out for the stage, so the whole drone always fits and no part is cut off (src/lib/three/showcase.ts).
  */
-const FRAMING: Record<string, { at?: V3; from: V3; label: V3 }> = {
-	// The drone chapter's first three beats (src/components/DroneChapter.astro): the whole drone, no label.
-	prologue: { from: [-0.55, 0.1, -0.82], label: [0, 0, 0] }, // low, behind on the left: a silhouette against the rim light
+const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number }> = {
+	// The drone chapter's first four beats (src/components/DroneChapter.astro): the whole drone, no label. `distance`
+	// (metres): stand this far back instead of fitting the drone to the stage, so the place it is in shows round it.
+	prologue: { from: [-0.6, 0.03, 0.8], label: [0, 0, 0], distance: 1.5 }, // low, in front on the left: a silhouette against the dusk
 	stakes: { from: [0, -0.26, 0.97], label: [0, 0, 0] }, // (replaced by the close-up on the lens, below)
-	reveal: { from: [0.66, 0.38, 0.78], label: [0, 0, 0] }, // up and round to the front right, as the lights come up
+	reveal: { from: [0.66, 0.38, 0.78], label: [0, 0, 0], distance: 1.35 }, // up and round to the front right, as the lights come up
+	flight: { from: [0.3, 0.14, -0.94], label: [0, 0, 0], distance: 2 }, // behind and a little above, chasing it toward the ridges
 	overview: { from: [-0.73, 0.57, 0.66], label: [0.7, 0.15, 0.45] }, // the hero's three-quarter view
 	"flight-controller": { from: [-0.2, 0.55, 0.27], label: [1.4, 0.8, 0] }, // high, looking down at the top plate
 	motors: { at: [-0.56, -0.35, 0.4], from: [-0.36, 0.09, -0.1], label: [-0.6, 1.5, 0.52] }, // low, beside the front-left (red) arm
@@ -141,8 +143,8 @@ const EXPLODE: Record<string, number> = { "flight-controller": 0.45, power: 0.5 
  *  Mostly up and down, so the layers of the stack separate; a little outward, so the arms clear the plates. */
 const SPREAD: V3 = [0.45, 2.1, 0.45];
 
-/** The stops that show the whole drone in colour: the overview, and the chapter's first three beats. */
-const WHOLE = ["prologue", "stakes", "reveal", "overview"];
+/** The stops that show the whole drone in colour: the overview, and the chapter's first four beats. */
+const WHOLE = ["prologue", "stakes", "reveal", "flight", "overview"];
 /** The moment (seconds) the still 4G rings are drawn at: the same as the stills' pose, three rings part way out. */
 const RINGS_AT = 0.35;
 /** Metres from the camera lens for the chapter's close-up on it (the stakes). */
@@ -237,8 +239,10 @@ export interface DroneShowcaseOptions {
 	spinAt?: string;
 	/** false: no blinking FC LED (the chapter shows only what the page states). */
 	led?: boolean;
-	/** true: the 4G stick's signal rings stay still, drawn at one moment, instead of pulsing (the drone is on the bench). */
-	staticRings?: boolean;
+	/** How fast the props turn, 0 to 1, asked every frame (the drone chapter: still on the pad, then flying); overrides `spinAt`. */
+	spin?: () => number;
+	/** false: never the 4G stick's signal rings (the drone chapter, whose HUD shows the 4G instead). */
+	rings?: boolean;
 }
 
 /** `ids`: the features in the order the page shows them. */
@@ -280,6 +284,7 @@ export default async function createDroneShowcase(
 			camera: target.map((v, d) => v + framing.from[d]) as V3,
 			label: point(box, framing.label, LABEL_GAP),
 			labelShift: box === all ? undefined : shiftOf(box),
+			distance: framing.distance,
 		};
 	});
 	// The chapter's stakes: close in on the camera's lens glass, from straight in front of it.
@@ -359,7 +364,7 @@ export default async function createDroneShowcase(
 	const videoLink = ids.indexOf("video-link");
 	let signal = 0;
 	const update = (t: number, dt: number) => {
-		rig.animate(options.staticRings ? RINGS_AT : t, dt, spin);
+		rig.animate(t, dt, options.spin?.() ?? spin);
 		for (const ring of rings) ring.opacity *= signal;
 		if (discs) discs.opacity *= DISC_OPACITY;
 	};
@@ -378,7 +383,7 @@ export default async function createDroneShowcase(
 		focus(weights, amount) {
 			signal = videoLink < 0 ? 0 : weights[videoLink];
 			if (spinAt >= 0) spin = smooth(weights[spinAt]);
-			for (const ring of rings) ring.visible = signal > 0.01;
+			for (const ring of rings) ring.visible = options.rings !== false && signal > 0.01;
 			pullApart(amount);
 		},
 		update,
