@@ -305,6 +305,8 @@ interface StageStats {
 	/** Frames actually drawn so far (a still room draws every other animation frame). */
 	renders: number;
 	readonly lights: number;
+	/** Shader programs built so far (one built in the middle of a move is a hitch: it should have been precompiled). */
+	readonly programs: number;
 }
 const registry: StageStats[] = [];
 (window as unknown as { __stage?: StageStats[] }).__stage = registry;
@@ -343,6 +345,9 @@ export async function mountStage(
 			let n = 0;
 			scene.traverse((o) => ((o as { isLight?: boolean }).isLight ? n++ : 0));
 			return n;
+		},
+		get programs() {
+			return renderer.info.programs?.length ?? 0;
 		},
 	};
 	registry.push(stats);

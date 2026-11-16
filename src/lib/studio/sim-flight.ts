@@ -71,6 +71,11 @@ export interface SimFlight {
 	sample(): { x: number; y: number; z: number; yaw: number } | undefined;
 	/** Where the room's camera stands for the laptop's feed to be exactly the window. */
 	feedPose(at: Vector3, q: Quaternion): void;
+	/**
+	 * Builds the flight's world now, if it isn't yet: the engine calls this the first time the room is at rest. Building
+	 * it (its sky, its shaders) froze the camera for ~100 ms when it was left until the scroll neared the bench.
+	 */
+	prepare(): void;
 }
 
 /** The label on every frame, and the camera's brackets once the picture is the drone's own view. */
@@ -154,7 +159,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 	const W = ids.indexOf("web");
 	const laptop = room.screens.find((screen) => screen.scene === "web");
 	const box = laptop?.feedBox;
-	if (T < 0 || W < 0 || !laptop || !box) return { update() {}, busy: () => false, play() {}, sample: () => undefined, feedPose() {} };
+	if (T < 0 || W < 0 || !laptop || !box) return { update() {}, busy: () => false, play() {}, sample: () => undefined, feedPose() {}, prepare() {} };
 	const start = T + LOOK.from;
 	const end = W - LOOK.to;
 	const { renderer, camera } = ctx;
@@ -284,11 +289,16 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 	const fromAt = new Vector3();
 	const fromQ = new Quaternion();
 
+	const prepare = () => {
+		if (state === "idle") build().catch((error) => console.warn("Studio: the simulated flight did not load.", error));
+	};
+
 	return {
+		prepare,
 		update(s) {
 			const near = playF !== null || (s > T - 1.6 && s < W + 1.6);
 			// (well ahead of the bench, so all of this is done by the time anyone can see it)
-			if ((playF !== null || (s > T - 3.2 && s < W + 1.6)) && state === "idle") build().catch((error) => console.warn("Studio: the simulated flight did not load.", error));
+			if (playF !== null || (s > T - 3.2 && s < W + 1.6)) prepare(); // (and anyway, if the room never came to rest)
 			const ready = state === "ready";
 			room.bench.screen.feed(ready ? target.texture : null, camera.aspect);
 			laptop.feed(ready ? target.texture : null, camera.aspect);

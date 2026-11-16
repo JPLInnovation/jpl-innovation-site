@@ -90,6 +90,7 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 	const hook = HOOK_3D ? createHookScene(ctx, room) : undefined;
 	const sim = createSim(ctx, room, shots.map((shot) => shot.id));
 	const devices = createDevices(room, sim);
+	let prepared = false;
 	// The device the camera is in (or flying to or from): 0 = at the scroll's shot, 1 = there.
 	let device: Device | undefined;
 	let deviceAmt = 0;
@@ -337,6 +338,11 @@ export async function drive(ctx: StageContext, { shots, content, position, onFra
 			// (Also while the logo intro covers the page: the room is drawn underneath it, so half the frames will do.)
 			// (Never while the opening words' 3D plays: it moves every frame.)
 			api.idle = !hook?.busy() && !device && (document.documentElement.classList.contains("splash") || document.documentElement.classList.contains("studio-dark") || clock > OPEN_TIME && lamp >= 1 && leaveAmt === (leaving ? 1 : 0) && hoverIndex < 0 && !room.busy() && !sim.busy() && Math.abs(speed) < 0.003 && Math.abs(s - clamp(position(), 0, n)) < 0.003 && Math.abs(pxT - px) < 0.01 && Math.abs(pyT - py) < 0.01);
+			// The first rest (behind the opening, or still on the first view): build the flight's world then, not mid-move.
+			if (api.idle && !prepared) {
+				prepared = true;
+				sim.prepare();
+			}
 		},
 		applyPalette: (p) => room.applyPalette(p),
 		dispose() {
