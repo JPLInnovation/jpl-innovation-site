@@ -100,7 +100,7 @@ def check_3d(browser, shots):
     cl.report(abs(home["x"] - at0["x"]) < 0.01 and abs(home["z"] - at0["z"]) < 0.01, "and back to its start on the prologue")
     to_stop(page, 2)
     at2 = field_state(page)
-    cl.report(at2["balls"] == 0 and abs(at2["heading"] - at1["heading"]) > 1.0, f"on the reveal the shot is done and it has turned ({at2['heading'] - at1['heading']:.2f} rad)")
+    cl.report(at2["balls"] == 0 and abs(at2["heading"] - at1["heading"]) > 0.5, f"on the reveal the shot is done and it has turned ({at2['heading'] - at1['heading']:.2f} rad)")
     if shots:
         page.screenshot(path=os.path.join(SHOTS, "1440-stop-2.png"))
     titles = page.evaluate("JSON.parse(document.querySelector('#kitbot').dataset.titles)")

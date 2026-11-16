@@ -4,7 +4,7 @@ import { DRIVE, HUB, aimAt, ballsAt, fieldTransform, poseAt, shotPoint, toRobot 
 
 const near = (a: number, b: number, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
 
-test("before the drive the robot stands at its start; after it, it faces its HUB from the shot spot", () => {
+test("before the drive the robot stands at its start; after it, its back is to its HUB (the launcher throws over the back)", () => {
 	const start = poseAt(0);
 	near(start.x, DRIVE.from.x);
 	near(start.z, DRIVE.from.z);
@@ -14,10 +14,11 @@ test("before the drive the robot stands at its start; after it, it faces its HUB
 	near(shot.x, DRIVE.to.x);
 	near(shot.z, DRIVE.to.z);
 	near(shot.heading, aimAt(DRIVE.to));
-	// facing the HUB: its centre is straight ahead in the robot's own space
+	// The KitBot's hood throws FUEL up and back, toward its own -z (frc-robot.ts, feedPath's end), so the HUB's centre
+	// is straight behind it in the robot's own space.
 	const hub = toRobot(shot, HUB.x, 0);
 	near(hub.x, 0, 1e-9);
-	assert.ok(hub.z > 1.5, `the HUB is ahead (${hub.z} m)`);
+	assert.ok(hub.z < -1.5, `the HUB is behind it (${hub.z} m)`);
 });
 
 test("the drive is a function of the scroll: forward and back give the same pose, and it only ever moves forward along the path", () => {
@@ -71,4 +72,9 @@ test("the shot: a stream of FUEL from the launcher into the HUB, only around the
 	assert.ok(to[1] > HUB.top, "it drops in from above the opening");
 	assert.ok(Math.max(...[0.25, 0.5, 0.75].map((u) => shotPoint(u)[1])) > HUB.top + 0.4, "an arc, not a line");
 	assert.ok(from[1] > 0.4 && from[1] < 0.7, "it leaves from the hood");
+	// and it flies away from the robot's front, over its back
+	const shot = poseAt(DRIVE.drive[1]);
+	const a = toRobot(shot, from[0], from[2]);
+	const b = toRobot(shot, shotPoint(0.2)[0], shotPoint(0.2)[2]);
+	assert.ok(b.z < a.z, `the ball heads toward the robot's -z (${a.z.toFixed(2)} -> ${b.z.toFixed(2)})`);
 });

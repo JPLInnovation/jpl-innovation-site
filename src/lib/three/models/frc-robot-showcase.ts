@@ -62,10 +62,10 @@ const RADIO_RATES = [0, 1, 0, 2, 0];
  */
 const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number }> = {
 	// The FRC chapter's opening beats (src/components/FrcChapter.astro, ./frc-chapter.ts): low at the front in the dark,
-	// then over the launcher's shoulder as it shoots at the HUB ahead, then the other three-quarter view as the lights
-	// come up.
+	// then high in front of it as it throws over its back into the HUB beyond, then the other three-quarter view as the
+	// lights come up.
 	prologue: { at: [0, -0.25, 0.2], from: [0.42, 0.1, 1.5], label: [0, 1.2, 0] },
-	stakes: { at: [0, 1.9, 2.2], from: [1.2, 1.6, -4.2], label: [0.6, 1.25, 0.4], distance: 6.1 }, // high behind its right shoulder, as a broadcast camera: the robot, the arc of the shot, the HUB, the field beyond
+	stakes: { at: [0, 1.9, -2.2], from: [-1.2, 1.6, 4.2], label: [-0.6, 1.25, -0.4], distance: 6.1 }, // high in front, off its shoulder, as a broadcast camera: the robot, the arc of the shot over its back, the HUB, the field beyond
 	reveal: { at: [0, -0.1, 0], from: [-1.25, 0.7, 1.3], label: [-0.55, 1.1, 0.6] },
 	overview: { at: [0, -0.15, 0], from: [1.18, 0.78, 1.3], label: [0.55, 1.1, -0.6] }, // the 3D viewer's three-quarter view
 	intake: { at: [0, -0.3, 0], from: [0.55, 0.12, 1.3], label: [-0.7, 1.4, 0.5] }, // low at the front

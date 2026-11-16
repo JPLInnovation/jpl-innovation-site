@@ -1,7 +1,8 @@
 /**
  * The KitBot's drive on the 2026 field in the FRC chapter (src/lib/three/models/frc-chapter.ts): where the robot is at
  * each point of the scroll. It drives a short curve in its alliance zone, shoots a stream of FUEL into its HUB, then
- * turns in place for its close-ups. Pure functions of the camera's position in stops, so scrolling back plays it back.
+ * turns in place for its close-ups. Its hood throws FUEL up and back over the robot (frc-robot.ts, the end of
+ * feedPath), so it shoots with its back to the HUB. Pure functions of the camera's position in stops, so scrolling back plays it back.
  *
  * Field space: metres, x along the field's length (the blue alliance wall at -x), z across it, y up; the field's centre
  * at the origin. A heading is radians from +z toward +x. The robot's own space has it at the origin facing +z, so the
@@ -17,8 +18,8 @@ export interface Spot {
 	z: number;
 }
 
-/** The heading that faces the blue HUB from `p`. */
-export const aimAt = (p: Spot) => Math.atan2(HUB.x - p.x, -p.z);
+/** The heading that puts the robot's back, where the launcher throws, to the blue HUB from `p`. */
+export const aimAt = (p: Spot) => Math.atan2(HUB.x - p.x, -p.z) + Math.PI;
 
 const deg = (d: number) => (d * Math.PI) / 180;
 
@@ -32,7 +33,7 @@ export const DRIVE = {
 	from: { x: -7.0, z: -1.25, heading: deg(18) },
 	to: { x: -6.55, z: 1.95 },
 	/** After the shot, it turns in place this far (radians) for its close-ups: round to face its own drivers (-x). */
-	turnBy: deg(139.8),
+	turnBy: deg(-40.2),
 	drive: [0.08, 0.86] as const,
 	shot: [0.78, 1.5] as const,
 	turn: [1.32, 2.15] as const,
@@ -50,7 +51,7 @@ const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smootherstep = (x: number) => x * x * x * (x * (6 * x - 15) + 10);
 const phase = (s: number, [a, b]: readonly [number, number]) => smootherstep(clamp01((s - a) / (b - a)));
 
-/* The curve: a cubic Bézier from the start (leaving along its heading) to the shot spot (arriving facing the HUB),
+/* The curve: a cubic Bézier from the start (leaving along its heading) to the shot spot (arriving with its back to the HUB),
    walked at an even speed through a table of its lengths. */
 const end = aimAt(DRIVE.to);
 const span = Math.hypot(DRIVE.to.x - DRIVE.from.x, DRIVE.to.z - DRIVE.from.z) * DRIVE.bend;
