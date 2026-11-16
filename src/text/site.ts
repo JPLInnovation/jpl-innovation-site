@@ -1,6 +1,6 @@
 /**
- * TEXT SHOWN ON EVERY PAGE: the name, contact email, menu, footer, the blue "Let's work together" box
- * at the bottom of each page, the email pop-up, and the "Page not found" page.
+ * TEXT SHOWN ON EVERY PAGE: the name, contact email, menu, the footer (with the "Let’s work together" contact and the
+ * game "Land the drone"), the email pop-up, and the "Page not found" page.
  *
  * Edit the words between the quotes. Keep the quotes and the commas at the end of lines.
  * A ’ (curly apostrophe) and a ' (straight one) both work inside "double quotes".
