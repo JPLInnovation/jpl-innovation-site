@@ -156,9 +156,9 @@ def main():
                             check_contrast(page, name, ".bom-table tbody th, .bom-table td.c-why", "parts list text")
                             check_contrast(page, name, ".revs-desc", "roadmap text")
                             # the headline decodes, then is its own words again
-                            page.evaluate("document.querySelector('[data-decode]').scrollIntoView({ block: 'center' })")
+                            page.evaluate("document.querySelector('[data-drone-decode]').scrollIntoView({ block: 'center' })")
                             page.wait_for_timeout(1600)
-                            words = page.evaluate("[document.querySelector('[data-decode]').textContent, document.querySelector('[data-decode]').hasAttribute('data-decoding')]")
+                            words = page.evaluate("[document.querySelector('[data-drone-decode]').textContent, document.querySelector('[data-drone-decode]').hasAttribute('data-decoding')]")
                             cl.report(words[0] == ("F450 4G Drone" if slug == "drone" else "Mini Arduino Drone") and not words[1], f"{name}: the headline decodes into its words ({words[0]!r})")
                         page.close()
                 # reduced motion: the pictures are lit and the plate is open from the start

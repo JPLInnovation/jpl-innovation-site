@@ -54,7 +54,7 @@ const story = (entry.body ?? "")
 
 	<header class="hero" data-reveal>
 		{data.greeting && <p class="hero__hello">{data.greeting}</p>}
-		<h1 class="hero__name living" style={nameFit} data-fit>
+		<h1 class="hero__name living" style={nameFit} data-name-fit>
 			{
 				words.map((w, i) => (
 					<>
@@ -207,7 +207,7 @@ const story = (entry.body ?? "")
 	}
 	document.addEventListener("astro:page-load", () => {
 		watch?.disconnect();
-		const h = document.querySelector<HTMLElement>("[data-fit]");
+		const h = document.querySelector<HTMLElement>("[data-name-fit]");
 		if (!h) return;
 		let width = 0;
 		watch = new ResizeObserver(([entry]) => {

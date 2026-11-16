@@ -137,7 +137,7 @@ def check_person(browser, base, path):
     for w, hgt in SIZES:
         page = open_page(browser, base, path, "dark", (w, hgt))
         page.wait_for_timeout(400)
-        fit = page.evaluate("""() => { const h = document.querySelector('[data-fit]'); const r = document.createRange(); r.selectNodeContents(h);
+        fit = page.evaluate("""() => { const h = document.querySelector('[data-name-fit]'); const r = document.createRange(); r.selectNodeContents(h);
           const spans = [...h.querySelectorAll('span')].map((s) => s.getBoundingClientRect().width);
           return { box: h.clientWidth, text: r.getBoundingClientRect().width, word: Math.max(...spans), wide: getComputedStyle(h).whiteSpace === 'nowrap', size: parseFloat(getComputedStyle(h).fontSize) }; }""")
         used = fit["text"] if fit["wide"] else fit["word"]

@@ -141,7 +141,8 @@ function init() {
 		delete root.dataset.throttle;
 	}
 
-	const isSpace = (e: KeyboardEvent) => e.code === "Space" || e.key === " ";
+	// Space, and Enter too: the stage is a role="button", and a button answers Enter.
+	const isSpace = (e: KeyboardEvent) => e.code === "Space" || e.key === " " || e.key === "Enter";
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (!isSpace(e) || e.target !== stage) return;
 		e.preventDefault(); // no page scroll

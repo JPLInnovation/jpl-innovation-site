@@ -54,6 +54,7 @@ function init() {
 	}
 
 	for (const el of all("[data-words]")) {
+		if (el.tagName === "SCRIPT" || el.tagName === "TEMPLATE") continue; // data, not text to light up
 		// Split once into word spans; the text itself is unchanged for screen readers.
 		if (!el.dataset.wordsReady) {
 			const text = (el.textContent ?? "").trim();

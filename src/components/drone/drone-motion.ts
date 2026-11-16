@@ -1,7 +1,7 @@
 /**
  * The drone pages' two moments (only when <html> has `motion`, i.e. the visitor allows it):
  *
- *   [data-decode]   a headline scrambles from random glyphs into its words, once, in under a second, when it comes
+ *   [data-drone-decode]   a headline scrambles from random glyphs into its words, once, in under a second, when it comes
  *                   into view (the letters: ./decode.ts). Each word keeps its own box, so nothing around it moves.
  *   [data-lights]   a render (./Lit.astro) or a drawing comes up from darkness when it comes into view, as if the
  *                   studio lights switched on; several entering together light one after another.
@@ -65,7 +65,7 @@ function init() {
 		},
 		{ threshold: 0.6 },
 	);
-	document.querySelectorAll("[data-decode]").forEach((el) => decodes.observe(el));
+	document.querySelectorAll("[data-drone-decode]").forEach((el) => decodes.observe(el));
 
 	const lights = new IntersectionObserver(
 		(entries) => {

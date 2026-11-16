@@ -686,6 +686,7 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 			if (fit.style.getPropertyValue("--fit") !== before) render(last, true);
 		});
 		ro.observe(fit);
+		ro.observe(document.body); // a late picture above the demo moves its track: measure again
 		addEventListener("scroll", onScroll, { passive: true });
 		addEventListener("resize", resize);
 		const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");

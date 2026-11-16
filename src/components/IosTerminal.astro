@@ -38,7 +38,7 @@ const lineHtml = (line: TerminalLine) =>
 	<p class="sr-only" aria-live="polite" data-cli-said></p>
 	<script is:inline type="application/json" data-scenes set:html={JSON.stringify(terminalScenes)}></script>
 	<script is:inline type="application/json" data-hosts set:html={JSON.stringify(labHosts)}></script>
-	<script is:inline type="application/json" data-words set:html={JSON.stringify({ handover: text.handover, yourTurn: text.yourTurn })}></script>
+	<script is:inline type="application/json" data-ios-words set:html={JSON.stringify({ handover: text.handover, yourTurn: text.yourTurn })}></script>
 </div>
 
 <style is:global>
@@ -197,7 +197,7 @@ const lineHtml = (line: TerminalLine) =>
 		for (const root of document.querySelectorAll<HTMLElement>("[data-ios-terminal]")) {
 			const json = <T,>(sel: string): T => JSON.parse(root.querySelector(sel)!.textContent ?? "null");
 			const scenes = json<TerminalScene[]>("[data-scenes]");
-			const words = json<{ handover: string; yourTurn: string }>("[data-words]");
+			const words = json<{ handover: string; yourTurn: string }>("[data-ios-words]");
 			const screen = root.querySelector<HTMLElement>("[data-screen]")!;
 			const note = root.querySelector<HTMLElement>("[data-note]")!;
 			const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-scene]")];

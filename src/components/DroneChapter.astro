@@ -230,7 +230,7 @@ const flightStill = existsSync("public/chapter/drone/flight.webp")
 					<!-- 03 The reveal: the name, status and credits -->
 					<header id="reveal" class="dch-panel dch-reveal" data-stop="2" aria-labelledby="reveal-label">
 						<BeatLabel id="reveal-label" beat={beats.reveal} />
-						<h1 class="font-wide"><span class="dch-kicker">{chapter.reveal.kicker}</span> <span class="dch-name living" data-decode>{drone.name}</span></h1>
+						<h1 class="font-wide"><span class="dch-kicker">{chapter.reveal.kicker}</span> <span class="dch-name living" data-drone-decode>{drone.name}</span></h1>
 						<p class="dch-intro">{drone.intro}</p>
 						<!-- data-astro-reload: the guide, the 3D layout and Camera POV are standalone pages. One button; the other two are links. -->
 						<div class="dch-actions">
