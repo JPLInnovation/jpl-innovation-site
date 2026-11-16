@@ -285,7 +285,7 @@ export interface Room {
 	/** The build bench (build-bench.ts): the opening hook's drone stands on it, and says so with `occupied`. */
 	bench: BuildBench;
 	/** What the camera can fly into (devices.ts). */
-	parts: { monitor: PageScreen; robot: Stations["robot"]; rack: Stations["rack"]; laptop: Group; drone: Stations["bench"] };
+	parts: { monitor: PageScreen; robot: Stations["robot"]; rack: Stations["rack"]; laptop: Group; software: Mesh; drone: Stations["bench"] };
 	/** True while a screen is moving because the visitor scrolled or pointed at it (the stage keeps full speed). */
 	busy(): boolean;
 	/** The sketchbook is drawn at once (a jump to its scene, the stills), instead of over a few seconds. */
@@ -563,7 +563,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		logo,
 		stationDrone: stations.drone,
 		bench,
-		parts: { monitor, robot: stations.robot, rack: stations.rack, laptop: stations.laptop, drone: stations.bench },
+		parts: { monitor, robot: stations.robot, rack: stations.rack, laptop: stations.laptop, software: stations.software, drone: stations.bench },
 		busy: () => busy || bench.busy() || stations.bench.busy() || (sketchStart >= 0 && sketchShow.value < 1),
 		finishSketch() {
 			sketchDone = true;

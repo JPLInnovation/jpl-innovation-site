@@ -8,6 +8,9 @@
  *
  * Reduced motion: no pinning, the end of the day, still (the slider still moves through the day by hand).
  * Paused off screen. Words: src/text/projects/lifetime.ts.
+ *
+ * `hand`: inside another page's window (the 3D studio's software monitor, LifetimeScreen.astro): never pinned to the
+ * page's scroll; the slider moves through the day, and "Play the day" runs it on its own.
  */
 import { Clock, Hourglass, Monitor, MonitorOff, Moon, Sun } from "lucide-react";
 import { DAY, MACHINES, OUTAGES } from "@/lib/look/lifetime-day";
@@ -31,6 +34,10 @@ import {
 	weekEnd,
 } from "./day-view";
 
+interface Props {
+	hand?: boolean;
+}
+const { hand = false } = Astro.props;
 const text = lifetimePage.demo;
 const ui = lifetimeUi.en;
 const v = view(DAY.end); // the end of the day: what reduced motion and no script show
@@ -60,10 +67,10 @@ const [queuedBefore, queuedAfter] = text.queued.split("{queued}");
 const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en"), count: v.fleet.total });
 ---
 
-<section class="ltd" aria-labelledby="ltd-heading" data-ltd>
+<section class="ltd" aria-labelledby="ltd-heading" data-ltd data-ltd-hand={hand ? "" : undefined}>
 	<div class="wrapper ltd-head">
 		<h2 id="ltd-heading" class="ltd-h2">{text.heading}</h2>
-		<p class="ltd-intro">{text.intro}</p>
+		<p class="ltd-intro">{hand ? text.introHand : text.intro}</p>
 	</div>
 
 	<div class="ltd-track" data-track>
@@ -145,6 +152,11 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 						<span>{text.controls.time}</span>
 						<input type="range" min={DAY.start} max={DAY.end} step="5" value={DAY.end} aria-valuetext={clock(DAY.end)} data-time />
 					</label>
+					{hand && (
+						<button type="button" class="ltd-play" aria-pressed="false" data-ltd-play data-play={text.controls.play} data-pause={text.controls.pause}>
+							{text.controls.play}
+						</button>
+					)}
 					<div class="ltd-switches">
 						<div class="ltd-seg" role="group" aria-label={text.controls.style}>
 							<button type="button" aria-pressed="true" data-set-style="glass">{text.controls.glass}</button>
@@ -551,7 +563,7 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 		let then = 0;
 		let sliding = false;
 		let slideTimer = 0;
-		const pinned = () => !reduced();
+		const pinned = () => !reduced() && !root!.hasAttribute("data-ltd-hand");
 
 		function measure() {
 			root!.classList.toggle("is-still", !pinned());
@@ -620,6 +632,39 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 			}
 		};
 		slider.addEventListener("input", onInput);
+
+		// "Play the day" (hand mode): the slider runs from where it is (or from the morning) to the evening in 24 s.
+		const playButton = root.querySelector<HTMLButtonElement>("[data-ltd-play]");
+		let playing = 0;
+		const stopPlay = () => {
+			cancelAnimationFrame(playing);
+			playing = 0;
+			if (!playButton) return;
+			playButton.setAttribute("aria-pressed", "false");
+			playButton.textContent = playButton.dataset.play ?? "";
+		};
+		const onPlay = () => {
+			if (playing) return stopPlay();
+			let t = Number(slider.value);
+			if (t >= DAY.end) t = DAY.start;
+			let before = 0;
+			playButton!.setAttribute("aria-pressed", "true");
+			playButton!.textContent = playButton!.dataset.pause ?? "";
+			const step = (now: number) => {
+				const dt = before ? Math.min(0.1, (now - before) / 1000) : 0;
+				before = now;
+				t = Math.min(DAY.end, t + (dt * span) / 24);
+				const minute = Math.round(t);
+				slider.value = String(minute);
+				slider.setAttribute("aria-valuetext", clock(minute));
+				target = shown = t;
+				render(minute);
+				if (t < DAY.end && visible) playing = requestAnimationFrame(step);
+				else stopPlay();
+			};
+			playing = requestAnimationFrame(step);
+		};
+		playButton?.addEventListener("click", onPlay);
 
 		const onClick = (e: Event) => {
 			const el = (e.target as Element).closest<HTMLElement>("[data-set-style],[data-set-theme],[data-app-theme],[data-lang],[data-filter],[data-pick],[data-prev],[data-next],[data-desk]");
@@ -695,7 +740,14 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 
 		renderPick();
 		resize();
-		if (!pinned()) render(DAY.end, true);
+		if (root.hasAttribute("data-ltd-hand")) {
+			// In the monitor: mid-morning, the lab busy, before the outage (Play runs on from here).
+			const morning = 9 * 60 + 45;
+			slider.value = String(morning);
+			slider.setAttribute("aria-valuetext", clock(morning));
+			target = shown = morning;
+			render(morning, true);
+		} else if (!pinned()) render(DAY.end, true);
 
 		// for the page checks (scripts/check-lifetime.py)
 		(window as any).__lifetime = { view: () => ({ ...v, minute: last }), running: () => frame !== 0, renders: () => renders };
@@ -709,6 +761,8 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 			root.removeEventListener("click", onClick);
 			root.removeEventListener("keydown", onKey);
 			slider.removeEventListener("input", onInput);
+			playButton?.removeEventListener("click", onPlay);
+			stopPlay();
 			if (frame) cancelAnimationFrame(frame);
 		};
 	}
@@ -1018,6 +1072,21 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 		width: 100%;
 		accent-color: var(--accent-brand);
 		min-height: 2.75rem;
+	}
+	.ltd-play {
+		justify-self: start;
+		min-height: 2.75rem;
+		padding: 0 1.25rem;
+		border-radius: 999px;
+		background: var(--ink);
+		color: var(--field);
+		font-size: var(--step-small);
+		font-weight: 700;
+	}
+	.ltd-play[aria-pressed="true"] {
+		background: transparent;
+		color: var(--ink);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
 	}
 	.ltd-switches {
 		display: flex;

@@ -7,7 +7,8 @@ The 3D studio's checks (the home page in 3D: src/components/Studio.astro, src/li
     python scripts/check-studio.py --port 4413 --shots  also saves every scene and every open device, both themes, at
                                                         1440 x 900, under screenshots/studio/
 
-Checks: each device you can enter (the desk monitor, the test bench's laptop, the rack, the robot's cart) opens from
+Checks: each device you can enter (the desk monitor, the test bench's laptop, the rack, the robot's cart, the software
+stand's Lifetime monitor) opens from
 its button with the keyboard and from a click on the device in the room; what opens is real HTML with something to
 focus; Back and Escape close it and focus returns to the button; no console errors; frame times while the camera moves
 between scenes.
@@ -34,6 +35,7 @@ DEVICES = {
     "web": {"at": (360, 420), "inside": "[data-flight-toggle]"},
     "networks": {"at": (950, 420), "inside": "#ios-command, [data-ios-terminal] [role=tab]"},
     "robotics": {"at": (980, 560), "inside": "input[type=range][data-explode]"},
+    "software": {"at": (900, 420), "inside": "[data-lts-tab]"},
 }
 
 

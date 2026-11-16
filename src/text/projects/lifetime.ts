@@ -28,6 +28,9 @@ export const lifetimePage = {
 		heading: "One school day, as the server sees it",
 		intro:
 			"A computer lab with 22 computers, from six in the morning to six in the evening. Scroll and the day runs: computers wake for lessons and sleep after them, a new one joins, and at 10:30 the server goes down for two hours.",
+		/** In the 3D studio's monitor, where the page doesn't scroll the day: the same lab, run by the button or the slider. */
+		introHand:
+			"A computer lab with 22 computers, from six in the morning to six in the evening. Press Play the day, or move the time slider: computers wake for lessons and sleep after them, a new one joins, and at 10:30 the server goes down for two hours.",
 		/** The one plain caption that says what this is. */
 		caption: "A simulation of the Lifetime Server interface, built in HTML for this page. The lab and its numbers are made up: no customer's data.",
 		/** Read by screen readers for the app window. */
@@ -40,6 +43,9 @@ export const lifetimePage = {
 			theme: "Theme",
 			dark: "Dark",
 			light: "Light",
+			/** In the 3D studio's monitor: runs the day on its own. */
+			play: "Play the day",
+			pause: "Pause",
 		},
 		plan: {
 			label: "Plan of the lab: 21 desks in three rows, the teacher's desk and the server cabinet. A lit screen is an awake computer. Use the arrow keys to pick a computer.",

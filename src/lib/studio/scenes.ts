@@ -42,8 +42,8 @@ export const SHOTS: Record<string, SceneShot> = {
 	 */
 	robotics: { id: "robotics", camera: [-1.1, 1.35, -0.3], target: [-1.1, 0.75, -2.6] },
 	drones: { id: "drones", camera: [1.85, 1.4, -0.6], target: [1.85, 1.0, -2.6] },
-	/** (Software: the small stand between the drones' bench and the rack, close enough to read its monitor.) */
-	software: { id: "software", camera: [2.3, 1.3, -1.2], target: [2.3, 1.12, -2.8] },
+	/** (Software: the small stand between the drones' bench and the rack, close in, the monitor right of centre.) */
+	software: { id: "software", camera: [2.4, 1.2, -1.85], target: [2.42, 1.1, -2.86] },
 	networks: { id: "networks", camera: [2.85, 1.45, -0.4], target: [2.85, 1.25, -2.9] },
 	/** (The test bench: closer than the others, so the laptop's page can be read.) */
 	web: { id: "web", camera: [-2.3, 1.17, -1.75], target: [-2.3, 0.99, -2.6] },

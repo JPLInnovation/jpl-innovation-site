@@ -9,6 +9,7 @@
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
 import IosTerminal from "@/components/IosTerminal.astro";
+import LifetimeScreen from "@/components/lifetime/LifetimeScreen.astro";
 import Register from "@/components/work/Register.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import ClassicHome from "@/components/ClassicHome.astro";
@@ -43,7 +44,7 @@ const content: RoomContent = {
 // The work stations, one per service, text on alternate sides.
 const stations = ["web", "robotics", "drones", "software", "networks"] as const;
 // The stations whose device you can enter (src/lib/studio/devices.ts), and their buttons.
-const enter: Record<string, string> = { web: devices.laptop.enter, robotics: devices.cart.enter, networks: devices.rack.enter };
+const enter: Record<string, string> = { web: devices.laptop.enter, robotics: devices.cart.enter, networks: devices.rack.enter, software: devices.software.enter };
 // The drones' station: arm the F450 on its bench (it never lifts off).
 const arm: Record<string, boolean> = { drones: true };
 // Each station's words sit on the side away from its subject.
@@ -288,6 +289,15 @@ const organization = {
 					<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
 				</div>
 				<div class="studio-device-body"><Register projects={projects} /></div>
+			</div>
+		</dialog>
+		<dialog class="studio-device" data-device="software" aria-labelledby="device-software">
+			<div class="studio-device-sheet" data-kind="screen">
+				<div class="studio-device-bar">
+					<h2 id="device-software" class="studio-device-title">{devices.software.title}</h2>
+					<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
+				</div>
+				<div class="studio-device-body studio-device-app"><LifetimeScreen /></div>
 			</div>
 		</dialog>
 		<dialog class="studio-device" data-device="networks" aria-labelledby="device-networks">

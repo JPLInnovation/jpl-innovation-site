@@ -7,6 +7,8 @@
  *                                 clock, with its telemetry in a panel beside it
  *   networks   the switch rack    up to its front, then the CCNA lab's console (src/components/IosTerminal.astro)
  *   robotics   the robot's cart   a three-quarter view; the robot turns, and comes apart into its CAD parts on a slider
+ *   software   the software stand's monitor   as the desk monitor: the screen becomes the window, then Lifetime is
+ *                                 there (its real screens, and the server's live demo: src/components/lifetime/LifetimeScreen.astro)
  *
  * Each device knows what to pick (for the pointer) and where the camera ends up. The engine flies there (engine.ts).
  */
@@ -14,7 +16,7 @@ import { Matrix4, type Mesh, type Object3D, type PerspectiveCamera, type Quatern
 import type { Room } from "./room";
 import type { SimFlight } from "./sim-flight";
 
-export const DEVICE_IDS = ["research", "web", "networks", "robotics"] as const;
+export const DEVICE_IDS = ["research", "web", "networks", "robotics", "software"] as const;
 export type DeviceId = (typeof DEVICE_IDS)[number];
 
 export interface Device {
@@ -48,7 +50,7 @@ function fillPose(mesh: Mesh, camera: PerspectiveCamera, at: Vector3, q: Quatern
 }
 
 export function createDevices(room: Room, sim: SimFlight): Record<DeviceId, Device> {
-	const { monitor, robot, rack, laptop } = room.parts;
+	const { monitor, robot, rack, laptop, software } = room.parts;
 	const rackFrom = rack.center.clone().add(new Vector3(0, 0, 1.15));
 	// The robot from the front right and a little above; the point looked at sits to the robot's right, so it stands in
 	// the left of the window, clear of the panel on the right.
@@ -61,5 +63,6 @@ export function createDevices(room: Room, sim: SimFlight): Record<DeviceId, Devi
 		web: { id: "web", pick: [laptop], pose: (at, q) => sim.feedPose(at, q) },
 		networks: { id: "networks", pick: [rack.group], pose: (at, q) => lookPose(rackFrom, rack.center, at, q) },
 		robotics: { id: "robotics", pick: [robot.holder], pose: (at, q) => lookPose(robotFrom, robotTo, at, q) },
+		software: { id: "software", pick: [software], pose: (at, q, camera) => fillPose(software, camera, at, q) },
 	};
 }

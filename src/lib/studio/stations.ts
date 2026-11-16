@@ -65,6 +65,8 @@ export interface Stations {
 	robot: { holder: Group; center: Vector3; explode(amount: number): void; turn(angle: number): void };
 	rack: { group: Group; center: Vector3 };
 	laptop: Group;
+	/** The software stand's monitor (Lifetime on it): the camera flies in until it fills the window. */
+	software: Mesh;
 	/** The F450 on its bench: arm it and its props spin up for a few seconds, then wind down. It never lifts off. */
 	bench: { holder: Group; arm(): void; busy(): boolean };
 	update(state: RoomState, dt: number): void;
@@ -859,6 +861,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		},
 		rack: { group: rack, center: new Vector3(rackX, 1.45, rackFront) },
 		laptop: lid,
+		software: softScreen,
 		bench: {
 			holder: droneHolder,
 			arm: () => (armedUntil = clock + ARMED_FOR),
