@@ -24,7 +24,6 @@
 // @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
 import { existsSync } from "node:fs";
 import BeatLabel from "@/components/BeatLabel.astro";
-import StatusTag from "@/components/StatusTag.astro";
 import { buttonVariants } from "@/components/ui/button";
 import { DataIcon } from "@/lib/icons";
 import { robotChapter as chapter } from "@/text/projects/frc";
@@ -175,7 +174,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 					<!-- 03 The reveal -->
 					<header id="reveal" class="kch-panel kch-reveal" data-stop="2" aria-labelledby="kitbot-reveal-label">
 						<BeatLabel id="kitbot-reveal-label" beat={beats.reveal} />
-						<div><StatusTag>{chapter.reveal.status}</StatusTag></div>
+						<p class="kch-status">{chapter.reveal.status}</p>
 						<h2 class="font-wide"><span class="kch-kicker">{chapter.reveal.kicker}</span> {chapter.reveal.name}</h2>
 						<p class="kch-intro">{chapter.reveal.intro}</p>
 						<dl class="kch-facts">
@@ -1059,6 +1058,11 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		font-family: var(--font-sans);
 		letter-spacing: 0.01em;
 		text-transform: none;
+	}
+	/* Where it raced: a plain line in the edition's yellow, not a badge over the headline. */
+	.kch-status {
+		font-weight: 650;
+		color: var(--accent);
 	}
 	.frc-ed .kch .chapter-label-n {
 		display: none;
