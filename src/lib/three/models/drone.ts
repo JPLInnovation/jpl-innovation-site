@@ -267,7 +267,7 @@ export async function loadDrone(): Promise<DroneRig> {
 	model.add(led);
 	const ringGeometry = new TorusGeometry(0.02, 0.0012, 8, 48);
 	const rings = [0, 1, 2].map(() => {
-		const ring = new Mesh(ringGeometry, new MeshBasicMaterial({ color: 0x5cc8ff, transparent: true, opacity: 0, depthWrite: false }));
+		const ring = new Mesh(ringGeometry, new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false }));
 		ring.rotation.x = Math.PI / 2;
 		model.add(ring);
 		return ring;
