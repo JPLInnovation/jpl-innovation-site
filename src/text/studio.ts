@@ -9,7 +9,7 @@
 export const studio = {
 	/** Read by screen readers for the 3D view. */
 	canvasLabel:
-		"The JPL Innovation studio in 3D: a desk with a sketchbook and a monitor, workbenches for robots, drones, networks and testing, a wall of projects, a whiteboard, a window, the team's table and the door.",
+		"The JPL Innovation studio in 3D: a desk with a sketchbook and a monitor, workbenches for robots, drones, software, networks and testing, a wall of projects, a whiteboard, a window, the team's table and the door.",
 	/** The film ruler at the bottom: what it is, for screen readers. */
 	rulerLabel: "Scenes in the studio",
 	/** Under the first scene, before anyone has scrolled. */
@@ -80,6 +80,7 @@ export const sceneNames: Record<string, string> = {
 	research: "Research",
 	robotics: "Robotics",
 	drones: "Drones",
+	software: "Software",
 	networks: "Networks",
 	build: "Build",
 	test: "Test",

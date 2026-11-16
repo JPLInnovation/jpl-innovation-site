@@ -44,7 +44,8 @@ def main() -> None:
             launch["executable_path"] = args.executable
         browser = p.chromium.launch(**launch)
         page = browser.new_page(viewport=SIZE, color_scheme="dark")
-        page.add_init_script("try{localStorage.setItem('theme','dark')}catch(e){}")
+        # The 3D studio, with the first visit's chooser, intro and hook already seen.
+        page.add_init_script("try{localStorage.setItem('theme','dark');localStorage.setItem('experience','3d');localStorage.setItem('hook-seen','1');sessionStorage.setItem('jpl-intro-seen','1')}catch(e){}")
         page.goto(args.url + "?studio=capture&quality=high", wait_until="load")
         page.wait_for_function("window.__studio", timeout=180000)
         page.add_style_tag(content="[data-site-header]{display:none!important}")

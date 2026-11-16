@@ -41,7 +41,7 @@ const content: RoomContent = {
 };
 
 // The work stations, one per service, text on alternate sides.
-const stations = ["web", "robotics", "drones", "networks"] as const;
+const stations = ["web", "robotics", "drones", "software", "networks"] as const;
 // The stations whose device you can enter (src/lib/studio/devices.ts), and their buttons.
 const enter: Record<string, string> = { web: devices.laptop.enter, robotics: devices.cart.enter, networks: devices.rack.enter };
 // The drones' station: arm the F450 on its bench (it never lifts off).
@@ -151,7 +151,7 @@ const organization = {
 			{studio.skipFlight} <ArrowRight className="size-4" aria-hidden="true" />
 		</button>
 
-		<!-- 3 The four stations: one service each -->
+		<!-- 3 The stations: one service each -->
 		{
 			services.map((s, i) => {
 				const id = stations[i];

@@ -1,10 +1,11 @@
 /**
- * The rest of the studio, after the desk (room.ts): the four work stations against the front wall, the curved wall of
+ * The rest of the studio, after the desk (room.ts): the five work stations against the front wall, the curved wall of
  * projects at the right-hand end, and along the back wall the whiteboard, the window, the team's table and the door.
  * Metres, y up; positions match the camera's shots in scenes.ts.
  *
  *   Robotics   the KitBot on a low rolling cart, a pegboard of tools behind it (the robot's own CAD, frc-robot.ts)
  *   Drones     the F450 on a landing mat, powered up on the bench (its LED blinks; it has not flown, so it never lifts off) (drone.ts)
+ *   Software   a small stand with a PC and a monitor, Lifetime's Overview on its screen
  *   Networks   a switch rack with blinking port lights and patch cables
  *   Testing    the test bench: a laptop on the F450's ground station (its page scrolls with the mouse wheel; screens.ts)
  *              and an easel whiteboard with the bench test. Its scene id stays "web" (links and the camera use it).
@@ -38,7 +39,7 @@ import { hardware } from "../three/finish";
 import { tick } from "../three/yield";
 import type { DroneRig } from "../three/models/drone";
 import type { Palette, StageContext } from "../three/stage";
-import { boxAt, canvasSurface, loadImage, ROOM, screenMaterial, woodMaterial } from "./room";
+import { boxAt, canvasSurface, imageTexture, loadImage, ROOM, screenMaterial, woodMaterial } from "./room";
 import { type PageScreen, pageScreen } from "./screens";
 import type { LightSpec } from "./lights";
 import { cover, cutCorners, cutCornerSurface, projectFace } from "./panels";
@@ -250,6 +251,25 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	await tick();
 
 	/* ================================================================== */
+	/* Software: a small stand between the drones and the rack, with      */
+	/* Lifetime on its monitor                                             */
+	/* ================================================================== */
+	const softX = 2.58;
+	const softZ = -2.7;
+	workbench(softX, 0.6, 0.6, softZ);
+	boxAt(group, 0.5, 0.325, 0.025, dark, softX, benchTop + 0.27, softZ - 0.16, 0.008);
+	// Its screen: Lifetime's own Overview (the same screenshot as on the Lifetime page), 16:10 like the screen.
+	const softScreen = new Mesh(new PlaneGeometry(0.47, 0.294), screenMaterial(imageTexture("/assets/lifetime/overview.webp")));
+	softScreen.position.set(softX, benchTop + 0.27, softZ - 0.146);
+	group.add(softScreen);
+	boxAt(group, 0.05, 0.11, 0.05, steel, softX, benchTop + 0.055, softZ - 0.18);
+	boxAt(group, 0.2, 0.01, 0.14, steel, softX, benchTop + 0.005, softZ - 0.17, 0.004);
+	boxAt(group, 0.36, 0.018, 0.12, dark, softX, benchTop + 0.009, softZ + 0.1, 0.005); // the keyboard
+	boxAt(group, 0.09, 0.3, 0.26, dark, softX + 0.21, 0.15, softZ - 0.05, 0.008); // the PC, on the floor under the stand
+
+	await tick();
+
+	/* ================================================================== */
 	/* Networks: the switch rack                                           */
 	/* ================================================================== */
 	const rackX = 3.3;
@@ -434,10 +454,10 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	await tick();
 
 	/* ================================================================== */
-	/* The wall: one panel per project, two rows on an arc                 */
+	/* The wall: one panel per project, three above and two below, on an arc */
 	/* ================================================================== */
 	// The arc's centre is where the camera stands for this scene (scenes.ts), so every panel is the same distance away.
-	const arc = { x: 3.6, z: 1.0, r: 3.9, step: 0.35, y: 1.45, row: 0.98 };
+	const arc = { x: 3.6, z: 1.0, r: 3.9, step: 0.235, y: 1.45, row: 0.7, scale: 0.68 };
 	const wallBack = new Mesh(
 		new CylinderGeometry(arc.r + 0.2, arc.r + 0.2, 2.6, 48, 1, true, Math.PI / 2 - 0.6, 1.2),
 		new MeshStandardMaterial({ color: 0x0e1834, roughness: 0.9, side: DoubleSide }),
@@ -448,10 +468,14 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	// The panel under the pointer (-1: none) lifts toward the camera, glows at its edge and brightens; the others dim a little.
 	let hovered = -1;
 	let wallHover = 0;
+	// Read left to right and top to bottom (the camera looks along +x, so its right is +z): the top row holds one more
+	// than the bottom when the count is odd, and each row is centred, so five sit three over two like bricks.
+	const topCount = Math.ceil(content.projects.length / 2);
 	const panels = content.projects.map((project, i) => {
-		// Two to a row, read left to right and top to bottom (the camera looks along +x, so its right is +z).
-		const angle = ((i % 2) - 0.5) * arc.step;
-		const y = arc.y + (Math.floor(i / 2) === 0 ? arc.row / 2 : -arc.row / 2);
+		const top = i < topCount;
+		const inRow = top ? topCount : content.projects.length - topCount;
+		const angle = ((top ? i : i - topCount) - (inRow - 1) / 2) * arc.step;
+		const y = arc.y + (top ? arc.row / 2 : -arc.row / 2);
 		const holder = new Group();
 		const bx = arc.x + Math.cos(angle) * arc.r;
 		const bz = arc.z + Math.sin(angle) * arc.r;
@@ -818,6 +842,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const accents: Record<string, LightSpec> = {
 		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0xb8c8ff, dark: 0.5, light: 0.5, distance: 1.4, decay: 2 },
 		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
+		software: { at: [softX, benchTop + 0.3, softZ + 0.35], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
 		contact: { at: [doorX, 2.1, z1 - 1.8], color: 0xffe6a8, dark: 1.2, light: 3, distance: 4, decay: 1.6 },
 	};
@@ -882,7 +907,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				const h = panel.hover;
 				panel.holder.rotation.y = panel.base + (1 - turn) * 0.5;
 				panel.holder.position.set(panel.bx + panel.toward[0] * 0.12 * h, panel.y - (1 - turn) * 0.04, panel.bz + panel.toward[1] * 0.12 * h);
-				panel.holder.scale.setScalar(1 + 0.05 * h);
+				panel.holder.scale.setScalar(arc.scale * (1 + 0.05 * h));
 				(panel.screen.material as MeshBasicMaterial).color.setScalar(1 - 0.3 * wallHover * (1 - h));
 				(panel.edge.material as MeshBasicMaterial).opacity = h;
 			});

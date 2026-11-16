@@ -1,6 +1,6 @@
 /**
  * The studio's scenes: where the camera stands and what it looks at for each one. Metres, y up; the room runs along
- * x (-8.5 to 8.5), with the desk and the four work stations against the front wall (z = -3.4, the camera looking
+ * x (-8.5 to 8.5), with the desk and the work stations against the front wall (z = -3.4, the camera looking
  * toward -z) and the whiteboard, window, table and door against the back wall (z = 6.4, the camera looking toward +z).
  * See src/lib/studio/room.ts for what stands where.
  *
@@ -37,11 +37,13 @@ export const SHOTS: Record<string, SceneShot> = {
 	simFly: { id: "simFly", camera: [-3.0, 1.3, -1.2], target: [-3.0, 1.1, -2.8] },
 	simLand: { id: "simLand", camera: [-2.33, 1.17, -1.75], target: [-2.33, 0.99, -2.6] },
 	/**
-	 * 3 Stations: the four work areas, one after another. Each subject sits on the side of the frame away from its text
+	 * 3 Stations: the work areas, one after another. Each subject sits on the side of the frame away from its text
 	 * (text on the left: the subject to the right, and the other way round).
 	 */
 	robotics: { id: "robotics", camera: [-1.1, 1.35, -0.3], target: [-1.1, 0.75, -2.6] },
 	drones: { id: "drones", camera: [1.85, 1.4, -0.6], target: [1.85, 1.0, -2.6] },
+	/** (Software: the small stand between the drones' bench and the rack, close enough to read its monitor.) */
+	software: { id: "software", camera: [2.3, 1.3, -1.2], target: [2.3, 1.12, -2.8] },
 	networks: { id: "networks", camera: [2.85, 1.45, -0.4], target: [2.85, 1.25, -2.9] },
 	/** (The test bench: closer than the others, so the laptop's page can be read.) */
 	web: { id: "web", camera: [-2.3, 1.17, -1.75], target: [-2.3, 0.99, -2.6] },
@@ -61,4 +63,4 @@ export const SHOTS: Record<string, SceneShot> = {
 };
 
 /** The home page's scenes, in order. */
-export const HOME = ["title", "sketch", "research", "build", "test", "simIn", "simFly", "simLand", "web", "robotics", "drones", "networks", "wall", "standards", "timeline", "crew", "contact"];
+export const HOME = ["title", "sketch", "research", "build", "test", "simIn", "simFly", "simLand", "web", "robotics", "drones", "software", "networks", "wall", "standards", "timeline", "crew", "contact"];

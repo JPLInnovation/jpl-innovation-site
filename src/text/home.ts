@@ -147,6 +147,13 @@ export const services: Service[] = [
 		verb: "sketch",
 	},
 	{
+		icon: "code",
+		title: "Software",
+		desc: "Software made for real use, like Lifetime, which counts how long each computer is really awake.",
+		proof: { label: "Lifetime", href: "/work/lifetime/" },
+		verb: "build",
+	},
+	{
 		icon: "shield",
 		title: "Networking & cybersecurity",
 		desc: "Designing, configuring and hardening networks: Cisco routing and switching, Windows Server infrastructure, access control.",
