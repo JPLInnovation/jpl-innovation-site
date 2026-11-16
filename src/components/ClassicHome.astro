@@ -711,13 +711,36 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		transform-origin: left center;
 		transform: scaleX(var(--p, 0));
 	}
+	/* The word's colour: a wide band (yellow, then the plate's ink, then blue) slides through its letters as you scroll,
+	   so it turns from yellow to blue, a different way on each plate: on Sketch it. the blue comes in from the left, on
+	   Build it. from below, on Secure it. from the right. The whole word is always there. */
+	.plate {
+		--c-yellow: #f5d042;
+		--c-mid: #f2eedf;
+		--c-blue: #8fb8f5;
+	}
+	:global(html.dark) .turned {
+		--c-yellow: #94700c;
+		--c-mid: #0a174e;
+		--c-blue: #2f7ce6;
+	}
 	.plate[data-scrolly] .verb {
 		animation: none;
 		transition: none;
-		--live-x: calc(6% + var(--p, 0) * 88%);
-		--live-y: calc(18% + var(--p, 0) * 64%);
-		clip-path: inset(0 calc((1 - min(1, var(--p, 0) * 3.2)) * 100%) 0 0);
+		clip-path: none;
+		background-image: linear-gradient(var(--sweep, 270deg), var(--c-yellow) 0%, var(--c-yellow) 22%, var(--c-mid) 50%, var(--c-blue) 78%, var(--c-blue) 100%);
+		background-size: 320% 100%;
+		background-position: calc((1 - var(--p, 0)) * 100%) 0;
 		transform: translateX(calc((0.4 - var(--p, 0)) * 4vw));
+	}
+	.plate--build[data-scrolly] .verb {
+		--sweep: 180deg;
+		background-size: 100% 320%;
+		background-position: 0 calc(var(--p, 0) * 100%);
+	}
+	.plate--secure[data-scrolly] .verb {
+		--sweep: 90deg;
+		background-position: calc(var(--p, 0) * 100%) 0;
 	}
 	.plate[data-scrolly] .plate-services > li {
 		--in: clamp(0, (var(--p, 0) - 0.4 - var(--k, 0) * 0.1) * 6, 1);
