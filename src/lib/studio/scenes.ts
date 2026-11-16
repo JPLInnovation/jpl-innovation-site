@@ -51,7 +51,7 @@ export const SHOTS: Record<string, SceneShot> = {
 	 * 4 The wall: the curved wall of project panels at the end of the room, from the centre of its curve (stations.ts),
 	 * turned a little left so the panels sit to the right of the text.
 	 */
-	wall: { id: "wall", camera: [3.6, 1.45, 1.0], target: [8.6, 1.45, -0.2] },
+	wall: { id: "wall", camera: [3.6, 1.45, 1.0], target: [8.6, 1.45, -0.08] },
 	/** 5 Standards: the whiteboard and the shelf of binders, on the back wall (the board sits right of centre, clear of the card on the left). */
 	standards: { id: "standards", camera: [6.0, 1.5, 2.6], target: [6.0, 1.45, 6.4] },
 	/** 6 Timeline: the long window, a year on each pane. */
