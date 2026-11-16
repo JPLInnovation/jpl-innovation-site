@@ -78,7 +78,7 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 		{
 			realScreens.map((p) => (
 				<figure class="lt-plate">
-					<img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} />
+					<a href={p.src} class="lt-plate-link"><img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} /></a>
 					<figcaption aria-hidden="true">{p.alt}</figcaption>
 				</figure>
 			))
@@ -111,7 +111,7 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 					</section>
 					{s.plates.map((p) => (
 						<figure class="lt-plate">
-							<img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} />
+							<a href={p.src} class="lt-plate-link"><img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} /></a>
 							<figcaption aria-hidden="true">{p.alt}</figcaption>
 						</figure>
 					))}
@@ -218,6 +218,12 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 		justify-items: center;
 		gap: 0.8rem;
 	}
+	.lt-plate-link {
+		display: flex;
+		justify-content: center;
+		width: 100%;
+		border-radius: 14px;
+	}
 	.lt-plate img {
 		display: block;
 		width: 100%;
@@ -276,12 +282,11 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 		position: absolute;
 		top: 0;
 		left: clamp(1.25rem, 3vw, 2.5rem);
-		transform: translateY(-55%);
+		transform: translateY(calc(-100% - 0.35rem));
 		display: inline-flex;
 		align-items: center;
 		gap: 0.5rem;
 		padding-inline: 0.5rem;
-		background: var(--field);
 		font-weight: 750;
 		font-stretch: 110%;
 		font-size: var(--step-small);
