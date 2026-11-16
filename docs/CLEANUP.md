@@ -29,7 +29,7 @@ For the files the change touched, ask each question and act on it in the same ch
 2. **Wrote something that already exists?** Search first (`src/lib/look/` for logic, `src/components/work/` for the
    shared page pieces, `src/styles/global.css` for classes and tokens). Two copies of one idea become one.
 3. **Added a class, a token, a data attribute or a script hook?** Check something uses it, and that no other script
-   claims the same name (`data-words`, `data-fit`, `data-decode`, `data-count` are taken: see `src/scripts/motion.ts`).
+   claims the same name (`data-words`, `data-fit`, `data-decode`, `data-count`, `data-wipe` are taken: see `src/scripts/motion.ts`).
 4. **Added a picture?** WebP, sized for where it shows, and referenced by name (or its folder listed in `DYNAMIC` in
    `scripts/audit-unused.py` when the name is built in code).
 5. **Added a listener, a timer, an observer or an animation loop?** It stops when the page is swapped out

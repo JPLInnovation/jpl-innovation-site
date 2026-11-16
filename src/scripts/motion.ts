@@ -7,6 +7,8 @@
  *   data-parallax          the first <img> inside settles from a slight zoom as it scrolls into place
  *   data-draw              a line or bar grows from its start edge once in view
  *   data-count="1234"      counts up from zero once in view (data-count-format="vnd" for ₫)
+ *   data-wipe              wiped on from the left once in view, like ink (a plate's word, a picture opening);
+ *                          data-wipe="mark" sweeps a <mark>'s highlight across its words instead (styles: global.css)
  *
  *   data-draw-duration / data-draw-ease="linear" / data-reveal-delay (ms) tune the above;
  *   data-draw-watch="parent" starts a bar when its track comes into view (for bars that start at zero width)
@@ -110,6 +112,8 @@ function init() {
 			});
 		});
 	}
+
+	for (const el of all("[data-wipe]")) once(el, () => el.setAttribute("data-wiped", ""));
 
 	for (const el of all("[data-count]")) {
 		const target = Number(el.dataset.count);

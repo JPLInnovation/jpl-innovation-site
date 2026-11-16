@@ -95,14 +95,14 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		[plate.sketch, plate.build, plate.secure].map((v) => (
 			<article class:list={["plate", `plate--${v.id}`, v.id !== "build" && "turned"]} aria-labelledby={`verb-${v.id}`}>
 				{v.id === "build" && (
-					<div class="plate-photo">
+					<div class="plate-photo" data-parallax>
 						<img src="/assets/FRCnew.jpg" srcset={srcset("/assets/FRCnew.jpg")} sizes="100vw" alt={v.alt} loading="lazy" width="1920" height="1280" />
 					</div>
 				)}
 				<div class="wrapper plate-grid">
-					<h3 id={`verb-${v.id}`} class="verb">{v.verb}</h3>
+					<h3 id={`verb-${v.id}`} class="verb" data-wipe>{v.verb}</h3>
 					{v.id === "sketch" && (
-						<div class="plate-picture">
+						<div class="plate-picture" data-parallax>
 							<img
 								src="/showcase/drone/power.webp"
 								srcset="/showcase/drone/power-800.webp 800w, /showcase/drone/power.webp 1600w"
@@ -144,7 +144,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 <section class="wrapper why" aria-labelledby="hook-heading">
 	<h2 id="hook-heading" class="head">{hook.heading}</h2>
 	<p class="lead why-text">
-		{hook.lines.map((line, i) => (i === hook.lampLine ? <><mark>{line}</mark> </> : `${line} `))}
+		{hook.lines.map((line, i) => (i === hook.lampLine ? <><mark data-wipe="mark">{line}</mark> </> : `${line} `))}
 	</p>
 </section>
 
@@ -160,7 +160,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 				const href = `/work/${p.id}/`;
 				return (
 					<li class="reg-row" data-project={p.id}>
-						<a href={href} class="reg-pic press" tabindex="-1" aria-hidden="true">
+						<a href={href} class="reg-pic press" tabindex="-1" aria-hidden="true" data-wipe>
 							<img
 								src={p.data.img}
 								srcset={srcset(p.data.img)}
@@ -666,7 +666,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		}
 	}
 	mark {
-		background: var(--mark);
+		background-color: transparent; /* the highlight itself: global.css, mark[data-wipe="mark"] */
 		color: #0a174e;
 		padding: 0 0.15em;
 		-webkit-box-decoration-break: clone;

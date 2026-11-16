@@ -319,6 +319,24 @@
 [data-parallax] {
 	overflow: hidden;
 }
+/* data-wipe: wiped on from the left once in view (motion.ts sets data-wiped); a <mark> sweeps its highlight instead. */
+[data-wipe] {
+	transition: clip-path 1s cubic-bezier(0.22, 1, 0.36, 1) var(--wipe-delay, 0s);
+}
+.motion [data-wipe]:not([data-wiped]) {
+	clip-path: inset(0 100% 0 0);
+}
+mark[data-wipe="mark"] {
+	background: linear-gradient(var(--mark), var(--mark)) 0 0 / 100% 100% no-repeat;
+	transition:
+		background-size 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.15s,
+		color 0.3s ease 0.45s;
+}
+.motion mark[data-wipe="mark"]:not([data-wiped]) {
+	clip-path: none;
+	background-size: 0% 100%;
+	color: inherit;
+}
 
 /* Press feedback: respond on pointer-down, not on release. */
 .press {
