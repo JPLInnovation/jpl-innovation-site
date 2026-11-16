@@ -9,7 +9,8 @@
  *   Networks   a switch rack with blinking port lights and patch cables
  *   Testing    the test bench: a laptop on the F450's ground station (its page scrolls with the mouse wheel; screens.ts)
  *              and an easel whiteboard with the bench test. Its scene id stays "web" (links and the camera use it).
- *   The wall   one panel per project, on an arc; they turn to face the camera one after another
+ *   The wall   one panel per project, on an arc, in front of a curved LED video wall; they turn to face the camera one
+ *              after another
  *   Standards  the whiteboard (the standards and the three steps, written out as the scene opens) and the binders
  *   Timeline   the long window: night sky in the dark theme, dusk in the light one; a year on each pane
  *   The crew   the table, two chairs, a portrait screen behind each
@@ -31,6 +32,7 @@ import {
 	MeshStandardMaterial,
 	Object3D,
 	PlaneGeometry,
+	ShaderMaterial,
 	ShapeGeometry,
 	TubeGeometry,
 	Vector3,
@@ -461,13 +463,54 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	// The arc's centre is where the camera stands for this scene (scenes.ts), so every panel is the same distance away.
 	const arc = { x: 3.6, z: 1.0, r: 3.9, step: 0.231, y: 1.45, row: 0.73, scale: 0.685 };
-	const wallBack = new Mesh(
-		new CylinderGeometry(arc.r + 0.2, arc.r + 0.2, 2.6, 48, 1, true, Math.PI / 2 - 0.6, 1.2),
-		new MeshStandardMaterial({ color: 0x0e1834, roughness: 0.9, side: DoubleSide }),
-	);
+	// Behind the panels, the curved wall is an LED video wall, switched on: slow bands of the brand's blue and a little
+	// yellow drift across it, a blueprint grid scrolls, a scan line sweeps down, and the LEDs' dot pattern shows up close.
+	// Drawn in its shader (nothing to download); it moves only while its scene is near (uTime, set in update).
+	const ledWall = new ShaderMaterial({
+		side: DoubleSide,
+		uniforms: { uTime: { value: 0 }, uLevel: { value: 1 } },
+		vertexShader: `
+			varying vec2 vUv;
+			void main() {
+				vUv = uv;
+				gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+			}`,
+		fragmentShader: `
+			uniform float uTime;
+			uniform float uLevel;
+			varying vec2 vUv;
+			const vec2 SIZE = vec2(${((arc.r + 0.2) * 1.2).toFixed(2)}, 2.6); // the wall in metres
+			void main() {
+				vec2 p = vUv * SIZE;
+				float t = uTime;
+				// the light: two slow bands, the brand's blue and a little of its yellow
+				float b1 = sin(p.x * 0.9 + t * 0.22 + sin(p.y * 1.3 - t * 0.18) * 1.2);
+				float b2 = sin(p.x * 0.55 - t * 0.15 + p.y * 0.8);
+				vec3 col = vec3(0.012, 0.022, 0.085);
+				col = mix(col, vec3(0.06, 0.22, 0.70), smoothstep(0.15, 1.0, b1) * 0.5);
+				col += vec3(0.90, 0.66, 0.08) * smoothstep(0.82, 1.0, b2) * 0.07; // added, not mixed: no grey between blue and yellow
+				// a blueprint grid, 25 cm, scrolling slowly sideways
+				vec2 g = p * 4.0 + vec2(t * 0.06, 0.0);
+				vec2 d = abs(fract(g) - 0.5) / fwidth(g);
+				float line = 1.0 - clamp(min(d.x, d.y) - 0.5 * fwidth(g.x) * 0.0, 0.0, 1.0);
+				col += vec3(0.20, 0.38, 0.85) * line * 0.12;
+				// a scan line sweeping down every 14 s
+				float scan = exp(-pow((vUv.y - (1.0 - fract(t / 14.0))) * 28.0, 2.0));
+				col += vec3(0.30, 0.50, 1.00) * scan * 0.07;
+				// the LEDs: round dots 4 cm apart, softened by their own size on screen (no shimmer far away)
+				vec2 led = fract(p * 25.0) - 0.5;
+				float w = fwidth(p.x * 25.0);
+				float dotOn = 1.0 - smoothstep(0.30 - w, 0.42 + w, length(led));
+				col *= mix(1.0, 0.62 + 0.38 * dotOn, clamp(1.0 - w * 2.0, 0.0, 1.0));
+				// its edges darker, like a screen's bezel falloff
+				float edge = smoothstep(0.0, 0.06, vUv.x) * smoothstep(1.0, 0.94, vUv.x) * smoothstep(0.0, 0.08, vUv.y) * smoothstep(1.0, 0.92, vUv.y);
+				gl_FragColor = vec4(col * (0.25 + 0.75 * edge) * uLevel * 0.62, 1.0);
+				#include <colorspace_fragment>
+			}`,
+	});
+	const wallBack = new Mesh(new CylinderGeometry(arc.r + 0.2, arc.r + 0.2, 2.6, 48, 1, true, Math.PI / 2 - 0.6, 1.2), ledWall);
 	wallBack.position.set(arc.x, 1.3, arc.z);
 	group.add(wallBack);
-	themed.push({ mat: wallBack.material as MeshStandardMaterial, dark: 0x0a174e, light: 0xe8e2cc });
 	// The panel under the pointer (-1: none) lifts toward the camera, glows at its edge and brightens; the others dim a little.
 	let hovered = -1;
 	let wallHover = 0;
@@ -903,6 +946,9 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 
 			// The wall: the panels turn to face the camera, one after another, as the scene opens.
 			const wallIn = near.wall ?? 0;
+			// Its video wall plays while its scene is near, and comes up with the room's lamp.
+			if (wallIn > 0.01) ledWall.uniforms.uTime.value += dt;
+			ledWall.uniforms.uLevel.value = 0.3 + 0.7 * level;
 			const settle = 1 - Math.exp(-14 * dt);
 			wallHover += ((hovered >= 0 ? 1 : 0) - wallHover) * settle;
 			panels.forEach((panel, i) => {
