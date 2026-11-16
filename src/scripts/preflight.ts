@@ -87,7 +87,8 @@ export function preflight(ctx: SplashContext) {
 	});
 
 	/* ---------- The prompt ---------- */
-	tween($("[data-pf-prompt]"), [{ opacity: 0, translate: "0 8px" }, { opacity: 1, translate: "0 0" }], PROMPT_AT - 0.3, 0.35, E.out);
+	// In full before the hold, so it isn't frozen part-way.
+	tween($("[data-pf-prompt]"), [{ opacity: 0, translate: "0 8px" }, { opacity: 1, translate: "0 0" }], PROMPT_AT - 0.4, 0.35, E.out);
 	ctx.hold(PROMPT_AT, () => takeOff(ctx), { skip: false, quiet: true });
 
 	/* ---------- Take-off ---------- */
@@ -146,7 +147,9 @@ function takeOff(ctx: SplashContext) {
 	const { el } = ctx;
 	return new Promise<void>((resolve) => {
 		let timer = 0;
+		el.setAttribute("data-prompt", ""); // waiting for the take-off (the page checks look for it)
 		const off = () => {
+			el.removeAttribute("data-prompt");
 			clearTimeout(timer);
 			el.removeEventListener("pointerdown", go);
 			removeEventListener("keydown", go, true);

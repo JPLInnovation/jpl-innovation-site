@@ -39,7 +39,8 @@ window.__frames = []; window.__edge = '';
   if (document.documentElement.classList.contains('splash') || !last) requestAnimationFrame(f); }; requestAnimationFrame(f); })();
 """
 SPLASH_GONE = "!document.documentElement.classList.contains('splash')"
-PROMPT_UP = "(() => { const p = document.querySelector('[data-pf-prompt]'); return !!p && getComputedStyle(p).opacity === '1'; })()"
+# The take-off prompt is up and waiting (preflight.ts marks the overlay while it waits), its words shown in full.
+PROMPT_UP = "(() => { const p = document.querySelector('[data-splash][data-prompt] [data-pf-prompt]'); return !!p && getComputedStyle(p).opacity === '1'; })()"
 
 
 def first_visit(browser, base, theme="dark", experience="classic", width=1440, height=900, **kw):
@@ -55,10 +56,11 @@ def first_visit(browser, base, theme="dark", experience="classic", width=1440, h
 
 def check_plays(browser, base):
     context, page, errors = first_visit(browser, base)
-    page.wait_for_selector("html.splash", state="attached", timeout=5000)
+    page.wait_for_selector("[data-splash-run]", state="attached", timeout=5000)
     t0 = time.time()
     shown = page.evaluate("(() => { const p = document.querySelector('[data-pf]'); return !!p && getComputedStyle(p).display !== 'none'; })()")
-    report(shown and page.evaluate("document.documentElement.classList.contains('intro-full')"), "first visit: the Pre-flight hook plays")
+    full = page.evaluate("document.documentElement.classList.contains('intro-full') && !document.documentElement.classList.contains('splash-fast')")
+    report(shown and full, "first visit: the Pre-flight hook plays")
     page.wait_for_function("document.querySelector('[data-pf-alt]')?.dataset.alt === '120'", timeout=6000)
     page.wait_for_function(PROMPT_UP, timeout=6000)
     up = time.time() - t0
@@ -149,7 +151,7 @@ def check_skips(browser, base):
 
 def check_reduced(browser, base):
     context, page, errors = first_visit(browser, base, reduced_motion="reduce")
-    page.wait_for_selector("html.splash", state="attached", timeout=5000)
+    page.wait_for_selector("[data-splash-run]", state="attached", timeout=5000)
     t = time.time()
     got = page.evaluate("""(() => { const r = document.documentElement.classList;
       const lines = [...document.querySelectorAll('.pf-line:not(.pf-leader)')].map((l) => getComputedStyle(l).strokeDashoffset);
@@ -247,6 +249,10 @@ def main():
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(channel="chrome", headless=False)
+            # Warm the fresh preview server up, so the first check doesn't time a cold start.
+            warm = browser.new_page()
+            warm.goto(base + "/", wait_until="load")
+            warm.close()
             check_plays(browser, base)
             check_skips(browser, base)
             check_reduced(browser, base)
