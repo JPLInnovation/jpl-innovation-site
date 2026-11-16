@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 @import "@fontsource-variable/archivo/wdth.css";
 @plugin "@tailwindcss/typography";
 

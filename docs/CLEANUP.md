@@ -50,6 +50,6 @@ These work today and don't clash; each is one idea in two places.
 
 - `jpl-innovation-site/` and `website-old-main/` (old copies of the site, untracked, about 470 MB) sit in the project
   folder. They are excluded from the type check. Deleting them is the owner's call: they are not in git.
-- `tw-animate-css` is installed and imported but no class of it is used. Removing a dependency changes
-  `package-lock.json`, so do it with `npm uninstall tw-animate-css` and a build, not by hand.
+- Removing a dependency changes `package-lock.json`: use `npm uninstall <name> --ignore-scripts` and a build, never a
+  hand edit (`tw-animate-css` went this way on 16 Nov 2026: nothing used it).
 - Local branches that are merged (`git branch --merged classic-redesign`) can be deleted with `git branch -d`.
