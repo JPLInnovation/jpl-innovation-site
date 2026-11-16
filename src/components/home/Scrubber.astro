@@ -1,0 +1,367 @@
+---
+/**
+ * The home page's live thing (the spec's "The idea"): one drag across the picture, or the arrow keys, takes the F450 from
+ * its sketch, through its CAD render, to the built drone. The sketch lies back and zooms in until its drone is the CAD
+ * drone's size, in the same place, as the CAD drone rises out of it; the bench render comes up from dark, as if the bench
+ * lamp came on. The stages and the keys: src/lib/look/scrub.ts (tested). Words: src/text/home.ts `scrub`. Pictures:
+ * scripts/render-scrub-stills.py (all three framed so the drone sits in the same place).
+ *
+ * Without script, the three pictures stand side by side with their names.
+ */
+import { scrub } from "@/text/home";
+
+interface Props {
+	class?: string;
+}
+
+const pictures = [
+	{ src: "/look/scrub/sketch.webp", srcset: "/look/scrub/sketch-840.webp 840w, /look/scrub/sketch.webp 1680w" },
+	{ src: "/showcase/drone/overview.webp", srcset: "/showcase/drone/overview-800.webp 800w, /showcase/drone/overview.webp 1600w" },
+	{ src: "/look/scrub/bench.webp", srcset: "/look/scrub/bench-840.webp 840w, /look/scrub/bench.webp 1680w" },
+];
+const [first] = scrub.stages;
+---
+
+<figure class:list={["scrub sheet lens", Astro.props.class]} data-scrub-root data-stage="0">
+	<div
+		class="scrub-control"
+		role="slider"
+		tabindex="0"
+		data-scrub
+		aria-label={scrub.label}
+		aria-valuemin="0"
+		aria-valuemax="100"
+		aria-valuenow="0"
+		aria-valuetext={`${first.name}: ${first.caption}`}
+		aria-describedby="scrub-hint"
+		data-texts={JSON.stringify(scrub.stages.map((s) => `${s.name}: ${s.caption}`))}
+	>
+		<div class="scrub-plate">
+			{
+				pictures.map((p, i) => (
+					<div class="scrub-layer" data-scrub-layer={i}>
+						<img
+							src={p.src}
+							srcset={p.srcset}
+							sizes="(min-width: 64rem) 46rem, calc(100vw - 2rem)"
+							alt=""
+							width="1680"
+							height="1120"
+							decoding="async"
+							fetchpriority={i === 0 ? "high" : "low"}
+							draggable="false"
+						/>
+						{i === 2 && <span class="scrub-dark" data-scrub-dark />}
+						<span class="scrub-name">{scrub.stages[i].name}</span>
+					</div>
+				))
+			}
+		</div>
+		<div class="scrub-rail" aria-hidden="true">
+			<span class="scrub-track"><span class="scrub-fill" data-scrub-fill></span></span>
+			<span class="scrub-run" data-scrub-knob><span class="scrub-knob"></span></span>
+			{scrub.stages.map((s, i) => <span class="scrub-stop" style={`--at:${i / 2}`}>{s.name}</span>)}
+		</div>
+	</div>
+	<figcaption>
+		<p class="scrub-caption" data-scrub-caption><strong>{first.name}.</strong> {first.caption}</p>
+		<p id="scrub-hint" class="scrub-hint">{scrub.hint}</p>
+	</figcaption>
+</figure>
+
+<script>
+	import { nearestStage, scrubKey, scrubLayers } from "@/lib/look/scrub";
+
+	// The sketch's drone is 0.3 of the picture's width, the CAD's 0.72 (scripts/render-scrub-stills.py): the sketch zooms
+	// by this much while the CAD grows into it, so the two drones stay the same size as they cross.
+	const ZOOM = 0.72 / 0.3;
+	const html = document.documentElement;
+	const still = () => html.classList.contains("reduce-motion") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+	let stops: Array<() => void> = [];
+
+	function mount(root: HTMLElement) {
+		const control = root.querySelector<HTMLElement>("[data-scrub]")!;
+		const plate = root.querySelector<HTMLElement>(".scrub-plate")!;
+		const layers = [...root.querySelectorAll<HTMLElement>("[data-scrub-layer]")];
+		const dark = root.querySelector<HTMLElement>("[data-scrub-dark]")!;
+		const fill = root.querySelector<HTMLElement>("[data-scrub-fill]")!;
+		const knob = root.querySelector<HTMLElement>("[data-scrub-knob]")!;
+		const caption = root.querySelector<HTMLElement>("[data-scrub-caption]")!;
+		const texts: string[] = JSON.parse(control.dataset.texts ?? "[]");
+		let t = 0;
+		let target = 0;
+		let raf = 0;
+		let spoken = 0;
+		let shown = 0;
+
+		const draw = () => {
+			const [sketch, cad, bench] = scrubLayers(t);
+			const grow = 1 + (ZOOM - 1) * sketch.tilt;
+			layers[0].style.opacity = String(sketch.opacity);
+			layers[0].style.transform = `scale(${grow}) rotateX(${sketch.tilt * 34}deg)`;
+			layers[1].style.opacity = String(cad.opacity);
+			layers[1].style.transform = `translate3d(0, ${cad.lift * 3}%, 0) scale(${cad.lift > 0 ? grow / ZOOM : 1 + 0.03 * (1 - cad.opacity)})`;
+			layers[2].style.opacity = String(bench.opacity);
+			layers[2].style.transform = `scale(${1.04 - 0.04 * bench.opacity})`;
+			dark.style.opacity = String(bench.dark);
+			fill.style.transform = `scaleX(${t})`;
+			knob.style.transform = `translateX(${t * 100}%)`;
+			const now = Math.round(t * 100);
+			if (now !== shown) {
+				shown = now;
+				control.setAttribute("aria-valuenow", String(now));
+			}
+			const stage = nearestStage(t);
+			if (stage !== spoken) {
+				spoken = stage;
+				const [name, ...rest] = texts[stage].split(": ");
+				control.setAttribute("aria-valuetext", texts[stage]);
+				caption.replaceChildren(Object.assign(document.createElement("strong"), { textContent: `${name}.` }), ` ${rest.join(": ")}`);
+				root.dataset.stage = String(stage);
+			}
+		};
+		const tick = () => {
+			raf = 0;
+			const d = target - t;
+			t = Math.abs(d) < 0.001 || still() ? target : t + d * 0.2;
+			draw();
+			if (t !== target) raf = requestAnimationFrame(tick);
+		};
+		const go = (value: number) => {
+			target = Math.min(1, Math.max(0, value));
+			if (!raf) raf = requestAnimationFrame(tick);
+		};
+
+		// A mouse or pen jumps to where it presses and follows; a finger scrubs only once it moves sideways, so a vertical
+		// swipe still scrolls the page (touch-action: pan-y).
+		let drag: { id: number; x: number; t: number; left: number; width: number; live: boolean; touch: boolean } | null = null;
+		const down = (e: PointerEvent) => {
+			if (e.button !== 0) return;
+			const r = plate.getBoundingClientRect();
+			const touch = e.pointerType === "touch";
+			drag = { id: e.pointerId, x: e.clientX, t: target, left: r.left, width: r.width, live: !touch, touch };
+			if (!touch) {
+				control.setPointerCapture(e.pointerId);
+				go((e.clientX - r.left) / r.width);
+				root.dataset.dragging = "";
+			}
+		};
+		const move = (e: PointerEvent) => {
+			if (!drag || e.pointerId !== drag.id) return;
+			const dx = e.clientX - drag.x;
+			if (!drag.live && Math.abs(dx) > 8) {
+				drag.live = true;
+				control.setPointerCapture(e.pointerId);
+				root.dataset.dragging = "";
+			}
+			if (!drag.live) return;
+			go(drag.touch ? drag.t + dx / drag.width : (e.clientX - drag.left) / drag.width);
+		};
+		const up = () => {
+			drag = null;
+			delete root.dataset.dragging;
+		};
+		const key = (e: KeyboardEvent) => {
+			const value = scrubKey(target, e.key);
+			if (value === null) return;
+			e.preventDefault();
+			go(value);
+		};
+		control.addEventListener("pointerdown", down);
+		control.addEventListener("pointermove", move);
+		control.addEventListener("pointerup", up);
+		control.addEventListener("pointercancel", up);
+		control.addEventListener("keydown", key);
+		root.dataset.live = "";
+		draw();
+		stops.push(() => {
+			cancelAnimationFrame(raf);
+			control.removeEventListener("pointerdown", down);
+			control.removeEventListener("pointermove", move);
+			control.removeEventListener("pointerup", up);
+			control.removeEventListener("pointercancel", up);
+			control.removeEventListener("keydown", key);
+		});
+	}
+
+	document.addEventListener("astro:page-load", () => {
+		stops.forEach((stop) => stop());
+		stops = [];
+		document.querySelectorAll<HTMLElement>("[data-scrub-root]").forEach(mount);
+	});
+</script>
+
+<style>
+	.scrub {
+		/* concentric corners: the plate's 16px inside the sheet's 8px padding */
+		--pad: 0.5rem;
+		--inner: 1rem;
+		margin: 0;
+		padding: var(--pad);
+		border-radius: calc(var(--inner) + var(--pad));
+	}
+	.scrub-control {
+		display: grid;
+		gap: 0.25rem;
+		border-radius: var(--inner);
+		cursor: ew-resize;
+		touch-action: pan-y;
+		user-select: none;
+		-webkit-user-select: none;
+	}
+	.scrub[data-dragging] .scrub-control {
+		cursor: grabbing;
+	}
+	.scrub-control:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 4px;
+	}
+	.scrub-plate {
+		position: relative;
+		aspect-ratio: 3 / 2;
+		overflow: hidden;
+		border-radius: var(--inner);
+		perspective: 1500px;
+		perspective-origin: 54% 47%;
+		/* behind the CAD render (it has no background of its own): a quiet step of the sheet */
+		background: color-mix(in oklab, var(--sheet) 55%, transparent);
+		isolation: isolate;
+	}
+	.scrub-layer {
+		position: absolute;
+		inset: 0;
+		transform-origin: 54% 47%;
+		will-change: transform, opacity;
+	}
+	.scrub-layer + .scrub-layer {
+		opacity: 0;
+	}
+	.scrub-layer img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		pointer-events: none;
+	}
+	.scrub-dark {
+		position: absolute;
+		inset: 0;
+		background: #050a24;
+		opacity: 1;
+	}
+	.scrub-name {
+		display: none;
+	}
+	.scrub-rail {
+		position: relative;
+		height: 3.25rem;
+		margin: 0 1.25rem;
+	}
+	.scrub-track {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 1rem;
+		height: 2px;
+		background: var(--sheet-edge);
+	}
+	.scrub-fill {
+		position: absolute;
+		inset: 0;
+		background: var(--accent-brand);
+		transform: scaleX(0);
+		transform-origin: left center;
+	}
+	.scrub-run {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 1rem;
+		height: 0;
+	}
+	.scrub-knob {
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 1.25rem;
+		height: 1.25rem;
+		margin: -0.625rem 0 0 -0.625rem;
+		border-radius: 50%;
+		background: var(--mark);
+		box-shadow: inset 0 0 0 2px var(--ink);
+		transition: scale 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.scrub[data-dragging] .scrub-knob,
+	.scrub-control:focus-visible .scrub-knob {
+		scale: 1.25;
+	}
+	.scrub-stop {
+		position: absolute;
+		top: 1.6rem;
+		left: calc(var(--at) * 100%);
+		translate: calc(var(--at) * -100%) 0;
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
+		transition: color 0.2s;
+	}
+	.scrub[data-stage="0"] .scrub-stop:nth-of-type(1),
+	.scrub[data-stage="1"] .scrub-stop:nth-of-type(2),
+	.scrub[data-stage="2"] .scrub-stop:nth-of-type(3) {
+		color: var(--ink);
+	}
+	figcaption {
+		display: grid;
+		gap: 0.25rem;
+		padding: 0.25rem 1.25rem 1rem;
+	}
+	.scrub-caption {
+		min-height: 3em;
+		font-size: var(--step-body);
+		line-height: 1.5;
+		text-wrap: pretty;
+	}
+	.scrub-hint {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.scrub[data-live] .scrub-hint {
+		display: block;
+	}
+
+	/* Without script: the three stages side by side, each named. */
+	.scrub:not([data-live]) .scrub-plate {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.5rem;
+		aspect-ratio: auto;
+		background: none;
+	}
+	.scrub:not([data-live]) .scrub-layer {
+		position: relative;
+		opacity: 1;
+		aspect-ratio: 3 / 2;
+		border-radius: calc(var(--inner) - 0.25rem);
+		overflow: hidden;
+	}
+	.scrub:not([data-live]) .scrub-dark,
+	.scrub:not([data-live]) .scrub-rail,
+	.scrub:not([data-live]) .scrub-hint {
+		display: none;
+	}
+	.scrub:not([data-live]) .scrub-name {
+		display: block;
+		position: absolute;
+		left: 0.5rem;
+		bottom: 0.5rem;
+		padding: 0.1rem 0.5rem;
+		border-radius: 0.375rem;
+		background: var(--sheet);
+		color: var(--ink);
+		font-size: var(--step-small);
+		font-weight: 600;
+	}
+	.scrub:not([data-live]) .scrub-control {
+		cursor: auto;
+	}
+</style>

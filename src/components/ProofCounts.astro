@@ -2,7 +2,8 @@
 /**
  * Proof, in numbers (labels: src/text/home.ts `proof`). Every number is counted from the site's own data, never typed:
  * the projects (src/text/projects/*.md), the F450's parts list and its priced total (as its page adds them up), and how
- * many steps of each drone's roadmap are done. Used by Classic (under "Selected work") and the studio's wall card.
+ * many steps of each drone's roadmap are done. The studio's wall card shows them all (`class="proof-compact"`); Classic
+ * shows each project's own beside it, as a line of its facts (`about="drone"`, `look="line"`).
  */
 import { getProjects } from "@/lib/content";
 import { formatVnd } from "@/lib/format";
@@ -13,36 +14,43 @@ import { roadmap as miniRoadmap } from "@/text/projects/mini-drone";
 
 interface Props {
 	class?: string;
+	/** Only the figures about this project ("drone", "mini-drone"), or "all" for the project count. Default: every one. */
+	about?: string;
+	/** "line": figures in a running line under a project, without the project's name repeated. */
+	look?: "line";
 }
 
+const { about, look } = Astro.props;
 const projects = await getProjects();
 const title = (id: string) => projects.find((p) => p.id === id)?.data.title;
 const parts = partGroups.flatMap((g) => g.parts);
 const done = (steps: readonly { state: string }[]) => `${steps.filter((s) => s.state === "done").length} ${proof.of} ${steps.length}`;
 
 const counts = [
-	{ value: String(projects.length), label: proof.projects },
-	{ value: String(parts.length), label: proof.parts, about: title("drone") },
-	{ value: formatVnd(parts.reduce((sum, p) => sum + (p.price ?? 0), 0)), label: proof.budget, about: title("drone"), note: proof.budgetNote },
-	{ value: done(roadmap), label: proof.steps, about: title("drone") },
-	{ value: done(miniRoadmap), label: proof.steps, about: title("mini-drone") },
-];
+	{ id: "all", value: String(projects.length), label: proof.projects },
+	{ id: "drone", value: String(parts.length), label: proof.parts, about: title("drone") },
+	{ id: "drone", value: formatVnd(parts.reduce((sum, p) => sum + (p.price ?? 0), 0)), label: proof.budget, about: title("drone"), note: proof.budgetNote },
+	{ id: "drone", value: done(roadmap), label: proof.steps, about: title("drone") },
+	{ id: "mini-drone", value: done(miniRoadmap), label: proof.steps, about: title("mini-drone") },
+].filter((c) => !about || c.id === about);
 ---
 
-<dl aria-label={proof.label} class={cn("proof-counts", Astro.props.class)}>
-	{
-		counts.map((c) => (
-			<div>
-				<dt>
-					{c.label}
-					{c.note && <span class="proof-note"> ({c.note})</span>}
-					{c.about && <span class="proof-about">{c.about}</span>}
-				</dt>
-				<dd>{c.value}</dd>
-			</div>
-		))
-	}
-</dl>
+{
+	counts.length > 0 && (
+		<dl aria-label={proof.label} class={cn("proof-counts", look === "line" && "proof-line", Astro.props.class)}>
+			{counts.map((c) => (
+				<div>
+					<dt>
+						{c.label}
+						{c.note && <span class="proof-note"> ({c.note})</span>}
+						{c.about && look !== "line" && <span class="proof-about">{c.about}</span>}
+					</dt>
+					<dd>{c.value}</dd>
+				</div>
+			))}
+		</dl>
+	)
+}
 
 <style>
 	.proof-counts {
@@ -89,5 +97,32 @@ const counts = [
 	.proof-compact dt {
 		font-size: 0.72rem;
 		line-height: 1.3;
+	}
+	/* Classic, under a project: each figure is a phrase ("22 drone parts"), the figure first, in a running line. */
+	.proof-line {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1.5rem;
+	}
+	.proof-line > div {
+		flex-direction: row-reverse;
+		align-items: baseline;
+		justify-content: flex-end;
+		gap: 0.4rem;
+		border: 0;
+		padding: 0;
+	}
+	.proof-line dd {
+		font-size: var(--step-body);
+		white-space: nowrap;
+	}
+	.proof-line dt {
+		font-size: var(--step-body);
+		line-height: 1.5;
+		color: var(--ink);
+	}
+	.proof-line .proof-note {
+		color: var(--ink-soft);
+		font-size: var(--step-small);
 	}
 </style>

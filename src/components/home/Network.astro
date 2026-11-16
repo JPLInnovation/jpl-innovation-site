@@ -1,0 +1,281 @@
+---
+/**
+ * The "Secure it." plate's drawing: the small secured network of the Cybersecurity project's picture
+ * (public/assets/cybersecurity.svg), drawn as a line drawing in the page's ink. Its links draw themselves in the order the
+ * traffic runs, from the internet to the computers, once, when it comes into view (whole without motion). Two
+ * layouts from the same parts: wide (left to right) and, on a phone, tall (top to bottom). Labels: src/text/home.ts.
+ */
+import { network as words, verbs } from "@/text/home";
+
+type Kind = "cloud" | "acl" | "router" | "l3" | "l2" | "server" | "pc";
+type Node = { kind: Kind; x: number; y: number; label?: string; sub?: string; at?: "above" | "below" | "right" | "left" };
+// A link: from (x1, y1) to (x2, y2), drawn in the order `n`, growing right, down or up from its start.
+type Link = [number, number, number, number, number];
+
+// The view box: x, y, width, height (the drawing's own extent, so no empty band above or below it).
+const wide = {
+	box: [0, 66, 1200, 500],
+	nodes: [
+		{ kind: "cloud", x: 110, y: 300, label: words.internet, at: "below" },
+		{ kind: "acl", x: 290, y: 300, label: words.acl, at: "below" },
+		{ kind: "router", x: 450, y: 300, label: words.router, at: "below" },
+		{ kind: "l3", x: 680, y: 300, label: words.l3, at: "above" },
+		{ kind: "server", x: 680, y: 505, label: words.server, sub: words.serverRoles, at: "left" },
+		{ kind: "l2", x: 930, y: 160, label: words.l2, at: "above" },
+		{ kind: "l2", x: 930, y: 440, label: words.l2, at: "below" },
+		{ kind: "pc", x: 1120, y: 100 },
+		{ kind: "pc", x: 1120, y: 220 },
+		{ kind: "pc", x: 1120, y: 380 },
+		{ kind: "pc", x: 1120, y: 500 },
+	] as Node[],
+	links: [
+		[176, 300, 258, 300, 0],
+		[322, 300, 412, 300, 1],
+		[488, 300, 603, 300, 2],
+		[680, 330, 680, 453, 3],
+		[757, 290, 830, 290, 3],
+		[757, 310, 830, 310, 3],
+		[830, 290, 830, 160, 4],
+		[830, 310, 830, 440, 4],
+		[830, 160, 863, 160, 5],
+		[830, 440, 863, 440, 5],
+		[997, 160, 1050, 160, 6],
+		[997, 440, 1050, 440, 6],
+		[1050, 160, 1050, 100, 7],
+		[1050, 160, 1050, 220, 7],
+		[1050, 440, 1050, 380, 7],
+		[1050, 440, 1050, 500, 7],
+		[1050, 100, 1090, 100, 8],
+		[1050, 220, 1090, 220, 8],
+		[1050, 380, 1090, 380, 8],
+		[1050, 500, 1090, 500, 8],
+	] as Link[],
+};
+
+const tall = {
+	box: [0, 20, 400, 830],
+	nodes: [
+		{ kind: "cloud", x: 200, y: 60, label: words.internet, at: "right" },
+		{ kind: "acl", x: 200, y: 185, label: words.acl, at: "right" },
+		{ kind: "router", x: 200, y: 305, label: words.router, at: "right" },
+		{ kind: "l3", x: 200, y: 430, label: words.l3, at: "right" },
+		{ kind: "server", x: 52, y: 430, label: words.server, sub: words.serverRoles, at: "below" },
+		{ kind: "l2", x: 105, y: 625, label: words.l2, at: "above" },
+		{ kind: "l2", x: 295, y: 625, label: words.l2, at: "above" },
+		{ kind: "pc", x: 60, y: 800 },
+		{ kind: "pc", x: 150, y: 800 },
+		{ kind: "pc", x: 250, y: 800 },
+		{ kind: "pc", x: 340, y: 800 },
+	] as Node[],
+	links: [
+		[200, 88, 200, 149, 0],
+		[200, 223, 200, 269, 1],
+		[200, 341, 200, 402, 2],
+		[125, 430, 82, 430, 3],
+		[200, 458, 200, 520, 3],
+		[200, 520, 105, 520, 4],
+		[200, 520, 295, 520, 4],
+		[105, 520, 105, 600, 5],
+		[295, 520, 295, 600, 5],
+		[105, 650, 105, 720, 6],
+		[295, 650, 295, 720, 6],
+		[105, 720, 60, 720, 7],
+		[105, 720, 150, 720, 7],
+		[295, 720, 250, 720, 7],
+		[295, 720, 340, 720, 7],
+		[60, 720, 60, 780, 8],
+		[150, 720, 150, 780, 8],
+		[250, 720, 250, 780, 8],
+		[340, 720, 340, 780, 8],
+	] as Link[],
+};
+
+/** Which way a link grows: its start is where the drawing comes from. */
+const grow = ([x1, y1, x2, y2]: Link) =>
+	x1 === x2
+		? { draw: "y", origin: y2 > y1 ? "center top" : "center bottom" }
+		: { draw: undefined, origin: x2 > x1 ? "left center" : "right center" };
+
+const label = (n: Node) => {
+	const gap = n.kind === "server" ? 62 : n.kind === "cloud" ? 46 : 52;
+	switch (n.at) {
+		case "above":
+			return { x: n.x, y: n.y - gap + 6, anchor: "middle" };
+		case "right":
+			return { x: n.x + (n.kind === "l3" ? 92 : 56), y: n.y + 7, anchor: "start" };
+		case "left":
+			return { x: n.x - 54, y: n.y - 4, anchor: "end" };
+		default:
+			return { x: n.x, y: n.y + gap + 16, anchor: "middle" };
+	}
+};
+
+const alt = verbs.find((v) => v.id === "secure")!.alt;
+---
+
+{
+	[
+		{ name: "wide", ...wide },
+		{ name: "tall", ...tall },
+	].map((d) => (
+		<svg
+			class:list={["net", `net--${d.name}`]}
+			viewBox={d.box.join(" ")}
+			role="img"
+			aria-label={alt}
+		>
+			{d.links.map((l) => {
+					const g = grow(l);
+					return (
+						<line
+							x1={l[0]}
+							y1={l[1]}
+							x2={l[2]}
+							y2={l[3]}
+							class="net-link"
+							data-dir={g.draw}
+							style={`transform-origin:${g.origin};--n:${l[4]}`}
+						/>
+					);
+				})}
+			{d.nodes.map((n) => {
+				const t = n.label ? label(n) : null;
+				return (
+					<g class={`net-node net-${n.kind}`}>
+						{n.kind === "cloud" && (
+							<path d={`M${n.x - 58},${n.y + 26} H${n.x + 54} A26,26 0 0 0 ${n.x + 50},${n.y - 22} A34,34 0 0 0 ${n.x - 12},${n.y - 32} A28,28 0 0 0 ${n.x - 54},${n.y - 4} A15,15 0 0 0 ${n.x - 58},${n.y + 26} Z`} />
+						)}
+						{n.kind === "acl" && (
+							<>
+								<path class="net-mark" d={`M${n.x},${n.y - 38} L${n.x + 32},${n.y - 26} V${n.y + 2} C${n.x + 32},${n.y + 22} ${n.x + 16},${n.y + 32} ${n.x},${n.y + 40} C${n.x - 16},${n.y + 32} ${n.x - 32},${n.y + 22} ${n.x - 32},${n.y + 2} V${n.y - 26} Z`} />
+								<polyline class="net-tick" points={`${n.x - 13},${n.y + 1} ${n.x - 3},${n.y + 12} ${n.x + 15},${n.y - 11}`} />
+							</>
+						)}
+						{n.kind === "router" && (
+							<>
+								<circle cx={n.x} cy={n.y} r="36" />
+								<path class="net-thin" d={`M${n.x - 16},${n.y - 16} L${n.x + 16},${n.y + 16} M${n.x + 16},${n.y - 16} L${n.x - 16},${n.y + 16} M${n.x - 16},${n.y - 4} V${n.y - 16} H${n.x - 4} M${n.x + 16},${n.y + 4} V${n.y + 16} H${n.x + 4} M${n.x + 4},${n.y - 16} H${n.x + 16} V${n.y - 4} M${n.x - 4},${n.y + 16} H${n.x - 16} V${n.y + 4}`} />
+							</>
+						)}
+						{(n.kind === "l3" || n.kind === "l2") && (
+							<>
+								<rect x={n.x - (n.kind === "l3" ? 76 : 66)} y={n.y - (n.kind === "l3" ? 29 : 25)} width={n.kind === "l3" ? 152 : 132} height={n.kind === "l3" ? 58 : 50} rx="10" />
+								<path class="net-thin" d={`M${n.x - 30},${n.y - 8} H${n.x + 22} m-9,-7 l9,7 l-9,7 M${n.x + 30},${n.y + 8} H${n.x - 22} m9,-7 l-9,7 l9,7`} />
+							</>
+						)}
+						{n.kind === "server" && (
+							<>
+								<rect x={n.x - 30} y={n.y - 46} width="60" height="92" rx="8" />
+								<path class="net-thin" d={`M${n.x - 16},${n.y - 26} H${n.x + 16} M${n.x - 16},${n.y - 12} H${n.x + 16} M${n.x - 16},${n.y + 26} H${n.x + 4}`} />
+							</>
+						)}
+						{n.kind === "pc" && (
+							<>
+								<rect x={n.x - 28} y={n.y - 20} width="56" height="38" rx="5" />
+								<path class="net-thin" d={`M${n.x - 12},${n.y + 28} H${n.x + 12} M${n.x},${n.y + 18} V${n.y + 28}`} />
+							</>
+						)}
+						{t && (
+							<text x={t.x} y={t.y} text-anchor={t.anchor}>
+								{n.label}
+								{n.sub && (
+									<tspan class="net-sub" x={t.x} dy="1.3em">
+										{n.sub}
+									</tspan>
+								)}
+							</text>
+						)}
+					</g>
+				);
+			})}
+		</svg>
+	))
+}
+
+<script>
+	// Draw the links once the drawing is in view (transform only; the CSS holds them back only under html.motion).
+	document.addEventListener("astro:page-load", () => {
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) {
+					if (!e.isIntersecting) continue;
+					e.target.setAttribute("data-drawn", "");
+					io.unobserve(e.target);
+				}
+			},
+			{ rootMargin: "0px 0px -15% 0px" },
+		);
+		document.querySelectorAll(".net").forEach((svg) => io.observe(svg));
+	});
+</script>
+
+<style>
+	.net {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+		font-family: inherit;
+	}
+	.net--tall {
+		display: none;
+	}
+	@media (max-width: 40rem) {
+		.net--wide {
+			display: none;
+		}
+		.net--tall {
+			display: block;
+			max-width: 26rem;
+			margin-inline: auto;
+		}
+	}
+	.net-link {
+		stroke: var(--ink);
+		stroke-width: 3;
+		stroke-linecap: square;
+		transform-box: fill-box;
+		transition: transform 0.45s linear calc(var(--n) * 140ms);
+	}
+	:global(.motion) .net:not([data-drawn]) .net-link {
+		transform: scaleX(0);
+	}
+	:global(.motion) .net:not([data-drawn]) .net-link[data-dir="y"] {
+		transform: scaleY(0);
+	}
+	.net-node :is(path, circle, rect, polyline) {
+		fill: var(--field);
+		stroke: var(--ink);
+		stroke-width: 3;
+		stroke-linejoin: round;
+	}
+	.net-node .net-thin {
+		fill: none;
+		stroke-width: 2.25;
+		stroke-linecap: round;
+	}
+	.net-node .net-mark {
+		fill: var(--mark);
+		stroke: #0a174e;
+	}
+	.net-node .net-tick {
+		fill: none;
+		stroke: #0a174e;
+		stroke-width: 4;
+		stroke-linecap: round;
+	}
+	.net text {
+		fill: var(--ink);
+		font-size: 21px;
+		font-weight: 650;
+		font-stretch: 110%;
+	}
+	.net-sub {
+		fill: var(--ink-soft);
+		font-size: 17px;
+		font-weight: 500;
+	}
+	.net--tall text {
+		font-size: 19px;
+	}
+</style>
