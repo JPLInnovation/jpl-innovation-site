@@ -1040,6 +1040,32 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
  @media (min-width: 1100px) and (min-aspect-ratio: 6/5) {
   .kch-panel h3 { font-size: clamp(1.8rem, 2.8vw, 3rem); margin-bottom: 1.25rem; }
  }
+
+	/* ---------- The FRC page's special edition (src/pages/work/frc.astro, .frc-ed): the chapter's big words in the
+	   page's display face, its labels in plain Archivo (no monospace, no all-caps, no beat numbers). The 3D view's own HUD
+	   and chapter map are left to the showcase's rebuild (spec §8). */
+	.frc-ed .kch :is(.kch-statement, .kch-stat, .kch-stat-secondary, .kch-reveal h2, .kch-panel h3) {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		font-stretch: normal;
+		letter-spacing: 0;
+		line-height: 0.95;
+		text-transform: uppercase;
+	}
+	.frc-ed .kch .kch-stat-unit {
+		color: var(--frc-y);
+	}
+	.frc-ed .kch :is(.chapter-label, .kch-stat-label, .kch-classic-hud, .kch-gate, .kch-panel .kch-facts dt) {
+		font-family: var(--font-sans);
+		letter-spacing: 0.01em;
+		text-transform: none;
+	}
+	.frc-ed .kch .chapter-label-n {
+		display: none;
+	}
+	.frc-ed .kch :is(.kch-panel > p:not([class]), .kch-intro, .kch-aside, .kch-stat-source, .kch-note) {
+		font-family: var(--font-sans);
+	}
 </style>
 
 <script>
