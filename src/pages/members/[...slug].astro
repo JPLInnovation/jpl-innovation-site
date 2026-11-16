@@ -402,6 +402,7 @@ const story = (entry.body ?? "")
 		padding: clamp(1.5rem, 3vw, 2.25rem);
 		background: var(--ink);
 		color: var(--field);
+		container-type: inline-size;
 	}
 	.sports__title {
 		font-size: var(--step-body);
@@ -419,7 +420,9 @@ const story = (entry.body ?? "")
 		border-top: 1px solid color-mix(in oklab, var(--field) 22%, transparent);
 	}
 	.sports__sport {
-		font-size: var(--step-head);
+		/* the head step, held to the panel's width so a long sport ("Badminton") stays inside */
+		font-size: min(var(--step-head), 12.5cqi);
+		overflow-wrap: anywhere;
 		font-weight: 820;
 		font-stretch: 125%;
 		line-height: 1;
