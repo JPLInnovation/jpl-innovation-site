@@ -13,8 +13,12 @@ tags:
 - Technology Enthusiast
 - Student
 # The map of Vietnam on his page (lat = degrees north, lon = degrees east).
-# [CHECK] his hometown or other places, if he wants them on the map (only Saigon for now).
+# The places on his map: his parents' hometown (both are from Đà Lạt), and Saigon.
 places:
+- name: Đà Lạt
+  note: my parents' hometown
+  lat: 11.94
+  lon: 108.44
 - name: Saigon
   note: home of JPL Innovation
   lat: 10.78

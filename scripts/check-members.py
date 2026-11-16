@@ -119,7 +119,7 @@ def check_person(browser, base, path):
               imgOk: (() => { const i = document.querySelector('.intro__portrait img'); return !!i && i.complete && i.naturalWidth > 0; })() })""")
             cl.report(got["hello"].startswith("Xin chào, mình là"), f"{path}: the greeting ({got['hello']!r})")
             cl.report(got["places"] == got["mapPlaces"] and got["places"] >= 1, f"{path}: every place is on the map ({got['mapPlaces']} of {got['places']})")
-            cl.report(got["stops"] == got["path"] and got["route"] == (got["path"] > 0), f"{path}: one stop on the route per step of the path ({got['stops']} for {got['path']})")
+            cl.report(got["stops"] == got["path"] and got["route"] == (got["places"] > 1), f"{path}: a route between the places, one stop on it per step of the path ({got['stops']} for {got['path']})")
             order = {"Advanced": 3, "Proficient": 2, "Developing": 1}
             sized = all(
                 (order.get(a, 0) - order.get(b, 0)) * (x - y) >= 0
