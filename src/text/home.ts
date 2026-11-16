@@ -6,23 +6,72 @@
  * and the people in "The team" come from src/text/members/*.md.
  */
 
-/** Hidden heading for screen readers and search engines. */
+/**
+ * The page's main heading. On the Classic home the words before the colon are shown huge across the top, in living
+ * colour; screen readers and search engines get the whole line.
+ */
 export const pageHeading = "JPL Innovation: a student-founded engineering startup in Ho Chi Minh City";
 
-/** The opening screen: the big "JPL" letters, then the photo with the intro over it. */
+/**
+ * The title block under the name on the Classic home (a drawing's title block: what this set of drawings is). "Drawn
+ * by" lists the people in src/text/members/*.md; "In the set" counts the projects in src/text/projects/*.md and adds
+ * `proof.projects` ("5 projects documented"); "Who we are" shows `hero.kicker`.
+ */
+export const titleBlock = {
+	/** Read by screen readers before the cells. */
+	label: "Title block",
+	drawnBy: "Drawn by",
+	founded: "Founded",
+	foundedValue: "October 2025",
+	inSet: "In the set",
+	who: "Who we are",
+};
+
+/**
+ * The live thing at the top of the Classic home: one drag (or the arrow keys) takes the F450 from its sketch, through
+ * its CAD render, to the built drone (src/components/home/Scrubber.astro; the pictures: scripts/render-scrub-stills.py).
+ * Until there is a photograph of the built F450, the last stage is a render of it on the bench, and says so.
+ */
+export const scrub = {
+	/** The control's name, read by screen readers. */
+	label: "The F450 drone, from its sketch to the built drone",
+	/** Under the picture. */
+	hint: "Drag across the drawing, or use the arrow keys.",
+	stages: [
+		{
+			name: "Sketch",
+			caption: "The F450 from above, on its page in the studio’s sketchbook: the parts, the wiring underneath, and the roadmap.",
+		},
+		{
+			name: "CAD",
+			caption: "The same drone as a CAD model, rendered: red front arms, white rear arms and four 10-inch props.",
+		},
+		{
+			name: "Built",
+			caption: "Built and bench tested, first flight next. Shown as a render of it on the bench until we have a photograph of it.",
+		},
+	],
+};
+
+/**
+ * The opening screen. Classic: the name across the top, then the slogan, `support` and the one button beside the
+ * sketch-to-drone picture; `heading` and `text` follow it with the two links. The 3D studio uses `kicker` and `support`.
+ */
 export const hero = {
-	/** Small line above the big letters. */
+	/** In the title block ("Who we are") on Classic; over the title in 3D. */
 	kicker: "Student-founded engineering startup · Ho Chi Minh City",
-	/** Line under the big letters. */
+	/** Line under the name. */
 	support: "We design, build and secure real technology: robots, drones, networks and the web.",
-	/** Button that flies the camera through the letters. */
+	/** The one button on the first screen: goes to the three plates of "What we do". */
 	enterButton: "See what we build",
+	/** Under the button (the blueprint behind the page flies as you scroll). */
 	scrollHint: "Scroll to fly in",
-	/** Shown over the photo once the camera is through the letters. */
+	/** The section right after the opening screen. */
 	heading: "Ideas in, working technology out.",
 	text: "JPL Innovation is a small team of student engineers. We take projects from the first sketch to a tested, working build (machines, networks and software) and document what we learn along the way.",
 	servicesButton: "Our services",
 	workButton: "See our work",
+	/** Under the robot photograph on the "Build it." plate. */
 	photoCaption: "Pictured: FRC Team 10951’s 2026 robot, one of the projects we worked on.",
 };
 
@@ -71,6 +120,8 @@ export interface Service {
 	desc: string;
 	/** The project on this site that shows this work. Leave it out and the card has no link. */
 	proof?: { label: string; href: string };
+	/** Which of the three plates (`verbs` below) it sits on in Classic: "sketch" | "build" | "secure". */
+	verb: "sketch" | "build" | "secure";
 }
 
 export const services: Service[] = [
@@ -79,31 +130,68 @@ export const services: Service[] = [
 		title: "Testing & upgrades",
 		desc: "Bench and field tests on every build, then upgrades as we learn.",
 		proof: { label: "F450 build guide", href: "/work/drone/build-guide/" },
+		verb: "build",
 	},
 	{
 		icon: "cog",
 		title: "Robotics & mechanical design",
 		desc: "CAD, prototyping and fabrication of mechanisms that hold up in real use, from concept to a tested build.",
 		proof: { label: "FRC robot", href: "/work/frc/" },
+		verb: "build",
 	},
 	{
 		icon: "drone",
 		title: "Embedded systems & drones",
 		desc: "Flight controllers, sensors and single-board computers wired into working machines, including live video over 4G.",
 		proof: { label: "F450 4G drone", href: "/work/drone/" },
+		verb: "sketch",
 	},
 	{
 		icon: "shield",
 		title: "Networking & cybersecurity",
 		desc: "Designing, configuring and hardening networks: Cisco routing and switching, Windows Server infrastructure, access control.",
 		proof: { label: "Cybersecurity lab", href: "/work/cybersecurity/" },
+		verb: "secure",
 	},
 ];
+
+/**
+ * The three whole-screen plates of "What we do" on the Classic home, one per word of the slogan (site.ts `slogan`),
+ * each with a picture of the work and the services above that carry its `id`.
+ */
+export const verbs = [
+	{
+		id: "sketch",
+		verb: "Sketch it.",
+		alt: "The F450’s CAD model pulled apart: props and motors at the top, the arms and plates, and its power parts picked out under the frame.",
+	},
+	{
+		id: "build",
+		verb: "Build it.",
+		alt: "FRC Team 10951’s 2026 robot on the practice field, its intake rollers in front.",
+	},
+	{
+		id: "secure",
+		verb: "Secure it.",
+		alt: "A drawing of a small secured network: the internet, an access-control list, a router, a layer 3 switch with a Windows Server, and two layer 2 switches with two computers each.",
+	},
+] as const;
+
+/** The labels in the "Secure it." plate's network drawing (the same network as the Cybersecurity project's picture). */
+export const network = {
+	internet: "Internet",
+	acl: "ACL",
+	router: "Router",
+	l3: "L3 switch",
+	l2: "L2 switch",
+	server: "Windows Server",
+	serverRoles: "AD · DNS · DHCP",
+};
 
 /** "Selected work": the heading above the project cards. */
 export const workSection = {
 	heading: "Selected work",
-	intro: "Our own builds and the team we compete with: a drone that streams over 4G, an FRC robot, and a secured network lab.",
+	intro: "Our own builds and the team we compete with: a drone that streams over 4G, Lifetime (software that counts how long each computer is really awake), an FRC robot, and a secured network lab.",
 	allWorkLink: "All work",
 };
 
