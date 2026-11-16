@@ -121,18 +121,15 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 	.register__revision {
 		color: var(--ink-soft) !important;
 	}
-	.register__row:hover {
-		background-color: color-mix(in oklab, var(--ink) 4%, transparent);
-	}
 	.register__project {
 		width: 44%;
 		font-weight: inherit;
 	}
+	/* inline-block: the name wraps like text and the plus follows its last word */
 	.register__toggle {
-		display: inline-flex;
-		align-items: baseline;
-		gap: 0.6em;
+		display: inline-block;
 		text-align: left;
+		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 		cursor: pointer;
 		color: var(--ink);
 	}
@@ -156,15 +153,21 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 		line-height: 1;
 		letter-spacing: -0.035em;
 		text-wrap: balance;
-		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
-	.register__row:hover .register__name {
-		transform: translateX(0.5rem);
+	@media (hover: hover) {
+		.register__row:hover {
+			background-color: color-mix(in oklab, var(--ink) 4%, transparent);
+		}
+		.register__row:hover .register__toggle {
+			transform: translateX(0.5rem);
+		}
 	}
 	.register__toggle :global(.register__plus) {
-		flex: none;
+		display: inline-block;
 		width: clamp(1.1rem, 0.8rem + 0.8vw, 1.6rem);
 		height: auto;
+		margin-left: 0.45em;
+		vertical-align: 0.05em;
 		color: var(--accent-brand);
 		transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
