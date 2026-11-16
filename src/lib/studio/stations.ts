@@ -5,7 +5,7 @@
  *
  *   Robotics   the KitBot on a low rolling cart, a pegboard of tools behind it (the robot's own CAD, frc-robot.ts)
  *   Drones     the F450 on a landing mat, powered up on the bench (its LED blinks; it has not flown, so it never lifts off) (drone.ts)
- *   Software   a small stand with a PC and a monitor, Lifetime's Overview on its screen
+ *   Software   a small stand with a PC and a monitor, Lifetime Server on its screen
  *   Networks   a switch rack with blinking port lights and patch cables
  *   Testing    the test bench: a laptop on the F450's ground station (its page scrolls with the mouse wheel; screens.ts)
  *              and an easel whiteboard with the bench test. Its scene id stays "web" (links and the camera use it).
@@ -260,8 +260,9 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const softZ = -2.7;
 	workbench(softX, 0.6, 0.6, softZ);
 	boxAt(group, 0.5, 0.325, 0.025, dark, softX, benchTop + 0.27, softZ - 0.16, 0.008);
-	// Its screen: Lifetime's own Overview (the same screenshot as on the Lifetime page), 16:10 like the screen.
-	const softScreen = new Mesh(new PlaneGeometry(0.47, 0.294), screenMaterial(imageTexture("/assets/lifetime/overview.webp")));
+	// Its screen: Lifetime Server's own dashboard (the screenshot on the Lifetime page), 16:10 like the screen; entered,
+	// that window runs live, to be used (LifetimeDay.astro in hand mode, src/pages/index.astro).
+	const softScreen = new Mesh(new PlaneGeometry(0.47, 0.294), screenMaterial(imageTexture("/assets/lifetime/server.webp")));
 	softScreen.position.set(softX, benchTop + 0.27, softZ - 0.146);
 	group.add(softScreen);
 	boxAt(group, 0.05, 0.11, 0.05, steel, softX, benchTop + 0.055, softZ - 0.18);
@@ -910,7 +911,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				const h = panel.hover;
 				panel.holder.rotation.y = panel.base + (1 - turn) * 0.5;
 				panel.holder.position.set(panel.bx + panel.toward[0] * 0.12 * h, panel.y - (1 - turn) * 0.04, panel.bz + panel.toward[1] * 0.12 * h);
-				panel.holder.scale.setScalar(arc.scale * (1 + 0.05 * h));
+				panel.holder.scale.setScalar(arc.scale * (1 + 0.03 * h));
 				(panel.screen.material as MeshBasicMaterial).color.setScalar(1 - 0.3 * wallHover * (1 - h));
 				(panel.edge.material as MeshBasicMaterial).opacity = h;
 			});

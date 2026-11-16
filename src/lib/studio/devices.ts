@@ -7,8 +7,8 @@
  *                                 clock, with its telemetry in a panel beside it
  *   networks   the switch rack    up to its front, then the CCNA lab's console (src/components/IosTerminal.astro)
  *   robotics   the robot's cart   a three-quarter view; the robot turns, and comes apart into its CAD parts on a slider
- *   software   the software stand's monitor   as the desk monitor: the screen becomes the window, then Lifetime is
- *                                 there (its real screens, and the server's live demo: src/components/lifetime/LifetimeScreen.astro)
+ *   software   the software stand's monitor   as the desk monitor: the screen becomes the window, then the Lifetime
+ *                                 Server window is there, to be used (the lab demo: src/components/lifetime/LifetimeDay.astro)
  *
  * Each device knows what to pick (for the pointer) and where the camera ends up. The engine flies there (engine.ts).
  */

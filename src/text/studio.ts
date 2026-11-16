@@ -62,16 +62,9 @@ export const devices = {
 		note: "Its props spin up; it stays on the bench. It hasn't flown yet.",
 	},
 	software: {
-		enter: "Open Lifetime",
-		title: "Lifetime, on the software stand",
-		/** The window's tabs. Overview and Activity are the app's real screens; Server runs the lab demo. */
-		tabsLabel: "Lifetime's pages",
-		tabs: { overview: "Overview", activity: "Activity", server: "Server" },
-		overviewAlt: "The Lifetime desktop app's Overview: total awake time, the current and longest sessions, and the last 14 days",
-		activityAlt: "The desktop app's Activity page: a calendar of awake hours, daily awake hours, the lifetime total and the hour-of-day profile",
-		/** Under the real screens, so nobody reads a screenshot as live. */
-		shotNote: "A screenshot of the app.",
-		page: "The Lifetime page",
+		enter: "Use Lifetime Server",
+		/** The monitor opens into the Lifetime Server window itself (the Lifetime page's lab demo), to be used. */
+		title: "Lifetime Server, on the software stand",
 	},
 	cart: {
 		enter: "Take the robot apart",

@@ -35,7 +35,7 @@ DEVICES = {
     "web": {"at": (360, 420), "inside": "[data-flight-toggle]"},
     "networks": {"at": (950, 420), "inside": "#ios-command, [data-ios-terminal] [role=tab]"},
     "robotics": {"at": (980, 560), "inside": "input[type=range][data-explode]"},
-    "software": {"at": (900, 420), "inside": "[data-lts-tab]"},
+    "software": {"at": (900, 420), "inside": "[data-ltd-play]"},
 }
 
 

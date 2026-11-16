@@ -9,7 +9,7 @@
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import EmailButton from "@/components/EmailButton.astro";
 import IosTerminal from "@/components/IosTerminal.astro";
-import LifetimeScreen from "@/components/lifetime/LifetimeScreen.astro";
+import LifetimeDay from "@/components/lifetime/LifetimeDay.astro";
 import Register from "@/components/work/Register.astro";
 import StatusTag from "@/components/StatusTag.astro";
 import ClassicHome from "@/components/ClassicHome.astro";
@@ -297,7 +297,7 @@ const organization = {
 					<h2 id="device-software" class="studio-device-title">{devices.software.title}</h2>
 					<button type="button" class="studio-device-back" data-device-back><ArrowLeft className="size-4" strokeWidth={2} aria-hidden="true" /> {devices.back}</button>
 				</div>
-				<div class="studio-device-body studio-device-app"><LifetimeScreen /></div>
+				<div class="studio-device-body studio-device-app"><LifetimeDay hand /></div>
 			</div>
 		</dialog>
 		<dialog class="studio-device" data-device="networks" aria-labelledby="device-networks">

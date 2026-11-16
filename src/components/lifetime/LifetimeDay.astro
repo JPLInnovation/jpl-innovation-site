@@ -9,8 +9,9 @@
  * Reduced motion: no pinning, the end of the day, still (the slider still moves through the day by hand).
  * Paused off screen. Words: src/text/projects/lifetime.ts.
  *
- * `hand`: inside another page's window (the 3D studio's software monitor, LifetimeScreen.astro): never pinned to the
- * page's scroll; the slider moves through the day, and "Play the day" runs it on its own.
+ * `hand`: the 3D studio's software monitor (src/pages/index.astro): only the Lifetime Server window, to be used, with a
+ * slim bar above it (the time, the time slider, "Play the day", the style and theme, the caption); never pinned to the
+ * page's scroll.
  */
 import { Clock, Hourglass, Monitor, MonitorOff, Moon, Sun } from "lucide-react";
 import { DAY, MACHINES, OUTAGES } from "@/lib/look/lifetime-day";
@@ -70,7 +71,7 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 <section class="ltd" aria-labelledby="ltd-heading" data-ltd data-ltd-hand={hand ? "" : undefined}>
 	<div class="wrapper ltd-head">
 		<h2 id="ltd-heading" class="ltd-h2">{text.heading}</h2>
-		<p class="ltd-intro">{hand ? text.introHand : text.intro}</p>
+		<p class="ltd-intro">{text.intro}</p>
 	</div>
 
 	<div class="ltd-track" data-track>
@@ -799,6 +800,56 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 		max-width: 46ch;
 		color: var(--ink-soft);
 		text-wrap: pretty;
+	}
+	/* In the studio's monitor: only the server window, the whole width, under a slim bar of controls. */
+	.ltd[data-ltd-hand] :is(.ltd-head, .ltd-beats, .ltd-plan-wrap, .ltd-compare) {
+		display: none;
+	}
+	.ltd[data-ltd-hand] {
+		padding-top: 0;
+	}
+	.ltd[data-ltd-hand] .ltd-stage {
+		padding: 0;
+	}
+	.ltd[data-ltd-hand] .ltd-fit {
+		max-width: none;
+		padding: 0.75rem clamp(1rem, 2vw, 1.5rem) 1.5rem;
+		gap: 0.75rem 1.5rem;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-rows: auto auto;
+		grid-template-areas:
+			"clock controls caption"
+			"app app app";
+		align-items: center;
+	}
+	.ltd[data-ltd-hand] .ltd-clock {
+		font-size: 2.25rem;
+	}
+	.ltd[data-ltd-hand] .ltd-controls {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+		margin-top: 0;
+	}
+	.ltd[data-ltd-hand] .ltd-time {
+		flex: 1 1 14rem;
+		grid-template-columns: auto 1fr;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.ltd[data-ltd-hand] .ltd-caption {
+		max-width: 30ch;
+		font-size: 0.75rem;
+	}
+	@media (max-width: 900px) {
+		.ltd[data-ltd-hand] .ltd-fit {
+			grid-template-columns: auto minmax(0, 1fr);
+			grid-template-areas:
+				"clock controls"
+				"app app"
+				"caption caption";
+		}
 	}
 	.ltd-track {
 		position: relative;
