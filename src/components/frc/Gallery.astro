@@ -9,6 +9,11 @@ import { edition, frcPhotos, lightboxText, rookieText, type FrcPhoto } from "@/t
 
 const photos = rookieText.pits.map((id) => frcPhotos[id] as FrcPhoto);
 const g = edition.gallery;
+// The cards are 4:3 and crop each photo to fill, so a wide photo needs a file as wide as the crop (see .fgal-track).
+const sizes = (p: FrcPhoto) => {
+	const k = Math.max(1, p.w / p.h / (4 / 3)).toFixed(2);
+	return `(max-width: 640px) calc(78vw * ${k}), calc(min(29vw, 26rem) * ${k})`;
+};
 ---
 
 <section class="fgal frc-paper" aria-labelledby="pits-heading" data-frc-gallery>
@@ -36,7 +41,7 @@ const g = edition.gallery;
 						data-zoom-caption={`${p.caption}${p.meta ? ` · ${p.meta}` : ""}`}
 						aria-label={`${lightboxText.open} ${p.caption}`}
 					>
-						<img src={`/assets/frc/${p.id}-640.webp`} alt={p.alt} width={p.w} height={p.h} loading="lazy" decoding="async" draggable="false" />
+						<img src={`/assets/frc/${p.id}-640.webp`} srcset={`/assets/frc/${p.id}-640.webp 640w, /assets/frc/${p.id}.webp ${p.w}w`} sizes={sizes(p)} alt={p.alt} width={p.w} height={p.h} loading="lazy" decoding="async" draggable="false" />
 						<span class="frc-mono" />
 					</button>
 					<p class="fgal-cap">

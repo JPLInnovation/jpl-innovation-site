@@ -19,6 +19,9 @@ const img = (p: FrcPhoto) => ({
 	width: p.w,
 	height: p.h,
 });
+// The reel's frames are 4:5 and crop each photo to fill (object-fit: cover), so a wide photo is drawn wider than the
+// frame: ask for a file as wide as the crop needs, or a 2.3:1 panorama is stretched from the 640 px copy.
+const crop = (p: FrcPhoto) => Math.max(1, p.w / p.h / 0.8);
 
 // The map: equirectangular, centred on the Pacific (150°E) so the flight to Vancouver doesn't wrap round the edge.
 const W = 1000;
@@ -70,7 +73,7 @@ for (let x = 10; x < W; x += 26) for (let y = 30; y < H + 40; y += 26) dots.push
 						const p = photo(s.photo);
 						return (
 							<figure class:list={["fhis-frame", i === 0 && "is-on"]}>
-								<img {...img(p)} sizes="(min-width: 861px) 24vw, 100vw" alt="" loading={i < 2 ? "eager" : "lazy"} decoding="async" />
+								<img {...img(p)} sizes={`(min-width: 861px) ${Math.ceil(24 * crop(p))}vw, ${Math.ceil(100 * crop(p))}vw`} alt="" loading={i < 2 ? "eager" : "lazy"} decoding="async" />
 								<span class="frc-mono" />
 							</figure>
 						);
