@@ -451,6 +451,8 @@ export function drive(ctx: StageContext, model: ShowcaseModel, { titles, positio
 		go(n: number | null, variant?: string) {
 			override = n === null ? null : clamp(Math.round(n), 0, last);
 			snap = true;
+			// Posed before the step too, so a variant that changes the step (the drone pulled apart) shows at once.
+			if (override !== null) model.pose?.(override, variant);
 			step(0);
 			if (override !== null) model.pose?.(override, variant);
 			ctx.render();

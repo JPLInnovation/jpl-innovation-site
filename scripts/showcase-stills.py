@@ -41,7 +41,9 @@ PAGES = {"drone": "/work/drone/", "robot": "/work/frc/"}
 # (src/components/DroneChapter.astro) use WebP only, so the drone gets no AVIF copies.
 AVIF = {"robot"}
 # A feature's other states, each its own picture: <feature-id>-<state>.webp (src/text/showcase/robot.ts `states`).
-STATES = {"robot": {"hopper-close": ["stowed"], "shooter": ["plate"]}}
+# Extra stills of a feature in another state: <feature>-<state>.webp. The drone's overview pulled apart is the
+# Classic home's "Sketch it." plate (src/components/ClassicHome.astro).
+STATES = {"robot": {"hopper-close": ["stowed"], "shooter": ["plate"]}, "drone": {"overview": ["apart"]}}
 # WebGL without a GPU, for Playwright's own Chromium (Chrome finds its own way).
 GL_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"]
 

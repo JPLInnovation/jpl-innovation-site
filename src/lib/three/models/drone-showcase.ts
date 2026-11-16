@@ -21,8 +21,8 @@ type V3 = [number, number, number];
  * CAD part names per feature id (the ids in src/text/showcase/drone.ts). `look`: the camera frames these and the
  * label hangs off them (none = the whole drone). `also`: more parts that keep their colour on that stop. Parts in no
  * list are the frame. The first feature is the overview: the whole drone stays in colour.
- * Names missing from the model are skipped, so the lists hold the names of both the October 16 layout and the newer
- * one (Pi on its own holder, battery in a printed case, FC on a damping plate).
+ * Names missing from the model are skipped, so the lists hold the names of the earlier layouts and the final one
+ * (16 Nov 2026: the battery in a printed box with a hinged door, which opens on the power stop).
  */
 const PARTS: Record<string, { look: string[]; also?: string[] }> = {
 	overview: { look: [] },
@@ -59,8 +59,10 @@ const PARTS: Record<string, { look: string[]; also?: string[] }> = {
 		also: ["Arms and ESCs", "ESC power leads", "ESC signal leads", "Motor phase wires"],
 	},
 	power: {
-		look: ["Battery", "Battery case (printed)"],
+		look: ["Battery", "Battery case (printed)", "Battery + battery box", "Battery box (printed)"],
 		also: [
+			"Battery box door (printed)",
+			"M3 x 10 latch screw",
 			"Battery strap",
 			"Matek BEC12S-PRO pads",
 			"BEC sleeve (printed)",
@@ -126,7 +128,7 @@ const FRAMING: Record<string, { at?: V3; from: V3; label: V3; distance?: number 
 	overview: { from: [-0.73, 0.57, 0.66], label: [0.7, 0.15, 0.45] }, // the hero's three-quarter view
 	"flight-controller": { from: [-0.2, 0.55, 0.27], label: [1.4, 0.8, 0] }, // high, looking down at the top plate
 	motors: { at: [-0.56, -0.35, 0.4], from: [-0.36, 0.09, -0.1], label: [-0.6, 1.5, 0.52] }, // low, beside the front-left (red) arm
-	power: { at: [0, -1, 0], from: [-0.5, -0.09, -0.27], label: [-1.5, -1.2, 0] }, // from below the belly
+	power: { at: [0, 0, -1], from: [-0.09, 0.05, -0.27], label: [1.9, 0.4, -1], distance: 0.42 }, // straight at the battery box's rear, a little above: its lid swings down toward the camera and the battery shows inside
 	camera: { at: [0, -0.4, -1.5], from: [0.1, -0.02, 0.26], label: [0, -0.9, 1.35] }, // low at the front, looking up at the mount
 	"video-link": { at: [0, 0.2, 0], from: [0.37, -0.06, -0.47], label: [1.1, 0, -0.6] }, // from the rear, low
 };
@@ -135,10 +137,10 @@ const LABEL_GAP = 0.015; // metres outside a face, for label coordinates of ±1
 
 /**
  * Exploded view: how far apart the drone is on each stop (0 = assembled, 1 = fully apart). The stack is easiest to
- * read pulled apart on the flight controller (the FC on its damping plates over the top plate) and the power stop
- * (the battery, its case and the PDB under the frame). The opening beat also starts fully apart and settles together.
+ * read pulled apart on the flight controller (the FC on its damping plates over the top plate). The power stop stays
+ * together: its battery box's lid opens instead. The opening beat also starts fully apart and settles together.
  */
-const EXPLODE: Record<string, number> = { "flight-controller": 0.45, power: 0.5 };
+const EXPLODE: Record<string, number> = { "flight-controller": 0.45 };
 /** Per axis: how far each part moves from the middle of the drone, as a share of how far its centre already is.
  *  Mostly up and down, so the layers of the stack separate; a little outward, so the arms clear the plates. */
 const SPREAD: V3 = [0.45, 2.1, 0.45];
@@ -167,7 +169,7 @@ const size = ({ lo, hi }: Box) => (hi[0] - lo[0]) * (hi[1] - lo[1]) * (hi[2] - l
  * goes in the exploded view, as an offset) to every CAD mesh of the drone. `centre`: the middle of the drone; parts
  * whose box spans most of the drone (all four arms, all four motors) move by each piece's own centre instead.
  */
-function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, extras: Record<string, number>, centre: V3, span: V3) {
+function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, extras: Record<string, number>, centre: V3, span: V3, doorFeature: number) {
 	const E = 2e-4; // the boxes are rounded to 0.1 mm
 	const holds = (b: Box, lo: number[], hi: number[]) => [0, 1, 2].every((d) => lo[d] >= b.lo[d] - E && hi[d] <= b.hi[d] + E);
 	const motors = extras.CircleGeometry ?? 0; // the spinning props sit on their own hubs, away from their part box
@@ -183,6 +185,7 @@ function tagFeatures(model: Object3D, boxes: Array<Box & { feature: number }>, e
 		const feature = new Float32Array(position.count);
 		const explode = new Float32Array(position.count * 3);
 		if (extra !== undefined) feature.fill(extra);
+		else if (mesh.parent?.userData.door) feature.fill(doorFeature); // the battery box's door, on its hinge (moved by hand)
 		else if (mesh.parent !== model) feature.fill(motors);
 		else if (index) {
 			// Connected pieces (union-find over the triangles' vertices)...
@@ -307,7 +310,8 @@ export default async function createDroneShowcase(
 	ids.forEach((id, n) => [...partsOf(id).look, ...(partsOf(id).also ?? [])].forEach((name) => featureOf.set(name, n)));
 	const boxes = parts.map((p) => ({ ...p, feature: featureOf.get(p.name) ?? 0 })).sort((a, b) => size(a) - size(b));
 	const extras = Object.fromEntries(Object.entries(EXTRAS).map(([type, id]) => [type, Math.max(0, ids.indexOf(id))]));
-	tagFeatures(rig.model, boxes, extras, centre, span);
+	const power = ids.indexOf("power");
+	tagFeatures(rig.model, boxes, extras, centre, span, Math.max(0, power));
 	ctx.root.add(rig.model);
 
 	const shadow = contactShadow(0.42, 0.3, 0.25);
@@ -320,8 +324,14 @@ export default async function createDroneShowcase(
 	const motorsBox = around(PARTS.motors.look);
 	const movers: Array<{ object: Object3D; home: Vector3; shift: Vector3 }> = [];
 	let led: Object3D | undefined;
+	if (rig.doorHinge) {
+		// The battery box's door goes where its box goes, so it stays shut on it when the drone comes apart.
+		const box = around(["Battery box (printed)", "Battery case (printed)"]);
+		movers.push({ object: rig.doorHinge, home: rig.doorHinge.position.clone(), shift: new Vector3(...shiftOf(box)) });
+	}
 	rig.model.children.forEach((object) => {
 		const mesh = object as Mesh;
+		if (object === rig.doorHinge) return;
 		const hub = !mesh.isMesh && object.children.length > 0;
 		const disc = mesh.isMesh && mesh.geometry.type === "CircleGeometry";
 		if (mesh.isMesh && mesh.geometry.type === "BoxGeometry") led = mesh;
@@ -350,6 +360,8 @@ export default async function createDroneShowcase(
 
 	// The opening beat: a light sweeps across the drone while its parts settle together.
 	const key = ctx.lights.key;
+	// The stills' "apart" variant (scripts/showcase-stills.py): the whole drone pulled apart, for the Classic home's plate.
+	let apartStill = false;
 	const keyHome = key.position.clone();
 
 	// The 4G stick's signal rings belong to the video link: they show on its stop only (and fade in and out with it).
@@ -378,16 +390,22 @@ export default async function createDroneShowcase(
 		opening(progress) {
 			const k = smooth(Math.min(1, Math.max(0, progress)));
 			key.position.set(keyHome.x + (1 - k) * 9, keyHome.y - (1 - k) * 2.5, keyHome.z);
-			return 1 - k;
+			return apartStill ? 1 : 1 - k;
 		},
 		focus(weights, amount) {
 			signal = videoLink < 0 ? 0 : weights[videoLink];
+			// The battery box's lid swings open as the camera arrives at the battery, and shuts as it leaves.
+			rig.door(power < 0 ? 0 : smooth(Math.min(1, weights[power] * 1.25)));
 			if (spinAt >= 0) spin = smooth(weights[spinAt]);
 			for (const ring of rings) ring.visible = options.rings !== false && signal > 0.01;
 			pullApart(amount);
 		},
 		update,
-		pose() {
+		pose(_stop, variant) {
+			apartStill = variant === "apart";
+			// (pulled apart it is taller and wider than the overview's framing: drawn smaller, so nothing is cut off)
+			rig.model.scale.setScalar(apartStill ? 0.74 : 1);
+			shadow.scale.setScalar(apartStill ? 0.74 : 1);
 			update(RINGS_AT, 1e-3); // the rings part way out, for the 4G video link's still
 			if (discs) discs.opacity = 0; // and no blur discs: nothing spins in a still
 		},

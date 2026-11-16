@@ -2,9 +2,10 @@
  * The F450 4G drone in 3D: the build guide's 3D layout (public/work/drone/3d-layout/) exactly as it exports itself,
  * so every part, wire, screw and the camera's printed tilt mount are where the layout puts them.
  *
- * f450-cad.bin is CAD/f450-drone.glb (the layout page's "Download 3D files" zip) reduced by scripts/f450-cad.mjs:
- * triangles merged by material, the four props split off to spin, 16-bit positions, gzipped. Run that script again
- * after a new export. Metres; y up; the front (the red arms, the camera) faces +z.
+ * f450-cad.bin is assets-src/models/f450-drone.glb (the layout's final export) reduced by scripts/f450-cad.mjs:
+ * triangles merged by material, the four props split off to spin, the battery box's door split off to open, 16-bit
+ * positions, gzipped. Run that script again after a new export. Metres; y up; the front (the red arms, the camera)
+ * faces +z.
  *
  * buildDrone() makes the drone itself, for whatever shows it: the drone page's 3D (createDrone, below) and its
  * intro (src/scripts/drone-splash.ts).
@@ -53,7 +54,14 @@ interface CadHeader {
 	parts: Record<string, number[]>;
 	/** The camera lens glass: its middle and the way it looks. */
 	lens: { p: number[]; d: number[] };
+	/** The battery box's door (group hub 4): its hinge's middle and line, and which way it faces (it opens that way). */
+	door?: { p: number[]; a: number[]; out: number };
 }
+
+/** The group "hub" the build script gives the battery box's door. */
+const DOOR_HUB = 4;
+/** How far the door swings open, radians: down to flat, like a drawbridge (it rests on the bottom plate). */
+const DOOR_OPEN = Math.PI / 2;
 
 const pad4 = (n: number) => (n + 3) & ~3;
 
@@ -166,6 +174,10 @@ export interface DroneRig {
 	floor: number;
 	/** Bounding box per CAD part name (min x y z, max x y z), for finding which part a triangle belongs to. */
 	parts: Record<string, number[]>;
+	/** Opens the battery box's door on its hinge: 0 shut to 1 open. Nothing happens on a model without one. */
+	door(open: number): void;
+	/** The door's hinge (a group in `model`, userData.door), or undefined. */
+	doorHinge?: Group;
 }
 
 export async function loadDrone(): Promise<DroneRig> {
@@ -187,13 +199,21 @@ export async function loadDrone(): Promise<DroneRig> {
 		),
 	);
 
-	/* ---------- Meshes: the frame's, then each prop's around its own motor ---------- */
+	/* ---------- Meshes: the frame's, then each prop's around its own motor, and the battery box's door on its hinge ---------- */
 	const hubs = header.hubs.map(([x, , z]) => {
 		const hub = new Group();
 		hub.position.set(x, 0, z);
 		model.add(hub);
 		return hub;
 	});
+	let doorHinge: Group | undefined;
+	if (header.door) {
+		doorHinge = new Group();
+		doorHinge.position.fromArray(header.door.p);
+		doorHinge.userData.door = true;
+		model.add(doorHinge);
+	}
+	const doorAxis = new Vector3(...((header.door?.a ?? [1, 0, 0]) as [number, number, number]));
 	let at = body;
 	for (const g of header.groups) {
 		const q = new Int16Array(buffer, at, g.n * 3);
@@ -202,7 +222,7 @@ export async function loadDrone(): Promise<DroneRig> {
 		at += pad4(g.n * 3);
 		const index = g.w ? new Uint32Array(buffer, at, g.i) : new Uint16Array(buffer, at, g.i);
 		at += pad4(g.i * (g.w ? 4 : 2));
-		const origin = g.h >= 0 ? header.hubs[g.h] : [0, 0, 0];
+		const origin = g.h === DOOR_HUB ? header.door!.p : g.h >= 0 ? header.hubs[g.h] : [0, 0, 0];
 		const position = new Float32Array(g.n * 3);
 		for (let i = 0; i < position.length; i++) {
 			const d = i % 3;
@@ -215,15 +235,16 @@ export async function loadDrone(): Promise<DroneRig> {
 		const mesh = new Mesh(geometry, materials[g.m]);
 		if (materials[g.m].userData.finish === "brushed") circularGrain(mesh, header.hubs);
 		if (header.materials[g.m].o !== undefined) mesh.renderOrder = 1;
-		(g.h >= 0 ? hubs[g.h] : model).add(mesh);
+		(g.h === DOOR_HUB ? doorHinge! : g.h >= 0 ? hubs[g.h] : model).add(mesh);
 	}
 	// Props spin in the quad-X pattern: front-left and rear-right clockwise (seen from above), the others counter-clockwise.
 	const props = hubs.map((hub, i) => ({ hub, clockwise: header.hubs[i][0] * header.hubs[i][2] > 0 }));
 
 	/* ---------- Where things are ---------- */
-	const part = (name: string) => {
-		const b = header.parts[name];
-		if (!b) throw new Error(`f450-cad.bin has no part called "${name}"`);
+	/** A part's box, by the first of its names the model has (the layouts have renamed a few parts). */
+	const part = (...names: string[]) => {
+		const b = names.map((name) => header.parts[name]).find(Boolean);
+		if (!b) throw new Error(`f450-cad.bin has no part called "${names.join('" or "')}"`);
 		return { lo: b.slice(0, 3), hi: b.slice(3), mid: [0, 1, 2].map((d) => (b[d] + b[d + 3]) / 2) };
 	};
 	const fc = part("Flight controller");
@@ -243,7 +264,10 @@ export async function loadDrone(): Promise<DroneRig> {
 		io: above("IO board", 0.022),
 		rx: above("Receiver", 0.022),
 		cam: [cam.mid[0], cam.lo[1] - 0.012, cam.hi[2] + 0.025],
-		lipo: below("Battery", 0.02),
+		lipo: (() => {
+			const p = part("Battery + battery box", "Battery");
+			return [p.mid[0], p.lo[1] - 0.02, p.mid[2]] as [number, number, number];
+		})(),
 		pi: below("Pi 4 case (ABS)", 0.02),
 		bec: [bec.hi[0] + 0.03, bec.mid[1], bec.mid[2]], // outboard: the BEC rides on the left side of the Pi case
 		modem: [modem.hi[0] + 0.03, modem.mid[1], modem.mid[2]],
@@ -279,6 +303,11 @@ export async function loadDrone(): Promise<DroneRig> {
 		spots,
 		floor: part("Landing gear").lo[1],
 		parts: header.parts,
+		doorHinge,
+		door(open) {
+			// The door's top swings out the way it faces: about the hinge's line, toward -z for a door at the rear.
+			doorHinge?.setRotationFromAxisAngle(doorAxis, (header.door?.out ?? -1) * Math.max(0, Math.min(1, open)) * DOOR_OPEN);
+		},
 		animate(t, dt, spin = 1) {
 			if (dt > 0) for (const { hub, clockwise } of props) hub.rotation.y += (clockwise ? -1 : 1) * dt * 30 * spin;
 			discMaterial.opacity = dt > 0 ? 0.06 * spin : 0;

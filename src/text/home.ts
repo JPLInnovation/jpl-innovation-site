@@ -170,7 +170,7 @@ export const verbs = [
 	{
 		id: "sketch",
 		verb: "Sketch it.",
-		alt: "The F450’s CAD model pulled apart: props and motors at the top, the arms and plates, and its power parts picked out under the frame.",
+		alt: "The F450’s CAD model pulled apart: the props and motors out at the ends of the arms, the stack of plates, boards and the battery box lifted apart, the landing legs below.",
 	},
 	{
 		id: "build",

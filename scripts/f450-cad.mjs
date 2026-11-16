@@ -1,6 +1,7 @@
-// Reduces the F450's GLB to src/lib/three/models/f450-cad.bin, the file the drone page's 3D model and its intro load.
-// The GLB is assets-src/models/f450-drone-web.glb, Blender's export of CAD/f450-drone-web.blend (kept in git, not
-// published). The 3D layout page's own export (CAD/f450-drone.glb, from its "Download 3D files" button) also works.
+// Reduces the F450's GLB to src/lib/three/models/f450-cad.bin, the one file every F450 on the site loads (the drone
+// page's 3D and its intro, the studio's bench, the simulated flight, the opening's blueprint).
+// The GLB is assets-src/models/f450-drone.glb (kept in git, not published): the F450 3D layout's export, the final
+// layout of 16 Nov 2026 (the battery in a printed box with a hinged door). Blender's split export (prop_* nodes) works too.
 //
 //   - the model is moved to metres with its front on +z (the GLB has a 0.001 scale and a half turn on its root node)
 //   - triangles are merged by material, so the whole drone is a few dozen meshes instead of one per part
@@ -8,17 +9,17 @@
 //     from the four prop_* nodes of Blender's export, or else by height from the
 //     layout's single "Motors and props" part
 //   - positions are 16-bit, normals 8-bit, identical vertices are welded, and the file is gzipped
+//   - the battery box's door (and its latch screw) is split off too, around its hinge bolt, so it can open
 //   - the file also says where each part is (a bounding box per part name) and where the camera lens looks from
 //
 // File layout (before gzip): u32 header length (padded to 4) · header JSON · for each group, in order: 16-bit
 // positions x3, 8-bit normals x3, indices (16-bit, or 32-bit when `w` is 1), each padded to 4 bytes.
 //
-// Run:  node scripts/f450-cad.mjs [assets-src/models/f450-drone-web.glb] [src/lib/three/models/f450-cad.bin]
-//       node scripts/f450-cad.mjs CAD/f450-drone.glb   (the layout page's export)
+// Run:  node scripts/f450-cad.mjs [assets-src/models/f450-drone.glb] [src/lib/three/models/f450-cad.bin]
 import { readFileSync, writeFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 
-const [srcPath = "assets-src/models/f450-drone-web.glb", outPath = "src/lib/three/models/f450-cad.bin"] = process.argv.slice(2);
+const [srcPath = "assets-src/models/f450-drone.glb", outPath = "src/lib/three/models/f450-cad.bin"] = process.argv.slice(2);
 
 /* ---------- Read the GLB ---------- */
 const glb = readFileSync(srcPath);
@@ -128,6 +129,29 @@ if (propNodes.length) {
 	}
 }
 
+/* ---------- The battery box's door: hinged on a bolt along its bottom edge ---------- */
+// Its triangles (and the latch screw's) go in group "hub" 4, placed around the hinge: the bolt's own triangles within
+// the door's depth give the hinge's line (its longest side) and middle. `out`: which way the door faces (it opens
+// that way), -1 for the end of the box nearest -z (the rear).
+const DOOR = "Battery box door (printed)";
+const DOOR_HUB = 4;
+let door;
+const doorTris = tris.filter((t) => t.part === DOOR);
+if (doorTris.length) {
+	const zs = doorTris.flatMap((t) => t.v.map((v) => v[2]));
+	const [z0, z1] = [Math.min(...zs) - 0.004, Math.max(...zs) + 0.004];
+	const within = (t) => centroid(t)[2] > z0 && centroid(t)[2] < z1;
+	const bolt = tris.filter((t) => t.part === "M3 x 45 hinge bolt" && within(t)).flatMap((t) => t.v);
+	if (!bolt.length) throw new Error(`no hinge bolt found at "${DOOR}"`);
+	const blo = [0, 1, 2].map((d) => Math.min(...bolt.map((v) => v[d])));
+	const bhi = [0, 1, 2].map((d) => Math.max(...bolt.map((v) => v[d])));
+	const long = [0, 1, 2].reduce((a, d) => (bhi[d] - blo[d] > bhi[a] - blo[a] ? d : a), 0);
+	const box = tris.filter((t) => t.part === "Battery box (printed)").flatMap((t) => t.v.map((v) => v[2]));
+	const boxMid = (Math.min(...box) + Math.max(...box)) / 2;
+	door = { p: blo.map((v, d) => (v + bhi[d]) / 2), a: [0, 1, 2].map((d) => (d === long ? 1 : 0)), out: (z0 + z1) / 2 < boxMid ? -1 : 1 };
+	for (const t of tris) if (t.part === DOOR || (t.part === "M3 x 10 latch screw" && within(t))) t.hub = DOOR_HUB;
+}
+
 /* ---------- Quantise, weld and group ---------- */
 const lo = [Infinity, Infinity, Infinity];
 const hi = [-Infinity, -Infinity, -Infinity];
@@ -199,6 +223,7 @@ const header = {
 	groups: groups.map((g) => ({ m: g.mat, h: g.hub, n: g.P.length / 3, i: g.I.length, w: g.P.length / 3 > 65535 ? 1 : 0 })),
 	parts: partBoxes,
 	lens: { p: middle.map(round), d: facing.map((x) => Math.round(x * 1e4) / 1e4) },
+	...(door && { door: { p: door.p.map(round), a: door.a, out: door.out } }),
 };
 const headerBytes = Buffer.from(JSON.stringify(header));
 // The header pads with spaces, not zeros: drone.ts parses the whole padded length as JSON, and spaces are JSON whitespace.
@@ -222,3 +247,4 @@ console.log(`${srcPath} → ${outPath}`);
 console.log(`  ${tris.length} triangles in, ${groups.reduce((s, g) => s + g.I.length / 3, 0)} out; ${vertexCount} vertices; ${materials.length} materials, ${groups.length} meshes (${hubs.length} spinning props)`);
 console.log(`  ${(glb.length / 1024).toFixed(0)} KB GLB → ${(raw.length / 1024).toFixed(0)} KB → ${(gz.length / 1024).toFixed(0)} KB gzipped`);
 console.log(`  lens at ${header.lens.p.join(", ")} facing ${header.lens.d.join(", ")}; hubs ${hubs.map((h) => `(${h[0].toFixed(3)}, ${h[2].toFixed(3)})`).join(" ")}`);
+console.log(door ? `  battery box door: hinge at ${header.door.p.join(", ")}, along ${"xyz"[door.a.indexOf(1)]}, opens toward ${door.out < 0 ? "-" : "+"}z` : "  (no battery box door in this model)");

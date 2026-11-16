@@ -1388,7 +1388,7 @@ const flightStill = existsSync("public/chapter/drone/flight.webp")
 			dispose = undefined;
 		});
 
-		type Hook = { go(n: number | null): void; capture(): string };
+		type Hook = { go(n: number | null, variant?: string): void; capture(): string };
 		const w = window as unknown as { __showcase?: Hook };
 		let hook: Hook | undefined;
 		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/drone-chapter"), afterIntro()])
@@ -1439,7 +1439,7 @@ const flightStill = existsSync("public/chapter/drone/flight.webp")
 				cleanups.push(() => removeEventListener("hashchange", toHash));
 				// ?showcase=capture: part n is stop partsAt + n (scripts/showcase-stills.py counts the parts only).
 				const held = hook;
-				if (capture && held) w.__showcase = { ...held, go: (n) => held.go(n === null ? null : n + partsAt) };
+				if (capture && held) w.__showcase = { ...held, go: (n, variant) => held.go(n === null ? null : n + partsAt, variant) };
 			})
 			.catch((error) => {
 				console.warn("Drone chapter: the 3D could not start.", error);
