@@ -82,6 +82,7 @@ const picture = next ? (register.rows[next.id]?.picture ?? { src: next.data.img,
 		font-weight: 850;
 		line-height: 0.9;
 		letter-spacing: -0.04em;
+		margin-left: -0.04em; /* the wide cut's side bearing: the stem lines up with the words below */
 		text-wrap: balance;
 		transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 	}

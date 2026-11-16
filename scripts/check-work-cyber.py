@@ -65,6 +65,8 @@ def check_register(browser, base):
         page.close()
 
     page = open_page(browser, base, "/work/", "dark")
+    page.locator(".register__row >> nth=2").scroll_into_view_if_needed()
+    page.wait_for_timeout(300)
     box = page.locator(".register__row >> nth=2").bounding_box()
     page.mouse.move(box["x"] + 200, box["y"] + box["height"] / 2, steps=6)
     page.wait_for_timeout(700)
