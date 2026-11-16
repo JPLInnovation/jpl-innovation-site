@@ -2,6 +2,7 @@
 title: Jayden Phan Le
 img: /assets/Jayden_pfp.jpg
 img_alt: Jayden Phan Le portrait
+greeting: Xin chào, mình là Jayden.
 leadership:
   jpl: CEO
   frc: Mechanical Lead
@@ -11,10 +12,37 @@ tags:
 - Software Developer
 - Robotics Enthusiast
 - Student
+# The map of Vietnam on his page: places in the order the route visits them (lat = degrees north, lon = degrees east).
+places:
+- name: Nghệ An
+  note: my family's hometown
+  lat: 19.0
+  lon: 105.1
+- name: Quảng Trị
+  note: my family's hometown
+  lat: 16.75
+  lon: 106.9
+- name: Saigon
+  note: where I grew up
+  lat: 10.78
+  lon: 106.7
+# The path so far, drawn as stops along the route.
+path:
+- LEGO Mindstorms
+- Python
+- C++
+- CCNA at VnPro
+# [CHECK] taken from his story (the RAM stick his dad gave him); swap for another true figure if you prefer.
+fun_fact:
+  label: The RAM stick my dad gave me
+  value: 16 GB
 achievements:
-- Cisco CCNA certificate (VnPro)
-- "Completed: Nhập môn Quản trị và An ninh mạng (Introduction to Network Administration and Security)"
-- "Completed: Quản trị Hạ tầng mạng (Infrastructure Administrator)"
+- title: Cisco CCNA (VnPro)
+  result: Certificate
+- title: Nhập môn Quản trị và An ninh mạng (Introduction to Network Administration and Security)
+  result: Completed
+- title: Quản trị Hạ tầng mạng (Infrastructure Administrator)
+  result: Completed
 sports:
 - sport: Football
   team: SSIS JV

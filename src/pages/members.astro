@@ -1,9 +1,7 @@
 ---
 import ContactSection from "@/components/ContactSection.astro";
-import Leadership from "@/components/Leadership.astro";
-import MemberList from "@/components/MemberList.astro";
+import CrewSheet from "@/components/members/CrewSheet.astro";
 import ModelViewer from "@/components/model-viewer";
-import PageIntro from "@/components/PageIntro.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getMembers, toBadge } from "@/lib/content";
 import { srcset } from "@/lib/images";
@@ -15,15 +13,13 @@ const badges = members.map(toBadge);
 ---
 
 <BaseLayout title={membersPage.seoTitle} description={membersPage.seoDescription}>
-	<PageIntro title={membersPage.title} lede={membersPage.lede} />
+	<div class="crew-wrap" data-reveal>
+		<CrewSheet />
+	</div>
 
-	<section class="wrapper pb-14 md:pb-20">
-		<Leadership lead="jpl" heading={membersPage.leadershipHeading} intro={membersPage.leadershipIntro} />
-	</section>
-
-	<section class="wrapper pb-14 md:pb-20" aria-labelledby="badges-heading">
-		<h2 id="badges-heading" class="sr-only">Member badges in 3D</h2>
-		<div class="overflow-hidden rounded-xl border surface" data-reveal>
+	<section class="wrapper badges" aria-labelledby="badges-heading">
+		<h2 id="badges-heading" class="badges__title">{membersPage.badgesHeading}</h2>
+		<div class="badges__plate">
 			<ModelViewer
 				client:visible
 				model="badges"
@@ -32,15 +28,41 @@ const badges = members.map(toBadge);
 				className="aspect-[4/3] w-full sm:aspect-[16/8]"
 			>
 				<div class="flex h-full items-center justify-center gap-6 p-8">
-					{members.map((m) => <img src={m.data.img} srcset={srcset(m.data.img)} sizes="(min-width: 640px) 360px, 45vw" alt="" class="h-3/4 w-auto rounded-xl object-cover shadow-sm" loading="lazy" />)}
+					{members.map((m) => <img src={m.data.img} srcset={srcset(m.data.img)} sizes="(min-width: 640px) 360px, 45vw" alt="" class="h-3/4 w-auto rounded-xl object-cover" loading="lazy" />)}
 				</div>
 			</ModelViewer>
 		</div>
-		<p class="mt-3 text-sm text-muted-foreground">{membersPage.badgesHint}</p>
+		<p class="badges__hint">{membersPage.badgesHint}</p>
 	</section>
 
-	<section class="wrapper pb-20 md:pb-28">
-		<MemberList members={members} headingLevel="h2" />
-	</section>
 	<ContactSection />
 </BaseLayout>
+
+<style>
+	.crew-wrap {
+		width: 100%;
+		max-width: 92rem;
+		margin-inline: auto;
+		padding: clamp(1rem, 2.5vw, 2rem) clamp(1rem, 2.5vw, 2.5rem) 0;
+	}
+	.badges {
+		padding-top: clamp(4rem, 9vw, 8rem);
+		padding-bottom: clamp(4rem, 9vw, 8rem);
+	}
+	.badges__title {
+		font-size: var(--step-lead);
+		font-weight: 760;
+		font-stretch: 112%;
+		margin-bottom: 1.25rem;
+	}
+	.badges__plate {
+		overflow: hidden;
+		border-radius: 1.5rem;
+		border: 1px solid var(--sheet-edge);
+	}
+	.badges__hint {
+		margin-top: 0.75rem;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+</style>

@@ -1,0 +1,89 @@
+---
+/**
+ * A member's photograph as a plate in the brand's two inks (navy shadows, a pale gold light), with the colour
+ * photograph over it. A parent turns the colour up with `--portrait-lit: 1` (their light comes up) or veils the plate
+ * with `--portrait-veil: 0.8` (dimmed to a silhouette). Opacity only, so the change costs nothing to animate. Both
+ * <img> share one file, so it downloads once.
+ */
+import { srcset } from "@/lib/images";
+
+interface Props {
+	src: string;
+	alt: string;
+	sizes: string;
+	/** The view-transition name, so the plate opens into the person's own sheet. */
+	name?: string;
+	loading?: "lazy" | "eager";
+	class?: string;
+}
+const { src, alt, sizes, name, loading = "lazy", class: className } = Astro.props;
+const set = srcset(src);
+---
+
+<div class:list={["portrait", className]}>
+	<div class="portrait__duo" aria-hidden="true">
+		<img src={src} srcset={set} sizes={sizes} alt="" loading={loading} decoding="async" />
+	</div>
+	<img class="portrait__colour" src={src} srcset={set} sizes={sizes} alt={alt} loading={loading} decoding="async" transition:name={name} />
+	<div class="portrait__veil" aria-hidden="true"></div>
+</div>
+
+<style>
+	.portrait {
+		--duo-lo: #0a174e;
+		--duo-hi: oklch(0.93 0.06 92);
+		position: relative;
+		isolation: isolate;
+		overflow: hidden;
+		width: 100%;
+		height: 100%;
+	}
+	:global(.dark) .portrait {
+		--duo-hi: oklch(0.88 0.11 92);
+	}
+	.portrait img,
+	.portrait__duo,
+	.portrait__veil {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+	.portrait img {
+		object-fit: cover;
+		object-position: 50% 18%;
+	}
+	/* the classic duotone: grey photo multiplied onto the light ink, the dark ink lightened in under it */
+	.portrait__duo {
+		background: var(--duo-hi);
+		isolation: isolate;
+	}
+	.portrait__duo img {
+		filter: grayscale(1) contrast(1.12);
+		mix-blend-mode: multiply;
+	}
+	.portrait__duo::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: var(--duo-lo);
+		mix-blend-mode: lighten;
+	}
+	.portrait__colour {
+		opacity: var(--portrait-lit, 0);
+		transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	.portrait__veil {
+		background: var(--field);
+		opacity: var(--portrait-veil, 0);
+		transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+	@media (forced-colors: active) {
+		.portrait__duo {
+			display: none;
+		}
+		.portrait__colour {
+			opacity: 1;
+		}
+	}
+</style>

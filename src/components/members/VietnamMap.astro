@@ -1,0 +1,221 @@
+---
+/**
+ * A hand-drawn map of Vietnam (outline: Natural Earth, public domain, via scripts/build-vietnam-map.mjs) marking a
+ * person's places, with their path drawn along it as a route: from their first place out to the coast, down the
+ * coast and in to their last, the stops of their path spaced along it. The words beside it are the same facts as
+ * text (the drawing itself is hidden from screen readers). Places and path: src/text/members/<name>.md.
+ */
+import { pointsAlong, project, routeVia, smooth, SIZE } from "@/lib/look/vnmap";
+import { memberPage } from "@/text/members";
+import { VIETNAM } from "./vietnam-map";
+
+interface Place {
+	name: string;
+	note?: string;
+	lat: number;
+	lon: number;
+}
+interface Props {
+	places: Place[];
+	path: string[];
+}
+const { places, path } = Astro.props;
+
+/** The sea lane the routes follow, north to south, a little off the coast (degrees, [lat, lon]). */
+const COAST: [number, number][] = [
+	[20.6, 107.4],
+	[19.5, 106.5],
+	[18.5, 106.7],
+	[17.4, 107.6],
+	[16.1, 108.9],
+	[14.5, 109.7],
+	[12.8, 110.1],
+	[11.3, 109.6],
+	[10.6, 108.3],
+	[10.15, 107.25],
+];
+const route = smooth(
+	routeVia(places.map((p) => [p.lat, p.lon]), COAST).map(([lat, lon]) => project(lat, lon)),
+	10,
+);
+const stops = route.length && path.length ? pointsAlong(route, path.length + 2).slice(1, -1) : [];
+const pct = ([x, y]: [number, number]) => `left:${((x / SIZE.w) * 100).toFixed(2)}%;top:${((y / SIZE.h) * 100).toFixed(2)}%`;
+const centre = (pts: [number, number][]) => pts.reduce((c, p) => [c[0] + p[0] / pts.length, c[1] + p[1] / pts.length], [0, 0]) as [number, number];
+const label = `${memberPage.mapLabel} ${places.map((p) => p.name).join(", ")}.`;
+const line = (pts: [number, number][]) => `M${pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L")}`;
+---
+
+<figure class="vnmap" role="img" aria-label={label}>
+	<div class="vnmap__draw" style={`aspect-ratio:${VIETNAM.w} / ${VIETNAM.h}`} aria-hidden="true">
+		<svg viewBox={`0 0 ${VIETNAM.w} ${VIETNAM.h}`} preserveAspectRatio="xMidYMid meet">
+			<defs>
+				<filter id="vn-pencil" x="-2%" y="-2%" width="104%" height="104%">
+					<feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="4" />
+					<feDisplacementMap in="SourceGraphic" scale="3.2" />
+				</filter>
+			</defs>
+			<g filter="url(#vn-pencil)">
+				<path class="vnmap__land" d={VIETNAM.land} />
+				<path class="vnmap__ghost" d={VIETNAM.land} transform="translate(2.4 1.6)" />
+			</g>
+			<g class="vnmap__islands">
+				{[...VIETNAM.hoangSa, ...VIETNAM.truongSa].map(([x, y]) => <circle cx={x} cy={y} r="2.6" />)}
+			</g>
+			{route.length > 0 && <path class="vnmap__route" d={line(route)} />}
+		</svg>
+		<span class="vnmap__isle vnmap__isle--east" style={pct([Math.max(...VIETNAM.hoangSa.map((p) => p[0])) + 14, centre(VIETNAM.hoangSa)[1]])}>
+			{memberPage.islands.hoangSa}
+		</span>
+		<span class="vnmap__isle" style={pct([centre(VIETNAM.truongSa)[0], centre(VIETNAM.truongSa)[1] + 50])}>{memberPage.islands.truongSa}</span>
+		{
+			places.map((p) => (
+				<span class="vnmap__place" style={pct(project(p.lat, p.lon))}>
+					<span class="vnmap__cross" />
+					<span class="vnmap__name">{p.name}</span>
+				</span>
+			))
+		}
+		<span class="vnmap__stops" data-reveal-group>
+			{
+				stops.map((s, i) => (
+					<span class="vnmap__stop" style={pct(s)}>
+						<span class="vnmap__dot" />
+						<span class="vnmap__stopname">{path[i]}</span>
+					</span>
+				))
+			}
+		</span>
+	</div>
+</figure>
+
+<style>
+	.vnmap {
+		margin: 0;
+	}
+	.vnmap__draw {
+		position: relative;
+		width: 100%;
+		container-type: inline-size;
+	}
+	svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+	.vnmap__land {
+		fill: color-mix(in oklab, var(--ink) 5%, transparent);
+		stroke: var(--ink);
+		stroke-width: 1.6;
+		stroke-linejoin: round;
+		vector-effect: non-scaling-stroke;
+	}
+	.vnmap__ghost {
+		fill: none;
+		stroke: var(--ink);
+		stroke-opacity: 0.28;
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+	.vnmap__islands circle {
+		fill: var(--ink);
+		opacity: 0.75;
+	}
+	.vnmap__route {
+		fill: none;
+		stroke: var(--accent-brand);
+		stroke-width: 2.4;
+		stroke-dasharray: 7 6;
+		stroke-linecap: round;
+		vector-effect: non-scaling-stroke;
+	}
+	.vnmap__isle,
+	.vnmap__place,
+	.vnmap__stop {
+		position: absolute;
+		line-height: 1.15;
+	}
+	.vnmap__isle {
+		translate: -50% 0;
+		width: max-content;
+		max-width: 9rem;
+		text-align: center;
+		font-size: clamp(0.625rem, 0.5rem + 0.9cqi, 0.8125rem);
+		color: var(--ink-soft);
+	}
+	.vnmap__isle--east {
+		translate: 0 -50%;
+		text-align: left;
+		max-width: 5rem;
+	}
+	/* names knock the lines out behind them, as on a printed map */
+	.vnmap__isle,
+	.vnmap__name,
+	.vnmap__stopname {
+		text-shadow:
+			0 0 2px var(--halo),
+			0 0 4px var(--halo),
+			0 0 6px var(--halo);
+	}
+	.vnmap {
+		--halo: color-mix(in oklab, var(--sheet) 85%, var(--field));
+	}
+	/* a place: the drawing's + mark, its name to the west */
+	.vnmap__place {
+		width: 0;
+		height: 0;
+	}
+	.vnmap__cross::before,
+	.vnmap__cross::after {
+		content: "";
+		position: absolute;
+		left: -0.6rem;
+		top: -1.25px;
+		width: 1.2rem;
+		height: 2.5px;
+		background: var(--place, var(--ink));
+	}
+	.vnmap__cross::after {
+		rotate: 90deg;
+	}
+	:global(.dark) .vnmap__cross {
+		--place: var(--mark);
+	}
+	.vnmap__name {
+		position: absolute;
+		right: 0.85rem;
+		top: -0.65em;
+		width: max-content;
+		font-size: clamp(0.75rem, 0.55rem + 1.6cqi, 1.125rem);
+		font-weight: 700;
+		font-stretch: 112%;
+	}
+	/* a stop on the path: a dot on the route, its name out to sea */
+	.vnmap__stops {
+		position: absolute;
+		inset: 0;
+	}
+	.vnmap__stop {
+		width: 0;
+		height: 0;
+	}
+	.vnmap__dot {
+		position: absolute;
+		left: -0.4rem;
+		top: -0.4rem;
+		width: 0.8rem;
+		height: 0.8rem;
+		border-radius: 50%;
+		background: var(--field);
+		border: 2.5px solid var(--accent-brand);
+	}
+	.vnmap__stopname {
+		position: absolute;
+		left: 0.85rem;
+		top: -0.65em;
+		width: max-content;
+		font-size: clamp(0.75rem, 0.55rem + 1.6cqi, 1.125rem);
+		font-weight: 650;
+	}
+</style>
