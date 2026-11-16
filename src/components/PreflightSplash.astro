@@ -453,7 +453,7 @@ const still = [1, 2, 0];
 			margin: 0.75rem 0;
 		}
 		.pf-wire {
-			width: min(100%, 31dvh);
+			width: min(100%, 31dvh + 8vw);
 			margin: 0 auto;
 		}
 		.pf-callout {
@@ -501,7 +501,7 @@ const still = [1, 2, 0];
 		transform: translateY(5px);
 	}
 
-	/* ---------- The line drawn round the first glass sheet (its box is set by the script) ---------- */
+	/* ---------- The line ruled along the first glass sheet's edge (the script sets where) ---------- */
 	.pf-edge {
 		position: absolute;
 		inset: 0;
@@ -526,6 +526,11 @@ const still = [1, 2, 0];
 		right: -9%;
 		top: calc(50% - var(--size) / 2);
 		will-change: transform;
+	}
+	/* Smaller verbs while the question is asked under them: a smaller sticker, further out. */
+	[data-will-ask] .pf-sticker {
+		--size: clamp(80px, 8.5vw, 130px);
+		right: -16%;
 	}
 	@media (max-width: 899px), (max-aspect-ratio: 1/1) {
 		/* Under the verbs on a phone, catching the end of "SECURE IT.". */
