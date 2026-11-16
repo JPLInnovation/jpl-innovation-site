@@ -1,5 +1,6 @@
 /**
- * WebP copies of the large photos in public/assets, made by scripts/resize-images.mjs (widths must match).
+ * WebP copies of the large photos in public/assets, made by scripts/photos-edit.mjs (the photographs) and
+ * scripts/resize-images.mjs (the team logo); the widths must match.
  * The originals stay as `src` fallbacks and for "open full size" links.
  */
 const copies: Record<string, number[]> = {

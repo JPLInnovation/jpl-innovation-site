@@ -1,5 +1,7 @@
-// Makes smaller WebP copies of the large images in public/assets, so pages download the size they show.
+// Makes smaller WebP copies of the team logo and the JPL logos in public/assets, so pages download the size they show.
 // Run with: node scripts/resize-images.mjs   (re-run after replacing one of these images)
+// The photographs' copies (FRC.JPG, FRCnew.jpg, Jayden_pfp.jpg, kitbot-back.jpg) are made with the photo edit by
+// scripts/photos-edit.mjs.
 // The originals stay for "open full size" links; pages and the 3D textures use the copies.
 // Widths must match src/lib/images.ts (srcset), src/components/Logo.astro and the texture paths in
 // src/lib/three/models/badges.ts and frc-robot.ts. (sharp comes with Astro.)
@@ -7,11 +9,7 @@ import sharp from "sharp";
 
 // The last width of each photo is its full-size WebP copy (used for the largest srcset entry and 3D textures).
 const jobs = {
-	"FRC.JPG": [640, 1280, 1920],
-	"FRCnew.jpg": [640, 1280, 1920],
 	"10951.jpg": [160, 400, 764],
-	"Jayden_pfp.jpg": [160, 480, 900],
-	"kitbot-back.jpg": [480, 1000],
 	"jpl-logo-dark.png": [480],
 	"jpl-logo-light.png": [480],
 };

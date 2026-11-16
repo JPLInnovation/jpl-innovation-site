@@ -57,7 +57,8 @@ Run from the repo root. The ones marked * need `npm run build && npx astro previ
 | `node scripts/make-og.mjs` | `public/assets/og-studio.jpg`: the link-preview picture (from the first scene's still) |
 | `python scripts/showcase-stills.py` * | the drone and robot showcases' stills |
 | `node scripts/measure-contrast.mjs` + `python scripts/measure-contrast.py` * | measures text contrast over the 3D scene and photos |
-| `node scripts/resize-images.mjs` | WebP copies of the big photos (widths match `src/lib/images.ts`) |
+| `node scripts/photos-edit.mjs` | The photo edit (grade, resize, sharpen) from the untouched sources, and the photos' WebP copies (widths match `src/lib/images.ts`) |
+| `node scripts/resize-images.mjs` | WebP copies of the team logo and the JPL logos |
 | `node scripts/make-logo-assets.mjs` | logo variants, favicon and touch icon from `public/assets/JPL_INNOVATION.jpg` |
 | `node scripts/build-*.mjs` | the animated logo SVGs for the page intros |
 | `python scripts/kitbot-cad.py`, `node scripts/f450-cad.mjs` | reduce the CAD exports to the files the 3D models load |

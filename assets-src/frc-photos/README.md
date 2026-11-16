@@ -7,16 +7,17 @@ exactly as published there: WebP, no EXIF/XMP/IPTC metadata. Captions and alt te
 ## Folders
 
 - `original/` – the 64 untouched images, exactly as published. Never edited; keep as the source of truth.
-- `edited/` – the 62 photos after the warm colour grade, denoise, clarity, texture and sharpening
-  (the two `mark-*` logos are not edited, so they exist only in `original/`).
+- `edited/` – the 62 photos after the photo edit (the two `mark-*` logos are not edited, so they exist only in
+  `original/`).
 
-The edited photos were then cleaned by `scripts/frc-photos-clean.mjs` (two median denoise passes, a 1.8x Lanczos
-upscale and a gentle sharpen): they are about 1.8x larger than the first grade, with visibly less grain.
+The edit is `scripts/photos-edit.mjs`, always from `original/`: a 1.8x Lanczos resize, a little more colour and
+contrast, and an unsharp mask. (An earlier pass also ran two median denoise passes; they smeared faces and small parts
+into a painted look, which made the photos read as blurry, so they were dropped on 16 Nov 2026.)
 
 **The website uses the edited versions.** `public/assets/frc/` holds the files the site serves: each `edited/` photo
-(identical copy, WebP q80) plus a 640-wide `-640.webp` of it. The two `mark-*` logos are not used, since the page
-already has the team logo. To change the look, re-run the grade from `original/` and overwrite `edited/` and
-`public/assets/frc/` – never edit `original/`.
+plus a 640-wide `-640.webp`, both written by the same script. The two `mark-*` logos are not used, since the page
+already has the team logo. To change the look, change the edit in the script and run it again – never edit
+`original/`.
 
 | Prefix | What |
 |---|---|
