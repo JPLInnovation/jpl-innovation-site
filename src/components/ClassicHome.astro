@@ -59,8 +59,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 <section class="hero" aria-labelledby="home-title">
 	<h1 id="home-title" class="hero-name">
 		<span class="living hero-name__a">{first}</span>
-		<span class="living hero-name__b">{others.join(" ")}</span>
-		<span class="sr-only">:{rest}</span>
+		<span class="living hero-name__b">{others.join(" ")}</span><span class="sr-only">:{rest}</span>
 	</h1>
 	<div class="wrapper hero-grid">
 		<div class="hero-lead">
