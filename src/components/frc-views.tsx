@@ -192,7 +192,8 @@ export function Filmstrip({ ids, label, mosaic }: { ids: FrcPhotoId[]; label: st
 					<li key={ph.id}>
 						<figure className="m-0 flex h-full flex-col gap-2">
 							<button type="button" onClick={() => setViewing(i)} className="group block flex-1 overflow-hidden rounded-xl" aria-label={`${lightboxText.open} ${ph.caption}`}>
-								<img src={small(ph.id)} {...(mosaic ? { srcSet: `${small(ph.id)} 640w, /assets/frc/${ph.id}.webp ${ph.w}w`, sizes: "(min-width: 1024px) 66vw, 100vw" } : {})} alt={ph.alt} width={ph.w} height={ph.h} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
+								{/* The film's tiles are up to 25rem tall and crop the photo to fill, so a wide photo needs a file as wide as the crop. */}
+								<img src={small(ph.id)} srcSet={`${small(ph.id)} 640w, /assets/frc/${ph.id}.webp ${ph.w}w`} sizes={mosaic ? "(min-width: 1024px) 66vw, 100vw" : `${Math.ceil(Math.max(16, (25 * ph.w) / ph.h))}rem`} alt={ph.alt} width={ph.w} height={ph.h} loading="lazy" decoding="async" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
 							</button>
 							<figcaption className="text-sm">
 								<span className="font-medium">{ph.caption}</span>
