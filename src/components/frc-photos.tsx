@@ -3,7 +3,7 @@
  *
  *   - PhotoDeck     a stack of prints: drag or flick the top one away and it goes to the back; tap one to see it large
  *   - BuildStrips   the build season as tall strips side by side; the one you hover, focus or tap opens wide
- *   - EventSheets   the two rookie regionals as tabs: the photo crossfades, and the rank shows among the whole field
+ *   - EventSheets   the two rookie regionals as tabs: the photo crossfades, and the rank shows on a starting grid of the whole field
  *   - Countdown     days, hours and minutes until the next regional's first day
  *   - WeekPosts     the preseason week by week, newest first; tap a post's photo to flip to the next one
  *
@@ -13,7 +13,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, MotionConfig, animate, motion, useMotionValue, useReducedMotion, useTransform, type PanInfo } from "motion/react";
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { gridSlots } from "@/lib/look/frc-race";
 import {
+	edition,
 	frcDeck,
 	frcPhotos,
 	lightboxText,
@@ -232,99 +234,95 @@ export function EventSheets() {
 	};
 	return (
 		<MotionConfig reducedMotion="user">
-			<div className="flex flex-col">
-				<div role="tabpanel" id="ev-panel" aria-labelledby={`ev-tab-${e.key}`} className="grid overflow-hidden rounded-2xl border surface lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
-					<figure className="relative m-0 aspect-[4/3] overflow-hidden bg-muted lg:aspect-auto lg:min-h-[22rem]">
-						<AnimatePresence initial={false}>
-							<motion.img
-								key={photo.id}
-								src={small(photo.id)}
-								srcSet={srcSet(photo)}
-								sizes="(min-width: 1024px) 50vw, 100vw"
-								alt={photo.alt}
-								data-zoom={full(photo.id)}
-								data-zoom-alt={photo.alt}
-								data-zoom-caption={`${photo.caption}${photo.meta ? ` · ${photo.meta}` : ""}`}
-								role="button"
-								tabIndex={0}
-								aria-label={`${lightboxText.open} ${photo.caption}`}
-								className="frc-zoom-img absolute inset-0 size-full object-cover"
-								initial={{ opacity: 0, scale: 1.04 }}
-								animate={{ opacity: 1, scale: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.6 }}
-							/>
-						</AnimatePresence>
-						<figcaption className="absolute inset-x-0 bottom-0 flex justify-between bg-gradient-to-t from-black/75 to-transparent px-5 pb-4 pt-12 font-mono text-xs uppercase tracking-wider text-white">
-							<span>
-								{photo.caption} · {e.tab}
-							</span>
-							<span>2026</span>
-						</figcaption>
-					</figure>
-					<div className="flex flex-col gap-3.5 p-5 md:p-6">
-						<div>
-							<div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-								<p className="text-sm text-muted-foreground">{e.city}</p>
-								<div role="tablist" aria-label={t.eventsLabel} className="flex w-fit gap-1 rounded-xl border bg-card p-1" onKeyDown={onKey}>
-									{events.map((ev, i) => (
-										<button
-											key={ev.key}
-											ref={(el) => {
-												tabs.current[i] = el;
-											}}
-											role="tab"
-											id={`ev-tab-${ev.key}`}
-											aria-selected={active === i}
-											aria-controls="ev-panel"
-											tabIndex={active === i ? 0 : -1}
-											onClick={() => setActive(i)}
-											className={cn("min-h-10 rounded-lg px-4 text-sm font-semibold transition-colors", active === i ? "bg-foreground text-background" : "hover:bg-foreground/5")}
-										>
-											{ev.tab}
-										</button>
-									))}
-								</div>
-							</div>
-							<h3 className="font-wide text-[clamp(1.4rem,2.2vw,1.9rem)] font-[850] leading-tight">{e.name}</h3>
-							<p className="text-sm text-muted-foreground">
+			<div className="frc-ev">
+				{/* The two cities, huge: the one picked in yellow. */}
+				<div role="tablist" aria-label={t.eventsLabel} className="frc-ev-tabs" onKeyDown={onKey}>
+					{events.map((ev, i) => (
+						<button
+							key={ev.key}
+							ref={(el) => {
+								tabs.current[i] = el;
+							}}
+							role="tab"
+							id={`ev-tab-${ev.key}`}
+							aria-selected={active === i}
+							aria-controls="ev-panel"
+							tabIndex={active === i ? 0 : -1}
+							onClick={() => setActive(i)}
+							className="frc-ev-tab"
+						>
+							{ev.tab}
+						</button>
+					))}
+				</div>
+				<div role="tabpanel" id="ev-panel" aria-labelledby={`ev-tab-${e.key}`} className="frc-ev-panel">
+					<div className="frc-ev-top">
+						<div className="frc-ev-name">
+							<p className="frc-ev-city">{e.city}</p>
+							<h3>{e.name}</h3>
+							<p className="frc-ev-meta">
 								{e.venue} · {e.dates}
 							</p>
+							<p className="frc-ev-note">{e.note}</p>
 						</div>
-						<dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border">
-							<Stat label={t.rankLabel} value={<>{e.rank}<span className="text-lg text-muted-foreground"> / {e.of}</span></>} />
-							<Stat label={t.qualLabel} value={e.qual} note={`${t.overallLabel}: ${e.overall}`} />
-							<Stat label={t.allianceLabel} value={`${e.alliance}`} note={t.allianceValue} />
-							<Stat label={t.kmLabel} value={`${e.km.toLocaleString("en-US")} km`} note={t.kmNote} />
-						</dl>
-						<RankStrip rank={e.rank} of={e.of} />
-						<div className="flex flex-wrap items-center gap-2">
-							<h4 className="mr-1 text-sm font-semibold">{t.playoffsHeading}</h4>
-							<ol className="flex flex-wrap gap-2">
+						<figure className="frc-ev-photo">
+							<AnimatePresence initial={false}>
+								<motion.img
+									key={photo.id}
+									src={small(photo.id)}
+									srcSet={srcSet(photo)}
+									sizes="(min-width: 1024px) 40vw, 100vw"
+									alt={photo.alt}
+									data-zoom={full(photo.id)}
+									data-zoom-alt={photo.alt}
+									data-zoom-caption={`${photo.caption}${photo.meta ? ` · ${photo.meta}` : ""}`}
+									role="button"
+									tabIndex={0}
+									aria-label={`${lightboxText.open} ${photo.caption}`}
+									className="frc-zoom-img absolute inset-0 size-full object-cover"
+									initial={{ opacity: 0, scale: 1.04 }}
+									animate={{ opacity: 1, scale: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.6 }}
+								/>
+							</AnimatePresence>
+							<figcaption>
+								{photo.caption} · {e.tab} · 2026
+							</figcaption>
+						</figure>
+					</div>
+					<dl className="frc-ev-stats">
+						<Stat label={t.rankLabel} value={<>{e.rank}<small> / {e.of}</small></>} />
+						<Stat label={t.qualLabel} value={e.qual} note={`${t.overallLabel}: ${e.overall}`} />
+						<Stat label={t.allianceLabel} value={`${e.alliance}`} note={t.allianceValue} />
+						<Stat label={t.kmLabel} value={<>{e.km.toLocaleString("en-US")}<small> km</small></>} note={t.kmNote} />
+					</dl>
+					<StartingGrid key={e.key} rank={e.rank} of={e.of} alliance={e.alliance} />
+					<div className="frc-ev-low">
+						<div className="frc-ev-playoffs">
+							<h4>{t.playoffsHeading}</h4>
+							<ol>
 								{e.playoffs.map((m, i) => {
 									const won = m.us > m.them;
 									return (
-										<li key={i} className={cn("rounded-lg border px-2.5 py-1 font-mono text-sm tabular-nums", won && "border-foreground bg-foreground text-background")}>
+										<li key={i} data-won={won ? "" : undefined}>
 											{won ? t.playoffWin : t.playoffLoss} {m.us}–{m.them}
 										</li>
 									);
 								})}
 							</ol>
 						</div>
-						<p className="text-[15px]">{e.note}</p>
-						<div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-						<details className="text-sm">
-							<summary className="cursor-pointer font-semibold">{t.goalsHeading}</summary>
-							<ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-muted-foreground">
+						<details className="frc-ev-goals">
+							<summary>{t.goalsHeading}</summary>
+							<ul>
 								{e.goals.map((g) => (
 									<li key={g}>{g}</li>
 								))}
 							</ul>
 						</details>
-						<a href={t.sourceHref} target="_blank" rel="noopener noreferrer" className="inline-flex w-fit items-center gap-1 text-sm font-semibold underline underline-offset-4">
-							{t.sourceLink} <ArrowUpRight className="size-4" aria-hidden="true" />
+						<a href={t.sourceHref} target="_blank" rel="noopener noreferrer" className="frc-ev-source">
+							{t.sourceLink} <ArrowUpRight className="size-4" strokeWidth={2} aria-hidden="true" />
 						</a>
-						</div>
 					</div>
 				</div>
 			</div>
@@ -334,39 +332,56 @@ export function EventSheets() {
 
 function Stat({ label, value, note }: { label: string; value: ReactNode; note?: string }) {
 	return (
-		<div className="flex flex-col gap-0.5 bg-card px-4 py-3">
-			<dt className="order-2 text-xs text-muted-foreground">
+		<div>
+			<dt>
 				{label}
-				{note && <span className="block">{note}</span>}
+				{note && <span>{note}</span>}
 			</dt>
-			<dd className="order-1 font-wide text-xl font-[850] tabular-nums sm:text-2xl">{value}</dd>
+			<dd>{value}</dd>
 		</div>
 	);
 }
 
-/** The whole field in rank order, one mark per team; ours is lit, and the marks fill in up to it. */
-function RankStrip({ rank, of }: { rank: number; of: number }) {
+/**
+ * The starting grid: the whole field in qualification order, two by two like a race grid, every slot above ours
+ * filled, ours lit in yellow with the first-round pick beside it. The slots come in from the front of the grid back.
+ */
+function StartingGrid({ rank, of, alliance }: { rank: number; of: number; alliance: number }) {
 	const reduce = useReducedMotion();
+	const t = rookieText;
 	return (
-		<figure className="m-0 flex flex-col gap-2">
-			<div className="flex h-6 items-end gap-[3px]" aria-hidden="true">
-				{Array.from({ length: of }, (_, i) => (
-					<motion.span
-						key={`${of}-${i}`}
-						className={cn("flex-1 rounded-[2px]", i + 1 === rank ? "bg-accent ring-1 ring-foreground/40" : "bg-foreground/20")}
-						initial={reduce ? false : { height: "20%" }}
-						animate={{ height: i + 1 === rank ? "100%" : i + 1 < rank ? "55%" : "35%" }}
-						transition={{ delay: reduce ? 0 : i * 0.012, type: "spring", bounce: 0, duration: 0.5 }}
-					/>
-				))}
-			</div>
-			<figcaption className="flex justify-between font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-				<span>1</span>
-				<span>
-					{rookieText.fieldLabel} · {rookieText.us}: {rank}
+		<figure className="frc-grid" aria-label={`${t.fieldLabel} · ${t.us}: ${rank} / ${of}`}>
+			<figcaption className="frc-grid-head">
+				<span>{edition.gridHeading}</span>
+				<span className="frc-grid-q">
+					<span>
+						{edition.gridPlace}
+						{rank}
+					</span>
+					<b>
+						{edition.firstRoundPick} · {t.allianceLabel} {alliance}
+					</b>
 				</span>
-				<span>{of}</span>
 			</figcaption>
+			<ol className="frc-grid-slots" aria-hidden="true">
+				{gridSlots(rank, of).map((s, i) => (
+					<motion.li
+						key={s.p}
+						data-kind={s.kind}
+						initial={reduce ? false : { opacity: 0, y: 12 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: reduce ? 0 : 0.15 + i * 0.016, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+					>
+						<i>{s.p}</i>
+						{s.kind === "us" && <span>10951 · P{s.p}</span>}
+					</motion.li>
+				))}
+			</ol>
+			<p className="frc-grid-key" aria-hidden="true">
+				<span data-kind="above">{edition.gridAbove}</span>
+				<span data-kind="us">{t.us}</span>
+				<span data-kind="below">{edition.gridBelow}</span>
+			</p>
 		</figure>
 	);
 }

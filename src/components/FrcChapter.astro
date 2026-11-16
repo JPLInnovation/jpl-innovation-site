@@ -24,7 +24,6 @@
 // @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
 import { existsSync } from "node:fs";
 import BeatLabel from "@/components/BeatLabel.astro";
-import StatusTag from "@/components/StatusTag.astro";
 import { buttonVariants } from "@/components/ui/button";
 import { DataIcon } from "@/lib/icons";
 import { robotChapter as chapter } from "@/text/projects/frc";
@@ -175,7 +174,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 					<!-- 03 The reveal -->
 					<header id="reveal" class="kch-panel kch-reveal" data-stop="2" aria-labelledby="kitbot-reveal-label">
 						<BeatLabel id="kitbot-reveal-label" beat={beats.reveal} />
-						<div><StatusTag>{chapter.reveal.status}</StatusTag></div>
+						<p class="kch-status">{chapter.reveal.status}</p>
 						<h2 class="font-wide"><span class="kch-kicker">{chapter.reveal.kicker}</span> {chapter.reveal.name}</h2>
 						<p class="kch-intro">{chapter.reveal.intro}</p>
 						<dl class="kch-facts">
@@ -1040,6 +1039,37 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
  @media (min-width: 1100px) and (min-aspect-ratio: 6/5) {
   .kch-panel h3 { font-size: clamp(1.8rem, 2.8vw, 3rem); margin-bottom: 1.25rem; }
  }
+
+	/* ---------- The FRC page's special edition (src/pages/work/frc.astro, .frc-ed): the chapter's big words in the
+	   page's display face, its labels in plain Archivo (no monospace, no all-caps, no beat numbers). The 3D view's own HUD
+	   and chapter map are left to the showcase's rebuild (spec §8). */
+	.frc-ed .kch :is(.kch-statement, .kch-stat, .kch-stat-secondary, .kch-reveal h2, .kch-panel h3) {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		font-stretch: normal;
+		letter-spacing: 0;
+		line-height: 0.95;
+		text-transform: uppercase;
+	}
+	.frc-ed .kch .kch-stat-unit {
+		color: var(--frc-y);
+	}
+	.frc-ed .kch :is(.chapter-label, .kch-stat-label, .kch-classic-hud, .kch-gate, .kch-panel .kch-facts dt) {
+		font-family: var(--font-sans);
+		letter-spacing: 0.01em;
+		text-transform: none;
+	}
+	/* Where it raced: a plain line in the edition's yellow, not a badge over the headline. */
+	.kch-status {
+		font-weight: 650;
+		color: var(--accent);
+	}
+	.frc-ed .kch .chapter-label-n {
+		display: none;
+	}
+	.frc-ed .kch :is(.kch-panel > p:not([class]), .kch-intro, .kch-aside, .kch-stat-source, .kch-note) {
+		font-family: var(--font-sans);
+	}
 </style>
 
 <script>

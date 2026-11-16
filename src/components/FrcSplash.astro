@@ -1,6 +1,7 @@
 ---
 /**
- * FRC page intro (4.8 s; 1.5 s on a refresh): the FIRST shapes build the full-colour FIRST logo, the Team 10951
+ * FRC page intro (4.8 s; 1.5 s on a refresh), the special edition's race start: on near-black, five start lights come on
+ * one by one while the FIRST shapes build the full-colour FIRST logo, and all go out as the Team 10951
  * dragon flies in and breathes a long stream of fire across it that burns the colours off to the header's black
  * and white, the dragon settles into its badge, and the lockup flies into its place in the page header.
  * Plays on a first entry to the FRC page(s), faster on a refresh, and when you click through to it from another
@@ -16,6 +17,7 @@
 import badgeSvg from "@/assets/intro/frc-badge.svg?raw";
 import firstSvg from "@/assets/intro/frc-first.svg?raw";
 import { BURN, burnEdge } from "@/lib/frc-burn";
+import { edition } from "@/text/projects/frc";
 import FrcLockup from "./FrcLockup.astro";
 import SplashShell from "./SplashShell.astro";
 
@@ -144,6 +146,11 @@ const win = Object.fromEntries(windows.map((w) => [w.name, burnWindow(w)]));
 			</Fragment>
 		</FrcLockup>
 	</div>
+	<!-- The start lights: on one by one while the FIRST mark builds, all out the moment the dragon breathes. -->
+	<div class="frc-lights" data-frc-lights aria-hidden="true">
+		{[0, 1, 2, 3, 4].map(() => <span><i></i></span>)}
+	</div>
+	<p class="frc-lights-line" data-frc-lights-line aria-hidden="true">{edition.lightsOut}</p>
 	<canvas class="frc-fire" data-frc-fire aria-hidden="true"></canvas>
 </SplashShell>
 
@@ -288,6 +295,58 @@ const win = Object.fromEntries(windows.map((w) => [w.name, burnWindow(w)]));
 		width: 100%;
 		height: 100%;
 		pointer-events: none;
+	}
+
+	/* ---------- The race start (the FRC page's special edition): near-black, five start lights ---------- */
+	.splash-overlay[data-splash="frc"] .splash-bg {
+		background: #070b12;
+	}
+	.splash-overlay[data-splash="frc"] :is(.splash-grid, .splash-trace) {
+		display: none;
+	}
+	.splash-overlay[data-splash="frc"] .splash-skip {
+		border-radius: 0;
+		border-color: rgb(238 241 246 / 0.22);
+		background: #070b12;
+		backdrop-filter: none;
+	}
+	.frc-lights {
+		position: absolute;
+		left: 50%;
+		top: max(4.5rem, 13svh);
+		display: flex;
+		gap: clamp(0.6rem, 1.6vw, 1.25rem);
+		translate: -50% 0;
+	}
+	.frc-lights span {
+		position: relative;
+		width: clamp(2rem, 5vw, 3.75rem);
+		aspect-ratio: 1;
+		border-radius: 50%;
+		background: #15181f;
+		box-shadow: inset 0 0 0 2px #262a33;
+	}
+	/* The lit lamp: flat red, no glow. */
+	.frc-lights i {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background: #e10600;
+		box-shadow: inset 0 0 0 2px #ff4d47;
+		opacity: 0;
+	}
+	.frc-lights-line {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: max(5rem, 9svh);
+		text-align: center;
+		font: 600 0.95rem/1.2 "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+		color: #8e9bb1;
+		opacity: 0;
+	}
+	html.splash-reduced :is(.frc-lights, .frc-lights-line) {
+		display: none;
 	}
 
 	/* Before the script runs everything is hidden; it brings each piece in. */

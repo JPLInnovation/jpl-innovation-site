@@ -307,7 +307,7 @@ export function KitBotView() {
 						</div>
 					))}
 				</dl>
-				<blockquote className="flex gap-3 border-l-4 border-accent pl-4">
+				<blockquote className="flex gap-3 border-t-2 border-accent pt-3">
 					<Quote className="mt-1 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
 					<p className="font-semiwide font-[650] leading-snug">{robot.philosophy}</p>
 				</blockquote>
@@ -439,12 +439,10 @@ export function Overview2027() {
 	return (
 		<div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 			<div className="flex flex-col items-start gap-4">
-				<span className="inline-flex items-center gap-2 rounded-full border border-foreground/15 bg-card px-2.5 py-0.5 text-[13px] font-medium">
-					<span className="size-2 rounded-full bg-accent ring-1 ring-foreground/25" aria-hidden="true" />
-					{t27.liveTag}
-				</span>
 				<h4 className="font-wide text-[clamp(2rem,3.6vw,3.25rem)] font-[880] leading-[1]">{season2027.headline}</h4>
-				<p>{season2027.intro}</p>
+				<p>
+					<strong className="font-semibold">{t27.liveTag}.</strong> {season2027.intro}
+				</p>
 				<p className="text-muted-foreground">{t.regionalsIntro}</p>
 				<div className="flex flex-wrap gap-3">
 					<button type="button" data-email-open data-subject={t27.joinEmailSubject} className={buttonVariants({ variant: "signal", size: "lg" })}>
@@ -522,11 +520,13 @@ export function Road2027() {
 
 export function Goals2027() {
 	return (
-		<ul className="grid gap-4 md:grid-cols-3">
+		<ul className="frc-goals">
 			{season2027More.goals.map((g) => (
-				<li key={g.title} className="flex flex-col gap-3 rounded-2xl border surface p-6">
-					<p className="text-sm text-muted-foreground">{g.label}</p>
-					<h4 className="font-wide text-2xl font-[850]">{g.title}</h4>
+				<li key={g.title}>
+					<div className="flex flex-col gap-1">
+						<p className="text-sm text-muted-foreground">{g.label}</p>
+						<h4 className="font-wide text-2xl font-[850]">{g.title}</h4>
+					</div>
 					<ul className="flex flex-col gap-2">
 						{g.items.map((item) => (
 							<li key={item} className="flex gap-2.5">

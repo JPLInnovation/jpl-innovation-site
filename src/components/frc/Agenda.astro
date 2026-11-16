@@ -1,0 +1,224 @@
+---
+/**
+ * The calendar, from the rookie preseason to the 2027 regionals, with the KitBot itself (a render of its real CAD,
+ * public/showcase/robot/overview) driving down the lane in the middle as you scroll: the row it passes lights up, it
+ * leans with the speed of the scroll, and after the last row it speeds off down the page (src/components/frc/edition.ts).
+ * Without motion the robot simply stands at the top of its lane. Words: src/text/projects/frc.ts (edition.agenda, and
+ * the two seasons' timelines and results).
+ */
+import { agendaRows } from "@/lib/look/frc-race";
+import { edition, rookieText, season2026, season2027, seasonsText } from "@/text/projects/frc";
+
+const rows = agendaRows(season2026.timeline, season2027.timeline, season2026.competitions);
+const a = edition.agenda;
+---
+
+<section class="fag dark" aria-labelledby="agenda-heading" data-frc-agenda>
+	<div class="wrapper">
+		<header class="fag-head">
+			<h2 id="agenda-heading" class="fag-h">{a.heading}</h2>
+			<p class="fag-intro">{a.intro}</p>
+		</header>
+		<div class="fag-track">
+			<div class="fag-lane" aria-hidden="true">
+				<span class="fag-car"><img src="/showcase/robot/overview-800.webp" alt="" width="800" height="600" loading="lazy" decoding="async" /></span>
+			</div>
+			<ol class="fag-rows">
+				{
+					rows.map((r) => (
+						<li class="fag-row" data-state={r.state}>
+							<div class="fag-what">
+								<h3 class="fag-title">{r.title}</h3>
+								<p class="fag-desc">{r.desc}</p>
+							</div>
+							<p class="fag-when">
+								<span>{r.when}</span>
+								{r.state === "done" && !r.result && <span class="fag-tag">{a.done}</span>}
+								{r.state === "current" && <span class="fag-tag fag-now">{seasonsText.s2027.nowTag}</span>}
+								{r.result && (
+									<span class="fag-res">
+										{r.result.rank} / {r.result.of} · {edition.firstRoundPick}, {rookieText.allianceLabel} {r.result.alliance}
+									</span>
+								)}
+							</p>
+						</li>
+					))
+				}
+			</ol>
+		</div>
+	</div>
+</section>
+
+<style>
+	.fag {
+		position: relative;
+		background: var(--frc-k);
+		color: var(--frc-w);
+		padding-block: clamp(5rem, 14svh, 9rem) clamp(6rem, 20svh, 12rem);
+		overflow: clip;
+	}
+	.fag-head {
+		display: grid;
+		gap: 1.25rem;
+		justify-items: center;
+		text-align: center;
+	}
+	.fag-h {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		text-transform: uppercase;
+		font-size: clamp(3rem, 7vw, 6.5rem);
+		line-height: 0.92;
+		letter-spacing: 0;
+		max-width: 12ch;
+		text-wrap: balance;
+	}
+	.fag-intro {
+		max-width: 44ch;
+		color: var(--frc-mute);
+		text-wrap: pretty;
+	}
+	.fag-track {
+		position: relative;
+		margin-top: clamp(3rem, 8svh, 6rem);
+	}
+	/* The lane down the middle: a dashed centre line, and the robot riding it. */
+	.fag-lane {
+		position: absolute;
+		left: 50%;
+		top: 0;
+		bottom: 0;
+		width: 0;
+		border-left: 2px dashed rgb(238 241 246 / 0.14);
+		z-index: 2;
+		pointer-events: none;
+	}
+	.fag-car {
+		--w: clamp(9rem, 15vw, 15rem);
+		position: sticky;
+		top: calc(50svh - var(--w) * 0.375);
+		display: block;
+		width: var(--w);
+		margin-left: calc(var(--w) * -0.5);
+		will-change: transform;
+	}
+	/* Arrives as the calendar comes up, leans with the scroll's speed, and speeds off after the last row (edition.ts). */
+	.fag-car {
+		transition:
+			translate 0.8s cubic-bezier(0.7, 0, 0.84, 0),
+			opacity 0.45s,
+			scale 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+			rotate 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	:global(.motion) .fag:not(.is-in) .fag-car {
+		opacity: 0;
+		scale: 0.9;
+	}
+	.fag.is-gone .fag-car {
+		translate: 0 75svh;
+		opacity: 0;
+	}
+	.fag-car img {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+	.fag-rows {
+		position: relative;
+		z-index: 1;
+		padding-block: 14svh 30svh;
+	}
+	.fag-row {
+		position: relative;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 1rem calc(clamp(9rem, 15vw, 15rem) + 2rem);
+		align-items: end;
+		padding: 1.6rem 0 1rem;
+		border-bottom: 1px solid rgb(120 165 230 / 0.2);
+		transition: color 0.3s;
+	}
+	.fag-row::after {
+		content: "";
+		position: absolute;
+		inset: auto 0 -1px;
+		height: 2px;
+		background: var(--frc-y);
+		transform: scaleX(0);
+		transform-origin: 0 50%;
+		transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.fag-row.is-lit {
+		color: var(--frc-y);
+	}
+	.fag-row.is-lit::after {
+		transform: none;
+	}
+	.fag-title {
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		text-transform: uppercase;
+		font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+		line-height: 1;
+		letter-spacing: 0.005em;
+	}
+	.fag-desc {
+		margin-top: 0.5rem;
+		max-width: 46ch;
+		color: var(--frc-mute);
+		font-size: var(--step-small);
+		text-wrap: pretty;
+	}
+	.fag-when {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		align-items: baseline;
+		gap: 0.35rem 0.9rem;
+		text-align: right;
+		font-weight: 600;
+	}
+	.fag-row[data-state="done"] .fag-when > span:first-child {
+		color: var(--frc-mute);
+	}
+	.fag-row[data-state="done"].is-lit .fag-when > span:first-child {
+		color: inherit;
+	}
+	.fag-tag {
+		font-size: var(--step-small);
+		color: var(--frc-mute);
+	}
+	.fag-now {
+		padding: 0.05rem 0.5rem;
+		background: var(--frc-y);
+		color: var(--frc-k);
+	}
+	.fag-res {
+		flex-basis: 100%;
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		font-size: 1.15rem;
+		letter-spacing: 0.01em;
+		color: var(--frc-b);
+	}
+	/* Phones: the lane runs down the right edge, the rows in one column beside it. */
+	@media (max-width: 760px) {
+		.fag-lane {
+			left: auto;
+			right: 0;
+		}
+		.fag-car {
+			--w: 6.5rem;
+			margin-left: calc(var(--w) * -0.9);
+		}
+		.fag-row {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0.4rem;
+			padding-right: 6rem;
+		}
+		.fag-when {
+			justify-content: flex-start;
+			text-align: left;
+		}
+	}
+</style>

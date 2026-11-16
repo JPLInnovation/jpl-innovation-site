@@ -1,17 +1,20 @@
 ---
 /**
- * A number whose digits roll up into place on page load, like a mechanical counter.
- * Screen readers get the plain number; without motion the digits simply sit in place.
+ * A number whose digits roll up into place, like a mechanical counter: on page load, or (wait) each time an ancestor
+ * gets the class `is-on` (the FRC page's pinned season chapters). Screen readers get the plain number; without motion
+ * the digits simply sit in place. Set --odo-lh on it to change the height of a digit (default 1em).
  */
 interface Props {
 	value: string;
 	class?: string;
+	/** Roll when an ancestor has `is-on`, instead of on page load. */
+	wait?: boolean;
 }
-const { value, class: className } = Astro.props;
+const { value, class: className, wait = false } = Astro.props;
 const digits = [...value];
 ---
 
-<span class:list={["odometer", className]}>
+<span class:list={["odometer", wait && "odometer--wait", className]}>
 	<span class="sr-only">{value}</span>
 	{
 		digits.map((d, i) =>
@@ -20,7 +23,7 @@ const digits = [...value];
 					<span class="odo-strip" style={`--digit: ${d}; --i: ${i}`} />
 				</span>
 			) : (
-				<span aria-hidden="true">{d}</span>
+				<span class="odo-char" aria-hidden="true">{d === " " ? " " : d}</span>
 			),
 		)
 	}
@@ -33,14 +36,16 @@ const digits = [...value];
 	}
 	.odo-window {
 		display: inline-block;
-		height: 1em;
-		/* A little room so descending strokes aren't clipped. */
-		line-height: 1;
+		height: var(--odo-lh, 1em);
+		line-height: var(--odo-lh, 1em);
 		overflow: hidden;
+	}
+	.odo-char {
+		line-height: var(--odo-lh, 1em);
 	}
 	.odo-strip {
 		display: block;
-		transform: translateY(calc((var(--digit) + 10) * -1em));
+		transform: translateY(calc((var(--digit) + 10) * -1 * var(--odo-lh, 1em)));
 	}
 	/* Two turns of the wheel (0–9 twice, one per line), so every digit spins a full turn before landing.
 	   Generated content keeps these 20 digits out of the page's text (search engines, copy-paste);
@@ -50,7 +55,7 @@ const digits = [...value];
 		white-space: pre;
 	}
 	/* Only rolls when motion is allowed (the `motion` class is set in BaseLayout). */
-	:global(.motion) .odo-strip {
+	:global(.motion) .odometer:not(.odometer--wait) .odo-strip {
 		animation: roll 1.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 		animation-delay: calc(var(--i) * 90ms + 150ms);
 	}
@@ -58,5 +63,13 @@ const digits = [...value];
 		from {
 			transform: translateY(0);
 		}
+	}
+	/* Waiting: at zero until an ancestor is on, then a roll; back to zero (at once) when it goes off. */
+	:global(.motion) .odometer--wait .odo-strip {
+		transform: translateY(0);
+	}
+	:global(.motion .is-on) .odometer--wait .odo-strip {
+		transform: translateY(calc((var(--digit) + 10) * -1 * var(--odo-lh, 1em)));
+		transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--i) * 70ms + 120ms);
 	}
 </style>

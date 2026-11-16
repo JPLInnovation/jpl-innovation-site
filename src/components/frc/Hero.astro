@@ -1,0 +1,211 @@
+---
+/**
+ * The top of the FRC page, the special edition's grid: two of the team's photos in black and white, masked in from
+ * the sides; the team lockup (the FRC intro lands on it); "Team 10951" huge, its digits rolling into place; the line
+ * under it, one button, and the team's facts. The photos start in the dark and come up one after the other, as if
+ * the arena's lights were switched on, once the intro has gone (src/components/frc/edition.ts).
+ * Words: src/text/projects/frc.ts (frcPage, partner, edition) and frc.md (the line).
+ */
+import BackLink from "@/components/BackLink.astro";
+import FrcLockup from "@/components/FrcLockup.astro";
+import Odometer from "@/components/Odometer.astro";
+import { backToWork } from "@/text/work";
+import { edition, frcPage, frcPhotos, partner, team, type FrcPhoto } from "@/text/projects/frc";
+
+interface Props {
+	/** The page's one-line description (frc.md). */
+	line: string;
+}
+const { line } = Astro.props;
+const [left, right] = edition.heroPhotos.map((id) => frcPhotos[id] as FrcPhoto);
+const { facts: f } = frcPage;
+const facts = [
+	{ label: f.rookieYear, value: String(team.rookieYear) },
+	{ label: f.region, value: team.region },
+	{ label: f.homeLabel, value: f.home },
+	{ label: f.nextSeasonLabel, value: f.nextSeason },
+];
+const src = (p: FrcPhoto) => ({ src: `/assets/frc/${p.id}-640.webp`, srcset: `/assets/frc/${p.id}-640.webp 640w, /assets/frc/${p.id}.webp ${p.w}w` });
+---
+
+<section class="fh dark" aria-labelledby="frc-title" data-frc-hero>
+	<div class="fh-photos" aria-hidden="true">
+		<span class="fh-ph fh-ph-l"><img {...src(left)} sizes="(min-width: 800px) 54vw, 100vw" alt="" width={left.w} height={left.h} fetchpriority="high" decoding="async" /><i></i></span>
+		<span class="fh-ph fh-ph-r"><img {...src(right)} sizes="58vw" alt="" width={right.w} height={right.h} decoding="async" /><i></i></span>
+	</div>
+	<div class="wrapper fh-in">
+		<div class="fh-back"><BackLink href="/work/">{backToWork}</BackLink></div>
+		<FrcLockup />
+		<h1 id="frc-title" class="fh-title">
+			<span class="fh-team">{frcPage.headingPrefix}</span>
+			<Odometer value={String(team.number)} class="fh-num" />
+		</h1>
+		<div class="fh-foot">
+			<div class="fh-who">
+				<p class="fh-line">{line}</p>
+				<button type="button" data-email-open data-subject={partner.emailSubject} class="frc-btn press"><span data-roll>{partner.button}</span><span class="frc-btn-chev" aria-hidden="true">»</span></button>
+			</div>
+			<dl class="fh-facts">
+				{
+					facts.map((x) => (
+						<div>
+							<dt>{x.label}</dt>
+							<dd>{x.value}</dd>
+						</div>
+					))
+				}
+			</dl>
+		</div>
+	</div>
+</section>
+
+<style>
+	.fh {
+		position: relative;
+		isolation: isolate;
+		overflow: clip;
+		min-height: calc(100svh - 4.5rem);
+		background: var(--frc-k);
+		color: var(--frc-w);
+	}
+	/* Two photos, black and white, masked in from the sides. */
+	.fh-photos {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+	}
+	.fh-ph {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		overflow: hidden;
+	}
+	.fh-ph img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		filter: grayscale(1) contrast(1.15) brightness(0.42);
+	}
+	.fh-ph-l {
+		left: 0;
+		width: 54%;
+		-webkit-mask-image: linear-gradient(90deg, #000 50%, transparent);
+		mask-image: linear-gradient(90deg, #000 50%, transparent);
+	}
+	.fh-ph-r {
+		right: 0;
+		width: 58%;
+		-webkit-mask-image: linear-gradient(270deg, #000 45%, transparent);
+		mask-image: linear-gradient(270deg, #000 45%, transparent);
+	}
+	/* The lights: each photo has its own dark layer that lifts when the arena lights come on (edition.ts). */
+	.fh-ph i {
+		position: absolute;
+		inset: 0;
+		background: var(--frc-k);
+		opacity: 0;
+		transition: opacity 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	:global(.motion) .fh:not(.is-lit) .fh-ph i {
+		opacity: 0.94;
+		transition: none;
+	}
+	.fh-ph-r i {
+		transition-delay: 0.35s;
+	}
+	/* The words at the bottom keep their contrast over the busiest part of the photos. */
+	.fh-photos::after {
+		content: "";
+		position: absolute;
+		inset: 45% 0 0;
+		background: linear-gradient(in oklch to top, rgb(7 11 18 / 0.88), rgb(7 11 18 / 0));
+	}
+	.fh :global([data-frc-lockup] p) {
+		text-align: center;
+	}
+	.fh-in {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: clamp(1rem, 3svh, 2rem);
+		min-height: inherit;
+		padding-block: 1rem clamp(1.5rem, 5svh, 3.5rem);
+	}
+	.fh-back {
+		align-self: flex-start;
+	}
+	.fh-title {
+		margin: auto 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		font-family: var(--frc-disp);
+		font-weight: 400;
+		text-transform: uppercase;
+		line-height: 0.8;
+		letter-spacing: 0;
+	}
+	.fh-team {
+		font-size: clamp(1.75rem, 3.2vw, 3rem);
+		line-height: 1;
+		color: var(--frc-y);
+		letter-spacing: 0.02em;
+	}
+	.fh-title :global(.fh-num) {
+		--odo-lh: 0.94em;
+		font-size: clamp(7rem, 24vw, 21rem);
+		letter-spacing: -0.01em;
+	}
+	.fh-foot {
+		width: 100%;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 2rem 3rem;
+	}
+	.fh-who {
+		display: flex;
+		max-width: 26rem;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.25rem;
+	}
+	.fh-line {
+		font-size: var(--step-body);
+		text-wrap: pretty;
+		color: rgb(238 241 246 / 0.86);
+	}
+	.fh-facts {
+		display: grid;
+		grid-template-columns: repeat(2, auto);
+		gap: 1rem 2.5rem;
+		text-align: right;
+	}
+	.fh-facts div {
+		display: flex;
+		flex-direction: column-reverse;
+		gap: 0.1rem;
+	}
+	.fh-facts dt {
+		font-size: var(--step-small);
+		color: var(--frc-mute);
+	}
+	.fh-facts dd {
+		font-weight: 650;
+		font-size: 1.05rem;
+	}
+	@media (max-width: 799px) {
+		.fh-ph-l {
+			width: 100%;
+			opacity: 0.55;
+		}
+		.fh-ph-r {
+			display: none;
+		}
+		.fh-facts {
+			text-align: left;
+			gap: 0.85rem 1.75rem;
+		}
+	}
+</style>
