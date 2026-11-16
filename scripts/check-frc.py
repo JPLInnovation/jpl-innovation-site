@@ -23,7 +23,8 @@ spec.loader.exec_module(cl)
 
 
 class Inventory(HTMLParser):
-    """Headings, links and team photos inside <main> of a built page."""
+    """Headings, links and team photos inside <main> and the site footer of a built page (the contact moved into
+    the footer, the back of the sheet, on 16 Nov: it is still on every page)."""
 
     def __init__(self):
         super().__init__(convert_charrefs=True)
@@ -34,7 +35,7 @@ class Inventory(HTMLParser):
         a = dict(a)
         if tag in ("script", "style", "template"):
             self.skip += 1
-        if tag == "main":
+        if tag in ("main", "footer"):
             self.main += 1
         if not self.main:
             return
@@ -50,7 +51,7 @@ class Inventory(HTMLParser):
     def handle_endtag(self, tag):
         if tag in ("script", "style", "template"):
             self.skip -= 1
-        if tag == "main":
+        if tag in ("main", "footer"):
             self.main -= 1
         if self.h == tag:
             t = re.sub(r"\s+", " ", "".join(self.buf)).strip()

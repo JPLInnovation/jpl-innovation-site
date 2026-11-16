@@ -690,7 +690,7 @@ const script = { pause: film.pause, play: film.play, chapters: film.chapters.map
 					{ duration: 750, easing: "cubic-bezier(0.65, 0, 0.35, 1)" },
 				);
 			}
-			start(-700); // the opening move plays before the first chapter
+			start(reducedMotion() ? 0 : -700); // the opening move plays before the first chapter (none under reduced motion)
 		};
 		const close = () => {
 			if (dialog.open) dialog.close();

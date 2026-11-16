@@ -93,7 +93,6 @@ const [first] = scrub.stages;
 		let target = 0;
 		let raf = 0;
 		let spoken = 0;
-		let shown = 0;
 
 		const draw = () => {
 			const [sketch, cad, bench] = scrubLayers(t);
@@ -107,16 +106,10 @@ const [first] = scrub.stages;
 			dark.style.opacity = String(bench.dark);
 			fill.style.transform = `scaleX(${t})`;
 			knob.style.transform = `translateX(${t * 100}%)`;
-			const now = Math.round(t * 100);
-			if (now !== shown) {
-				shown = now;
-				control.setAttribute("aria-valuenow", String(now));
-			}
 			const stage = nearestStage(t);
 			if (stage !== spoken) {
 				spoken = stage;
 				const [name, ...rest] = texts[stage].split(": ");
-				control.setAttribute("aria-valuetext", texts[stage]);
 				caption.replaceChildren(Object.assign(document.createElement("strong"), { textContent: `${name}.` }), ` ${rest.join(": ")}`);
 				root.dataset.stage = String(stage);
 			}
@@ -130,6 +123,12 @@ const [first] = scrub.stages;
 		};
 		const go = (value: number) => {
 			target = Math.min(1, Math.max(0, value));
+			// Screen readers hear where it is going at once; the picture eases there frame by frame.
+			const now = String(Math.round(target * 100));
+			if (control.getAttribute("aria-valuenow") !== now) {
+				control.setAttribute("aria-valuenow", now);
+				control.setAttribute("aria-valuetext", texts[nearestStage(target)]);
+			}
 			if (!raf) raf = requestAnimationFrame(tick);
 		};
 
