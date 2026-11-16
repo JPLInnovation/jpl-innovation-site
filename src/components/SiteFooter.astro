@@ -1,34 +1,259 @@
 ---
+/**
+ * The footer: the back of the sheet (spec §7, §5 "the curtain footer"). The page slides up off it: the footer stays
+ * put while the page's last edge rises and uncovers it, the name at full width first. Words: src/text/site.ts
+ * (`contact`, `footer`, `landing`, `personality`).
+ *
+ * The curtain, without a sticky layer behind a see-through page: the footer box sits in the flow and clips its own
+ * content, and the content is held still against the screen (a scroll-driven translate) while the box enters. So the
+ * glass page never has the footer behind it, and needs no surface of its own. Where scroll-driven animations aren't
+ * supported (Firefox today), under reduced motion, or while something in it has keyboard focus, it is a plain footer.
+ *
+ * Always the night side, in both themes (the hard section switch of spec §5): `dark` sets the tokens inside it.
+ * id="contact" sits on the footer box itself, which never moves, so links to #contact land where they should.
+ */
 import Logo from "./Logo.astro";
-// Words and links: src/text/site.ts (`footer`).
-import { footer, site } from "@/text/site";
+import EmailButton from "./EmailButton.astro";
+import LandingGame from "./footer/LandingGame.astro";
+import { contact, footer, personality, site } from "@/text/site";
 
 const year = new Date().getFullYear();
-const linkClass = "press inline-flex min-h-11 items-center underline-offset-4 hover:text-foreground hover:underline";
+// Only the lines the owner has approved.
+const lines = personality.filter((l) => l.approved).map((l) => l.text);
 ---
 
-<footer class="border-t">
-	<div class="wrapper grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr]">
-		<div class="flex max-w-xs flex-col gap-4">
-			<a href="/" class="press w-fit" aria-label="JPL Innovation home"><Logo class="h-12" /></a>
-			<p class="text-sm text-muted-foreground">
-				{footer.blurb}
-			</p>
+<footer id="contact" class="back dark" data-footer>
+	<div class="back__inner">
+		<div class="wrapper back__top">
+			<section class="back__contact" aria-labelledby="contact-heading">
+				<h2 id="contact-heading">{contact.heading}</h2>
+				<p>
+					{contact.before}{" "}<a href={`mailto:${site.email}`}>{site.email}</a>{contact.after}
+				</p>
+				<EmailButton label={contact.button} subject={contact.subject} class="back__cta" />
+			</section>
+			<LandingGame />
 		</div>
-		<nav aria-label="Footer">
-			<h2 class="mb-1 text-sm font-semibold">{footer.pagesHeading}</h2>
-			<ul class="flex flex-col text-sm text-muted-foreground">
-				{footer.pages.map((l) => <li><a class={linkClass} href={l.href}>{l.label}</a></li>)}
-			</ul>
-		</nav>
-		<div>
-			<h2 class="mb-1 text-sm font-semibold">{footer.contactHeading}</h2>
-			<ul class="flex flex-col text-sm text-muted-foreground">
-				<li><a class={linkClass} href={`mailto:${site.email}`}>{site.email}</a></li>
-			</ul>
+
+		<div class="wrapper">
+			<div class="back__block">
+				<nav class="back__cell back__cell--pages" aria-labelledby="footer-pages">
+					<h2 id="footer-pages">{footer.pagesHeading}</h2>
+					<ul>
+						{footer.pages.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+					</ul>
+				</nav>
+				<div class="back__cell">
+					<h2>{footer.contactHeading}</h2>
+					<a href={`mailto:${site.email}`}>{site.email}</a>
+				</div>
+			</div>
 		</div>
-	</div>
-	<div class="wrapper border-t py-5 text-sm text-muted-foreground">
-		&copy; {year} {footer.copyright}
+
+		<div class="back__name-wrap" aria-hidden="true">
+			<p class="back__name living">{site.name}</p>
+		</div>
+
+		<div class="wrapper back__print">
+			<a href="/" class="press w-fit shrink-0 rounded-md" aria-label="JPL Innovation home"><Logo class="h-9" /></a>
+			<p class="back__blurb">{footer.blurb}</p>
+			<div class="back__sign">
+				<p>&copy; {year} {footer.copyright}</p>
+				{lines.length > 0 && <p class="back__voice">{lines.join(" · ")}</p>}
+			</div>
+		</div>
 	</div>
 </footer>
+
+<style>
+	.back {
+		position: relative;
+		overflow: clip;
+		background: var(--field-2);
+		color: var(--ink);
+		/* the page's last edge, seen against the back: one step of light where they meet */
+		box-shadow: inset 0 1px 0 var(--sheet-edge);
+	}
+	.back__inner {
+		padding-top: clamp(5.5rem, 4.5rem + 2vw, 6.5rem);
+	}
+
+	/* The contact and the game, side by side from tablets up. */
+	.back__top {
+		display: grid;
+		gap: 3.5rem;
+	}
+	@media (min-width: 48rem) {
+		.back__top {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+			gap: clamp(2.5rem, 5vw, 5rem);
+			align-items: start;
+		}
+	}
+	.back__contact {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1.5rem;
+	}
+	.back__contact h2 {
+		font-size: var(--step-head);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.035em;
+		max-width: 12ch;
+	}
+	.back__contact p {
+		max-width: 34rem;
+		font-size: var(--step-body);
+		line-height: 1.55;
+	}
+	.back__contact p a {
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+		overflow-wrap: anywhere;
+	}
+	.back__contact p a:hover {
+		text-decoration-color: var(--ink);
+	}
+	/* The one action: flat, round, the night side's yellow. */
+	:global(.back__cta) {
+		height: 3.5rem;
+		border-radius: 999px;
+		padding-inline: 1.75rem;
+		font-size: 1rem;
+		font-weight: 650;
+	}
+
+	/* The title block of the back: ruled cells, as on the drawing. */
+	.back__block {
+		display: grid;
+		margin-top: clamp(2.5rem, 4vw, 3.25rem);
+		border-radius: 1rem;
+		overflow: hidden;
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+	}
+	@media (min-width: 48rem) {
+		.back__block {
+			grid-template-columns: minmax(0, 1fr) auto;
+		}
+	}
+	.back__cell {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		padding: 0.85rem 1.25rem 0.6rem;
+		min-width: 0;
+		box-shadow:
+			1px 0 0 var(--sheet-edge),
+			0 1px 0 var(--sheet-edge);
+	}
+	.back__cell h2 {
+		font-size: var(--step-small);
+		font-weight: 500;
+		color: var(--ink-soft);
+		letter-spacing: 0;
+	}
+	.back__cell--pages ul {
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 1.1rem;
+	}
+	.back__cell a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 2.75rem;
+		font-size: 1.0625rem;
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-color: transparent;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+		transition: text-decoration-color 0.2s;
+	}
+	.back__cell a:hover {
+		text-decoration-color: var(--accent-brand);
+	}
+	.back__cell > a {
+		text-decoration-color: var(--accent-brand);
+		overflow-wrap: anywhere;
+	}
+
+	/* The fine print, under the name: the logo, what JPL is, the year. */
+	.back__print {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem 2rem;
+		padding-bottom: clamp(1.25rem, 2vw, 1.75rem);
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.back__blurb {
+		flex: 1 1 22rem;
+		max-width: 46rem;
+	}
+	.back__sign {
+		margin-left: auto;
+		text-align: right;
+	}
+	/* phones and tablets: the logo and the year on one line, what JPL is under them */
+	@media (max-width: 48rem) {
+		.back__blurb {
+			order: 3;
+			flex-basis: 100%;
+		}
+	}
+	.back__voice {
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	/* The name, at the full width of the screen: Archivo's widest cut fills the line ("JPL Innovation" set in it is
+	   8.5 times its font size wide, so 11.7 cqi; another name needs its own number). Living colour inside its letters
+	   (global.css), paused while the footer is off screen. */
+	.back__name-wrap {
+		container-type: inline-size;
+		padding: clamp(1.5rem, 2.4vw, 2.25rem) clamp(1rem, 2.4vw, 2.5rem) clamp(1rem, 1.6vw, 1.5rem);
+	}
+	.back__name {
+		font-size: 11.7cqi;
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.8;
+		letter-spacing: -0.045em;
+		white-space: nowrap;
+		text-wrap: nowrap;
+	}
+	.back:not([data-visible]) .back__name {
+		animation-play-state: paused;
+	}
+
+	/* The curtain: the content held still on the screen while the footer box comes up and clips it. One screen at
+	   most: a footer taller than the screen is uncovered for its first screen, then scrolls on as usual. */
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			:global(html:not(.reduce-motion)) .back {
+				view-timeline: --back-curtain block;
+				view-timeline-inset: 0;
+			}
+			:global(html:not(.reduce-motion)) .back:not(:has(:focus-visible)) .back__inner {
+				animation: back-curtain linear both;
+				animation-timeline: --back-curtain;
+				animation-range: entry 0% entry 100%;
+			}
+		}
+	}
+	@keyframes back-curtain {
+		from {
+			transform: translateY(max(-100%, -100dvh));
+		}
+		to {
+			transform: none;
+		}
+	}
+</style>
