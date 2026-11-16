@@ -586,7 +586,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 	.plate-photo {
 		position: absolute;
 		inset: 0 0 auto;
-		height: 68%;
+		height: 62svh;
 	}
 	.plate-photo img {
 		width: 100%;
@@ -603,7 +603,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 	}
 	/* the word stands on the photograph's floor, right of the robot, its foot on the navy */
 	.plate--build .verb {
-		margin-top: 52svh;
+		margin-top: 50svh;
 		margin-bottom: 1rem;
 		justify-self: end;
 	}
@@ -702,8 +702,19 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 	}
 	@media (min-width: 48rem) {
 		.reg-row {
-			grid-template-columns: minmax(0, 3fr) minmax(0, 4.5fr) minmax(0, 4.5fr);
+			grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
 			align-items: start;
+		}
+		.reg-pic {
+			grid-row: span 2;
+		}
+	}
+	@media (min-width: 64rem) {
+		.reg-row {
+			grid-template-columns: minmax(0, 3fr) minmax(0, 4.5fr) minmax(0, 4.5fr);
+		}
+		.reg-pic {
+			grid-row: auto;
 		}
 	}
 	.reg-pic {
@@ -949,6 +960,8 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		}
 	}
 	.rev-tag {
+		grid-row: 1;
+		grid-column: -2;
 		font-size: var(--step-small);
 		font-weight: 700;
 		text-align: right;

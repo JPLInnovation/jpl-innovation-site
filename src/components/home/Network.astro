@@ -8,7 +8,7 @@
 import { network as words, verbs } from "@/text/home";
 
 type Kind = "cloud" | "acl" | "router" | "l3" | "l2" | "server" | "pc";
-type Node = { kind: Kind; x: number; y: number; label?: string; sub?: string; at?: "above" | "below" | "right" | "left" };
+type Node = { kind: Kind; x: number; y: number; label?: string; sub?: string; at?: "above" | "below" | "right" | "left" | "under" | "inside" };
 // A link: from (x1, y1) to (x2, y2), drawn in the order `n`, growing right, down or up from its start.
 type Link = [number, number, number, number, number];
 
@@ -59,9 +59,9 @@ const tall = {
 		{ kind: "acl", x: 200, y: 185, label: words.acl, at: "right" },
 		{ kind: "router", x: 200, y: 305, label: words.router, at: "right" },
 		{ kind: "l3", x: 200, y: 430, label: words.l3, at: "right" },
-		{ kind: "server", x: 52, y: 430, label: words.server, sub: words.serverRoles, at: "below" },
-		{ kind: "l2", x: 105, y: 625, label: words.l2, at: "above" },
-		{ kind: "l2", x: 295, y: 625, label: words.l2, at: "above" },
+		{ kind: "server", x: 52, y: 430, label: words.server, sub: words.serverRoles, at: "under" },
+		{ kind: "l2", x: 105, y: 625, label: words.l2, at: "inside" },
+		{ kind: "l2", x: 295, y: 625, label: words.l2, at: "inside" },
 		{ kind: "pc", x: 60, y: 800 },
 		{ kind: "pc", x: 150, y: 800 },
 		{ kind: "pc", x: 250, y: 800 },
@@ -72,11 +72,11 @@ const tall = {
 		[200, 223, 200, 269, 1],
 		[200, 341, 200, 402, 2],
 		[125, 430, 82, 430, 3],
-		[200, 458, 200, 520, 3],
-		[200, 520, 105, 520, 4],
-		[200, 520, 295, 520, 4],
-		[105, 520, 105, 600, 5],
-		[295, 520, 295, 600, 5],
+		[200, 458, 200, 568, 3],
+		[200, 568, 105, 568, 4],
+		[200, 568, 295, 568, 4],
+		[105, 568, 105, 600, 5],
+		[295, 568, 295, 600, 5],
 		[105, 650, 105, 720, 6],
 		[295, 650, 295, 720, 6],
 		[105, 720, 60, 720, 7],
@@ -102,7 +102,11 @@ const label = (n: Node) => {
 		case "above":
 			return { x: n.x, y: n.y - gap + 6, anchor: "middle" };
 		case "right":
-			return { x: n.x + (n.kind === "l3" ? 92 : 56), y: n.y + 7, anchor: "start" };
+			return { x: n.x + (n.kind === "l3" ? 92 : n.kind === "cloud" ? 72 : 56), y: n.y + 7, anchor: "start" };
+		case "under":
+			return { x: n.x - 30, y: n.y + gap + 16, anchor: "start" };
+		case "inside":
+			return { x: n.x, y: n.y + 7, anchor: "middle" };
 		case "left":
 			return { x: n.x - 54, y: n.y - 4, anchor: "end" };
 		default:
@@ -160,7 +164,7 @@ const alt = verbs.find((v) => v.id === "secure")!.alt;
 						{(n.kind === "l3" || n.kind === "l2") && (
 							<>
 								<rect x={n.x - (n.kind === "l3" ? 76 : 66)} y={n.y - (n.kind === "l3" ? 29 : 25)} width={n.kind === "l3" ? 152 : 132} height={n.kind === "l3" ? 58 : 50} rx="10" />
-								<path class="net-thin" d={`M${n.x - 30},${n.y - 8} H${n.x + 22} m-9,-7 l9,7 l-9,7 M${n.x + 30},${n.y + 8} H${n.x - 22} m9,-7 l-9,7 l9,7`} />
+								{n.at !== "inside" && <path class="net-thin" d={`M${n.x - 30},${n.y - 8} H${n.x + 22} m-9,-7 l9,7 l-9,7 M${n.x + 30},${n.y + 8} H${n.x - 22} m9,-7 l-9,7 l9,7`} />
 							</>
 						)}
 						{n.kind === "server" && (
