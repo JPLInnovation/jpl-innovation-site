@@ -724,6 +724,19 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		opacity: var(--in);
 		transform: translateY(calc((1 - var(--in)) * 2.5rem));
 	}
+	/* a service reached with the keyboard before its turn shows at once */
+	.plate[data-scrolly] .plate-services > li:focus-within {
+		opacity: 1;
+		transform: none;
+	}
+	/* Sketch it., held on one screen: the picture no taller than about half of it. */
+	.plate--sketch[data-scrolly] .plate-picture {
+		height: min(56svh, 40rem);
+	}
+	.plate--sketch[data-scrolly] .plate-picture img:first-child {
+		height: 100%;
+		object-fit: contain;
+	}
 	/* Sketch it.: the parts pulled apart come together into the drone. */
 	.plate--sketch[data-scrolly] .plate-picture img {
 		--joined: clamp(0, (var(--p, 0) - 0.3) * 2.6, 1);
@@ -1230,31 +1243,42 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 			for (const plate of plates) {
 				const r = plate.getBoundingClientRect();
 				if (r.bottom < -vh || r.top > 2 * vh) continue;
-				const p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - vh)));
+				// 0 when the plate's top is halfway up the window (so the word starts as it arrives), 1 as it leaves
+				const p = Math.min(1, Math.max(0, (vh / 2 - r.top) / Math.max(1, r.height - vh / 2)));
 				plate.style.setProperty("--p", p.toFixed(4));
 			}
 		};
 		const onScroll = () => {
-			if (!frame && plates[0].hasAttribute("data-scrolly")) frame = requestAnimationFrame(update);
+			if (!frame && plates.some((plate) => plate.hasAttribute("data-scrolly"))) frame = requestAnimationFrame(update);
 		};
 		let was: boolean | undefined;
 		const apply = () => {
 			const on = allowed();
 			if (on === was) return;
 			was = on;
-			for (const plate of plates) plate.toggleAttribute("data-scrolly", on);
+			for (const plate of plates) {
+				plate.toggleAttribute("data-scrolly", on);
+				// a screen too short to hold the plate's stage: that plate stays plain, nothing is cut off
+				const stage = plate.querySelector<HTMLElement>(".plate-stage");
+				if (on && stage && stage.scrollHeight > stage.clientHeight + 2) plate.removeAttribute("data-scrolly");
+			}
 			if (on) update();
 		};
 		apply();
 		addEventListener("scroll", onScroll, { passive: true });
-		addEventListener("resize", onScroll);
+		const onResize = () => {
+			was = undefined; // measure the stages again
+			apply();
+			onScroll();
+		};
+		addEventListener("resize", onResize);
 		wide.addEventListener("change", apply);
 		const watch = new MutationObserver(apply); // the motion setting can change in Settings
 		watch.observe(html, { attributes: true, attributeFilter: ["class"] });
 		stop = () => {
 			cancelAnimationFrame(frame);
 			removeEventListener("scroll", onScroll);
-			removeEventListener("resize", onScroll);
+			removeEventListener("resize", onResize);
 			wide.removeEventListener("change", apply);
 			watch.disconnect();
 			stop = undefined;
