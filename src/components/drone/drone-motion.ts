@@ -2,13 +2,13 @@
  * The drone pages' two moments (only when <html> has `motion`, i.e. the visitor allows it):
  *
  *   [data-drone-decode]   a headline scrambles from random glyphs into its words, once, in under a second, when it comes
- *                   into view (the letters: ./decode.ts). Each word keeps its own box, so nothing around it moves.
+ *                   into view (the letters: src/lib/look/decode.ts, shared with the kit's DecodeHeading). Each word keeps its own box, so nothing around it moves.
  *   [data-lights]   a render (./Lit.astro) or a drawing comes up from darkness when it comes into view, as if the
  *                   studio lights switched on; several entering together light one after another.
  *
  * Skipped inside the drone chapter while it runs in 3D (the 3D stages its own words).
  */
-import { scramble } from "./decode";
+import { decodeFrame } from "@/lib/look/decode";
 
 const DURATION = 760; // ms, the whole decode
 let stop: (() => void) | undefined;
@@ -38,7 +38,7 @@ function decode(el: HTMLElement) {
 	const start = performance.now();
 	const frame = (now: number) => {
 		const p = Math.min(1, (now - start) / DURATION);
-		const s = scramble(text, 1 - (1 - p) ** 2);
+		const s = decodeFrame(text, p);
 		for (const o of overlays) o.span.textContent = s.slice(o.from, o.to);
 		if (p < 1) requestAnimationFrame(frame);
 		else {

@@ -8,7 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "test": "node --test \"src/**/*.test.ts\"",
-    "tidy": "astro check && npm test && python scripts/audit-unused.py"
+    "tidy": "astro check && npm test && python scripts/audit-unused.py && python scripts/audit-security.py"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.6",

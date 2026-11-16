@@ -2,11 +2,11 @@
 /**
  * The parts list, as on a drawing: the number of parts as the heading, the receipt beside it (each group's sum, the
  * lines adding up to the total, the total counting up), then the list itself, numbered down the whole set, one table
- * per group with its subtotal. The sums: ./tally.ts (tested). A group with no prices has no Price column; a list with
+ * per group with its subtotal. The sums: src/lib/look/tally.ts (tested). A group with no prices has no Price column; a list with
  * no prices at all counts parts instead of money.
  */
 import { formatVnd } from "@/lib/format";
-import { tally } from "./tally";
+import { tally } from "@/lib/look/tally";
 
 interface Part {
 	name: string;

@@ -1287,7 +1287,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				closeGate();
 				// A link to a stop (/work/frc/#intake) lands on it, on arrival and when the address changes to one.
 				const toHash = () => {
-					const hashed = stops.indexOf(decodeURIComponent(location.hash.slice(1)));
+					const hashed = stops.indexOf(location.hash.slice(1));
 					if (hashed >= 0) goTo(hashed, false);
 				};
 				toHash();

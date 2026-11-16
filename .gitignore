@@ -50,3 +50,4 @@ CAD/
 .skills.json
 skills-lock.json
 .superpowers/
+__pycache__/

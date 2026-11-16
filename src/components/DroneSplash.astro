@@ -190,7 +190,8 @@ const lettersSvg = `<svg class="ds-letters" viewBox="${vx} ${vy} ${vw} ${vh}" ar
 		--big: clamp(12px, 2.5vmin, 30px);
 		--hud-bottom: max(6vh, calc(max(1rem, env(safe-area-inset-bottom)) + 44px + 12px)); /* clear of Skip (SplashShell) */
 		color: #eef3f2;
-		font: 500 var(--big) / 1.35 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+		font: 500 var(--big) / 1.35 "Archivo Variable", "Archivo", system-ui, sans-serif;
+		font-variant-numeric: tabular-nums; /* figures keep their columns without a monospace face */
 		letter-spacing: 0.08em;
 		text-shadow: 0 0 6px rgb(0 0 0 / 0.6);
 	}
