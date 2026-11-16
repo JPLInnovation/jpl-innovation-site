@@ -144,7 +144,7 @@ export function SeasonTimeline() {
 								aria-pressed={on === i}
 								className={cn("frc-pick flex size-full flex-col items-start gap-1 rounded-xl border p-3 text-left", on === i && "is-on")}
 							>
-								<span className="text-xs opacity-75">{s.when}</span>
+								<span className="text-[13px] opacity-75">{s.when}</span>
 								<span className="flex items-center gap-1.5 text-sm font-semibold leading-tight">
 									{event && <Flag className="size-3.5 shrink-0 text-alliance-red" aria-hidden="true" />}
 									{s.title}
@@ -299,7 +299,7 @@ export function KitBotView() {
 				<dl className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-4">
 					{robot.stats.map((s) => (
 						<div key={s.label} className="flex flex-col gap-0.5 bg-card p-3">
-							<dt className="order-2 text-xs text-muted-foreground">{s.label}</dt>
+							<dt className="order-2 text-[13px] text-muted-foreground">{s.label}</dt>
 							<dd className="order-1 font-wide text-2xl font-[850] tabular-nums">
 								{s.value}
 								<span className="text-sm font-semibold text-muted-foreground">{s.suffix}</span>
@@ -398,7 +398,7 @@ export function HardwareView() {
 							<li key={it.name}>
 								<button type="button" aria-pressed={on === i} onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onClick={() => setOn(i)} className={cn("frc-pick flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left", on === i && "is-on")}>
 									<span className="font-semibold">{it.name}</span>
-									<span className="text-xs opacity-75">
+									<span className="text-[13px] opacity-75">
 										{it.maker}
 										{it.legacy ? ` · ${hardwareText.legacyHeading}` : ""}
 									</span>
@@ -458,7 +458,7 @@ export function Overview2027() {
 				<ul className="grid gap-4 sm:grid-cols-2">
 					{t.regionals.map((r) => (
 						<li key={r.name} className="flex flex-col gap-1.5 rounded-xl border surface p-5">
-							<p className="text-xs text-muted-foreground">{r.label}</p>
+							<p className="text-[13px] text-muted-foreground">{r.label}</p>
 							<h5 className="font-semiwide text-xl font-[780]">{r.name}</h5>
 							<p className="text-sm text-muted-foreground">
 								{r.city} · {r.dates}
@@ -487,9 +487,9 @@ export function Road2027() {
 				{steps.map((s, i) => (
 					<li key={s.title}>
 						<button type="button" onMouseEnter={() => setOn(i)} onFocus={() => setOn(i)} onClick={() => setOn(i)} aria-pressed={on === i} className={cn("frc-pick flex size-full flex-col items-start gap-1 rounded-xl border p-4 text-left", on === i && "is-on")}>
-							<span className="flex items-center gap-2 text-xs opacity-75">
+							<span className="flex items-center gap-2 text-[13px] opacity-75">
 								{s.when}
-								{s.state === "current" && <span className="rounded-sm bg-accent px-1.5 py-0.5 text-[11px] font-bold text-accent-foreground">{t27.nowTag}</span>}
+								{s.state === "current" && <span className="rounded-sm bg-accent px-1.5 py-0.5 text-[13px] font-bold text-accent-foreground">{t27.nowTag}</span>}
 							</span>
 							<span className="font-semibold">{s.title}</span>
 						</button>

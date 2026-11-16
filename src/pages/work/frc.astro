@@ -624,16 +624,6 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 		font-stretch: normal;
 		letter-spacing: 0.01em;
 	}
-	/* No little monospace or all-caps labels in the edition: the islands' labels read as plain small text. */
-	.frc-ed .font-mono {
-		font-family: inherit;
-		letter-spacing: 0;
-	}
-	.frc-ed .font-mono.uppercase,
-	.frc-ed .uppercase.tracking-wider {
-		text-transform: none;
-		letter-spacing: 0;
-	}
 	/* Depth on dark comes from a lighter surface, not shadows. */
 	.frc-ed .surface {
 		background-color: var(--card);
@@ -990,7 +980,7 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 	}
 	.frc-grid-slots li i {
 		font-style: normal;
-		font-size: 0.72rem;
+		font-size: 0.8125rem;
 		font-weight: 600;
 		color: var(--muted-foreground);
 	}
@@ -1014,7 +1004,7 @@ const nextOf = (id: string) => board.chapters[(board.chapters.findIndex((c) => c
 		padding: 1px 7px;
 		background: var(--frc-y);
 		color: var(--frc-k);
-		font-size: 0.75rem;
+		font-size: 0.8125rem;
 		font-weight: 700;
 		white-space: nowrap;
 	}

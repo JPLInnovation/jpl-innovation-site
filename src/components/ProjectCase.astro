@@ -118,11 +118,12 @@ const id = `case-${Astro.props.project}`;
 		min-width: 0;
 	}
 	.case :global(.case__headline) {
-		max-width: 18ch;
-		font-size: var(--step-head);
-		font-stretch: 125%;
+		/* a sentence, not a title: sized and measured so it sits in two lines on a desktop, three on a phone */
+		max-width: 34ch;
+		font-size: clamp(1.75rem, 1.2rem + 2vw, 3rem);
+		font-stretch: 122%;
 		font-weight: 800;
-		line-height: 0.98;
+		line-height: 1.02;
 		letter-spacing: -0.03em;
 		text-wrap: balance;
 	}
@@ -157,7 +158,7 @@ const id = `case-${Astro.props.project}`;
 		width: fit-content;
 		text-decoration: line-through;
 		text-decoration-color: var(--accent-brand);
-		text-decoration-thickness: 0.1em;
+		text-decoration-thickness: 0.055em; /* thin: the words under the strike stay easy to read */
 		font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.85rem);
 		font-stretch: 112%;
 		font-weight: 700;

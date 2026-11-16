@@ -138,7 +138,7 @@ function init() {
 	};
 	function release() {
 		throttle = false;
-		delete root.dataset.throttle;
+		delete root!.dataset.throttle;
 	}
 
 	// Space, and Enter too: the stage is a role="button", and a button answers Enter.

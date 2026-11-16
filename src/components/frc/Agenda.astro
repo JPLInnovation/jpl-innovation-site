@@ -54,7 +54,7 @@ const a = edition.agenda;
 		position: relative;
 		background: var(--frc-k);
 		color: var(--frc-w);
-		padding-block: clamp(5rem, 14svh, 9rem) clamp(6rem, 20svh, 12rem);
+		padding-block: clamp(5rem, 14svh, 9rem) clamp(3.5rem, 9svh, 6rem);
 		overflow: clip;
 	}
 	.fag-head {
@@ -126,7 +126,7 @@ const a = edition.agenda;
 	.fag-rows {
 		position: relative;
 		z-index: 1;
-		padding-block: 14svh 30svh;
+		padding-block: 14svh 14svh; /* room for the KitBot to drive off, without leaving half a screen empty */
 	}
 	.fag-row {
 		position: relative;

@@ -157,7 +157,7 @@ void main() {
 	vec2 pos = c + p.xy;
 	gl_Position = vec4(pos.x * uRes.y / uRes.x, pos.y, 0.0, 1.0);
 	// Where the page's content column is (about the middle 80%), a card is only a ghost; in the margins, full.
-	vEdge = mix(0.22, 1.0, smoothstep(0.6, 0.86, abs(gl_Position.x)));
+	vEdge = mix(0.16, 1.0, smoothstep(0.78, 0.95, abs(gl_Position.x)));
 	vLocal = aCorner;
 	vAtlas = (vec2(mod(aMore.y, 4.0), floor(aMore.y / 4.0)) + 0.5 + aCorner * vec2(0.46, -0.46)) / 4.0;
 	vLight = 0.5 + 0.5 * sin(ry - rx + 0.6);
@@ -241,7 +241,7 @@ const CELLS: Record<Parts, number[]> = {
 const TILE_COUNT = 7;
 
 function start(canvas: HTMLCanvasElement) {
-	const state = (window.__field = { paused: true, scale: 1, night: 1, frames: 0, fallback: false, reveal: 0, drawing: "", tiles: 0 });
+	const state: NonNullable<Window["__field"]> = (window.__field = { paused: true, scale: 1, night: 1, frames: 0, fallback: false, reveal: 0, drawing: "", tiles: 0 });
 	const root = document.documentElement;
 	const holder = canvas.closest<HTMLElement>(".site-bg");
 	const giveUp = () => {

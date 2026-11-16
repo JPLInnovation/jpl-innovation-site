@@ -655,7 +655,7 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		padding-block: clamp(7rem, 14vw, 13rem) clamp(4rem, 8vw, 7rem);
 	}
 	.why .head {
-		max-width: 14ch;
+		max-width: 20ch;
 	}
 	.why-text {
 		max-width: 46ch;
@@ -780,12 +780,13 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 	}
 	.mission-statement {
 		margin-top: 1.5rem;
-		max-width: 24ch;
-		font-size: var(--step-head);
-		font-stretch: 112%;
-		font-weight: 800;
-		line-height: 1.02;
-		letter-spacing: -0.025em;
+		/* a paragraph, so it is set as one: large, but well under the headings, with room between its lines */
+		max-width: 34ch;
+		font-size: clamp(1.5rem, 1.1rem + 1.8vw, 2.625rem);
+		font-stretch: 110%;
+		font-weight: 760;
+		line-height: 1.16;
+		letter-spacing: -0.02em;
 		text-wrap: balance;
 	}
 	.mission-grid {

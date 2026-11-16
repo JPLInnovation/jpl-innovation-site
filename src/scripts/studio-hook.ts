@@ -73,7 +73,7 @@ function arm() {
 			/* storage blocked */
 		}
 		html.classList.remove("studio-dark");
-		el.setAttribute("data-leaving", "");
+		el!.setAttribute("data-leaving", "");
 		window.setTimeout(clear, FADE);
 	}
 	abort = () => {

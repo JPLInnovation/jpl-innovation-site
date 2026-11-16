@@ -671,7 +671,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			busyDevice = true;
 			openId = id;
 			returnTo = from;
-			root.setAttribute("data-entering", "");
+			root!.setAttribute("data-entering", "");
 			document.documentElement.classList.add("studio-in-device");
 			// (the camera may stall in a background tab: the dialog opens after a moment anyway)
 			await Promise.race([handle.enter(id), new Promise<void>((resolve) => setTimeout(resolve, 2500))]);
@@ -700,7 +700,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			dialog.close();
 			returnTo?.focus({ preventScroll: true });
 			await Promise.race([handle?.exit(), new Promise<void>((resolve) => setTimeout(resolve, 2500))]);
-			root.removeAttribute("data-entering");
+			root!.removeAttribute("data-entering");
 			document.documentElement.classList.remove("studio-in-device");
 			openId = undefined;
 			busyDevice = false;

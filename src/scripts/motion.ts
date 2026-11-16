@@ -111,26 +111,6 @@ function init() {
 		});
 	}
 
-	// Tilt toward the pointer on a spring; springs back (with a little bounce) when the pointer leaves.
-	if (matchMedia("(pointer: fine)").matches) {
-		for (const el of all("[data-tilt]")) {
-			const area = el.closest("figure") ?? el;
-			const move = (e: PointerEvent) => {
-				const r = area.getBoundingClientRect();
-				const x = (e.clientX - r.left) / r.width - 0.5;
-				const y = (e.clientY - r.top) / r.height - 0.5;
-				animate(el, { rotateY: x * 22, rotateX: -y * 22 }, { type: "spring", bounce: 0, duration: 0.5 });
-			};
-			const leave = () => animate(el, { rotateX: 0, rotateY: 0 }, { type: "spring", bounce: 0.25, duration: 0.8 });
-			area.addEventListener("pointermove", move as EventListener);
-			area.addEventListener("pointerleave", leave);
-			cleanups.push(() => {
-				area.removeEventListener("pointermove", move as EventListener);
-				area.removeEventListener("pointerleave", leave);
-			});
-		}
-	}
-
 	for (const el of all("[data-count]")) {
 		const target = Number(el.dataset.count);
 		const decimals = (el.dataset.count!.split(".")[1] ?? "").length;

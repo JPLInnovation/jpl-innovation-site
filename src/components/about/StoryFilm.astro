@@ -646,9 +646,9 @@ const script = { pause: film.pause, play: film.play, chapters: film.chapters.map
 		/** The end: the film lifts, the page shows through, and the edition choice stands on it. */
 		function finish() {
 			pause();
-			dialog.removeAttribute("data-card");
-			dialog.setAttribute("data-ended", "");
-			dialog.removeAttribute("data-own-backdrop"); // the field behind wakes up again
+			dialog!.removeAttribute("data-card");
+			dialog!.setAttribute("data-ended", "");
+			dialog!.removeAttribute("data-own-backdrop"); // the field behind wakes up again
 			end.hidden = false;
 			syncEditions();
 			end.querySelector<HTMLElement>("h2")?.focus();

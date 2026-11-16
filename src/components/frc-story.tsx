@@ -277,14 +277,14 @@ function SwerveCanvas({ lit }: { lit?: number }) {
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="overflow-hidden rounded-2xl border bg-[#0a101b] text-white">
-				<div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2.5 font-mono text-[11px] uppercase tracking-wider text-white/70">
+				<div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2.5 text-[13px] text-white/70">
 					<span>{t.title}</span>
 					<button type="button" onClick={() => setAuto((a) => !a)} aria-pressed={auto} className={cn("rounded-full border px-2.5 py-1", auto ? "border-[#5ce1ff] text-[#5ce1ff]" : "border-white/25")}>
 						{t.auto}
 					</button>
 				</div>
 				<canvas ref={canvas} tabIndex={0} aria-label={`${t.canvasLabel}. ${t.howTo}`} className="block aspect-[40/27] w-full cursor-crosshair touch-none outline-offset-[-3px]" />
-				<dl className="grid grid-cols-4 border-t border-white/10 font-mono text-xs">
+				<dl className="grid grid-cols-4 border-t border-white/10 text-[13px]">
 					{readout.map((r, i) => (
 						<div key={i} className={cn("flex flex-col gap-0.5 px-3 py-2.5", i && "border-l border-white/10", lit === i && "bg-[#5ce1ff]/15")}>
 							<dt className="text-white/60">{t.modules[i]}</dt>
@@ -348,7 +348,7 @@ function draw(
 	roundRect(g, -b * 0.8, -b * 0.8, b * 1.6, b * 1.6, 0.04 * s);
 	g.fill();
 	g.fillStyle = "#ffffff";
-	g.font = `700 ${Math.round(0.11 * s)}px ui-monospace, monospace`;
+	g.font = `700 ${Math.round(0.11 * s)}px "Archivo Variable", Archivo, sans-serif`;
 	g.textAlign = "center";
 	g.textBaseline = "middle";
 	g.save();
@@ -488,7 +488,7 @@ export function CertPipeline() {
 									onClick={() => go(i)}
 									aria-current={step === i ? "step" : undefined}
 									aria-label={`${t.stepOf} ${i + 1}: ${s.title}`}
-									className={cn("grid size-9 place-items-center rounded-full border-2 font-mono text-sm font-bold transition-colors", i <= step ? "border-foreground bg-foreground text-background" : "border-foreground/30 bg-card", i === n - 1 && i <= step && "border-accent bg-accent text-accent-foreground")}
+									className={cn("grid size-9 place-items-center rounded-full border-2 text-sm font-bold transition-colors", i <= step ? "border-foreground bg-foreground text-background" : "border-foreground/30 bg-card", i === n - 1 && i <= step && "border-accent bg-accent text-accent-foreground")}
 								>
 									{i + 1}
 								</button>
@@ -498,7 +498,7 @@ export function CertPipeline() {
 					<div className="min-h-[7.5rem]" aria-live="polite">
 						<AnimatePresence mode="wait" initial={false}>
 							<motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.22 }} className="flex flex-col gap-2">
-								<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+								<p className="text-[13px] text-muted-foreground">
 									{t.stepOf} {step + 1} / {n}
 								</p>
 								<h4 className="font-wide text-2xl font-[850]">{t.steps[step].title}</h4>
@@ -518,7 +518,7 @@ export function CertPipeline() {
 				<div className="flex flex-col gap-4">
 					<div className="flex items-baseline justify-between gap-3">
 						<h3 className="font-semiwide text-xl font-[780]">{t.checklistHeading}</h3>
-						<p className="font-mono text-sm tabular-nums" aria-live="polite">
+						<p className="text-sm tabular-nums" aria-live="polite">
 							{done} / {ticked.length} {t.checklistTicked}
 						</p>
 					</div>
@@ -577,7 +577,7 @@ export function SupportPicker() {
 					</ul>
 				</div>
 				<div className="relative overflow-hidden rounded-2xl border surface p-6 md:p-8" aria-live="polite">
-					<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{t.powersLabel}</p>
+					<p className="text-[13px] text-muted-foreground">{t.powersLabel}</p>
 					<AnimatePresence mode="wait" initial={false}>
 						<motion.div key={kind.name} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="mt-3 flex flex-col gap-4">
 							<h4 className="font-wide text-[clamp(1.6rem,3vw,2.25rem)] font-[880] leading-tight">{kind.name}</h4>

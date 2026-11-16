@@ -19,7 +19,7 @@ const buttonVariants = cva(
           "hover:bg-secondary hover:text-secondary-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         signal:
-          "bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.2)] hover:bg-[color-mix(in_oklch,var(--primary)_86%,var(--ink))]",
+          "bg-primary text-primary-foreground hover:bg-[color-mix(in_oklch,var(--primary)_86%,var(--ink))]",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",

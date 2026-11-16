@@ -554,10 +554,10 @@ const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en
 		const pinned = () => !reduced();
 
 		function measure() {
-			root.classList.toggle("is-still", !pinned());
+			root!.classList.toggle("is-still", !pinned());
 			const header = document.querySelector<HTMLElement>("[data-site-header]");
 			const headerHeight = header ? header.offsetHeight : 64;
-			root.style.setProperty("--ltd-top", `${headerHeight}px`);
+			root!.style.setProperty("--ltd-top", `${headerHeight}px`);
 			trackTop = track.getBoundingClientRect().top + scrollY - headerHeight;
 			runway = Math.max(1, track.offsetHeight - stage.offsetHeight);
 			// the whole stage fits the screen: scaled down a little on short screens rather than cut off

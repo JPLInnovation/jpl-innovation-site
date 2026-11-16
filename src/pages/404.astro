@@ -72,7 +72,7 @@ const rows = [
 			<tbody>
 				{
 					rows.map((r) => (
-						<tr class:list={{ "register__sub": r.sub }}>
+						<tr class:list={{ "register__sub": "sub" in r && r.sub }}>
 							<th scope="row">
 								<a href={r.href}>{r.label}</a>
 							</th>

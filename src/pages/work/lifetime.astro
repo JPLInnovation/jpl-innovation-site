@@ -170,6 +170,9 @@ const isRevision = (id: string) => id.startsWith("coming-in-version");
 		.lt-sec .lt-sec-h {
 			position: sticky;
 			top: 6.5rem;
+			/* in the narrow left column a section title sits in two or three lines, not four */
+			font-size: clamp(1.75rem, 1rem + 1.7vw, 2.6rem);
+			line-height: 1.04;
 		}
 	}
 	.lt-text {

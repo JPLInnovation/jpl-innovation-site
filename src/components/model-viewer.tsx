@@ -96,7 +96,7 @@ export default function ModelViewer({ model, label, options, hint = true, classN
 				</div>
 			)}
 			{ready && hint && (
-				<p className="pointer-events-none absolute bottom-3 right-3 hidden rounded-full border bg-card/85 px-3 py-1 text-xs font-medium text-muted-foreground [@media(pointer:fine)]:block">
+				<p className="pointer-events-none absolute bottom-3 right-3 hidden rounded-full border bg-card/85 px-3 py-1 text-[13px] font-medium text-muted-foreground [@media(pointer:fine)]:block">
 					Drag to rotate
 				</p>
 			)}

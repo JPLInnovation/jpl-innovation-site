@@ -66,8 +66,8 @@ function Lightbox({ photos, index, onIndex }: { photos: FrcPhoto[]; index: numbe
 					<img src={full(photo.id)} alt={photo.alt} width={photo.w} height={photo.h} className="max-h-[78vh] w-auto max-w-full rounded-lg object-contain" />
 					<figcaption className="flex flex-wrap items-baseline justify-center gap-x-3 text-center text-white">
 						<span className="font-medium">{photo.caption}</span>
-						{photo.meta && <span className="font-mono text-xs uppercase tracking-wider text-white/70">{photo.meta}</span>}
-						<span className="font-mono text-xs text-white/70">
+						{photo.meta && <span className="text-[13px] text-white/70">{photo.meta}</span>}
+						<span className="text-[13px] text-white/70">
 							{index! + 1} / {photos.length}
 						</span>
 					</figcaption>
@@ -127,14 +127,14 @@ export function PhotoDeck() {
 					<button type="button" onClick={() => cycle(-1)} className="frc-round-btn" aria-label={frcDeck.prev}>
 						<ArrowLeft className="size-4" aria-hidden="true" />
 					</button>
-					<p className="min-w-[4.5rem] text-center font-mono text-sm tabular-nums" aria-live="polite">
+					<p className="min-w-[4.5rem] text-center text-sm tabular-nums" aria-live="polite">
 						{String(top + 1).padStart(2, "0")} / {String(order.length).padStart(2, "0")}
 					</p>
 					<button type="button" onClick={() => cycle(1)} className="frc-round-btn" aria-label={frcDeck.next}>
 						<ArrowRight className="size-4" aria-hidden="true" />
 					</button>
 				</div>
-				<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{frcDeck.hint}</p>
+				<p className="text-[13px] text-muted-foreground">{frcDeck.hint}</p>
 			</div>
 			<Lightbox photos={photos} index={viewing} onIndex={setViewing} />
 		</MotionConfig>
@@ -173,7 +173,7 @@ function DeckCard({ photo, depth, onFling, onOpen, still }: { photo: FrcPhoto; d
 			</button>
 			<figcaption className={cn("frc-print-caption", !isTop && "invisible")}>
 				<span className="font-semibold">{photo.caption}</span>
-				{photo.meta && <span className="font-mono text-[11px] uppercase tracking-wider opacity-75">{photo.meta}</span>}
+				{photo.meta && <span className="text-[13px] opacity-75">{photo.meta}</span>}
 			</figcaption>
 		</motion.figure>
 	);
@@ -202,7 +202,7 @@ export function BuildStrips() {
 						>
 							<img src={small(photo.id)} srcSet={srcSet(photo)} sizes="(min-width: 768px) 50vw, 92vw" alt={photo.alt} loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover" />
 							<span className="frc-strip-label">
-								<span className="font-mono text-[11px] uppercase tracking-wider">{photo.meta}</span>
+								<span className="text-[13px]">{photo.meta}</span>
 								<span className="frc-strip-caption font-semibold">{photo.caption}</span>
 							</span>
 						</button>
@@ -405,7 +405,7 @@ export function Countdown() {
 	return (
 		<div className="flex flex-col gap-4 rounded-2xl border surface p-5">
 			<div className="flex flex-col gap-1">
-				<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{t.nextLabel}</p>
+				<p className="text-[13px] text-muted-foreground">{t.nextLabel}</p>
 				<p className="font-wide text-2xl font-[850]">{next.name}</p>
 				<p className="text-sm text-muted-foreground">
 					{next.city} · {next.dates}
@@ -415,12 +415,12 @@ export function Countdown() {
 				</a>
 			</div>
 			<div className="flex flex-col gap-1">
-				<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">{t.untilLabel}</p>
+				<p className="text-[13px] text-muted-foreground">{t.untilLabel}</p>
 				<p className="flex gap-4" role="timer" aria-live="off">
 					{(["d", "h", "m"] as const).map((k) => (
 						<span key={k} className="flex flex-col items-center">
 							<span className="min-w-[3ch] text-center font-wide text-4xl font-[900] tabular-nums">{parts ? String(parts[k]).padStart(k === "d" ? 3 : 2, "0") : "–"}</span>
-							<span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">{t.units[k]}</span>
+							<span className="text-[13px] text-muted-foreground">{t.units[k]}</span>
 						</span>
 					))}
 				</p>
@@ -489,7 +489,7 @@ function WeekPost({ week }: { week: (typeof season2027More.weeks)[number] }) {
 				</span>
 			</button>
 			<div className="flex flex-col gap-1 p-4">
-				<p className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+				<p className="text-[13px] text-muted-foreground">
 					{t.weekLabel} {week.week} · {week.dates}
 				</p>
 				<p className="text-[15px]">{week.text}</p>
