@@ -65,6 +65,14 @@ def check_register(browser, base):
         page.close()
 
     page = open_page(browser, base, "/work/", "dark")
+    box = page.locator(".register__row >> nth=2").bounding_box()
+    page.mouse.move(box["x"] + 200, box["y"] + box["height"] / 2, steps=6)
+    page.wait_for_timeout(700)
+    peek = page.evaluate("(() => { const p = document.querySelector('[data-peek]'); return p.hasAttribute('data-on') && p.querySelector('img').getAttribute('src'); })()")
+    os.makedirs(SHOTS, exist_ok=True)
+    page.screenshot(path=os.path.join(SHOTS, "work-peek-dark-1440.png"))
+    cl.report(peek == "/assets/FRCnew.jpg", f"/work/: pointing at a closed row shows its picture beside the pointer ({peek})")
+    page.mouse.move(5, 5)
     state = "() => [...document.querySelectorAll('[data-register-toggle]')].map((t) => t.getAttribute('aria-expanded') === 'true' && !document.getElementById(t.getAttribute('aria-controls')).hidden)"
     cl.report(page.evaluate(state) == [False] * 5, "/work/: every plate starts closed")
     page.click("[data-register-toggle] >> nth=2")

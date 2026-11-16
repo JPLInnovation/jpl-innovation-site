@@ -4,7 +4,8 @@
  * status, revision) that opens into a whole-width plate. The plate is the project's sheet standing in the blueprint
  * space: it lights up from darkness as it opens, and turns to face you as you scroll past it (the spec's section 1,
  * in CSS 3D). One plate open at a time; Escape closes it. Every project link is a real link in the row itself, so
- * nothing depends on script; without script the rows simply stay closed.
+ * nothing depends on script; without script the rows simply stay closed. With a mouse, the project's picture follows the
+ * pointer over a closed row (a peek at the plate).
  * The words: src/text/work.ts (`register`, `workWall.listHeading`, `projectCard`).
  *
  *   <Register projects={await getProjects()} />
@@ -40,7 +41,7 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 				<tbody class="register__entry" role="rowgroup">
 					<tr class="register__row" role="row">
 						<th scope="row" role="rowheader" class="register__project">
-							<button type="button" class="register__toggle" aria-expanded="false" aria-controls={`plate-${p.id}`} data-register-toggle>
+							<button type="button" class="register__toggle" aria-expanded="false" aria-controls={`plate-${p.id}`} data-register-toggle data-peek-src={row.picture.src} data-peek-fit={row.picture.fit}>
 								<span class="register__name">{p.data.title}</span>
 								<Plus className="register__plus" strokeWidth={2} aria-hidden="true" />
 							</button>
@@ -84,6 +85,7 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 			))
 		}
 	</table>
+	<div class="register__peek" aria-hidden="true" data-peek><img alt="" decoding="async" /></div>
 </section>
 
 <style>
@@ -299,6 +301,35 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 		transform: translateX(0.3rem);
 	}
 
+	/* The peek: the plate's picture following the pointer over a closed row. Mouse only; transform and opacity only. */
+	.register__peek {
+		position: fixed;
+		left: 0;
+		top: 0;
+		z-index: 5;
+		width: clamp(13rem, 20vw, 20rem);
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		border-radius: 1rem;
+		background: var(--sheet);
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.25s;
+	}
+	.register__peek[data-on] {
+		opacity: 1;
+	}
+	.register__peek img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+	}
+	.register__peek[data-fit="contain"] img {
+		object-fit: contain;
+		padding: 6%;
+	}
+
 	/* Tablets and phones: each row stacks, name and arrow first, then its details on one line. */
 	@media (max-width: 899px) {
 		thead {
@@ -383,6 +414,7 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 			toggles.forEach((other) => other !== t && close(other));
 			t.setAttribute("aria-expanded", "true");
 			nameOf(t).classList.add("living");
+			root.querySelector("[data-peek]")?.removeAttribute("data-on");
 			const plate = plateOf(t);
 			plate.hidden = false;
 			if (still()) return;
@@ -416,9 +448,58 @@ const rows = projects.map((p) => ({ p, row: register.rows[p.id] ?? { discipline:
 		};
 		root.addEventListener("click", onClick);
 		root.addEventListener("keydown", onKey);
+
+		// The peek follows the pointer with a little lag, drawn only while it moves.
+		const peek = root.querySelector<HTMLElement>("[data-peek]")!;
+		const peekImg = peek.querySelector("img")!;
+		const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
+		const at = { x: 0, y: 0, tx: 0, ty: 0 };
+		let raf = 0;
+		let showing: HTMLButtonElement | undefined;
+		const draw = () => {
+			at.x += (at.tx - at.x) * 0.18;
+			at.y += (at.ty - at.y) * 0.18;
+			const tilt = Math.max(-6, Math.min(6, (at.tx - at.x) * 0.05));
+			peek.style.transform = `translate3d(${at.x}px, ${at.y}px, 0) rotate(${tilt}deg)`;
+			raf = Math.abs(at.tx - at.x) + Math.abs(at.ty - at.y) > 0.5 ? requestAnimationFrame(draw) : 0;
+		};
+		const onMove = (event: PointerEvent) => {
+			if (event.pointerType !== "mouse" || still()) return;
+			const t = (event.target as Element).closest(".register__row")?.querySelector<HTMLButtonElement>("[data-register-toggle]");
+			const on = !!t && t.getAttribute("aria-expanded") !== "true";
+			const w = peek.offsetWidth || 300;
+			const h = peek.offsetHeight || 225;
+			at.tx = event.clientX > innerWidth * 0.55 ? event.clientX - w - 28 : event.clientX + 28;
+			at.ty = Math.max(80, Math.min(innerHeight - h - 16, event.clientY - h / 2));
+			if (on && t !== showing) {
+				if (!showing) {
+					at.x = at.tx;
+					at.y = at.ty;
+				}
+				peekImg.src = t!.dataset.peekSrc!;
+				peek.dataset.fit = t!.dataset.peekFit;
+			}
+			showing = on ? t! : undefined;
+			peek.toggleAttribute("data-on", on);
+			if (!raf) raf = requestAnimationFrame(draw);
+		};
+		const onLeave = () => {
+			showing = undefined;
+			peek.removeAttribute("data-on");
+		};
+		const table = root.querySelector("table")!;
+		if (fine) {
+			table.addEventListener("pointermove", onMove);
+			table.addEventListener("pointerleave", onLeave);
+			addEventListener("scroll", onLeave, { passive: true });
+		}
 		cleanup = () => {
 			root.removeEventListener("click", onClick);
 			root.removeEventListener("keydown", onKey);
+			table.removeEventListener("pointermove", onMove);
+			table.removeEventListener("pointerleave", onLeave);
+			removeEventListener("scroll", onLeave);
+			cancelAnimationFrame(raf);
 		};
 	}
 
