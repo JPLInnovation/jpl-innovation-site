@@ -542,14 +542,9 @@ const last = story.paragraphs.length - 1;
 		text-wrap: pretty;
 	}
 	@media (min-width: 1024px) {
-		.beliefs {
-			grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
-			gap: clamp(2rem, 5vw, 5rem);
-		}
-		.beliefs .heading {
-			position: sticky;
-			top: 7rem;
-			align-self: start;
+		/* each belief the full width (two lines at most), its sentence under the second half */
+		.belief__desc {
+			margin-left: 50%;
 		}
 	}
 </style>
