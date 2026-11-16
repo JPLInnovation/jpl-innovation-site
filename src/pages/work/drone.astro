@@ -1,215 +1,118 @@
 ---
 import ProjectCase from "@/components/ProjectCase.astro";
 import { getEntry } from "astro:content";
-import { ArrowDown, ArrowRight, CircleCheck, CornerDownRight } from "lucide-react";
+import { CircleCheck } from "lucide-react";
 import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
 import ContactSection from "@/components/ContactSection.astro";
 import DroneChapter from "@/components/DroneChapter.astro";
 import NextChapter from "@/components/NextChapter.astro";
-import PartsTable from "@/components/parts-table";
+import Bom from "@/components/drone/Bom.astro";
+import Revisions from "@/components/drone/Revisions.astro";
+import Schematic from "@/components/drone/Schematic.astro";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 // All the words on this page: src/text/projects/drone.ts (card on the Work page: src/text/projects/drone.md); the
 // chapter at the top (src/components/DroneChapter.astro) also uses "Part by part": src/text/showcase/drone.ts
 import { drone, dronePage as text, earlierWork, partGroups, roadmap, systems } from "@/text/projects/drone";
-import { formatVnd } from "@/lib/format";
-import { DataIcon } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 
 const entry = (await getEntry("work", "drone"))!;
-
-const groups = partGroups.map((g) => ({
-	...g,
-	subtotal: g.parts.reduce((sum, p) => sum + (p.price ?? 0), 0),
-}));
-const total = groups.reduce((sum, g) => sum + g.subtotal, 0);
-const partCount = groups.reduce((sum, g) => sum + g.parts.length, 0);
 ---
 
 <BaseLayout title={`${drone.name} | JPL Innovation`} description={entry.data.description}>
 	<ChapterBackdrop project="drone" />
-	<!-- The chapter, beats 1 to 4: one pinned 3D stage the scroll moves the camera through (Classic: an ordinary page). -->
+	<!-- The opening: in 3D one pinned stage the scroll moves the camera through; in Classic the sheet's opening, the
+	     plate with its title block, and the parts drawn one by one. -->
 	<DroneChapter />
 
 	<!-- The case: the problem, why not the alternatives, our answer (src/text/projects/hooks.ts). -->
 	<ProjectCase project="drone" />
 
-	<!-- Progress -->
-	<section class="wrapper flex flex-col gap-8 pb-24" aria-labelledby="progress-heading">
-		<h2 data-reveal id="progress-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.progressHeading}</h2>
-		<ol class="grid gap-8 sm:grid-cols-2 lg:grid-cols-6 lg:gap-5" data-reveal-group>
+	<!-- The roadmap, as the drawing's revision table -->
+	<Revisions
+		steps={roadmap}
+		heading={text.progressHeading}
+		labels={{ step: text.stepLabel, stage: text.stageLabel, state: text.stateLabel, done: text.doneTag, now: text.nowTag }}
+	/>
+
+	<!-- How it works: the three systems as schematics -->
+	<Schematic systems={systems} heading={text.systemsHeading} intro={text.systemsIntro} branchPrefix={text.branchPrefix} />
+
+	<!-- Parts & budget: the receipt, then the parts list -->
+	<Bom
+		groups={partGroups}
+		suffix={text.partsHeadingSuffix}
+		labels={text.table}
+		captionSuffix={text.table.captionSuffix}
+		total={{ label: text.totalLabel, note: text.totalNote }}
+	/>
+
+	<!-- Earlier work: the sheet before this one -->
+	<section class="earlier wrapper" aria-labelledby="earlier-heading">
+		<div class="earlier-lead">
+			<p class="earlier-date">{text.earlierLabel} {earlierWork.date}</p>
+			<h2 id="earlier-heading" class="earlier-heading">{earlierWork.title}</h2>
+			<p class="earlier-summary">{earlierWork.summary}</p>
+		</div>
+		<ul class="earlier-points">
 			{
-				roadmap.map((step, i) => (
-					<li class="flex flex-col gap-2">
-						<span aria-hidden="true" class="mb-2 flex h-1.5 overflow-hidden rounded-full bg-foreground/15">
-							{step.state !== "upcoming" && (
-								<span
-									data-draw
-									data-draw-watch="parent"
-									data-reveal-delay={i * 150}
-									class={cn("block w-full rounded-full", step.state === "done" ? "bg-foreground" : "bg-accent")}
-								/>
-							)}
-						</span>
-						<p class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-							{text.stepLabel} {i + 1}
-							{step.state === "done" && (
-								<span class="inline-flex items-center gap-1 text-foreground">
-									<CircleCheck className="size-4" aria-hidden="true" /> {text.doneTag}
-								</span>
-							)}
-							{step.state === "current" && (
-								<span class="rounded-sm bg-accent px-1.5 py-0.5 text-xs font-bold text-accent-foreground">{text.nowTag}</span>
-							)}
-						</p>
-						<h3 class="font-semiwide text-lg font-[760]">{step.title}</h3>
-						<p class="text-muted-foreground">{step.desc}</p>
+				earlierWork.points.map((p) => (
+					<li>
+						<CircleCheck className="size-[1.15em] shrink-0" strokeWidth={1.5} aria-hidden="true" />
+						{p}
 					</li>
 				))
 			}
-		</ol>
-	</section>
-
-	<!-- How it works -->
-	<section class="border-y bg-card/70" aria-labelledby="systems-heading">
-		<div class="wrapper flex flex-col gap-10 py-20 md:py-24">
-			<div class="flex max-w-2xl flex-col gap-3" data-reveal>
-				<h2 id="systems-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{text.systemsHeading}</h2>
-				<p class="text-lg text-muted-foreground">{text.systemsIntro}</p>
-			</div>
-			<div class="flex flex-col gap-10">
-				{
-					systems.map((sys) => (
-						<div class="flex flex-col gap-4 border-t pt-6">
-							<h3 class="flex items-center gap-2.5 font-semiwide text-xl font-[780]">
-								<DataIcon name={sys.icon} className="size-5" strokeWidth={1.75} />
-								{sys.title}
-							</h3>
-							<ol class="flex flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-0" data-reveal-group>
-								{sys.steps.map((s, j) => (
-									<li class="flex flex-col lg:flex-1 lg:flex-row lg:items-center">
-										{j > 0 && (
-											<span class="flex items-center gap-2 py-1.5 pl-4 text-xs text-muted-foreground lg:flex-col lg:justify-center lg:gap-0.5 lg:px-2 lg:py-0">
-												<ArrowDown className="size-4 lg:hidden" aria-hidden="true" />
-												<ArrowRight className="hidden size-4 lg:block" aria-hidden="true" />
-												{"link" in s && s.link && <span class="lg:whitespace-nowrap">{s.link}</span>}
-											</span>
-										)}
-										<span class="flex flex-1 flex-col rounded-lg border bg-background px-4 py-3">
-											<strong class="font-semibold">{s.name}</strong>
-											<small class="text-sm text-muted-foreground">{s.detail}</small>
-										</span>
-									</li>
-								))}
-							</ol>
-							{"branch" in sys && sys.branch && (
-								<div class="flex flex-col gap-2 pl-4 lg:pl-8">
-									<p class="flex items-center gap-2 text-sm text-muted-foreground">
-										<CornerDownRight className="size-4" aria-hidden="true" /> {text.branchPrefix} {sys.branch.from}
-									</p>
-									<ol class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-0" data-reveal-group>
-										{sys.branch.steps.map((s, j) => (
-											<li class="flex flex-col sm:flex-row sm:items-center">
-												{j > 0 && (
-													<span class="py-1.5 pl-4 text-muted-foreground sm:px-2 sm:py-0" aria-hidden="true">
-														<ArrowDown className="size-4 sm:hidden" />
-														<ArrowRight className="hidden size-4 sm:block" />
-													</span>
-												)}
-												<span class="flex flex-col rounded-lg border bg-background px-4 py-3">
-													<strong class="font-semibold">{s.name}</strong>
-													<small class="text-sm text-muted-foreground">{s.detail}</small>
-												</span>
-											</li>
-										))}
-									</ol>
-								</div>
-							)}
-						</div>
-					))
-				}
-			</div>
-		</div>
-	</section>
-
-	<!-- Parts & budget -->
-	<section id="parts" class="wrapper flex flex-col gap-10 py-20 md:py-24" aria-labelledby="parts-heading">
-		<h2 data-reveal id="parts-heading" class="font-wide text-[clamp(2rem,4.5vw,3.25rem)] font-[850]">{partCount} {text.partsHeadingSuffix}</h2>
-
-		<figure class="grid gap-8 rounded-xl border surface p-6 md:grid-cols-[1fr_1.4fr] md:p-8" data-reveal>
-			<div class="flex flex-col gap-2">
-				<p class="text-sm text-muted-foreground">{text.totalLabel}</p>
-				<p class="font-wide text-[clamp(2.2rem,5vw,3.25rem)] font-[880] leading-none tabular-nums" data-count={total} data-count-format="vnd">{formatVnd(total)}</p>
-				<figcaption class="text-sm text-muted-foreground">
-					{text.totalNote}
-				</figcaption>
-			</div>
-			<div class="flex flex-col gap-5">
-				<!-- Share of the budget per group; exact values are in the legend and the tables below. -->
-				<div class="flex h-4 gap-[2px]" aria-hidden="true" data-draw data-draw-duration="1.4">
-					{
-						groups.map((g) => (
-							<span
-								class="rounded-[4px]"
-								title={`${g.title}: ${formatVnd(g.subtotal)}`}
-								style={`flex-grow: ${g.subtotal}; background: ${g.color}`}
-							/>
-						))
-					}
-				</div>
-				<ul class="grid gap-3 sm:grid-cols-2">
-					{
-						groups.map((g) => (
-							<li class="flex items-start gap-3">
-								<span class="mt-1.5 size-3 shrink-0 rounded-[3px]" style={`background: ${g.color}`} aria-hidden="true" />
-								<span class="flex flex-col">
-									<span class="font-medium">{g.title}</span>
-									<span class="text-sm tabular-nums text-muted-foreground">
-										{formatVnd(g.subtotal)}, {Math.round((g.subtotal / total) * 100)}%
-									</span>
-								</span>
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</figure>
-
-		<div class="flex flex-col gap-12">
-			{
-				groups.map((g) => (
-					<section aria-labelledby={`group-${g.id}`} class="flex flex-col gap-3" data-reveal>
-						<h3 id={`group-${g.id}`} class="flex items-center gap-2.5 font-semiwide text-xl font-[780]">
-							<span class="size-3 rounded-[3px]" style={`background: ${g.color}`} aria-hidden="true" />
-							{g.title}
-						</h3>
-						<PartsTable caption={`${g.title} ${text.table.captionSuffix}`} parts={g.parts} subtotal={g.subtotal} />
-					</section>
-				))
-			}
-		</div>
-	</section>
-
-	<!-- Earlier work -->
-	<section class="border-t bg-card/70" aria-labelledby="earlier-heading">
-		<div class="wrapper grid gap-8 py-20 md:grid-cols-[1fr_1.2fr] md:gap-14 md:py-24">
-			<div class="flex flex-col gap-3" data-reveal>
-				<p class="text-sm text-muted-foreground">{text.earlierLabel} {earlierWork.date}</p>
-				<h2 id="earlier-heading" class="font-wide text-3xl font-[850] md:text-4xl">{earlierWork.title}</h2>
-				<p class="text-lg">{earlierWork.summary}</p>
-			</div>
-			<ul class="flex flex-col" data-reveal-group>
-				{
-					earlierWork.points.map((p) => (
-						<li class="flex gap-3 border-t py-4">
-							<CircleCheck className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-							{p}
-						</li>
-					))
-				}
-			</ul>
-		</div>
+		</ul>
 	</section>
 
 	<NextChapter current={"drone"} />
 	<ContactSection />
 </BaseLayout>
+
+<style>
+	.earlier {
+		display: grid;
+		gap: 2.5rem;
+		padding-block: clamp(4rem, 9vw, 7rem);
+		border-top: 1px solid var(--sheet-edge);
+	}
+	@media (min-width: 52rem) {
+		.earlier {
+			grid-template-columns: 1fr 1.2fr;
+			gap: 4rem;
+		}
+	}
+	.earlier-lead {
+		display: flex;
+		flex-direction: column;
+		gap: 0.9rem;
+	}
+	.earlier-date {
+		color: var(--ink-soft);
+	}
+	.earlier-heading {
+		font-size: var(--step-lead);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 1.05;
+		letter-spacing: -0.02em;
+		text-wrap: balance;
+	}
+	.earlier-summary {
+		max-width: 46ch;
+		text-wrap: pretty;
+	}
+	.earlier-points li {
+		display: flex;
+		gap: 0.75rem;
+		padding-block: 0.9rem;
+		border-bottom: 1px solid var(--sheet-edge);
+		text-wrap: pretty;
+	}
+	.earlier-points li :global(svg) {
+		margin-top: 0.2em;
+		color: var(--ink-soft);
+	}
+	.earlier-points li:first-child {
+		border-top: 1.5px solid var(--ink);
+	}
+</style>

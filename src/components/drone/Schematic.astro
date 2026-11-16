@@ -1,0 +1,221 @@
+---
+/**
+ * How the parts connect, drawn as a schematic: each system one wire with a terminal per part, the connection's name
+ * (12 AWG, SBUS…) written on the wire where it comes in, and a branch as a second wire tapped off under the part it
+ * comes from. Across on wide windows, down on narrow ones.
+ */
+import { CornerDownRight } from "lucide-react";
+import { DataIcon } from "@/lib/icons";
+
+interface Step {
+	name: string;
+	detail: string;
+	link?: string;
+}
+interface Props {
+	systems: ReadonlyArray<{ title: string; icon: string; steps: ReadonlyArray<Step>; branch?: { from: string; steps: ReadonlyArray<Step> } }>;
+	heading: string;
+	intro: string;
+	/** Before a branch: "Also from the <part>". */
+	branchPrefix: string;
+}
+const { systems, heading, intro, branchPrefix } = Astro.props;
+/** The column of the part a branch comes from (by its name, or the start of its detail: "flight controller, …"). */
+const from = (steps: ReadonlyArray<Step>, name: string) =>
+	Math.max(
+		0,
+		steps.findIndex((s) => s.name === name || s.detail.startsWith(name)),
+	);
+---
+
+<section class="sch" aria-labelledby="systems-heading">
+	<div class="wrapper sch-in">
+		<div class="sch-head">
+			<h2 id="systems-heading" class="sch-heading">{heading}</h2>
+			<p class="sch-intro">{intro}</p>
+		</div>
+		{
+			systems.map((sys) => (
+				<div class="sch-system" style={`--n: ${sys.steps.length}; --at: ${sys.branch ? from(sys.steps, sys.branch.from) : 0}`}>
+					<h3 class="sch-title">
+						<DataIcon name={sys.icon as never} className="size-[1em]" strokeWidth={2} />
+						{sys.title}
+					</h3>
+					<ol class="sch-wire" style={`--count: ${sys.steps.length}`}>
+						{sys.steps.map((s) => (
+							<li>
+								<span class="sch-node" aria-hidden="true" />
+								{s.link && <span class="sch-link">{s.link}</span>}
+								<strong>{s.name}</strong>
+								<small>{s.detail}</small>
+							</li>
+						))}
+					</ol>
+					{sys.branch && (
+						<div class="sch-branch">
+							<p class="sch-from">
+								<CornerDownRight className="size-[1.1em]" strokeWidth={1.5} aria-hidden="true" /> {branchPrefix} {sys.branch.from}
+							</p>
+							<ol class="sch-wire" style={`--count: ${sys.branch.steps.length}`}>
+								{sys.branch.steps.map((s) => (
+									<li>
+										<span class="sch-node" aria-hidden="true" />
+										{s.link && <span class="sch-link">{s.link}</span>}
+										<strong>{s.name}</strong>
+										<small>{s.detail}</small>
+									</li>
+								))}
+							</ol>
+						</div>
+					)}
+				</div>
+			))
+		}
+	</div>
+</section>
+
+<style>
+	.sch {
+		--wire: rgb(10 23 78 / 0.36);
+		--rule: rgb(10 23 78 / 0.14);
+		padding-block: clamp(4.5rem, 10vw, 8rem);
+	}
+	:global(.dark) .sch {
+		--wire: rgb(242 238 223 / 0.38);
+		--rule: rgb(242 238 223 / 0.14);
+	}
+	.sch-in {
+		display: flex;
+		flex-direction: column;
+		gap: clamp(2.5rem, 5vw, 4rem);
+	}
+	.sch-head {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 44rem;
+	}
+	.sch-heading {
+		font-size: var(--step-head);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	.sch-intro {
+		font-size: var(--step-lead);
+		line-height: 1.4;
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.sch-system {
+		--gap: 1.25rem;
+		container-type: inline-size;
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--rule);
+	}
+	.sch-title {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		font-size: var(--step-lead);
+		font-stretch: 112%;
+		font-weight: 760;
+	}
+	/* The wire: down the left on narrow windows, a terminal per part. */
+	.sch-wire {
+		position: relative;
+		display: grid;
+		gap: 1.1rem;
+		padding-left: 1.75rem;
+	}
+	.sch-wire::before {
+		content: "";
+		position: absolute;
+		left: 0.4rem;
+		top: 0.6rem;
+		bottom: 0.9rem;
+		width: 2px;
+		background: var(--wire);
+	}
+	.sch-wire li {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+	}
+	.sch-node {
+		position: absolute;
+		left: -1.75rem;
+		top: 0.3rem;
+		width: 0.95rem;
+		height: 0.95rem;
+		border-radius: 50%;
+		background: var(--field);
+		border: 2px solid var(--ink);
+	}
+	.sch-link {
+		order: -1;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.sch-wire strong {
+		font-weight: 650;
+	}
+	.sch-wire small {
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.sch-branch {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding-left: 1.75rem;
+	}
+	.sch-from {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		color: var(--ink-soft);
+	}
+	/* Across on wide windows: the wire runs left to right through equal columns, the connection's name written on it
+	   just before the terminal it feeds; a branch starts under the part it comes from, on the same columns. */
+	@media (min-width: 64rem) {
+		.sch-system {
+			--colw: calc((100cqw - (var(--n) - 1) * var(--gap)) / var(--n));
+		}
+		.sch-wire {
+			grid-auto-flow: column;
+			grid-auto-columns: var(--colw);
+			gap: 0 var(--gap);
+			padding-left: 0;
+		}
+		.sch-wire::before {
+			left: 0.45rem;
+			top: calc(1.9rem - 1px);
+			bottom: auto;
+			width: calc((var(--count) - 1) * (var(--colw) + var(--gap)));
+			height: 2px;
+		}
+		.sch-wire li {
+			padding-top: 2.75rem;
+		}
+		.sch-node {
+			left: 0;
+			top: calc(1.9rem - 0.475rem);
+		}
+		.sch-link {
+			position: absolute;
+			top: 0.2rem;
+			right: calc(100% + 0.5rem);
+			white-space: nowrap;
+		}
+		.sch-branch {
+			padding-left: 0;
+			margin-left: calc(var(--at) * (var(--colw) + var(--gap)));
+		}
+	}
+</style>

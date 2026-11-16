@@ -1,0 +1,154 @@
+---
+/**
+ * The roadmap as the drawing's revision table: each step of the build in order, what it covers, and where it stands
+ * (done, now, or still to come). The step now carries the sheet's one yellow mark.
+ */
+import { CircleCheck } from "lucide-react";
+
+interface Props {
+	steps: ReadonlyArray<{ title: string; desc: string; state: string }>;
+	heading: string;
+	labels: { step: string; stage: string; state: string; done: string; now: string };
+}
+const { steps, heading, labels } = Astro.props;
+---
+
+<section class="revs wrapper" aria-labelledby="progress-heading">
+	<h2 id="progress-heading" class="revs-heading">{heading}</h2>
+	<table class="revs-table" aria-labelledby="progress-heading">
+		<thead>
+			<tr>
+				<th scope="col" class="revs-n">{labels.step}</th>
+				<th scope="col">{labels.stage}</th>
+				<th scope="col" class="revs-state">{labels.state}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{
+				steps.map((s, i) => (
+					<tr data-state={s.state}>
+						<td class="revs-n">{i + 1}</td>
+						<th scope="row">
+							<span class="revs-stage">
+								<span class="revs-title">{s.title}</span>
+								<span class="revs-desc">{s.desc}</span>
+							</span>
+						</th>
+						<td class="revs-state">
+							{s.state === "done" && (
+								<span class="revs-done">
+									<CircleCheck className="size-[1.1em]" strokeWidth={2} aria-hidden="true" />
+									{labels.done}
+								</span>
+							)}
+							{s.state === "current" && <span class="revs-now">{labels.now}</span>}
+						</td>
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</section>
+
+<style>
+	.revs {
+		--rule: rgb(10 23 78 / 0.14);
+		display: flex;
+		flex-direction: column;
+		gap: clamp(2rem, 4vw, 3rem);
+		padding-block: clamp(4.5rem, 10vw, 8rem);
+	}
+	:global(.dark) .revs {
+		--rule: rgb(242 238 223 / 0.14);
+	}
+	.revs-heading {
+		max-width: 18ch;
+		font-size: var(--step-head);
+		font-stretch: 125%;
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
+	}
+	.revs-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.revs-table thead th {
+		padding: 0 1rem 0.6rem 0;
+		text-align: left;
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
+		border-bottom: 1.5px solid var(--ink);
+	}
+	.revs-table td,
+	.revs-table tbody th {
+		padding: 1.15rem 1rem 1.15rem 0;
+		vertical-align: baseline;
+		text-align: left;
+		border-bottom: 1px solid var(--rule);
+	}
+	.revs-n {
+		width: 3.5rem;
+		color: var(--ink-soft);
+		font-variant-numeric: tabular-nums;
+	}
+	.revs-stage {
+		display: grid;
+		gap: 0.3rem 2rem;
+		font-weight: 400;
+	}
+	@media (min-width: 52rem) {
+		.revs-stage {
+			grid-template-columns: minmax(14rem, 0.8fr) 1.2fr;
+		}
+	}
+	.revs-title {
+		font-size: var(--step-lead);
+		font-stretch: 112%;
+		font-weight: 720;
+		line-height: 1.2;
+		text-wrap: balance;
+	}
+	.revs-desc {
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.revs-state {
+		width: 7rem;
+		padding-right: 0 !important;
+		text-align: right !important;
+		white-space: nowrap;
+	}
+	.revs-done {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-weight: 600;
+	}
+	.revs-now {
+		display: inline-block;
+		padding: 0.15rem 0.7rem;
+		border-radius: 999px;
+		background: var(--mark);
+		color: #0a174e;
+		font-weight: 700;
+	}
+	/* Still to come: quieter, not yet drawn. */
+	tr[data-state="upcoming"] .revs-title {
+		color: var(--ink-soft);
+	}
+	/* the step now: the sheet's one yellow mark under its row */
+	tr[data-state="current"] {
+		border-bottom: 3px solid var(--mark);
+	}
+	@media (max-width: 30rem) {
+		.revs-n {
+			width: 2.25rem;
+		}
+		.revs-state {
+			width: auto;
+		}
+	}
+</style>

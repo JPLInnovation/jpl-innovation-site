@@ -24,17 +24,24 @@
 // @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
 import { existsSync, statSync } from "node:fs";
 import { getEntry } from "astro:content";
+import { ArrowUpRight } from "lucide-react";
 import BackLink from "@/components/BackLink.astro";
 import BeatLabel from "@/components/BeatLabel.astro";
-import StatusTag from "@/components/StatusTag.astro";
+import DroneIllustration from "@/components/DroneIllustration.astro";
+import TitleBlock from "@/components/TitleBlock.astro";
+import Lit from "@/components/drone/Lit.astro";
+import Motion from "@/components/drone/Motion.astro";
+import Plate from "@/components/drone/Plate.astro";
 import { buttonVariants } from "@/components/ui/button";
-import { DataIcon } from "@/lib/icons";
 import { drone, droneChapter as chapter, dronePage as text, roadmap } from "@/text/projects/drone";
 import { droneShowcase as parts } from "@/text/showcase/drone";
 import { backToWork } from "@/text/work";
 
 const team = await Promise.all(
-	drone.team.map(async (t) => ({ role: t.role, member: "member" in t ? await getEntry("members", t.member) : null })),
+	drone.team.map(async (t) => {
+		const member = "member" in t ? await getEntry("members", t.member) : null;
+		return { label: t.role, value: member ? member.data.title : "name" in t ? t.name : "", href: member ? `/members/${member.id}/` : undefined };
+	}),
 );
 const beats = chapter.beats;
 const [first, ...rest] = parts.features;
@@ -45,6 +52,18 @@ const titles = ["", "", "", ...parts.features.map((f) => f.title)];
 const beatList = [beats.prologue, beats.stakes, beats.reveal, beats.anatomy];
 const now = roadmap.findIndex((s) => s.state === "current");
 const step = now >= 0 ? `${chapter.hud.stepLabel} ${now + 1} ${chapter.hud.ofLabel} ${roadmap.length} · ${roadmap[now].title}` : "";
+/** The drawing's title block: the project, where it stands, its main figures, who built it. */
+const titleRows = [
+	{ label: text.titleBlock.project, value: drone.name },
+	{ label: text.titleBlock.status, value: drone.status },
+	...(step ? [{ label: text.titleBlock.stage, value: step }] : []),
+	...drone.facts.map((f) => ({ label: f.label, value: f.value })),
+	...team,
+];
+/** The problem, with its accent words marked. */
+const [problemBefore, problemAfter] = chapter.prologue.accent ? chapter.prologue.problem.split(chapter.prologue.accent) : [chapter.prologue.problem];
+/** "720p": the 720 counts up, the "p" stays. */
+const [, stakesN, stakesRest] = chapter.stakes.value.match(/^(\d+)(.*)$/) ?? [null, null, chapter.stakes.value];
 // The model's size, for the loading gate's real percentage (the bytes as served).
 const cadBytes = statSync("src/lib/three/models/f450-cad.bin").size;
 /** Classic's picture of a stop, from the real model (scripts/showcase-stills.py), when there is one. */
@@ -157,9 +176,11 @@ const overviewStill = still("overview");
 
 			<div class="dch-panels">
 				<!-- Beats 1 to 3: dark in both modes (Classic: a still gradient). -->
-				<div class="dch-band dark">
+				<div class="dch-band">
 					<div class="dch-back wrapper"><BackLink href="/work/">{backToWork}</BackLink></div>
 
+					<!-- Classic: the problem and the camera's answer side by side (3D: two stops). -->
+					<div class="dch-opening">
 					<!-- 01 Prologue -->
 					<section id="prologue" class="dch-panel" data-stop="0" aria-labelledby="prologue-label">
 						<BeatLabel id="prologue-label" beat={beats.prologue} />
@@ -172,70 +193,49 @@ const overviewStill = still("overview");
 								<time class="dch-hud-time" data-dch-clock={chapter.hud.timeZone}>--:--:--</time>
 							</span>
 						</p>
-						<p class="dch-statement font-wide">{chapter.prologue.problem}</p>
+						<p class="dch-statement font-wide">
+							{problemBefore}{problemAfter !== undefined && <><span class="dch-accent">{chapter.prologue.accent}</span>{problemAfter}</>}
+						</p>
 					</section>
 
 					<!-- 02 The stakes: the camera's modes, and the 4G link said on its own (no frame rate for the stream) -->
 					<section id="stakes" class="dch-panel" data-stop="1" aria-labelledby="stakes-label">
 						<BeatLabel id="stakes-label" beat={beats.stakes} />
 						<p class="dch-stat-label">{chapter.stakes.label}</p>
-						<p class="dch-stat font-wide"><span>{chapter.stakes.value}</span> <span class="dch-stat-unit">{chapter.stakes.unit}</span></p>
+						<p class="dch-stat font-wide"><span>{stakesN && <span data-count={stakesN}>{stakesN}</span>}{stakesRest}</span> <span class="dch-stat-unit">{chapter.stakes.unit}</span></p>
 						<p class="dch-stat-secondary font-wide">{chapter.stakes.secondary}</p>
 						<p class="dch-stat-source">{chapter.stakes.source}</p>
 						<p class="dch-aside">{chapter.stakes.link}</p>
 					</section>
+					</div>
 
 					<!-- 03 The reveal: the name, status and credits -->
 					<header id="reveal" class="dch-panel dch-reveal" data-stop="2" aria-labelledby="reveal-label">
 						<BeatLabel id="reveal-label" beat={beats.reveal} />
-						<div><StatusTag>{drone.status}</StatusTag></div>
-						<h1 class="font-wide"><span class="dch-kicker">{chapter.reveal.kicker}</span> {drone.name}</h1>
+						<h1 class="font-wide"><span class="dch-kicker">{chapter.reveal.kicker}</span> <span class="dch-name living" data-decode>{drone.name}</span></h1>
 						<p class="dch-intro">{drone.intro}</p>
-						<dl class="dch-facts">
-							{
-								drone.facts.map((f) => (
-									<div>
-										<dt>
-											<DataIcon name={f.icon} className="size-4" />
-											{f.label}
-										</dt>
-										<dd>{f.value}</dd>
-									</div>
-								))
-							}
-						</dl>
-						<ul class="dch-team">
-							{
-								team.map((t) => (
-									<li>
-										{t.role}
-										{t.member && (
-											<>
-												{" — "}
-												<a href={`/members/${t.member.id}/`}>{t.member.data.title}</a>
-											</>
-										)}
-									</li>
-								))
-							}
-						</ul>
-						<!-- data-astro-reload: the guide, the 3D layout and Camera POV are standalone pages. -->
+						<!-- data-astro-reload: the guide, the 3D layout and Camera POV are standalone pages. One button; the other two are links. -->
 						<div class="dch-actions">
 							<a href={text.buildGuide.href} data-astro-reload class={buttonVariants({ variant: "signal", size: "lg" })}>{text.buildGuide.label}</a>
-							<a href={text.layout3d.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.layout3d.label}</a>
-							<a href={text.cameraPov.href} data-astro-reload class={buttonVariants({ variant: "outline", size: "lg" })}>{text.cameraPov.label}</a>
+							<a href={text.layout3d.href} data-astro-reload class="dch-link">{text.layout3d.label}<ArrowUpRight className="size-[1.1em]" strokeWidth={2} aria-hidden="true" /></a>
+							<a href={text.cameraPov.href} data-astro-reload class="dch-link">{text.cameraPov.label}<ArrowUpRight className="size-[1.1em]" strokeWidth={2} aria-hidden="true" /></a>
 						</div>
 						<p class="dch-note">{text.buildGuide.note}</p>
-						<p class="dch-legend">
-							<span><span class="dch-swatch bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
-							<span><span class="dch-swatch bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
-							<span>{text.model3d.layoutNote}</span>
-						</p>
-						{
-							overviewStill && (
-								<img class="dch-still" transition:name="project-drone" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={text.model3d.description} width="1600" height="1200" loading="lazy" />
-							)
-						}
+						<Plate class="dch-plate" cols={5}>
+							{
+								overviewStill && (
+									<div class="dch-plate-still" transition:name="project-drone">
+										<Lit src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 64rem) 72vw, 100vw" alt={text.model3d.description} width={1600} height={1200} loading="eager" />
+									</div>
+								)
+							}
+							<TitleBlock slot="block" rows={titleRows} label={text.titleBlock.label} />
+							<p slot="notes" class="dch-legend">
+								<span><span class="dch-swatch bg-alliance-red" aria-hidden="true"></span>{text.model3d.frontArms}</span>
+								<span><span class="dch-swatch bg-muted-foreground" aria-hidden="true"></span>{text.model3d.rearArms}</span>
+								<span>{text.model3d.layoutNote}</span>
+							</p>
+						</Plate>
 					</header>
 				</div>
 
@@ -251,7 +251,7 @@ const overviewStill = still("overview");
 						<dl class="dch-part-facts">
 							{first.facts.map((f) => <div><dt>{f.label}</dt><dd>{f.value}</dd></div>)}
 						</dl>
-						{(() => { const s = still(first.id); return s && <img class="dch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />; })()}
+						<DroneIllustration class="dch-planview" label={text.planLabel} wheelbase={450} prop={254} dimension={chapter.anatomy.measure} />
 					</section>
 					{
 						rest.map((f, i) => {
@@ -263,7 +263,7 @@ const overviewStill = still("overview");
 									<dl class="dch-part-facts">
 										{f.facts.map((x) => <div><dt>{x.label}</dt><dd>{x.value}</dd></div>)}
 									</dl>
-									{s && <img class="dch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" />}
+									{s && <Lit class="dch-still" src={s.src} srcset={s.srcset} sizes="(min-width: 48rem) 36rem, 100vw" alt={parts.modelLabel} width={1600} height={1200} />}
 								</section>
 							);
 						})
@@ -275,18 +275,18 @@ const overviewStill = still("overview");
 	<p class="sr-only" aria-live="polite" data-dch-live></p>
 </div>
 <div id="after-chapter" class="dch-after" tabindex="-1"></div>
+<Motion />
 
 <style is:global>
 	/* ---------- Both modes ---------- */
+	/* Each beat's number and name ("01 Prologue") names its stop for screen readers; on screen, the 3D's map names them. */
 	.dch .chapter-label {
-		font: 600 0.8rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--muted-foreground);
-	}
-	.dch .chapter-label-n {
-		color: var(--foreground);
-		margin-right: 0.6em;
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 	.dch-panel {
 		color: var(--foreground);
@@ -301,8 +301,7 @@ const overviewStill = still("overview");
 		width: 0.55em;
 		height: 0.55em;
 		border-radius: 50%;
-		background: var(--accent);
-		box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 80%, transparent);
+		background: var(--mark);
 	}
 	.dch-hud-time {
 		display: inline-block;
@@ -311,117 +310,104 @@ const overviewStill = still("overview");
 		font-variant-numeric: tabular-nums;
 	}
 	.dch-statement {
-		max-width: 16ch;
-		font-weight: 860;
-		font-size: clamp(2rem, 5vw, 3.5rem);
-		line-height: 1.02;
-		letter-spacing: -0.02em;
+		max-width: 15ch;
+		font-weight: 820;
+		font-size: var(--step-head);
+		line-height: 0.98;
+		letter-spacing: -0.03em;
 		text-wrap: balance;
 	}
+	.dch-accent {
+		color: var(--accent-brand);
+	}
 	.dch-stat-label {
-		font: 600 0.85rem/1.3 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: var(--muted-foreground);
+		font-size: var(--step-small);
+		font-weight: 600;
+		color: var(--ink-soft);
 	}
 	.dch-stat {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
 		gap: 0 0.3em;
-		font-weight: 900;
-		font-size: clamp(4rem, 15vw, 9rem);
-		line-height: 0.86;
+		font-weight: 850;
+		font-size: var(--step-head);
+		line-height: 0.9;
 		letter-spacing: -0.03em;
 		font-variant-numeric: tabular-nums;
 	}
 	.dch-stat > span:first-child {
 		white-space: nowrap;
 	}
-	.dch-stat-small {
-		font-size: clamp(2.75rem, 8vw, 5rem);
-	}
 	.dch-stat-unit {
-		font-size: 0.32em;
+		font-size: 0.42em;
 		font-weight: 760;
-		letter-spacing: 0;
-		color: var(--muted-foreground);
+		letter-spacing: -0.01em;
+		color: var(--ink-soft);
 	}
 	.dch-stat-secondary {
-		font-size: clamp(1.4rem, 3vw, 2.25rem);
-		font-weight: 780;
-		color: var(--muted-foreground);
+		font-size: var(--step-lead);
+		font-weight: 760;
+		color: var(--ink-soft);
 	}
 	.dch-stat-source,
 	.dch-aside {
-		max-width: 46ch;
-		font-size: 1.125rem;
+		max-width: 44ch;
+		text-wrap: pretty;
 	}
 	.dch-stat-source {
-		color: var(--muted-foreground);
+		color: var(--ink-soft);
 	}
 	.dch-reveal h1 {
-		font-size: clamp(2.8rem, 8vw, 6.25rem);
-		font-weight: 900;
-		line-height: 0.94;
+		font-size: var(--step-display);
+		font-weight: 850;
+		line-height: 0.88;
+		letter-spacing: -0.04em;
 	}
 	.dch-kicker {
 		display: block;
-		margin-bottom: 0.15em;
-		font-size: 0.36em;
-		font-weight: 720;
-		color: var(--muted-foreground);
+		margin-bottom: 0.35em;
+		font-size: var(--step-lead);
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		line-height: 1.1;
+		color: var(--ink-soft);
+	}
+	.dch-name {
+		display: block;
 	}
 	.dch-intro {
-		max-width: 56ch;
-		font-size: 1.125rem;
-	}
-	.dch-facts {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 1.25rem 1.5rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid var(--border);
-	}
-	@media (min-width: 40rem) {
-		.dch-facts {
-			grid-template-columns: repeat(4, minmax(0, 1fr));
-		}
-	}
-	.dch-facts dt {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		font-size: 0.875rem;
-		color: var(--muted-foreground);
-	}
-	.dch-facts dd {
-		font-weight: 600;
-	}
-	.dch-team {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 1.25rem;
-		font-size: 0.875rem;
-		color: var(--muted-foreground);
-	}
-	.dch-team a {
-		font-weight: 500;
-		color: var(--foreground);
-	}
-	.dch-team a:hover {
-		text-decoration: underline;
+		max-width: 50ch;
+		font-size: var(--step-lead);
+		line-height: 1.45;
+		text-wrap: pretty;
 	}
 	.dch-actions {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 1rem;
+		align-items: center;
+		gap: 0.5rem 1.75rem;
+	}
+	.dch-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-height: 2.75rem;
+		font-weight: 650;
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 5px;
+	}
+	.dch-link:hover {
+		text-decoration-thickness: 3px;
 	}
 	.dch-note,
 	.dch-legend {
-		max-width: 48ch;
-		font-size: 0.875rem;
-		color: var(--muted-foreground);
+		max-width: 52ch;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+		text-wrap: pretty;
 	}
 	.dch-legend {
 		display: flex;
@@ -439,42 +425,61 @@ const overviewStill = still("overview");
 		border-radius: 999px;
 	}
 	.dch-parts-heading {
-		font-size: clamp(2rem, 4.5vw, 3.25rem);
-		font-weight: 850;
+		font-size: var(--step-head);
+		font-weight: 800;
+		line-height: 0.95;
+		letter-spacing: -0.03em;
+		text-wrap: balance;
 	}
 	.dch-parts-intro {
-		max-width: 56ch;
-		font-size: 1.125rem;
-		color: var(--muted-foreground);
+		max-width: 50ch;
+		color: var(--ink-soft);
+		text-wrap: pretty;
 	}
 	.dch-part-title {
-		font-size: 1.5rem;
-		font-weight: 780;
+		font-size: var(--step-lead);
+		font-weight: 760;
 	}
+	/* A part's figures as the ruled rows of a drawing's table. */
 	.dch-part-facts {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem 1.5rem;
-		padding-top: 0.75rem;
-		border-top: 1px solid var(--border);
+		border-top: 1.5px solid var(--ink);
+	}
+	.dch-part-facts > div {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 0.25rem 1.5rem;
+		flex-wrap: wrap;
+		padding-block: 0.55rem;
+		border-bottom: 1px solid var(--sheet-edge);
 	}
 	.dch-part-facts dt {
-		font-size: 0.8rem;
-		color: var(--muted-foreground);
+		font-size: var(--step-small);
+		color: var(--ink-soft);
 	}
 	.dch-part-facts dd {
-		font-weight: 600;
+		font-weight: 650;
+		text-align: right;
 	}
+	/* Out of sight until the keyboard reaches it. */
 	.dch-skip {
 		position: absolute;
 		left: 1rem;
 		z-index: 60;
-		translate: 0 -200%;
 		padding: 0.6rem 1rem;
 		border-radius: 999px;
 		background: var(--primary);
 		color: var(--primary-foreground);
 		font-weight: 600;
+	}
+	.dch-skip:not(:focus-visible) {
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
 	}
 	.dch-skip:focus-visible {
 		translate: 0 0.5rem;
@@ -482,17 +487,13 @@ const overviewStill = still("overview");
 		outline-offset: 2px;
 	}
 
-	/* ---------- Classic: an ordinary page, in the same order ---------- */
+	/* ---------- Classic: the sheet, in the same order ---------- */
 	.dch[data-read] :is(.dch-bg, .dch-stage, .dch-veil, .dch-frame, .dch-hud, .dch-map, .dch-gate) {
 		display: none;
 	}
+	/* The band spans the window, so the plate can open to its full width (src/components/drone/Plate.astro). */
 	.dch[data-read] .dch-band {
-		padding-bottom: 10rem;
-		/* The still gradient: the 3D's colours, fading into the page. */
-		background:
-			linear-gradient(to bottom, rgb(3 10 16 / 0.35), rgb(3 10 16 / 0.6) 60%, #030a10 calc(100% - 10rem), transparent),
-			url("/chapter/drone/classic.webp") center 35% / cover no-repeat,
-			#071822;
+		container-type: inline-size;
 	}
 	.dch[data-read] .dch-back {
 		padding-top: 1.5rem;
@@ -506,51 +507,123 @@ const overviewStill = still("overview");
 		margin-inline: auto;
 		padding: 2.5rem clamp(1rem, 4vw, 2.5rem);
 	}
+	/* The opening: the problem, large, and the camera's answer beside it. */
+	.dch[data-read] .dch-opening {
+		display: grid;
+		gap: 3rem;
+		max-width: 76rem;
+		margin-inline: auto;
+		padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 6vw, 5rem);
+	}
+	@media (min-width: 60rem) {
+		.dch[data-read] .dch-opening {
+			grid-template-columns: 1.3fr 1fr;
+			align-items: end;
+			gap: 5rem;
+		}
+	}
+	.dch[data-read] .dch-opening > .dch-panel {
+		max-width: none;
+		margin: 0;
+		padding: 0;
+	}
+	.dch[data-read] #prologue {
+		gap: 2rem;
+	}
+	.dch[data-read] .dch-statement {
+		max-width: 13ch;
+	}
 	.dch-classic-hud {
 		display: flex;
 		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 0.5rem 2rem;
-		padding-block: 0.75rem;
-		border-block: 1px solid var(--border);
-		font: 500 0.85rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		gap: 0.4rem 1.5rem;
+		padding-bottom: 0.9rem;
+		border-bottom: 1px solid var(--sheet-edge);
+		font-size: var(--step-small);
+		font-variant-numeric: tabular-nums;
+		color: var(--ink-soft);
 	}
-	.dch-classic-hud > span:last-child {
-		display: inline-flex;
-		gap: 1em;
-		color: var(--muted-foreground);
+	.dch-classic-hud .dch-hud-state {
+		color: var(--ink);
+		font-weight: 600;
 	}
-	.dch-still {
+	.dch[data-read] #stakes {
+		gap: 0.75rem;
+		padding-top: 1.25rem;
+		border-top: 1.5px solid var(--ink);
+	}
+	.dch[data-read] #stakes .dch-stat-secondary {
+		margin-top: -0.25rem;
+	}
+	/* The reveal: the name at full size, the case for it, then the plate. */
+	.dch[data-read] .dch-reveal {
+		gap: 1.5rem;
+		padding-top: clamp(2rem, 6vw, 4rem);
+		padding-bottom: 0;
+	}
+	.dch[data-read] .dch-plate {
+		margin-top: clamp(1.5rem, 4vw, 3rem);
+	}
+	.dch-plate-still > .lit {
 		width: 100%;
-		max-width: 40rem;
-		height: auto;
-		border-radius: 0.75rem;
+		height: 100%;
 	}
+	/* Part by part: the frame drawn from above with its 450 mm, then each part's render as a detail view. */
 	.dch[data-read] .dch-parts {
 		display: grid;
 		max-width: 76rem;
 		margin-inline: auto;
+		padding-block: clamp(4rem, 10vw, 8rem) clamp(2rem, 6vw, 4rem);
+	}
+	.dch[data-read] .dch-parts > .dch-panel {
+		gap: 1rem;
+	}
+	.dch[data-read] .dch-stat-small {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.dch-planview {
+		width: 100%;
+		max-width: 34rem;
+		margin: 1rem auto 0;
+	}
+	.dch[data-read] .dch-parts .dch-still {
+		order: -1;
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		margin-bottom: 0.5rem;
 	}
 	@media (min-width: 48rem) {
 		.dch[data-read] .dch-parts {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+			column-gap: clamp(1rem, 4vw, 4rem);
 		}
 		.dch[data-read] .dch-parts > :first-child {
 			grid-column: 1 / -1;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			column-gap: clamp(2rem, 5vw, 5rem);
+			align-content: start;
+			margin-bottom: clamp(2rem, 5vw, 4rem);
 		}
-		.dch[data-read] .dch-parts > :first-child .dch-still {
-			max-width: 36rem;
+		.dch[data-read] .dch-parts > :first-child > :not(.dch-planview) {
+			grid-column: 1;
 		}
-	}
-	.dch[data-read] .dch-parts .dch-still {
-		order: -1;
-		background: var(--card);
-		border: 1px solid var(--border);
-	}
-	.dch[data-read] .dch-parts > :first-child .dch-still {
-		order: 0;
+		.dch[data-read] .dch-parts > :first-child > .dch-planview {
+			grid-column: 2;
+			grid-row: 1 / span 8;
+			align-self: center;
+			margin: 0;
+			max-width: none;
+		}
+		/* the right-hand details sit lower, as on a sheet of detail views */
+		.dch[data-read] .dch-parts > :nth-child(2n + 3) {
+			margin-top: clamp(3rem, 8vw, 7rem);
+		}
 	}
 
 	/* ---------- 3D: the pinned stage ---------- */
@@ -786,8 +859,35 @@ const overviewStill = still("overview");
 	.dch:not([data-read]) .dch-back > * {
 		opacity: calc(1 - var(--past, 0));
 	}
-	.dch:not([data-read]) .dch-still {
+	.dch:not([data-read]) :is(.dch-still, .dch-planview) {
 		display: none;
+	}
+	/* The classic page's groupings and the plate fall away in 3D: their words are the stops' own. The plate's picture is
+	   the 3D itself, so only its title block and notes stay, in the reveal's words (a plain film: no blur over the 3D). */
+	.dch:not([data-read]) :is(.dch-opening, .dch-plate) {
+		display: contents;
+	}
+	.dch:not([data-read]) .dch-plate .plate-art {
+		display: none;
+	}
+	.dch:not([data-read]) .dch-plate :is(.plate-block, .plate-notes) {
+		position: static;
+		width: auto;
+		max-width: none;
+		padding: 0;
+	}
+	.dch:not([data-read]) .dch-plate .title-block {
+		-webkit-backdrop-filter: none;
+		backdrop-filter: none;
+		background-color: rgb(3 10 16 / 0.55);
+		border-radius: 1rem;
+		grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 45%), 1fr));
+	}
+	.dch:not([data-read]) .dch-plate .title-block :is(dt, dd) {
+		font-size: 0.8rem;
+	}
+	.dch:not([data-read]) .dch-plate .title-block > div {
+		padding: 0.5rem 0.75rem 0.55rem;
 	}
 
 	/* Each stop's words, over the stage on the left; the current one showing. --on (0 to 1) follows the camera, and the
@@ -834,9 +934,6 @@ const overviewStill = still("overview");
 	}
 	.dch:not([data-read]) .dch-reveal h1 {
 		font-size: clamp(2.6rem, 5vw, 4.75rem);
-	}
-	.dch:not([data-read]) .dch-reveal .dch-facts {
-		grid-template-columns: repeat(4, minmax(0, 1fr));
 	}
 	.dch:not([data-read]) .dch-reveal .dch-intro,
 	.dch:not([data-read]) .dch-parts-intro {
@@ -993,11 +1090,9 @@ const overviewStill = still("overview");
 		color: var(--foreground);
 		font-variant-numeric: tabular-nums;
 	}
-	/* After the chapter: its dark fades gradually into the page's own colour (both themes). */
-	.dch:not([data-read]) + .dch-after {
-		height: 40vh;
-		background: linear-gradient(to bottom, #030a10, color-mix(in oklab, #030a10 40%, transparent) 45%, transparent);
-		pointer-events: none;
+	/* After the chapter: a hard switch from its night to the page (no fade). */
+	.dch-after {
+		height: 0;
 	}
 	.dch-after:focus {
 		outline: none;

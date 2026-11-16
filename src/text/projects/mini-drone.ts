@@ -19,8 +19,26 @@ export const miniDronePage = {
 	branchPrefix: 'Also from the',
 	/** The parts heading is "<number> parts, one tiny quad". */
 	partsHeadingSuffix: 'parts, one tiny quad',
-	/** Screen-reader table caption: "<group> parts". Column headings are shared: src/components/parts-table.tsx */
+	/** Screen-reader table caption: "<group> parts". Column headings are the F450 page's (src/text/projects/drone.ts). */
 	tableCaptionSuffix: 'parts',
+	/** The receipt: each group's number of parts, then all of them: "Transmitter … 6 parts", "In all … 17 parts". */
+	countUnit: 'parts',
+	countTotal: 'In all',
+	/** The roadmap's table: its column headings (the first is `stepLabel`). */
+	stageLabel: 'Stage',
+	stateLabel: 'State',
+	/** The drawing of the quad from above, at the top of the page. */
+	plan: {
+		/** The size written on the drawing, motor to motor across the frame (the frame's line in the parts list). */
+		dimension: '69 mm motor to motor',
+	},
+	/** The drawing's title block, on the drawing: what the project is, where it stands, who builds it. */
+	titleBlock: {
+		/** Read aloud by screen readers for the block. */
+		label: 'Title block of the Mini Arduino Drone',
+		project: 'Project',
+		status: 'Status',
+	},
 };
 
 export interface Part {
@@ -33,7 +51,7 @@ export interface PartGroup {
 	id: string;
 	title: string;
 	icon: 'rocket-launch' | 'lightning' | 'cell-signal' | 'cpu';
-	/** A chart token (validated categorical order), used for the group marker. */
+	/** The group's colour in the receipt (--bom-1 to --bom-4, brand colours: src/components/drone/Bom.astro). */
 	color: string;
 	parts: Part[];
 }
@@ -94,7 +112,7 @@ export const partGroups: PartGroup[] = [
 		id: 'drone',
 		title: 'Drone: frame & flight controller',
 		icon: 'rocket-launch',
-		color: 'var(--chart-1)',
+		color: 'var(--bom-1)',
 		parts: [
 			{ name: '3D Printed Micro Frame', why: '69 mm motor-to-motor, sized for the coreless motors.' },
 			{ name: 'Arduino Pro Mini (ATmega328P)', why: 'Runs the stabilisation loop and reads the radio link.' },
@@ -113,7 +131,7 @@ export const partGroups: PartGroup[] = [
 		id: 'transmitter',
 		title: "Transmitter",
 		icon: 'cell-signal',
-		color: 'var(--chart-3)',
+		color: 'var(--bom-2)',
 		parts: [
 			{ name: 'Arduino Nano (ATmega328P)', why: 'Reads the joysticks and drives the radio and LCD.' },
 			{ name: 'NRF24L01+PA+LNA', why: 'External-antenna radio module for better range than the drone’s onboard one.' },
