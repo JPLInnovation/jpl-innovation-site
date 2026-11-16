@@ -186,7 +186,7 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 			screenMat.uniforms.uGlow.value = 0.25 + 0.75 * screenGlow;
 		},
 		applyPalette(darkTheme) {
-			benchMat.color.set(darkTheme ? 0x2a3550 : 0xc9d3e6);
+			benchMat.color.set(darkTheme ? 0x5d6479 : 0xd9d2bc);
 		},
 		busy: () => moving,
 	};

@@ -99,7 +99,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const dark = new MeshStandardMaterial({ color: 0x141a28, roughness: 0.5 });
 	const wood = woodMaterial("oak_veneer_01");
 	const themed: { mat: MeshStandardMaterial; dark: number; light: number }[] = [
-		{ mat: bench as MeshStandardMaterial, dark: 0x1b2d6e, light: 0xd9d2bc },
+		{ mat: bench as MeshStandardMaterial, dark: 0x5d6479, light: 0xd9d2bc },
 	];
 
 	/** A workbench: a top on four legs, its top surface at `benchTop`. */

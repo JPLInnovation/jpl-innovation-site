@@ -31,6 +31,7 @@ import {
 	PlaneGeometry,
 	SphereGeometry,
 	SpotLight,
+	Vector3,
 	RepeatWrapping,
 	SRGBColorSpace,
 	type Texture,
@@ -47,7 +48,6 @@ import { buildAmbience } from "./ambience";
 import { buildBackdrop } from "./backdrop";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
-import { SHOTS } from "./scenes";
 import { BLANK, buildDeskSheets, type SheetPlace } from "./desk-sheets";
 import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { type PageScreen, pageScreen } from "./screens";
@@ -59,6 +59,45 @@ export const ROOM = { x0: -8.5, x1: 8.5, z0: -3.4, z1: 6.4, h: 3.4 };
 export const DESK = { x: -6, z: -2.45, top: 0.76, book: { x: -6.32, z: -2.31 } };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 export const asset = (path: string) => `${BASE}${path}`;
+type P3 = [number, number, number];
+/**
+ * The bench lamps (lights.ts): for each scene, where the light comes from (`at`), what it points at (`aim`), its power
+ * (candela, dark theme), and how wide its cone is. Most hang from a real lamp you can see (FIXTURES); the rack, the
+ * project wall and the back wall are lit from the ceiling, out of frame. The title and the sketch have the desk lamp.
+ */
+const LAMP = {
+	build: { at: [-4.5, 1.16, -2.6] as P3, aim: [-4.12, 0.82, -2.38] as P3, power: 6, angle: 0.8 },
+	test: { at: [-3.08, 1.33, -2.55] as P3, aim: [-2.62, 0.85, -2.45] as P3, power: 7, angle: 0.72 },
+	robot: { at: [-0.22, 1.08, -2.72] as P3, aim: [-0.6, 0.42, -2.55] as P3, power: 8, angle: 0.8 },
+	drone: { at: [0.96, 1.36, -2.62] as P3, aim: [1.42, 0.85, -2.55] as P3, power: 7, angle: 0.72 },
+	crew: { at: [-2.4, 2.3, 5.0] as P3, aim: [-2.4, 0.75, 5.1] as P3, power: 22, angle: 0.75 },
+};
+/** The lamps you can see: a weighted base (or a ceiling cord), an arm, a shade aimed at the subject, a warm bulb. */
+const FIXTURES: { base: P3; lamp: keyof typeof LAMP; hang?: boolean }[] = [
+	{ base: [-4.6, 0.82, -2.66], lamp: "build" },
+	{ base: [-3.28, 0.85, -2.88], lamp: "test" },
+	{ base: [-0.05, 1.165, -3.26], lamp: "robot" }, // clamped to the pegboard's shelf
+	{ base: [0.76, 0.85, -2.86], lamp: "drone" },
+	{ base: [-2.4, 3.4, 5.1], lamp: "crew", hang: true }, // a pendant over the table
+];
+const sceneLamp = (lamp: (typeof LAMP)[keyof typeof LAMP], share = 1) => ({ ...lamp, power: lamp.power * share });
+const SCENE_LAMPS: Record<string, { at: P3; aim: P3; power: number; angle: number }> = {
+	build: LAMP.build,
+	test: LAMP.build,
+	simIn: LAMP.build,
+	simFly: LAMP.test,
+	simLand: LAMP.test,
+	web: LAMP.test,
+	robotics: LAMP.robot,
+	drones: LAMP.drone,
+	crew: LAMP.crew,
+	research: sceneLamp(LAMP.build, 0.35),
+	networks: { at: [3.3, 3.2, -1.5], aim: [3.3, 1.2, -2.7], power: 26, angle: 0.5 },
+	wall: { at: [5.8, 3.3, 0.9], aim: [7.4, 1.2, 0.3], power: 10, angle: 0.8 },
+	standards: { at: [5.0, 3.2, 5.0], aim: [5.0, 1.4, 6.35], power: 24, angle: 0.62 },
+	timeline: { at: [1.2, 3.2, 4.8], aim: [1.2, 0.9, 6.2], power: 8, angle: 0.7 },
+	contact: { at: [-5.6, 3.0, 5.4], aim: [-5.6, 1.0, 6.3], power: 14, angle: 0.6 },
+};
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -149,6 +188,44 @@ export async function loadImage(path: string, svgWidth = 1600) {
 		img.onerror = reject;
 		img.src = src;
 	});
+}
+
+/** A rod from `a` to `b`. */
+function rod(parent: Group, a: Vector3, b: Vector3, radius: number, material: Material) {
+	const d = b.clone().sub(a);
+	const mesh = new Mesh(new CylinderGeometry(radius, radius, d.length(), 8), material);
+	mesh.position.copy(a).addScaledVector(d, 0.5);
+	mesh.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), d.normalize());
+	parent.add(mesh);
+}
+
+/** The bench lamps you can see (FIXTURES). Returns their bulbs' one material, for the room to bring up with the lamp. */
+function buildFixtures(parent: Group, metal: Material) {
+	const shadeMat = hardware({ color: 0xe9e4d6, roughness: 0.4, side: DoubleSide }, "plastic");
+	const bulbMat = new MeshBasicMaterial({ color: 0xfff0d0, toneMapped: false });
+	for (const { base, lamp, hang } of FIXTURES) {
+		const { at, aim } = LAMP[lamp];
+		const b = new Vector3(...base);
+		const head = new Vector3(...at);
+		const toward = new Vector3(...aim).sub(head).normalize();
+		if (hang) rod(parent, b, head, 0.004, metal);
+		else {
+			const foot = new Mesh(new CylinderGeometry(0.06, 0.07, 0.022, 24), metal);
+			foot.position.copy(b).setY(b.y + 0.011);
+			parent.add(foot);
+			const elbow = new Vector3(b.x + (head.x - b.x) * 0.15, head.y + 0.14, b.z + (head.z - b.z) * 0.15);
+			rod(parent, b, elbow, 0.008, metal);
+			rod(parent, elbow, head, 0.008, metal);
+		}
+		const shade = new Mesh(new CylinderGeometry(0.03, hang ? 0.13 : 0.075, hang ? 0.14 : 0.1, 24, 1, true), shadeMat);
+		shade.quaternion.setFromUnitVectors(new Vector3(0, -1, 0), toward);
+		shade.position.copy(head).addScaledVector(toward, hang ? 0.03 : 0.015);
+		parent.add(shade);
+		const bulb = new Mesh(new SphereGeometry(hang ? 0.035 : 0.022, 12, 8), bulbMat);
+		bulb.position.copy(head).addScaledVector(toward, hang ? 0.05 : 0.035);
+		parent.add(bulb);
+	}
+	return bulbMat;
 }
 
 /** A screen that shows a texture without being lit (it glows a little in the dark). */
@@ -393,7 +470,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	const bulb = new Mesh(new SphereGeometry(0.03, 16, 12), new MeshBasicMaterial({ color: 0xfff0d0, toneMapped: false }));
 	bulb.position.set(shade.position.x + 0.012, shade.position.y - 0.03, shade.position.z);
 	group.add(bulb);
-	const lamp = new SpotLight(0xffe6c0, 0, 4, 0.75, 0.7, 1.6);
+	const lamp = new SpotLight(0xffd59a, 0, 5, 0.95, 0.95, 1.6);
 	lamp.position.copy(bulb.position);
 	lamp.target.position.set(deskX - 0.25, deskTop, deskZ + 0.12);
 	group.add(lamp, lamp.target);
@@ -433,9 +510,11 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 	await tick();
 	// The pooled point lights: the glow of what the camera is on, and a ceiling light above the camera.
 	const accents: Record<string, LightSpec> = { ...stations.accents, ...bench.accents, research: { at: [monitorX, deskTop + 0.36, deskZ + 0.05], color: 0x9ccfff, dark: 1.2, light: 1.2, distance: 1.6, decay: 2 } };
-	const overhead: Record<string, LightSpec> = {};
-	for (const id of Object.keys(SHOTS)) overhead[id] = { at: [SHOTS[id].camera[0], h - 0.4, 1.5], color: 0xcfe3ff, dark: 4.5, light: 10, distance: 9, decay: 1.6 };
-	const pool = createLightPool(group, accents, overhead);
+	// The bench lamps: a warm spot over each scene's subject (lights.ts), hung toward the room so the pool spills forward.
+	const lamps: Record<string, LightSpec> = {};
+	for (const [id, l] of Object.entries(SCENE_LAMPS)) lamps[id] = { at: l.at, aim: l.aim, angle: l.angle, color: 0xffcf96, dark: l.power, light: l.power * 0.5, distance: 6, decay: 2 };
+	const bulbs = buildFixtures(group, steel);
+	const pool = createLightPool(group, accents, lamps);
 	const ambience = buildAmbience(group);
 	const props = buildProps(group);
 
@@ -471,9 +550,10 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			for (const screen of screens) busy = screen.update(dt, near[screen.scene] ?? 0) || busy;
 			// The lamp, and the room coming up with it.
 			const level = on * on * (3 - 2 * on);
-			lamp.intensity = 7 * level;
+			lamp.intensity = (palette?.dark === false ? 9 : 16) * level;
 			(bulb.material as MeshBasicMaterial).color.setRGB(0.2 + 0.8 * level, 0.18 + 0.76 * level, 0.15 + 0.66 * level);
-			sky.intensity = (palette?.dark ? 0.35 : 0.9) * (0.25 + 0.75 * level);
+			bulbs.color.copy((bulb.material as MeshBasicMaterial).color);
+			sky.intensity = (palette?.dark ? 0.09 : 0.8) * (0.25 + 0.75 * level);
 			pool.update(state.focus, level, !!palette?.dark);
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
 			(slogan.material as MeshBasicMaterial).opacity = level;
@@ -492,9 +572,9 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		applyPalette(p) {
 			palette = p;
 			const dark = p.dark;
-			tint(wallMat, dark ? 0x0a174e : 0xf2eedf); // the site's navy and paper
-			tint(ceilingMat, dark ? 0x081240 : 0xfaf7ec);
-			tint(floorMat, dark ? 0x071038 : 0xd9d2bc);
+			tint(wallMat, dark ? 0x1c2756 : 0xf2eedf); // the site's navy and paper
+			tint(ceilingMat, dark ? 0x121a3c : 0xfaf7ec);
+			tint(floorMat, dark ? 0x2a3044 : 0xd9d2bc);
 			trimMat.color.set(dark ? 0x1b2d6e : 0xd6cfb6);
 			glassMat.color.set(dark ? 0x0a174e : 0xf5f1e4);
 			glassMat.opacity = dark ? 0.14 : 0.1;
@@ -508,16 +588,16 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			(logo.material as MeshBasicMaterial).map = dark ? logoLight : logoDark;
 			(logo.material as MeshBasicMaterial).needsUpdate = true;
 			(slogan.material as MeshBasicMaterial).color.set(dark ? 0xf2eedf : 0x0a174e);
-			(ctx.scene.fog as Fog).color.set(dark ? 0x050c2e : 0xf2eedf);
-			(ctx.scene.fog as Fog).near = dark ? 7 : 12;
-			(ctx.scene.fog as Fog).far = dark ? 19 : 32;
+			(ctx.scene.fog as Fog).color.set(dark ? 0x02050f : 0xf2eedf);
+			(ctx.scene.fog as Fog).near = dark ? 5 : 12;
+			(ctx.scene.fog as Fog).far = dark ? 16 : 32;
 			sky.color.set(dark ? 0x8fb4ff : 0xffffff);
 			sky.groundColor.set(dark ? 0x071038 : 0xd6cfb6);
 			// The stage's product lights ride on the camera; in a room they'd flatten it, so they stay low.
-			ctx.lights.key.intensity = dark ? 0.55 : 1.1;
-			ctx.lights.fill.intensity = dark ? 0.2 : 0.45;
-			ctx.lights.rim.intensity = dark ? 0.35 : 0.5;
-			ctx.scene.environmentIntensity = dark ? 0.22 : 0.6;
+			ctx.lights.key.intensity = dark ? 0.1 : 0.9;
+			ctx.lights.fill.intensity = dark ? 0.04 : 0.35;
+			ctx.lights.rim.intensity = dark ? 0.08 : 0.4;
+			ctx.scene.environmentIntensity = dark ? 0.07 : 0.5;
 		},
 	};
 }
