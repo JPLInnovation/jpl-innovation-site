@@ -164,7 +164,7 @@ const alt = verbs.find((v) => v.id === "secure")!.alt;
 						{(n.kind === "l3" || n.kind === "l2") && (
 							<>
 								<rect x={n.x - (n.kind === "l3" ? 76 : 66)} y={n.y - (n.kind === "l3" ? 29 : 25)} width={n.kind === "l3" ? 152 : 132} height={n.kind === "l3" ? 58 : 50} rx="10" />
-								{n.at !== "inside" && <path class="net-thin" d={`M${n.x - 30},${n.y - 8} H${n.x + 22} m-9,-7 l9,7 l-9,7 M${n.x + 30},${n.y + 8} H${n.x - 22} m9,-7 l-9,7 l9,7`} />
+								{n.at !== "inside" && <path class="net-thin" d={`M${n.x - 30},${n.y - 8} H${n.x + 22} m-9,-7 l9,7 l-9,7 M${n.x + 30},${n.y + 8} H${n.x - 22} m9,-7 l-9,7 l9,7`} />}
 							</>
 						)}
 						{n.kind === "server" && (
