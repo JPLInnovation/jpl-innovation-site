@@ -47,11 +47,17 @@ export interface SplashContext {
 	at: (seconds: number, fn: () => void) => void;
 	/**
 	 * Stop the whole timeline at `seconds` and wait for `wait()` before going on. `skip: false` turns Skip off while it
-	 * waits (the opening page's buttons need their clicks).
+	 * waits (the opening page's buttons need their clicks). `quiet: true` keeps the page under it asleep (no
+	 * html.splash-hold, so nothing heavy starts loading: Pre-flight's take-off prompt).
 	 */
-	hold: (seconds: number, wait: () => Promise<void>, options?: { skip?: boolean }) => void;
-	/** Turn Skip off (or back on) from now (the opening page while it is going to ask a question). */
-	skippable: (on: boolean) => void;
+	hold: (seconds: number, wait: () => Promise<void>, options?: { skip?: boolean; quiet?: boolean }) => void;
+	/** Skip now, even during a hold that turned Skip off (the Skip button at Pre-flight's take-off prompt). */
+	skip: () => void;
+	/**
+	 * Ignore skipping input for `ms` from now, and for as long as a scroll that started then keeps going (the click,
+	 * key or trackpad scroll that took off must not also skip what it started).
+	 */
+	calm: (ms: number) => void;
 	/** Clean up when this animation finishes (the last one in the timeline). */
 	endWith: (animation: Animation | undefined) => void;
 	/** Extra clean-up for this intro (canvases, listeners...). */
@@ -69,6 +75,7 @@ let finished = false;
 let rate = 1;
 let unwire = () => {};
 let skipping = true; // Skip is off while a hold asks for that
+let calmUntil = 0; // performance.now() before which input doesn't skip (ctx.calm)
 /** When the timeline's clock started (moved later by each hold, so `now - started` is always timeline time). */
 let started = 0;
 /** Where the timeline is now, in its own seconds. */
@@ -110,19 +117,30 @@ function cleanup(el: HTMLElement) {
 	el.remove();
 }
 
-function wireSkip(el: HTMLElement) {
-	const skip = () => {
-		if (!skipping) return;
-		for (const a of anims) {
-			try {
-				a.finish();
-			} catch {
-				/* already cancelled */
-			}
+/** Finish every animation at once and take the overlay away. */
+function skipNow(el: HTMLElement) {
+	for (const a of anims) {
+		try {
+			a.finish();
+		} catch {
+			/* already cancelled */
 		}
-		cleanup(el);
+	}
+	cleanup(el);
+}
+
+function wireSkip(el: HTMLElement) {
+	const skip = (event: Event) => {
+		const now = performance.now();
+		if (now < calmUntil) {
+			// A scroll that is still going (a trackpad's momentum) stays calm until it stops.
+			if (event.type === "wheel" || event.type === "touchmove") calmUntil = Math.max(calmUntil, now + 250);
+			return;
+		}
+		if (!skipping || (event as KeyboardEvent).repeat) return;
+		skipNow(el);
 	};
-	const onKey = () => skip(); // Tab still moves focus into the page as usual
+	const onKey = (event: KeyboardEvent) => skip(event); // Tab still moves focus into the page as usual
 	el.addEventListener("pointerdown", skip);
 	addEventListener("keydown", onKey, true);
 	addEventListener("wheel", skip, { passive: true });
@@ -138,9 +156,11 @@ function wireSkip(el: HTMLElement) {
 /**
  * Start the intro of this `kind` if its overlay is on the page (SplashShell's inline script put it there, during
  * a real page load or an in-site page swap). `play` builds the timeline; reduced motion gets a quick fade instead.
- * `fastRate`: how much faster the refresh version plays. Safe to call again: an intro already playing is left be.
+ * `fastRate`: how much faster the refresh version plays. `stillFull`: how long reduced motion shows the full version's
+ * still before it fades (seconds; the fast version's is always 0.35). Safe to call again: an intro already playing is
+ * left be.
  */
-export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, { fastRate }: { fastRate: number }) {
+export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, { fastRate, stillFull = 0.35 }: { fastRate: number; stillFull?: number }) {
 	const el = document.querySelector<HTMLElement>(`[data-splash="${kind}"]`);
 	if (el?.hasAttribute("data-splash-run")) return; // already playing
 	if (!el || !root.classList.contains("splash")) {
@@ -153,6 +173,7 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 	finished = false;
 	rate = 1;
 	skipping = true;
+	calmUntil = 0;
 	// Seconds since the overlay went up: from the page load, or from the in-site swap that put it there.
 	const waited = performance.now() - Number(el.dataset.splashT0 ?? 0);
 	// A script that arrives late (slow connection) plays the fast version, so the page isn't held back long.
@@ -162,7 +183,8 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 		wireSkip(el);
 		if (root.classList.contains("splash-reduced")) {
 			// No movement, in either version: the finished artwork shows at once, then a 300 ms fade.
-			const fade = tween(el, [{ opacity: 1 }, { opacity: 0 }], 0.35, 0.3, E.out);
+			const still = root.classList.contains("intro-full") && !late ? stillFull : 0.35;
+			const fade = tween(el, [{ opacity: 1 }, { opacity: 0 }], still, 0.3, E.out);
 			fade?.finished.then(() => cleanup(el), () => {});
 			return;
 		}
@@ -181,8 +203,9 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 				timers.push(timer);
 				schedule(timer, now());
 			},
-			skippable: (on) => (skipping = on),
-			hold: (seconds, wait, { skip = true } = {}) => {
+			skip: () => skipNow(el),
+			calm: (ms) => (calmUntil = performance.now() + ms),
+			hold: (seconds, wait, { skip = true, quiet = false } = {}) => {
 				const stop = { t: seconds, fn: () => {}, id: 0, done: false };
 				stop.fn = () => {
 					// Freeze every animation still to play exactly at the hold, and put off every callback still to come. The
@@ -202,7 +225,7 @@ export function runSplash(kind: SplashKind, play: (ctx: SplashContext) => void, 
 					for (const t of waiting) clearTimeout(t.id);
 					const at = performance.now();
 					skipping = skip;
-					root.classList.add("splash-hold");
+					if (!quiet) root.classList.add("splash-hold");
 					wait().then(() => {
 						if (finished) return;
 						root.classList.remove("splash-hold");

@@ -91,6 +91,50 @@ export const experience = {
 };
 
 /**
+ * PRE-FLIGHT: the opening of the site, once per visit (src/components/PreflightSplash.astro; the timing is in
+ * src/lib/look/preflight.ts). The F450 draws itself with its parts labelled while the boot log runs its real checks and
+ * the altitude climbs to 120 m; then the prompt; then "XIN CHÀO!" opens like hangar doors onto the three verbs (the
+ * `slogan` above, one per line) and the sticker. Only true facts about the drone: they come from
+ * src/text/projects/drone.ts.
+ */
+export const preflight = {
+	/** In the top corner while the drone arms. */
+	title: "Pre-flight check",
+	drone: "F450 4G Drone",
+	/**
+	 * The boot log, one check per line: what is checked, and its result.
+	 * The spec's "GPS lock" became the receiver: the drone has no GPS in its parts list. [CHECK] If a GPS is fitted later,
+	 * put back { what: "GPS", result: "lock" }.
+	 */
+	checks: [
+		{ what: "Frame 450 mm", result: "ok" },
+		{ what: "ESC", result: "4 of 4" },
+		{ what: "Receiver, 2.4 GHz", result: "bound" },
+		{ what: "4G link", result: "up" },
+		{ what: "Camera", result: "720p60" },
+	],
+	/** Each part's label, shown as its line is drawn. */
+	parts: {
+		frame: "F450 frame, 450 mm",
+		motors: "4× A2212 1000KV motors",
+		props: "1045 propellers",
+		controller: "MicoAir743 flight controller",
+		camera: "Camera Module 3",
+		modem: "ZTE MF833 4G modem",
+	},
+	altitude: "Altitude",
+	unit: "m",
+	climbing: "climbing",
+	cruise: "cruise altitude",
+	prompt: "Click, scroll or press any key to take off.",
+	/** On phones and tablets. */
+	promptTouch: "Tap anywhere to take off.",
+	hello: "XIN CHÀO!",
+	/** Round the spinning sticker (the dots separate the phrases; it goes all the way round). */
+	sticker: "JPL INNOVATION · BUILDING STUFF IN SAIGON SINCE 2025 · ",
+};
+
+/**
  * The footer: the back of the sheet, uncovered as the page slides up off it (src/components/SiteFooter.astro). It
  * carries the contact (`contact` below), the game (`landing`), the name at full width and these.
  */

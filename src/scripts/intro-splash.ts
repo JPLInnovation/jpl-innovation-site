@@ -1,24 +1,33 @@
 /**
- * JPL logo intro, "build then boot", 2.8 s. Markup and CSS: src/components/IntroSplash.astro.
- * Shared overlay, skip, reduced motion and clean-up: src/scripts/splash-core.ts.
+ * The JPL intro. Markup and CSS: src/components/IntroSplash.astro. Shared overlay, skip, reduced motion and clean-up:
+ * src/scripts/splash-core.ts. Two versions (src/lib/splash.ts):
  *
- *   wrench   the wrench swings in from the left on an arc (stretched while it's fast), overshoots,
- *            tightens a quarter-turn with a small bounce and settles. It enters silver and turns teal
- *            as the screen lights up behind it, so it never disappears into the navy.
- *   boot     the ring draws itself round, the monitor outline draws on and fills, the screen flickers on
- *            with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
- *   type-on  J P L, a short pause, I N N O V A T I O N: each whole letter rises a few pixels and fades in on the
- *            word's baseline (no scale, no overshoot, no cursor: mid-way, the word must never look torn).
- *   slogan   "Sketch it. Build it. Secure it." comes in under the logo.
+ *   full     once per visit: the Pre-flight hook (src/scripts/preflight.ts) plays first and opens its hangar doors onto
+ *            the opening page with the logo already finished; then the hold and the hand-off below.
+ *   fast     a refresh or a later visit in the same tab: the logo builds itself, 2.8 s played FAST_RATE times faster:
+ *     wrench   the wrench swings in from the left on an arc (stretched while it's fast), overshoots,
+ *              tightens a quarter-turn with a small bounce and settles. It enters silver and turns teal
+ *              as the screen lights up behind it, so it never disappears into the navy.
+ *     boot     the ring draws itself round, the monitor outline draws on and fills, the screen flickers on
+ *              with a soft cyan glow, the signal waves pulse out from the wrench, inner to outer.
+ *     type-on  J P L, a short pause, I N N O V A T I O N: each whole letter rises a few pixels and fades in on the
+ *              word's baseline (no scale, no overshoot, no cursor: mid-way, the word must never look torn).
+ *     slogan   "Sketch it. Build it. Secure it." comes in under the logo.
+ *
+ * Then, in both:
  *   hold     the opening page: the timeline stops (ctx.hold). A first visit on a computer that could run the 3D is
- *            asked 3D or Classic here (BaseLayout put html.choose-experience on); later visits pause for a beat.
+ *            asked 3D or Classic here (BaseLayout put html.choose-experience on); later visits pause for a beat. Skipped
+ *            before it asked, the pop-up (ExperienceChoice.astro) asks after the intro instead.
  *   hand-off a light sweep, then the logo flies (FLIP) into the navbar logo, or with 3D on the home page onto the
  *            logo on the studio's wall (src/lib/handoff.ts), while the overlay fades and the page or the room appears.
+ *            After Pre-flight a line also draws itself round the first glass sheet.
  *
- * The beats are written on a 3.78 s design clock (plus the hold) and played back SPEED times faster.
- * On a refresh the same timeline plays FAST_RATE times faster again, without the cursor.
+ * The logo's beats are written on a 3.78 s design clock (plus the hold) and played back SPEED times faster; after
+ * Pre-flight the hand-off's marks move later by the time Pre-flight took.
  */
 import { startStudio, whenLive } from "@/lib/handoff";
+import { markSeen } from "@/lib/splash";
+import { preflight } from "./preflight";
 import { E, flip, onScreen, runSplash, type Frames, type SplashContext } from "./splash-core";
 
 const SPEED = 3.28 / 2.8;
@@ -30,7 +39,7 @@ const HOLD = 2.9; // the opening page: logo and slogan up, the timeline waits he
 const FLY = 3.24; // the logo starts flying to the navbar (or the studio's wall)
 const LAND = 3.64; // ...and lands
 const END = 3.78; // crossfade into the real navbar logo done
-/** How long later visits rest on the opening page, in real seconds (full, then fast). */
+/** How long later visits rest on the opening page, in real seconds (after Pre-flight, after the fast logo). */
 const BEAT = { full: 0.7, fast: 0.25 };
 
 const root = document.documentElement;
@@ -42,10 +51,12 @@ function navLogo() {
 	return { wrap, img };
 }
 
+type Tween = (target: Element | null | undefined, frames: Frames, start: number, dur: number, easing?: string, options?: KeyframeAnimationOptions) => Animation | undefined;
+
 function play(ctx: SplashContext) {
 	const { el } = ctx;
 	/** Tween on the design clock. */
-	const tween = (target: Element | null | undefined, frames: Frames, start: number, dur: number, easing = E.out) => ctx.tween(target, frames, s(start), s(dur), easing);
+	const tween: Tween = (target, frames, start, dur, easing = E.out, options) => ctx.tween(target, frames, s(start), s(dur), easing, options);
 
 	const svg = el.querySelector<SVGSVGElement>("svg.jl-logo")!;
 	// Searches the whole splash: the wrench group gets lifted out of the main SVG into its own layer.
@@ -57,16 +68,109 @@ function play(ctx: SplashContext) {
 	const { wrap: navWrap } = navLogo();
 	const slogan = el.querySelector<HTMLElement>("[data-intro-slogan]");
 	const choice = el.querySelector<HTMLElement>("[data-intro-choice]");
-	// The first-visit question is asked here, not in the pop-up (ExperienceChoice.astro), and Skip stays off until it
-	// has been answered.
+	// The first-visit question is asked here, not in the pop-up (ExperienceChoice.astro). Skipped before it was asked,
+	// the pop-up asks it as the intro goes (its own script has already looked and let it be).
 	const asking = root.classList.contains("choose-experience") && !!choice;
+	let answered = !asking;
 	if (asking) {
 		root.classList.remove("choose-experience");
-		ctx.skippable(false);
+		ctx.onCleanup(() => {
+			if (answered) return;
+			root.classList.add("choose-experience");
+			const dialog = document.getElementById("experience-dialog") as HTMLDialogElement | null;
+			if (dialog && !dialog.open) dialog.showModal();
+		});
 	}
+	el.toggleAttribute("data-will-ask", asking);
 	/** Where the logo lands: the navbar logo, unless the studio's wall takes over (3D, home page). */
 	let landing = () => navLogo().img?.getBoundingClientRect();
 
+	// Pre-flight (the full version) comes first and opens onto the finished logo; the fast version builds the logo.
+	const pre = ctx.mode === "full" ? preflight(ctx) : undefined;
+	if (!pre) buildLogo(tween, svg, $, parallax);
+	/** The opening page's marks move later by the time Pre-flight takes (design seconds). */
+	const o = pre ? pre.open * SPEED - HOLD : 0;
+	const d = (t: number) => t + o;
+
+	/* ---------- Hand-off (design 2.96–3.78 s) ---------- */
+	tween(
+		$("sweep"),
+		[
+			{ opacity: 0, translate: "0 0" },
+			{ opacity: 1, translate: "100px 0", offset: 0.08 },
+			{ opacity: 1, translate: "900px 0", offset: 0.92 },
+			{ opacity: 0, translate: "980px 0" },
+		],
+		d(2.96),
+		0.4,
+		E.inOut,
+	);
+	// FLIP into the navbar logo. Measured now, and again just before take-off (fonts or the scrollbar can
+	// nudge the header while the intro plays).
+	const flight = tween(logo, [{ transform: "none" }, { transform: flightTarget(logo, landing()) }], d(FLY), LAND - FLY, E.fly);
+	const retarget = () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo, landing()) }]);
+	ctx.at(s(d(FLY - 0.06)), () => {
+		// Only while it's genuinely about to take off (not paused, not already moving).
+		if (flight && flight.playState === "running" && Number(flight.currentTime) < s(d(FLY)) * 1000) retarget();
+	});
+	tween(bg, [{ opacity: 1 }, { opacity: 0 }], d(3.3), LAND - 3.3, E.out);
+	ctx.at(s(d(3.3)), () => root.classList.add("splash-leaving")); // scrollbar back to the page's colours
+	tween(skipButton, [{ opacity: 1 }, { opacity: 0 }], d(3.1), 0.3, E.out);
+	if (!root.classList.contains("dark")) {
+		// Light theme: the navbar logo has navy "JPL", so the silver letters turn navy on the way.
+		tween($("jpl-ink"), [{ opacity: 0 }, { opacity: 1 }], d(3.34), 0.28, E.inOut);
+	}
+	// After Pre-flight: the line round the first glass sheet, and the verbs and the sticker go with the field.
+	pre?.leave(s(d(2.96)), s(END - 2.96));
+
+	/* ---------- Slogan, and the opening page's hold (design 2.5-3.45 s, the hold at 2.9) ---------- */
+	// One animation for in and out (two on the same element would fight over its opacity before the second starts).
+	// After Pre-flight the verbs are already up (pre.leave takes them away).
+	if (!pre) {
+		tween(
+			slogan,
+			[
+				{ opacity: 0, translate: "0 10px", offset: 0 },
+				{ opacity: 1, translate: "0 0", offset: 0.4 },
+				{ opacity: 1, translate: "0 0", offset: 0.74 },
+				{ opacity: 0, translate: "0 0", offset: 1 },
+			],
+			2.5,
+			0.95,
+			E.out,
+		);
+	}
+	ctx.hold(
+		s(d(HOLD)),
+		async () => {
+			let pick: "3d" | "classic" = stored() === "3d" ? "3d" : "classic";
+			if (asking) {
+				pick = await ask(el, choice!);
+				answered = true;
+			} else await new Promise((resolve) => setTimeout(resolve, BEAT[ctx.mode] * 1000));
+			// 3D on the home page: the studio is built under the opening page (switched on just now after a first visit's
+			// answer), and the logo lands on the logo on its wall. Too slow, or no 3D here: the navbar as usual.
+			if (pick === "3d" && document.querySelector("[data-studio]")) {
+				if (asking) startStudio();
+				const studio = await whenLive(9000);
+				const wall = studio?.logoRect();
+				if (studio && onScreen(wall ?? undefined)) landing = () => studio.logoRect() ?? navLogo().img?.getBoundingClientRect();
+			}
+			retarget();
+		},
+		{ skip: !asking },
+	);
+	// Crossfade into the real navbar image once they're on top of each other (the PNG has a soft shadow
+	// and bevel the flat vectors don't, so this is a blend rather than a swap). Forwards only: Pre-flight brings the
+	// logo in earlier.
+	tween(logo, [{ opacity: 1 }, { opacity: 0 }], d(LAND - 0.02), END - LAND, E.inOut, { fill: "forwards" });
+	ctx.endWith(tween(navWrap, [{ opacity: 0 }, { opacity: 1 }], d(LAND - 0.02), END - LAND, E.inOut));
+
+	ctx.devExtras({ retarget });
+}
+
+/** The fast version's opening: the logo builds itself (design 0–2.6 s). */
+function buildLogo(tween: Tween, svg: SVGSVGElement, $: (id: string) => SVGGraphicsElement | null, parallax: HTMLElement) {
 	/* ---------- Wrench (design 0.0–1.0 s) ---------- */
 	// It flies while the page underneath is still starting up (layout, hydration, image decoding), so it
 	// moves on the compositor: the wrench group is lifted into its own small SVG stacked exactly over the
@@ -226,76 +330,8 @@ function play(ctx: SplashContext) {
 			E.out,
 		);
 	});
-
-	/* ---------- Hand-off (design 2.96–3.78 s) ---------- */
-	tween(
-		$("sweep"),
-		[
-			{ opacity: 0, translate: "0 0" },
-			{ opacity: 1, translate: "100px 0", offset: 0.08 },
-			{ opacity: 1, translate: "900px 0", offset: 0.92 },
-			{ opacity: 0, translate: "980px 0" },
-		],
-		2.96,
-		0.4,
-		E.inOut,
-	);
-	// FLIP into the navbar logo. Measured now, and again just before take-off (fonts or the scrollbar can
-	// nudge the header while the intro plays).
-	const flight = tween(logo, [{ transform: "none" }, { transform: flightTarget(logo, landing()) }], FLY, LAND - FLY, E.fly);
-	const retarget = () => (flight?.effect as KeyframeEffect | undefined)?.setKeyframes([{ transform: "none" }, { transform: flightTarget(logo, landing()) }]);
-	ctx.at(s(FLY - 0.06), () => {
-		// Only while it's genuinely about to take off (not paused, not already moving).
-		if (flight && flight.playState === "running" && Number(flight.currentTime) < s(FLY) * 1000) retarget();
-	});
-	tween(bg, [{ opacity: 1 }, { opacity: 0 }], 3.3, LAND - 3.3, E.out);
-	ctx.at(s(3.3), () => root.classList.add("splash-leaving")); // scrollbar back to the page's colours
-	tween(skipButton, [{ opacity: 1 }, { opacity: 0 }], 3.1, 0.3, E.out);
-	if (!root.classList.contains("dark")) {
-		// Light theme: the navbar logo has navy "JPL", so the silver letters turn navy on the way.
-		tween($("jpl-ink"), [{ opacity: 0 }, { opacity: 1 }], 3.34, 0.28, E.inOut);
-	}
-
-	/* ---------- Slogan, and the opening page's hold (design 2.5-3.45 s, the hold at 2.9) ---------- */
-	// One animation for in and out (two on the same element would fight over its opacity before the second starts).
-	tween(
-		slogan,
-		[
-			{ opacity: 0, translate: "0 10px", offset: 0 },
-			{ opacity: 1, translate: "0 0", offset: 0.4 },
-			{ opacity: 1, translate: "0 0", offset: 0.74 },
-			{ opacity: 0, translate: "0 0", offset: 1 },
-		],
-		2.5,
-		0.95,
-		E.out,
-	);
-	ctx.hold(
-		s(HOLD),
-		async () => {
-			let pick: "3d" | "classic" = stored() === "3d" ? "3d" : "classic";
-			if (asking) pick = await ask(el, choice!);
-			else await new Promise((resolve) => setTimeout(resolve, BEAT[ctx.mode] * 1000));
-			// 3D on the home page: the studio is built under the opening page (switched on just now after a first visit's
-			// answer), and the logo lands on the logo on its wall. Too slow, or no 3D here: the navbar as usual.
-			if (pick === "3d" && document.querySelector("[data-studio]")) {
-				if (asking) startStudio();
-				const studio = await whenLive(9000);
-				const wall = studio?.logoRect();
-				if (studio && onScreen(wall ?? undefined)) landing = () => studio.logoRect() ?? navLogo().img?.getBoundingClientRect();
-			}
-			retarget();
-		},
-		{ skip: !asking },
-	);
-	// Crossfade into the real navbar image once they're on top of each other (the PNG has a soft shadow
-	// and bevel the flat vectors don't, so this is a blend rather than a swap).
-	tween(logo, [{ opacity: 1 }, { opacity: 0 }], LAND - 0.02, END - LAND, E.inOut);
-	ctx.endWith(tween(navWrap, [{ opacity: 0 }, { opacity: 1 }], LAND - 0.02, END - LAND, E.inOut));
-
-	if (ctx.mode === "full") startParallax(ctx, parallax);
-	ctx.devExtras({ retarget });
 }
+
 
 /* ---------- The wrench's own compositor layer ---------- */
 const VIEWBOX = { x: 49, y: 40, w: 687, h: 248 };
@@ -401,39 +437,8 @@ function ask(overlay: HTMLElement, choice: HTMLElement): Promise<"3d" | "classic
 	});
 }
 
-/* ---------- Parallax (desktop only): the logo leans a little toward the mouse ---------- */
-function startParallax(ctx: SplashContext, el: HTMLElement) {
-	if (!matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-	const target = { x: 0, y: 0 };
-	const cur = { x: 0, y: 0 };
-	const t0 = performance.now();
-	let raf = 0;
-	const onMove = (e: PointerEvent) => {
-		if (e.pointerType !== "mouse") return;
-		target.x = (e.clientX / innerWidth - 0.5) * 2;
-		target.y = (e.clientY / innerHeight - 0.5) * 2;
-	};
-	addEventListener("pointermove", onMove, { passive: true });
-	const stop = () => {
-		cancelAnimationFrame(raf);
-		removeEventListener("pointermove", onMove);
-		el.style.transform = "";
-	};
-	ctx.onCleanup(stop);
-	const frame = (now: number) => {
-		const t = (now - t0) / 1000;
-		// Glide back to centre before take-off so the flight starts from the true position.
-		const settle = t > s(2.4);
-		const k = settle ? 0.2 : 0.08;
-		cur.x += ((settle ? 0 : target.x) - cur.x) * k;
-		cur.y += ((settle ? 0 : target.y) - cur.y) * k;
-		if (t >= s(FLY - 0.08)) return stop();
-		el.style.transform = `translate3d(${cur.x * 10}px, ${cur.y * 8}px, 0) rotateX(${-cur.y * 3}deg) rotateY(${cur.x * 4}deg)`;
-		raf = requestAnimationFrame(frame);
-	};
-	raf = requestAnimationFrame(frame);
-}
-
-runSplash("jpl", play, { fastRate: FAST_RATE });
+// The hook is once per visit: this tab has had it (a refresh or a later visit gets the fast logo; src/lib/splash.ts).
+if (root.classList.contains("intro-full") && document.querySelector('[data-splash="jpl"]')) markSeen("jpl");
+runSplash("jpl", play, { fastRate: FAST_RATE, stillFull: 1 });
 
 export {};

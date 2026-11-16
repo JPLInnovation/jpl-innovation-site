@@ -9,8 +9,10 @@
  *
  * Which version: decided once per real page load, before the first paint (SplashShell inlines these functions
  * into its blocking <head> script, which puts intro-full / intro-fast / intro-none on <html>):
- *   - "full"  first entry: a link from another site, a search result, a bookmark, a typed URL
- *   - "fast"  refresh (F5, Ctrl+R, Ctrl+Shift+R, the reload button): the same timeline, played faster
+ *   - "full"  first entry: a link from another site, a search result, a bookmark, a typed URL. For the JPL intro
+ *             this is the Pre-flight hook (src/scripts/preflight.ts), once per visit: a later first entry in the same
+ *             tab (sessionStorage "jpl-intro-seen") gets "fast"
+ *   - "fast"  refresh (F5, Ctrl+R, Ctrl+Shift+R, the reload button): the same timeline, played faster (JPL: the logo)
  *   - "none"  back/forward
  * Arriving from another page of this site (arrivalMode): an ordinary click doesn't reload, Astro's router swaps
  * the page, and SplashShell's script shows the intro then too, but only the FRC and drone ones:
@@ -94,6 +96,12 @@ export function getIntroMode(kind: SplashKind): IntroMode {
 		if (document.referrer && new URL(document.referrer).origin === location.origin) return arrivalMode(kind);
 	} catch {
 		/* unreadable referrer: treat as a first entry */
+	}
+	try {
+		// The JPL intro's full version is the Pre-flight hook: once per visit. Coming back in the same tab: the logo, fast.
+		if (kind === "jpl" && sessionStorage.getItem("jpl-intro-seen")) return "fast";
+	} catch {
+		/* storage blocked: the hook every time */
 	}
 	return "full";
 }
