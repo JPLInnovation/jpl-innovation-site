@@ -527,7 +527,9 @@ const external = (href: string) => (href.startsWith("http") ? { target: "_blank"
 		--ring: #f5d042;
 	}
 	.verb {
-		font-size: clamp(3.75rem, 12.2vw, 15rem);
+		/* At most 12.5rem: the longest word (Secure it., about 5.5em wide) then fits the 71rem column. Any larger and
+		   its last letters ran past its box on wide screens, where the colour clipped to the text can't reach them. */
+		font-size: clamp(3.75rem, 12.2vw, 12.5rem);
 		font-stretch: 125%;
 		font-weight: 850;
 		line-height: 0.84;
