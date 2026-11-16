@@ -21,6 +21,7 @@ import { type DissolveUniforms, dissolveMaterials } from "./hook-dissolve";
 import type { LightSpec } from "./lights";
 import { boxAt, canvasSurface, ROOM, type RoomState } from "./room";
 import { FEED_GLSL } from "./screens";
+import { simLabel } from "../../text/studio";
 
 /** Where the bench stands: its middle (x, z) and the height of its top. */
 export const BENCH = { x: -4.15, z: -2.4, top: 0.82, width: 1.0, depth: 0.62 };
@@ -106,11 +107,11 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 		g.lineWidth = 3;
 		g.strokeRect(22, 20, 372, 62);
 		g.fillStyle = "#ffd65a";
-		g.font = "700 24px ui-monospace, monospace";
-		g.fillText("SIMULATION", 58, 52);
+		g.font = '700 24px "Archivo Variable", "Archivo", system-ui, sans-serif';
+		g.fillText(simLabel.heading, 58, 52);
 		g.fillStyle = "#e1e8f5";
-		g.font = "16px ui-monospace, monospace";
-		g.fillText("3D model · not flown yet", 58, 74);
+		g.font = '16px "Archivo Variable", "Archivo", system-ui, sans-serif';
+		g.fillText(simLabel.note, 58, 74);
 		poster.redraw();
 	}
 	// Until the simulated flight has loaded (sim-flight.ts), the poster; then the live picture.
@@ -186,7 +187,7 @@ export function buildBench(ctx: StageContext, group: Group): BuildBench {
 			screenMat.uniforms.uGlow.value = 0.25 + 0.75 * screenGlow;
 		},
 		applyPalette(darkTheme) {
-			benchMat.color.set(darkTheme ? 0x2a3550 : 0xc9d3e6);
+			benchMat.color.set(darkTheme ? 0x5d6479 : 0xd9d2bc);
 		},
 		busy: () => moving,
 	};

@@ -65,6 +65,12 @@ export interface SimFlight {
 	update(s: number): void;
 	/** True while something changed that the stage has to draw. */
 	busy(): boolean;
+	/** The laptop's ground station is open (src/components/Studio.astro): the flight plays at `f` (0 to 1) of its clock instead of following the scroll; null gives it back. */
+	play(f: number | null): void;
+	/** Where the drone is now, for the ground station's telemetry; undefined until the flight has loaded. */
+	sample(): { x: number; y: number; z: number; yaw: number } | undefined;
+	/** Where the room's camera stands for the laptop's feed to be exactly the window. */
+	feedPose(at: Vector3, q: Quaternion): void;
 }
 
 /** The label on every frame, and the camera's brackets once the picture is the drone's own view. */
@@ -86,11 +92,11 @@ function buildOverlay(camera: PerspectiveCamera) {
 		g.beginPath();
 		g.arc(62, 64, 17, 0, Math.PI * 2);
 		g.fill();
-		g.font = '800 62px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
+		g.font = '800 62px "Archivo Variable", "Archivo", system-ui, sans-serif';
 		g.fillStyle = "#ffe08a";
 		g.textBaseline = "middle";
 		g.fillText(simLabel.heading, 100, 68);
-		g.font = '500 44px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
+		g.font = '500 44px "Archivo Variable", "Archivo", system-ui, sans-serif';
 		g.fillStyle = "#e6edf8";
 		g.fillText(simLabel.note, 34, 146);
 	};
@@ -104,7 +110,7 @@ function buildOverlay(camera: PerspectiveCamera) {
 	brackets.width = 1024;
 	brackets.height = 640;
 	const g = brackets.getContext("2d")!;
-	g.strokeStyle = "rgba(134,239,172,0.95)";
+	g.strokeStyle = "rgba(242,238,223,0.9)"; // paper white
 	g.lineWidth = 5;
 	g.lineCap = "round";
 	for (const [x, y, dx, dy] of [[300, 180, 1, 1], [724, 180, -1, 1], [300, 460, 1, -1], [724, 460, -1, -1]]) {
@@ -117,8 +123,8 @@ function buildOverlay(camera: PerspectiveCamera) {
 	g.beginPath();
 	g.arc(512, 320, 8, 0, Math.PI * 2);
 	g.stroke();
-	g.font = '600 26px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
-	g.fillStyle = "rgba(190,250,210,0.95)";
+	g.font = '600 26px "Archivo Variable", "Archivo", system-ui, sans-serif';
+	g.fillStyle = "rgba(242,238,223,0.95)";
 	g.textAlign = "center";
 	g.fillText(simLabel.camera, 512, 140);
 	const bracketMesh = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: new CanvasTexture(brackets), transparent: true, depthTest: false, fog: false, opacity: 0 }));
@@ -148,7 +154,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 	const W = ids.indexOf("web");
 	const laptop = room.screens.find((screen) => screen.scene === "web");
 	const box = laptop?.feedBox;
-	if (T < 0 || W < 0 || !laptop || !box) return { update() {}, busy: () => false };
+	if (T < 0 || W < 0 || !laptop || !box) return { update() {}, busy: () => false, play() {}, sample: () => undefined, feedPose() {} };
 	const start = T + LOOK.from;
 	const end = W - LOOK.to;
 	const { renderer, camera } = ctx;
@@ -168,6 +174,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 	let dirty = false;
 	let lastSig = "";
 	let lastClock = 0;
+	let playF: number | null = null;
 
 	const build = async () => {
 		state = "loading";
@@ -279,9 +286,9 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 
 	return {
 		update(s) {
-			const near = s > T - 1.6 && s < W + 1.6;
+			const near = playF !== null || (s > T - 1.6 && s < W + 1.6);
 			// (well ahead of the bench, so all of this is done by the time anyone can see it)
-			if (s > T - 3.2 && s < W + 1.6 && state === "idle") build().catch((error) => console.warn("Studio: the simulated flight did not load.", error));
+			if ((playF !== null || (s > T - 3.2 && s < W + 1.6)) && state === "idle") build().catch((error) => console.warn("Studio: the simulated flight did not load.", error));
 			const ready = state === "ready";
 			room.bench.screen.feed(ready ? target.texture : null, camera.aspect);
 			laptop.feed(ready ? target.texture : null, camera.aspect);
@@ -295,7 +302,7 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 					target.setSize(w, h);
 					lastSig = "";
 				}
-				const f = clamp01((s - start) / (end - start));
+				const f = playF ?? clamp01((s - start) / (end - start));
 				const sig = `${f.toFixed(5)}|${camera.aspect.toFixed(4)}|${w}`;
 				if (sig !== lastSig) {
 					lastSig = sig;
@@ -322,7 +329,16 @@ export function createSim(ctx: StageContext, room: Room, ids: readonly string[])
 				camera.quaternion.slerpQuaternions(fillQ, fromQ, a);
 			}
 		},
-		busy: () => dirty || state === "loading",
+		busy: () => dirty || state === "loading" || playF !== null,
+		play(f) {
+			playF = f;
+		},
+		sample: () => (state === "ready" ? { x: pose.point.x, y: pose.point.y, z: pose.point.z, yaw: pose.yaw } : undefined),
+		feedPose(at, q) {
+			fill(laptop.mesh, box.x, box.y, box.width, box.height);
+			at.copy(fillAt);
+			q.copy(fillQ);
+		},
 	};
 }
 

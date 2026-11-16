@@ -17,7 +17,6 @@
  * The robot and the drone load their CAD in the background; the room is complete without them.
  */
 import {
-	AdditiveBlending,
 	CatmullRomCurve3,
 	Color,
 	CylinderGeometry,
@@ -25,10 +24,10 @@ import {
 	ExtrudeGeometry,
 	Group,
 	InstancedMesh,
+	Matrix4,
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
-	NormalBlending,
 	Object3D,
 	PlaneGeometry,
 	ShapeGeometry,
@@ -61,6 +60,12 @@ export interface Stations {
 	screens: PageScreen[];
 	/** The drone bench's F450, once it has loaded (the opening hook's desk drone shares its geometry). */
 	drone(): DroneRig | undefined;
+	/** What the camera can fly into (src/lib/studio/devices.ts): the robot on its cart, the rack and the laptop. */
+	robot: { holder: Group; center: Vector3; explode(amount: number): void; turn(angle: number): void };
+	rack: { group: Group; center: Vector3 };
+	laptop: Group;
+	/** The F450 on its bench: arm it and its props spin up for a few seconds, then wind down. It never lifts off. */
+	bench: { holder: Group; arm(): void; busy(): boolean };
 	update(state: RoomState, dt: number): void;
 	applyPalette(p: Palette): void;
 }
@@ -85,7 +90,6 @@ export const SCREEN_STEP = 0.05;
 const FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
 /** Handwriting (the sketchbook's Caveat, public/fonts): the whiteboards and the names on the crew's photos. */
 const HAND = '"Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
-const MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
 /** Built in slices (`tick`), so the page stays responsive while the room comes up. */
 export async function buildStations(ctx: StageContext, parent: Group, content: RoomContent): Promise<Stations> {
@@ -99,7 +103,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const dark = new MeshStandardMaterial({ color: 0x141a28, roughness: 0.5 });
 	const wood = woodMaterial("oak_veneer_01");
 	const themed: { mat: MeshStandardMaterial; dark: number; light: number }[] = [
-		{ mat: bench as MeshStandardMaterial, dark: 0x1b2d6e, light: 0xd9d2bc },
+		{ mat: bench as MeshStandardMaterial, dark: 0x5d6479, light: 0xd9d2bc },
 	];
 
 	/** A workbench: a top on four legs, its top surface at `benchTop`. */
@@ -144,9 +148,46 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		boxAt(group, 0.012, len * 0.6, 0.012, toolMetal, robotX + x, 1.62 - len * 0.72, z0 + 0.05);
 	}
 	boxAt(group, 0.5, 0.025, 0.12, steel, robotX, 1.15, z0 + 0.08); // a shelf
-	for (const [i, c] of [0xffc20e, 0x1f5fd1, 0x34d399].entries()) boxAt(group, 0.1, 0.07, 0.08, hardware({ color: c, roughness: 0.5 }, "plastic"), robotX - 0.15 + i * 0.15, 1.2, z0 + 0.08, 0.01);
+	for (const [i, c] of [0xf5d042, 0x2f7ce6, 0xf2eedf].entries()) boxAt(group, 0.1, 0.07, 0.08, hardware({ color: c, roughness: 0.5 }, "plastic"), robotX - 0.15 + i * 0.15, 1.2, z0 + 0.08, 0.01);
 
-	let robot: { animate(t: number, dt: number): void; applyPalette(p: { dark: boolean }): void } | undefined;
+	let robot: { model: Group; animate(t: number, dt: number): void; applyPalette(p: { dark: boolean }): void } | undefined;
+	// Taking the robot apart (the cart's device): every CAD part's instance slides out from the robot's middle, along the
+	// line from the middle to the part, so the robot opens like an exploded drawing. The parts' poses are read once, on
+	// the first use, and put back exactly at 0.
+	let parts: { mesh: InstancedMesh; index: number; base: Matrix4; out: Vector3 }[] | undefined;
+	let explodedBy = 0;
+	const shifted = new Matrix4();
+	const explode = (amount: number) => {
+		if (!robot || amount === explodedBy) return;
+		if (!parts) {
+			parts = [];
+			const middle = new Vector3();
+			const centre = new Vector3();
+			const found: { mesh: InstancedMesh; index: number; base: Matrix4; at: Vector3 }[] = [];
+			robot.model.traverse((o) => {
+				const mesh = o as InstancedMesh;
+				if (!mesh.isInstancedMesh) return;
+				mesh.geometry.computeBoundingBox();
+				mesh.geometry.boundingBox!.getCenter(centre);
+				for (let i = 0; i < mesh.count; i++) {
+					const base = new Matrix4();
+					mesh.getMatrixAt(i, base);
+					const at = centre.clone().applyMatrix4(base);
+					middle.add(at);
+					found.push({ mesh, index: i, base, at });
+				}
+			});
+			middle.divideScalar(Math.max(1, found.length));
+			for (const f of found) parts.push({ mesh: f.mesh, index: f.index, base: f.base, out: f.at.sub(middle).multiply(new Vector3(0.75, 0.6, 0.75)) });
+		}
+		explodedBy = amount;
+		const e = amount * amount * (3 - 2 * amount);
+		for (const part of parts) {
+			part.mesh.setMatrixAt(part.index, shifted.makeTranslation(part.out.x * e, part.out.y * e + 0.12 * e, part.out.z * e).multiply(part.base));
+			part.mesh.instanceMatrix.needsUpdate = true;
+			if (amount > 0) part.mesh.frustumCulled = false; // (its bounds are the assembled robot's)
+		}
+	};
 	const robotHolder = new Group();
 	robotHolder.position.set(robotX + 0.04, cartTop, -2.55);
 	robotHolder.rotation.y = -0.55;
@@ -233,7 +274,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		{ y: 0.9, h: 0.3, ports: 4 },
 	];
 	const leds: { x: number; y: number; phase: number; rate: number; color: Color }[] = [];
-	const ledColors = [new Color(0x34d399), new Color(0x34d399), new Color(0xffc20e), new Color(0x2f7ce6)]; // link, link, activity, the brand blue
+	const ledColors = [new Color(0x7cc47f), new Color(0x7cc47f), new Color(0xf5b942), new Color(0x2f7ce6)]; // link, link, activity, the brand blue
 	for (const [u, unit] of units.entries()) {
 		boxAt(rack, 0.6, unit.h, 0.5, deviceMat, rackX, unit.y, rackZ + 0.02, 0.004);
 		boxAt(rack, 0.6, unit.h, 0.006, faceMat, rackX, unit.y, rackFront - 0.03);
@@ -255,7 +296,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	});
 	rack.add(ledMesh);
 	// Patch cables between the patch panel and the switches, in the site's chart colours.
-	const cableColors = [0x1f5fd1, 0xb87a00, 0x8fb8f5, 0xc8283a, 0x1f5fd1, 0x34d399];
+	const cableColors = [0x1f5fd1, 0xb87a00, 0x8fb8f5, 0xc8283a, 0x1f5fd1, 0xf5d042];
 	for (let c = 0; c < 10; c++) {
 		const from = rackX - 0.2 + c * 0.044;
 		const to = rackX - 0.21 + ((c * 7) % 10) * 0.046;
@@ -425,7 +466,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		holder.add(frame);
 		const screen = new Mesh(cutCornerSurface(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
-		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
+		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
 		edge.position.z = -0.06;
 		holder.add(edge);
 		return { holder, base: holder.rotation.y, y, screen, edge, bx, bz, toward: [-Math.cos(angle), -Math.sin(angle)] as const, hover: 0 };
@@ -539,7 +580,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			}),
 		);
 		// The three steps, on sticky notes; the last one (where a project ends up) circled in red.
-		const colours = ["#fde68a", "#a5f3fc", "#fbcfe8"];
+		const colours = ["#f5d042", "#f2eedf", "#bcd3f5"]; // the brand yellow, paper, a pale brand blue
 		const noteW = 470;
 		const noteH = 330;
 		const top = 900;
@@ -694,7 +735,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			g.fillText(person.name, 0, 0);
 			g.restore();
 			g.fillStyle = "#475569";
-			g.font = `600 44px ${MONO}`;
+			g.font = `500 44px ${FONT}`;
 			g.fillText(person.role, 560, 1300);
 			g.textAlign = "start";
 			photo.redraw();
@@ -715,7 +756,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		// (A little light of its own: the back wall is dim, and a photo should read as paper, not grey.)
 		const screen = new Mesh(new PlaneGeometry(0.56, 0.68), hardware({ color: 0xffffff, map: photo.texture, emissive: 0xffffff, emissiveMap: photo.texture, emissiveIntensity: 0.45, roughness: 0.85 }, "printed"));
 		holder.add(screen);
-		const tape = new Mesh(new PlaneGeometry(0.17, 0.05), new MeshStandardMaterial({ color: i % 2 ? 0xa5f3fc : 0xfde68a, roughness: 0.7, transparent: true, opacity: 0.78 }));
+		const tape = new Mesh(new PlaneGeometry(0.17, 0.05), new MeshStandardMaterial({ color: i % 2 ? 0xf2eedf : 0xf5d042, roughness: 0.7, transparent: true, opacity: 0.78 }));
 		tape.position.set(0, 0.335, 0.004);
 		tape.rotation.z = -tilt * 1.6;
 		holder.add(tape);
@@ -737,7 +778,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	const doorPivot = new Group();
 	doorPivot.position.set(doorX + 0.5, 0, z1 - 0.05);
 	group.add(doorPivot);
-	const doorMat = hardware({ color: 0x24345e, roughness: 0.5 }, "plastic");
+	const doorMat = hardware({ color: 0x24345e, roughness: 0.85 }, "plastic"); // matte: a painted door, no hotspot
 	themed.push({ mat: doorMat as MeshStandardMaterial, dark: 0x1b2d6e, light: 0x3d4770 });
 	boxAt(doorPivot, 0.98, 2.08, 0.045, doorMat, -0.49, 1.04, 0);
 	const handle = new Mesh(new CylinderGeometry(0.012, 0.012, 0.14, 10), toolMetal);
@@ -750,8 +791,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		g.fillStyle = "#06102a";
 		g.fillRect(0, 0, 720, 180);
 		g.fillStyle = "#f5d042";
-		g.shadowColor = "#f5d042";
-		g.shadowBlur = 28;
 		g.font = `900 92px ${FONT}`;
 		g.textAlign = "center";
 		g.textBaseline = "middle";
@@ -769,21 +808,37 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	/* ================================================================== */
 	let palette: Palette | undefined;
 	let clock = 0;
+	const ARMED_FOR = 4; // seconds the props run once armed
+	let armedUntil = -1;
+	let propSpin = 0;
 	const ledColor = new Color();
 	let ledTimer = 0;
 
 	// What lights each scene's subject (the pooled lights slide between these as the camera moves).
 	const accents: Record<string, LightSpec> = {
-		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0x5eead4, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
+		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0xb8c8ff, dark: 0.5, light: 0.5, distance: 1.4, decay: 2 },
 		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
-		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0xffe6a8, dark: 3, light: 5, distance: 4, decay: 1.6 },
+		contact: { at: [doorX, 2.1, z1 - 1.8], color: 0xffe6a8, dark: 1.2, light: 3, distance: 4, decay: 1.6 },
 	};
 
 	return {
 		accents,
 		screens: [laptop],
 		drone: () => drone,
+		robot: {
+			holder: robotHolder,
+			center: new Vector3(robotX + 0.04, cartTop + 0.3, -2.55),
+			explode,
+			turn: (angle) => (robotHolder.rotation.y = -0.55 + angle),
+		},
+		rack: { group: rack, center: new Vector3(rackX, 1.45, rackFront) },
+		laptop: lid,
+		bench: {
+			holder: droneHolder,
+			arm: () => (armedUntil = clock + ARMED_FOR),
+			busy: () => propSpin > 0 || clock < armedUntil,
+		},
 		wall: {
 			screens: panels.map((panel) => panel.screen),
 			hover(index) {
@@ -794,12 +849,15 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			clock += dt;
 			const level = lamp * lamp * (3 - 2 * lamp);
 
-			// Robot: rollers turn while its scene is in view.
-			if (robot && (near.robotics ?? 0) > 0.05) robot.animate(clock, dt * (near.robotics ?? 0));
+			// Robot: rollers turn while its scene is in view (not while it is apart: they would snap back together).
+			if (robot && explodedBy === 0 && (near.robotics ?? 0) > 0.05) robot.animate(clock, dt * (near.robotics ?? 0));
 
 			// Drone: stays on its mat. The build is not finished and it has not flown, so the room does not show it flying:
-			// powered up on the bench, props still, the flight controller's LED blinking.
-			drone?.animate(clock, 0);
+			// powered up on the bench, the flight controller's LED blinking; armed, its props spin up, then wind down.
+			const armed = clock < armedUntil ? 1 : 0;
+			propSpin += (armed - propSpin) * (1 - Math.exp(-(armed ? 1.8 : 1.1) * dt));
+			if (propSpin < 0.004) propSpin = 0;
+			drone?.animate(clock, propSpin > 0 ? dt : 0, propSpin);
 
 			// Rack: the port lights blink (a few times a second, not every frame).
 			ledTimer += dt;
@@ -826,7 +884,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				panel.holder.position.set(panel.bx + panel.toward[0] * 0.12 * h, panel.y - (1 - turn) * 0.04, panel.bz + panel.toward[1] * 0.12 * h);
 				panel.holder.scale.setScalar(1 + 0.05 * h);
 				(panel.screen.material as MeshBasicMaterial).color.setScalar(1 - 0.3 * wallHover * (1 - h));
-				(panel.edge.material as MeshBasicMaterial).opacity = (palette?.dark === false ? 0.4 : 0.5) * h;
+				(panel.edge.material as MeshBasicMaterial).opacity = h;
 			});
 
 			// The whiteboard writes itself out.
@@ -842,9 +900,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			for (const panel of panels) {
 				const edge = panel.edge.material as MeshBasicMaterial;
 				edge.color.set(p.dark ? 0xf5d042 : 0x1f5fc4);
-				edge.blending = p.dark ? AdditiveBlending : NormalBlending;
-				edge.needsUpdate = true;
-			}
+							}
 			for (const { mat, dark: d, light } of themed) mat.color.set(p.dark ? d : light);
 			robot?.applyPalette(p);
 			drawPeg(p.dark);
