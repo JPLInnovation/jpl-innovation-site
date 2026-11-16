@@ -153,12 +153,15 @@ Today the drone and the robot turn in front of a dark backdrop. Reference: **RIY
 city at night, through clouds at dusk, with live HUD telemetry and labelled close-ups of its parts: the machine in the
 place it works. **Ours goes further:** both machines are real (their CAD), the sky is Saigon's, and the robot plays.
 
-- **The F450 in the sky:** the drone chapter (`DroneChapter`, `drone-chapter.ts`) flies the F450 above Saigon at dusk:
-  the generated sky and city below (chat prompt), soft cloud layers drifting past at different depths, the city's
-  lights far below; a HUD in the corner with live simulated telemetry (altitude, heading, speed, 4G signal, the real
-  720p at 60 fps); close-ups with labelled parts (flight controller, ESCs, Pi 4, camera) from its real CAD.
-- **The KitBot on the FRC field:** the robot chapter (`FrcChapter`, `frc-chapter.ts`) stands the KitBot on a real FRC
-  field: the 2026 field's carpet and lines (from `public/assets/2026-playing-field-page.webp`), a few of the season's
+- **The F450 in the sky:** the drone chapter (`DroneChapter`, `drone-chapter.ts`) flies the F450 over mountains and
+  ground, **like the simulated flight in the 3D studio** (`src/lib/studio/sim-flight.ts`: the dusk sky, the ridges, the
+  fields and trees, the H pads, the real CAD). Owner, 16 Nov 2026: "I only want the F450 drone to fly over the
+  mountains and ground right now, like the simulation in the 3D part" (not over Saigon). It is a simulation of the real
+  CAD and says so on screen, as the studio's does (the drone has not flown). A HUD in the corner with live simulated
+  telemetry (altitude, heading, speed, 4G signal, the real 720p at 60 fps); close-ups with labelled parts (flight
+  controller, ESCs, Pi 4, camera) from its real CAD.
+- **The KitBot on the FRC field** (owner, 16 Nov 2026: the field is the showcase's background): the robot chapter
+  (`FrcChapter`, `frc-chapter.ts`) stands the KitBot on a real FRC field: the 2026 field's carpet and lines (from `public/assets/2026-playing-field-page.webp`), a few of the season's
   field elements, the arena's lights and a softly blurred crowd behind (generated backdrop, chat prompt); the robot
   drives a short path and scores, then turns for its labelled close-ups (Krakens, hopper, intake, Limelight).
 - Same rules as the rest: the backdrops are layered pictures with a little depth, not a heavy 3D scene; the model's
