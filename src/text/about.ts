@@ -65,7 +65,7 @@ export const story = {
  */
 export const focus = {
 	heading: "What we work on",
-	intro: "Three tracks, each documented on its own page.",
+	intro: "Five projects, each documented on its own page.",
 	/** Put before the project's name on each card's link: "See FIRST Robotics". */
 	linkPrefix: "See",
 	areas: [
@@ -79,6 +79,17 @@ export const focus = {
 			title: "F450 drone and C++ telemetry",
 			desc: "A quadcopter that streams live video over 4G, and a custom C++ telemetry system to go with it.",
 			picture: { src: "/showcase/drone/overview.webp", small: "/showcase/drone/overview-800.webp", w: 1600, h: 1200, cut: true },
+		},
+		{
+			project: "mini-drone",
+			title: "Mini Arduino drone",
+			desc: "A palm-sized quadcopter built around an Arduino Pro Mini, flown with a custom 2.4 GHz radio link and a hand-built transmitter.",
+		},
+		{
+			project: "lifetime",
+			title: "Lifetime, software for real use",
+			desc: "Windows software that measures how long each computer is really awake, and brings every computer in a school or office onto one dashboard. Open source, and deployed in Vietnam by COBACOM.",
+			picture: { src: "/assets/lifetime/server.webp", small: "/assets/lifetime/server.webp", w: 1600, h: 1000 },
 		},
 		{
 			project: "cybersecurity",
