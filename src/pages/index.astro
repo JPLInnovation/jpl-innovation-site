@@ -71,9 +71,9 @@ const organization = {
 		<!-- 0 Title -->
 		<section data-scene="title" data-place="center" class="studio-scene studio-title">
 			<img class="studio-still" {...still("title")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-kicker">{hero.kicker}</p>
 			<h1 class="sr-only">{pageHeading}</h1>
 			<p class="studio-lede">{hero.support}</p>
+			<p class="studio-kicker">{hero.kicker}</p>
 			<p class="studio-hint">{studio.scrollHint} <span aria-hidden="true">↓</span></p>
 		</section>
 
@@ -95,33 +95,31 @@ const organization = {
 		<!-- 1 Sketch: where every project starts -->
 		<section data-scene="sketch" data-place="top" class="studio-scene studio-card" aria-labelledby="scene-sketch">
 			<img class="studio-still" {...still("sketch")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-tag">{mission.stepLabel} 01 · {plan.title}</p>
 			<h2 id="scene-sketch">{servicesSection.heading}</h2>
 			<p class="studio-big">{servicesSection.intro}</p>
-			<p>{plan.desc}</p>
+			<p><strong>{plan.title}.</strong> {plan.desc}</p>
 		</section>
 
 		<!-- 2 Research: the build guide on the monitor -->
 		<section data-scene="research" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-research">
 			<img class="studio-still" {...still("research")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-tag">{mission.stepLabel} 02 · {build.title}</p>
 			<h2 id="scene-research">{mission.processHeading}</h2>
-			<p>{build.desc}</p>
+			<p><strong>{build.title}.</strong> {build.desc}</p>
 		</section>
 
 		<!-- 2b Build: the F450 goes together on the bench, piece by piece -->
 		<section data-scene="build" class="studio-scene studio-card" aria-labelledby="scene-build">
 			<img class="studio-still" {...still("build")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-tag">{buildStory.build.tag}</p>
 			<h2 id="scene-build">{buildStory.build.heading}</h2>
+			<p class="studio-tag">{buildStory.build.tag}</p>
 			<p>{buildStory.build.body}</p>
 		</section>
 
 		<!-- 2c Test: the bench test, and the simulated flight on the screen (labelled as one) -->
 		<section data-scene="test" data-side="right" class="studio-scene studio-card" aria-labelledby="scene-test">
 			<img class="studio-still" {...still("test")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-tag">{buildStory.test.tag}</p>
 			<h2 id="scene-test">{buildStory.test.heading}</h2>
+			<p class="studio-tag">{buildStory.test.tag}</p>
 			<p>{buildStory.test.bench}</p>
 			<ul class="studio-checks">
 				{benchBoard.passed.map((item) => <li>{item}</li>)}
@@ -134,8 +132,8 @@ const organization = {
 		{
 			buildStory.sim.map((scene) => (
 				<section data-scene={scene.id} class="studio-scene studio-card studio-sim" aria-labelledby={`scene-${scene.id}`}>
-					<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
 					<h2 id={`scene-${scene.id}`}>{scene.heading}</h2>
+					<p class="studio-chip studio-sim-chip">{buildStory.test.label}</p>
 					<p>{scene.body}</p>
 				</section>
 			))
@@ -154,9 +152,6 @@ const organization = {
 				return (
 					<section data-scene={id} data-side={onRight[id] ? "right" : undefined} class="studio-scene studio-card" aria-labelledby={`scene-${id}`}>
 						<img class="studio-still" {...still(id)} alt="" loading="lazy" width="1600" height="900" />
-						<p class="studio-tag">
-							{servicesSection.heading} · {i + 1} {studio.stationOf} {services.length}
-						</p>
 						<h2 id={`scene-${id}`}>{s.title}</h2>
 						<p>{s.desc}</p>
 						{s.proof && (
@@ -196,14 +191,12 @@ const organization = {
 		<!-- 5 Standards: the whiteboard -->
 		<section data-scene="standards" class="studio-scene studio-card" aria-labelledby="scene-standards">
 			<img class="studio-still" {...still("standards")} alt="" loading="lazy" width="1600" height="900" />
-			<p class="studio-tag">{mission.stepLabel} 03 · {handOver.title}</p>
 			<h2 id="scene-standards">{mission.standardsHeading}</h2>
 			<ul class="studio-checks">
 				{mission.standards.map((s) => <li>{s}</li>)}
 			</ul>
-			<p>{handOver.desc}</p>
-			<p class="studio-tag">{mission.label}</p>
-			<p class="studio-big">{mission.statement}</p>
+			<p><strong>{handOver.title}.</strong> {handOver.desc}</p>
+			<p class="studio-big"><strong>{mission.label}:</strong> {mission.statement}</p>
 		</section>
 
 		<!-- 6 Timeline: the window -->

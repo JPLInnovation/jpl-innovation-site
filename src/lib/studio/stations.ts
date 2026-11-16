@@ -17,7 +17,6 @@
  * The robot and the drone load their CAD in the background; the room is complete without them.
  */
 import {
-	AdditiveBlending,
 	CatmullRomCurve3,
 	Color,
 	CylinderGeometry,
@@ -28,7 +27,6 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
-	NormalBlending,
 	Object3D,
 	PlaneGeometry,
 	ShapeGeometry,
@@ -85,7 +83,6 @@ export const SCREEN_STEP = 0.05;
 const FONT = '"Archivo Variable", "Archivo", system-ui, sans-serif';
 /** Handwriting (the sketchbook's Caveat, public/fonts): the whiteboards and the names on the crew's photos. */
 const HAND = '"Caveat", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive';
-const MONO = 'ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
 
 /** Built in slices (`tick`), so the page stays responsive while the room comes up. */
 export async function buildStations(ctx: StageContext, parent: Group, content: RoomContent): Promise<Stations> {
@@ -144,7 +141,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		boxAt(group, 0.012, len * 0.6, 0.012, toolMetal, robotX + x, 1.62 - len * 0.72, z0 + 0.05);
 	}
 	boxAt(group, 0.5, 0.025, 0.12, steel, robotX, 1.15, z0 + 0.08); // a shelf
-	for (const [i, c] of [0xffc20e, 0x1f5fd1, 0x34d399].entries()) boxAt(group, 0.1, 0.07, 0.08, hardware({ color: c, roughness: 0.5 }, "plastic"), robotX - 0.15 + i * 0.15, 1.2, z0 + 0.08, 0.01);
+	for (const [i, c] of [0xf5d042, 0x2f7ce6, 0xf2eedf].entries()) boxAt(group, 0.1, 0.07, 0.08, hardware({ color: c, roughness: 0.5 }, "plastic"), robotX - 0.15 + i * 0.15, 1.2, z0 + 0.08, 0.01);
 
 	let robot: { animate(t: number, dt: number): void; applyPalette(p: { dark: boolean }): void } | undefined;
 	const robotHolder = new Group();
@@ -233,7 +230,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		{ y: 0.9, h: 0.3, ports: 4 },
 	];
 	const leds: { x: number; y: number; phase: number; rate: number; color: Color }[] = [];
-	const ledColors = [new Color(0x34d399), new Color(0x34d399), new Color(0xffc20e), new Color(0x2f7ce6)]; // link, link, activity, the brand blue
+	const ledColors = [new Color(0x7cc47f), new Color(0x7cc47f), new Color(0xf5b942), new Color(0x2f7ce6)]; // link, link, activity, the brand blue
 	for (const [u, unit] of units.entries()) {
 		boxAt(rack, 0.6, unit.h, 0.5, deviceMat, rackX, unit.y, rackZ + 0.02, 0.004);
 		boxAt(rack, 0.6, unit.h, 0.006, faceMat, rackX, unit.y, rackFront - 0.03);
@@ -255,7 +252,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 	});
 	rack.add(ledMesh);
 	// Patch cables between the patch panel and the switches, in the site's chart colours.
-	const cableColors = [0x1f5fd1, 0xb87a00, 0x8fb8f5, 0xc8283a, 0x1f5fd1, 0x34d399];
+	const cableColors = [0x1f5fd1, 0xb87a00, 0x8fb8f5, 0xc8283a, 0x1f5fd1, 0xf5d042];
 	for (let c = 0; c < 10; c++) {
 		const from = rackX - 0.2 + c * 0.044;
 		const to = rackX - 0.21 + ((c * 7) % 10) * 0.046;
@@ -425,7 +422,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		holder.add(frame);
 		const screen = new Mesh(cutCornerSurface(1.2, 0.844), screenMaterial(face.texture));
 		holder.add(screen);
-		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, toneMapped: false }));
+		const edge = new Mesh(new ShapeGeometry(cutCorners(1.32, 0.96)), new MeshBasicMaterial({ color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
 		edge.position.z = -0.06;
 		holder.add(edge);
 		return { holder, base: holder.rotation.y, y, screen, edge, bx, bz, toward: [-Math.cos(angle), -Math.sin(angle)] as const, hover: 0 };
@@ -539,7 +536,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			}),
 		);
 		// The three steps, on sticky notes; the last one (where a project ends up) circled in red.
-		const colours = ["#fde68a", "#a5f3fc", "#fbcfe8"];
+		const colours = ["#f5d042", "#f2eedf", "#bcd3f5"]; // the brand yellow, paper, a pale brand blue
 		const noteW = 470;
 		const noteH = 330;
 		const top = 900;
@@ -694,7 +691,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			g.fillText(person.name, 0, 0);
 			g.restore();
 			g.fillStyle = "#475569";
-			g.font = `600 44px ${MONO}`;
+			g.font = `500 44px ${FONT}`;
 			g.fillText(person.role, 560, 1300);
 			g.textAlign = "start";
 			photo.redraw();
@@ -715,7 +712,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		// (A little light of its own: the back wall is dim, and a photo should read as paper, not grey.)
 		const screen = new Mesh(new PlaneGeometry(0.56, 0.68), hardware({ color: 0xffffff, map: photo.texture, emissive: 0xffffff, emissiveMap: photo.texture, emissiveIntensity: 0.45, roughness: 0.85 }, "printed"));
 		holder.add(screen);
-		const tape = new Mesh(new PlaneGeometry(0.17, 0.05), new MeshStandardMaterial({ color: i % 2 ? 0xa5f3fc : 0xfde68a, roughness: 0.7, transparent: true, opacity: 0.78 }));
+		const tape = new Mesh(new PlaneGeometry(0.17, 0.05), new MeshStandardMaterial({ color: i % 2 ? 0xf2eedf : 0xf5d042, roughness: 0.7, transparent: true, opacity: 0.78 }));
 		tape.position.set(0, 0.335, 0.004);
 		tape.rotation.z = -tilt * 1.6;
 		holder.add(tape);
@@ -750,8 +747,6 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 		g.fillStyle = "#06102a";
 		g.fillRect(0, 0, 720, 180);
 		g.fillStyle = "#f5d042";
-		g.shadowColor = "#f5d042";
-		g.shadowBlur = 28;
 		g.font = `900 92px ${FONT}`;
 		g.textAlign = "center";
 		g.textBaseline = "middle";
@@ -774,7 +769,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 
 	// What lights each scene's subject (the pooled lights slide between these as the camera moves).
 	const accents: Record<string, LightSpec> = {
-		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0x5eead4, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
+		networks: { at: [rackX, 1.4, rackFront + 0.3], color: 0xb8c8ff, dark: 0.5, light: 0.5, distance: 1.4, decay: 2 },
 		web: { at: [webX, benchTop + 0.25, laptopZ + 0.3], color: 0x9ccfff, dark: 0.9, light: 0.9, distance: 1.4, decay: 2 },
 		standards: { at: [boardX, 2.75, z1 - 0.7], color: 0xfff4e0, dark: 2.2, light: 3, distance: 3.2, decay: 1.6 },
 		contact: { at: [doorX, 1.2, z1 - 0.5], color: 0xffe6a8, dark: 3, light: 5, distance: 4, decay: 1.6 },
@@ -826,7 +821,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 				panel.holder.position.set(panel.bx + panel.toward[0] * 0.12 * h, panel.y - (1 - turn) * 0.04, panel.bz + panel.toward[1] * 0.12 * h);
 				panel.holder.scale.setScalar(1 + 0.05 * h);
 				(panel.screen.material as MeshBasicMaterial).color.setScalar(1 - 0.3 * wallHover * (1 - h));
-				(panel.edge.material as MeshBasicMaterial).opacity = (palette?.dark === false ? 0.4 : 0.5) * h;
+				(panel.edge.material as MeshBasicMaterial).opacity = h;
 			});
 
 			// The whiteboard writes itself out.
@@ -842,9 +837,7 @@ export async function buildStations(ctx: StageContext, parent: Group, content: R
 			for (const panel of panels) {
 				const edge = panel.edge.material as MeshBasicMaterial;
 				edge.color.set(p.dark ? 0xf5d042 : 0x1f5fc4);
-				edge.blending = p.dark ? AdditiveBlending : NormalBlending;
-				edge.needsUpdate = true;
-			}
+							}
 			for (const { mat, dark: d, light } of themed) mat.color.set(p.dark ? d : light);
 			robot?.applyPalette(p);
 			drawPeg(p.dark);

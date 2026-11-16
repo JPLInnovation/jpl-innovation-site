@@ -91,7 +91,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 				))
 			}
 		</ol>
-		<p class="studio-ruler-label" aria-hidden="true"><span data-ruler-index>01</span> <span data-ruler-name>{sceneNames[scenes[0]]}</span></p>
+		<p class="studio-ruler-label" aria-hidden="true"><span data-ruler-name>{sceneNames[scenes[0]]}</span></p>
 	</nav>
 	<p class="sr-only" aria-live="polite" data-studio-live></p>
 	<script type="application/json" data-studio-shots set:html={JSON.stringify(shots)} />
@@ -114,10 +114,6 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		position: relative;
 	}
 	/* Under the sticky header, so the first scene is the very top of the page (and the logo is whole there). */
-	.studio:not([data-read]) {
-		margin-top: -4.5rem;
-	}
-	/* Under the sticky header, so the first scene is the very top of the page (and the header's logo is whole there). */
 	.studio:not([data-read]) {
 		margin-top: -4.5rem;
 	}
@@ -201,7 +197,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			left: clamp(1rem, 5vw, 4.5rem);
 			bottom: auto;
 			top: 54%;
-			width: min(26rem, 32vw);
+			width: min(21rem, 25vw);
 			transform: translate3d(0, calc(-50% + (1 - var(--on, 0)) * 18px), 0);
 			text-align: left;
 		}
@@ -223,13 +219,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		padding: 0.35rem 1rem 0.5rem;
 		border-radius: 1.25rem;
 		color: var(--foreground);
-		/* A small glass pill, so the ticks and the scene's name keep their contrast over whatever the room shows behind. */
-		background: color-mix(in oklab, var(--background) 80%, transparent);
-		-webkit-backdrop-filter: blur(10px);
-		backdrop-filter: blur(10px);
-	}
-	html:not(.dark) .studio-ruler {
-		background: color-mix(in oklab, var(--background) 90%, transparent);
+		/* Solid, so the ticks and the scene's name keep their contrast over whatever the room shows behind. */
+		background: var(--field);
+		border: 1px solid var(--sheet-edge);
 	}
 	.studio[data-read] .studio-ruler {
 		display: none;
@@ -258,24 +250,16 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio-ruler button:hover .tick {
 		background: var(--foreground);
 	}
-	/* The cyan accent is for the dark theme; on the light one the current tick and number are blue (3:1 and 4.5:1 or more). */
+	/* The current scene's tick: the brand accent (blue on paper, yellow on navy). */
 	.studio-ruler button[aria-current] .tick {
 		height: 1.5rem;
-		background: var(--primary);
-	}
-	.dark .studio-ruler button[aria-current] .tick {
-		background: var(--accent);
+		background: var(--accent-brand);
 	}
 	.studio-ruler-label {
-		font: 500 12px/1 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-		letter-spacing: 0.04em;
-		color: var(--muted-foreground);
-	}
-	.studio-ruler-label [data-ruler-index] {
-		color: var(--primary);
-	}
-	.dark .studio-ruler-label [data-ruler-index] {
-		color: var(--accent);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		line-height: 1;
+		color: var(--ink-soft);
 	}
 
 	/* A project's panel was clicked: the words and the ruler let go as the camera pushes in. */
@@ -366,7 +350,6 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		const canvas = stage.querySelector("canvas")!;
 		const panels = [...root.querySelectorAll<HTMLElement>(".studio-panels > [data-scene]")];
 		const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-goto]")];
-		const rulerIndex = root.querySelector<HTMLElement>("[data-ruler-index]")!;
 		const rulerName = root.querySelector<HTMLElement>("[data-ruler-name]")!;
 		const announce = root.querySelector<HTMLElement>("[data-studio-live]")!;
 		let announceTimer: number | undefined;
@@ -485,7 +468,6 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 			if (current !== shown) {
 				shown = current;
 				buttons.forEach((b, i) => (i === current ? b.setAttribute("aria-current", "step") : b.removeAttribute("aria-current")));
-				rulerIndex.textContent = String(current + 1).padStart(2, "0");
 				rulerName.textContent = sceneNames[shots[current].id] ?? shots[current].id;
 				// Told to screen readers once the camera has settled (not for every scene it passes in a long move).
 				window.clearTimeout(announceTimer);
@@ -582,35 +564,30 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio-scene p {
 		color: color-mix(in oklab, var(--foreground) 82%, transparent);
 	}
-	/* A glass card: blur over the room, a thin light edge, a navy tint. Text stays 4.5:1 or more over any of it. */
+	/* A solid sheet of the field's own colour (no glass: the room is the one big picture here), a thin alpha edge. */
 	.studio-card {
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
 		padding: 1.5rem 1.75rem;
 		border-radius: 1rem;
-		border: 1px solid rgb(255 255 255 / 0.14);
-		background: color-mix(in oklab, var(--background) 72%, transparent);
-		box-shadow: 0 20px 50px -24px rgb(0 0 0 / 0.55);
-		-webkit-backdrop-filter: blur(14px) saturate(1.3);
-		backdrop-filter: blur(14px) saturate(1.3);
+		border: 1px solid var(--sheet-edge);
+		background: var(--field);
 	}
-	/* On the light theme the glass is more opaque: dark text must stay 4.5:1 over the dark parts of the room too. */
-	html:not(.dark) .studio-card {
-		background: color-mix(in oklab, var(--background) 88%, transparent);
+	.studio-scene h2 {
+		text-wrap: balance;
 	}
-	/* Small HUD-style labels: monospace, blue on the light theme and cyan on the dark one (both 4.5:1+). */
+	.studio-scene p {
+		text-wrap: pretty;
+	}
+	/* Quiet lines (the project a scene is about, the scroll hint): the body face, a little smaller and softer. */
 	.studio-scene .studio-tag,
 	.studio-scene .studio-kicker,
 	.studio-scene .studio-hint {
-		font: 500 12.5px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-		letter-spacing: 0.03em;
-		color: #1e3a9f;
-	}
-	.dark .studio-scene .studio-tag,
-	.dark .studio-scene .studio-kicker,
-	.dark .studio-scene .studio-hint {
-		color: var(--mark);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		line-height: 1.4;
+		color: var(--ink-soft);
 	}
 	.studio-scene .studio-big {
 		font-size: 1.15rem;
@@ -622,13 +599,9 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		align-items: center;
 		gap: 1rem;
 	}
-	/* Over the room, a soft glass backing keeps the title's words readable whatever is behind them (the chair). */
+	/* The title's words stand on the dark wall left of the desk, no card. */
 	.studio:not([data-read]) .studio-title {
-		padding: 1.25rem 1.75rem;
-		border-radius: 1.25rem;
-		background: color-mix(in oklab, var(--background) 62%, transparent);
-		-webkit-backdrop-filter: blur(12px) saturate(1.2);
-		backdrop-filter: blur(12px) saturate(1.2);
+		padding: 1.25rem 0;
 	}
 	.studio-scene .studio-wordmark {
 		font-stretch: 125%;
@@ -669,13 +642,11 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		min-height: 44px;
 		padding: 0 1.2rem;
 		border-radius: 999px;
-		border: 1px solid rgb(255 255 255 / 0.28);
-		background: rgb(8 12 24 / 0.72);
-		color: #fff;
+		border: 1px solid var(--sheet-edge);
+		background: var(--field);
+		color: var(--ink);
 		font-weight: 600;
 		cursor: pointer;
-		-webkit-backdrop-filter: blur(10px);
-		backdrop-filter: blur(10px);
 		visibility: hidden;
 		opacity: 0;
 		transition:
@@ -688,7 +659,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		opacity: 1;
 	}
 	.studio-skip:hover {
-		background: rgb(8 12 24 / 0.92);
+		background: var(--sheet);
 	}
 	.studio-skip:focus-visible {
 		outline: 2px solid var(--ring);
@@ -705,12 +676,6 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		}
 	}
 	/* Links and lists inside the cards. */
-	/* Blur only what is on screen: the scenes that are not showing are transparent and need no backdrop filter. */
-	.studio:not([data-read]) .studio-panels > [data-scene]:not([data-shown]):not(:first-child),
-	.studio:not([data-read])[data-live] .studio-panels > [data-scene]:not([data-shown]) {
-		-webkit-backdrop-filter: none;
-		backdrop-filter: none;
-	}
 	.studio-scene a:not(.studio-link) {
 		text-decoration: underline;
 		text-decoration-thickness: 1.5px;
@@ -754,10 +719,7 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 		position: absolute;
 		left: 0.15rem;
 		font-weight: 800;
-		color: #15803d;
-	}
-	.dark .studio-checks li::before {
-		color: #4ade80;
+		color: var(--accent-brand);
 	}
 	.studio:not([data-read]) .studio-panels > [data-scene][data-wide] {
 		width: min(42rem, calc(100vw - 2rem));
@@ -795,16 +757,19 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	.studio-chip {
 		border-radius: 999px;
 		padding: 0.1rem 0.5rem;
-		font: 600 11px/1.4 ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+		font-size: 0.75rem;
+		font-weight: 650;
+		line-height: 1.4;
 		background: color-mix(in oklab, var(--foreground) 12%, transparent);
 		color: var(--foreground);
 	}
 	/* The simulated flight's label: it must read as plainly as the words around it. */
 	.studio-sim-chip {
 		display: inline-block;
+		align-self: flex-start;
 		margin-top: 0.25rem;
-		border: 1px solid #b87a00;
-		background: color-mix(in oklab, #ffc20e 18%, transparent);
+		border: 1px solid color-mix(in oklab, var(--mark) 70%, var(--ink));
+		background: color-mix(in oklab, var(--mark) 22%, transparent);
 	}
 	.studio-chip-now {
 		background: var(--accent);
@@ -863,9 +828,6 @@ const anchorAt = Object.fromEntries(Object.entries(anchors).map(([anchor, scene]
 	}
 	.studio[data-read] .studio-hint {
 		display: none;
-	}
-	html:not(.dark) .studio:not([data-read]) .studio-title {
-		background: color-mix(in oklab, var(--background) 88%, transparent);
 	}
 	.studio[data-read] .studio-title {
 		padding-block: 1.5rem 1rem;

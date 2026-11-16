@@ -66,7 +66,7 @@ type P3 = [number, number, number];
  * project wall and the back wall are lit from the ceiling, out of frame. The title and the sketch have the desk lamp.
  */
 const LAMP = {
-	build: { at: [-4.5, 1.16, -2.6] as P3, aim: [-4.12, 0.82, -2.38] as P3, power: 6, angle: 0.8 },
+	build: { at: [-3.86, 1.16, -2.6] as P3, aim: [-4.12, 0.82, -2.38] as P3, power: 6, angle: 0.8 },
 	test: { at: [-3.08, 1.33, -2.55] as P3, aim: [-2.62, 0.85, -2.45] as P3, power: 7, angle: 0.72 },
 	robot: { at: [-0.22, 1.08, -2.72] as P3, aim: [-0.6, 0.42, -2.55] as P3, power: 8, angle: 0.8 },
 	drone: { at: [0.96, 1.36, -2.62] as P3, aim: [1.42, 0.85, -2.55] as P3, power: 7, angle: 0.72 },
@@ -74,7 +74,7 @@ const LAMP = {
 };
 /** The lamps you can see: a weighted base (or a ceiling cord), an arm, a shade aimed at the subject, a warm bulb. */
 const FIXTURES: { base: P3; lamp: keyof typeof LAMP; hang?: boolean }[] = [
-	{ base: [-4.6, 0.82, -2.66], lamp: "build" },
+	{ base: [-3.74, 0.82, -2.66], lamp: "build" },
 	{ base: [-3.28, 0.85, -2.88], lamp: "test" },
 	{ base: [-0.05, 1.165, -3.26], lamp: "robot" }, // clamped to the pegboard's shelf
 	{ base: [0.76, 0.85, -2.86], lamp: "drone" },

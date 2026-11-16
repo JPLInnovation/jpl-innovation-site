@@ -22,8 +22,6 @@ export const studio = {
 	skipFlight: "Skip the flight",
 	/** On the monitor and the laptop when the pointer is on them: their pages scroll with the mouse wheel. */
 	screenHint: "Scroll to read",
-	/** Over each work station's text: "What we do · 1 of 4". */
-	stationOf: "of",
 };
 
 /**
@@ -172,7 +170,7 @@ export const buildStory = {
 
 /** Drawn on every frame of the simulated flight (src/lib/studio/sim-flight.ts). */
 export const simLabel = {
-	heading: "SIMULATION",
+	heading: "Simulation",
 	note: "3D model · not flown yet",
-	camera: "CAMERA MODULE 3 VIEW · SIMULATED",
+	camera: "Camera Module 3 view · simulated",
 };

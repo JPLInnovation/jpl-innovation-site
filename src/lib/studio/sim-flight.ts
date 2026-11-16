@@ -86,11 +86,11 @@ function buildOverlay(camera: PerspectiveCamera) {
 		g.beginPath();
 		g.arc(62, 64, 17, 0, Math.PI * 2);
 		g.fill();
-		g.font = '800 62px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
+		g.font = '800 62px "Archivo Variable", "Archivo", system-ui, sans-serif';
 		g.fillStyle = "#ffe08a";
 		g.textBaseline = "middle";
 		g.fillText(simLabel.heading, 100, 68);
-		g.font = '500 44px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
+		g.font = '500 44px "Archivo Variable", "Archivo", system-ui, sans-serif';
 		g.fillStyle = "#e6edf8";
 		g.fillText(simLabel.note, 34, 146);
 	};
@@ -104,7 +104,7 @@ function buildOverlay(camera: PerspectiveCamera) {
 	brackets.width = 1024;
 	brackets.height = 640;
 	const g = brackets.getContext("2d")!;
-	g.strokeStyle = "rgba(134,239,172,0.95)";
+	g.strokeStyle = "rgba(242,238,223,0.9)"; // paper white
 	g.lineWidth = 5;
 	g.lineCap = "round";
 	for (const [x, y, dx, dy] of [[300, 180, 1, 1], [724, 180, -1, 1], [300, 460, 1, -1], [724, 460, -1, -1]]) {
@@ -117,8 +117,8 @@ function buildOverlay(camera: PerspectiveCamera) {
 	g.beginPath();
 	g.arc(512, 320, 8, 0, Math.PI * 2);
 	g.stroke();
-	g.font = '600 26px ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace';
-	g.fillStyle = "rgba(190,250,210,0.95)";
+	g.font = '600 26px "Archivo Variable", "Archivo", system-ui, sans-serif';
+	g.fillStyle = "rgba(242,238,223,0.95)";
 	g.textAlign = "center";
 	g.fillText(simLabel.camera, 512, 140);
 	const bracketMesh = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: new CanvasTexture(brackets), transparent: true, depthTest: false, fog: false, opacity: 0 }));

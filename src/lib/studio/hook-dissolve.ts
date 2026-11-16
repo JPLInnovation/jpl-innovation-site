@@ -280,7 +280,7 @@ export function lineGlow(line: [Vector3, Vector3]) {
 	down.addColorStop(1, "rgba(0,0,0,0)");
 	g.fillStyle = down;
 	g.fillRect(0, 0, 256, 64);
-	const material = new SpriteMaterial({ map: new CanvasTexture(canvas), color: 0x6fdcff, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, fog: false });
+	const material = new SpriteMaterial({ map: new CanvasTexture(canvas), color: 0xf5d042, transparent: true, opacity: 0, depthWrite: false, blending: AdditiveBlending, fog: false });
 	const sprite = new Sprite(material);
 	sprite.position.copy(line[0]).lerp(line[1], 0.5);
 	sprite.scale.set(line[0].distanceTo(line[1]) * 1.25, 0.05, 1);
