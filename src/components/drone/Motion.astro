@@ -1,0 +1,29 @@
+---
+/**
+ * The drone pages' own moments: the decoding headline ([data-decode]) and renders that come up from darkness
+ * ([data-lights], see Lit.astro). Put it once on a page; the behaviour: ./drone-motion.ts.
+ */
+---
+
+<script>
+	import "./drone-motion";
+</script>
+
+<style is:global>
+	/* While a headline decodes: each word keeps its real letters' box (transparent, still read aloud) and the glyphs
+	   run over it; the living colour waits until the words are there. */
+	[data-decoding] {
+		background-image: none !important;
+		color: var(--ink) !important;
+	}
+	.decode-word {
+		position: relative;
+		color: transparent;
+	}
+	.decode-glyphs {
+		position: absolute;
+		inset: 0 auto auto 0;
+		white-space: nowrap;
+		color: var(--ink);
+	}
+</style>

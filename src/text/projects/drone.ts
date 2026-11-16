@@ -17,10 +17,15 @@ export const dronePage = {
 		rearArms: 'Rear arms',
 		layoutNote: 'Quad-X layout, 2 clockwise and 2 counter-clockwise props',
 	},
+	/** Read aloud by screen readers for the drawing of the frame from above ("Part by part", on the plain page). */
+	planLabel: 'Drawing of the F450 from above: the quad-X frame with its front arms marked, four 10-inch props, and the 450 mm from motor to motor across the frame.',
 	progressHeading: 'From parts list to first flight',
 	stepLabel: 'Step',
 	doneTag: 'Done',
 	nowTag: 'Now',
+	/** The roadmap's table: its column headings (the first is `stepLabel`). */
+	stageLabel: 'Stage',
+	stateLabel: 'State',
 	systemsHeading: 'Three systems, one drone',
 	systemsIntro: 'How power, pilot commands and live video move through the build.',
 	/** Before a branch in a system diagram: "Also from the flight controller". */
@@ -31,6 +36,8 @@ export const dronePage = {
 	totalNote: "Estimates from Vietnamese online stores. Parts that aren't priced yet aren't included.",
 	/** Parts table column headings. */
 	table: {
+		/** The parts are numbered down the whole list, as on a drawing's parts list. */
+		item: 'Item',
 		part: 'Part',
 		why: 'Why we need it',
 		price: 'Price',
@@ -38,6 +45,15 @@ export const dronePage = {
 		subtotal: 'Subtotal',
 		/** Screen-reader caption: "<group> parts and prices". */
 		captionSuffix: 'parts and prices',
+	},
+	/** The drawing's title block, on the picture of the drone: what the project is, where it stands, who built it. */
+	titleBlock: {
+		/** Read aloud by screen readers for the block. */
+		label: 'Title block of the F450 4G Drone',
+		project: 'Project',
+		status: 'Status',
+		/** Before the roadmap's current step: "Step 5 of 6 · Printed mounts". */
+		stage: 'Now',
 	},
 	/** Before the date in the last section: "Earlier work, <date>". */
 	earlierLabel: 'Earlier work,',
@@ -84,18 +100,21 @@ export const droneChapter = {
 	},
 	/** The status strip at the top: the drone's real state, the city and its live local time. */
 	hud: {
-		state: 'PRE-FLIGHT · ON THE BENCH',
+		/** (In capitals over the 3D, as on the drone's screen; as written here on the plain page.) */
+		state: 'Pre-flight · on the bench',
 		city: 'Ho Chi Minh City',
 		/** The clock's time zone (IANA name). */
 		timeZone: 'Asia/Ho_Chi_Minh',
 		/** Read aloud before the time: "Local time in Ho Chi Minh City". */
 		timeLabel: 'Local time in',
-		/** The build step now, from the roadmap below: "STEP 5 OF 6 · PRINTED MOUNTS". */
-		stepLabel: 'STEP',
-		ofLabel: 'OF',
+		/** The build step now, from the roadmap below: "Step 5 of 6 · Printed mounts". */
+		stepLabel: 'Step',
+		ofLabel: 'of',
 	},
 	prologue: {
 		problem: 'A drone’s video only reaches as far as its radio link.',
+		/** The words of `problem` that take the accent colour (leave empty for none). */
+		accent: 'radio link',
 	},
 	stakes: {
 		label: 'The camera',
@@ -140,7 +159,7 @@ export interface PartGroup {
 	id: string;
 	title: string;
 	icon: 'rocket-launch' | 'lightning' | 'target' | 'video-camera';
-	/** A chart token (validated categorical order), used for the budget bar and legend. */
+	/** The group's colour in the budget bar and the receipt (--bom-1 to --bom-4, brand colours: src/components/drone/Bom.astro). */
 	color: string;
 	parts: Part[];
 }
@@ -150,11 +169,11 @@ export const drone = {
 	status: 'Bench tested, first flight next',
 	intro:
 		'A quadcopter built on the classic F450 frame that streams live, high-quality video over the 4G mobile network — so it can be watched from anywhere with signal, not just within Wi-Fi range.',
-	/** Who's building it. `members` are ids from src/text/members/*.md; leave a role's `member` out to show the name only. */
+	/** Who's building it. `member` is an id from src/text/members/*.md; without one, `name` is shown as it is. */
 	team: [
 		{ role: 'Electrical: soldering & wiring', member: 'khoa' },
 		{ role: 'Everything else: design, flight software & assembly', member: 'jayden' },
-		{ role: 'Power-system advice, including the Matek BEC: a professional drone builder in Vietnam' },
+		{ role: 'Power-system advice, including the Matek BEC', name: 'A professional drone builder in Vietnam' },
 	],
 	facts: [
 		{ icon: 'rocket-launch', label: 'Frame', value: 'F450 · 450 mm' },
@@ -230,7 +249,7 @@ export const partGroups: PartGroup[] = [
 		id: 'airframe',
 		title: 'Airframe & propulsion',
 		icon: 'rocket-launch',
-		color: 'var(--chart-1)',
+		color: 'var(--bom-1)',
 		parts: [
 			{ name: 'F450 Drone Frame', why: 'A large, strong frame with plenty of room for all the electronics. Its bottom plate is the power distribution board.', price: 180_000 },
 			{ name: '4× A2212 1000KV Brushless Motors', why: 'The classic motors for the F450 frame — 2 clockwise, 2 counter-clockwise.', price: 142_000 },
@@ -244,7 +263,7 @@ export const partGroups: PartGroup[] = [
 		id: 'power',
 		title: 'Power',
 		icon: 'lightning',
-		color: 'var(--chart-2)',
+		color: 'var(--bom-2)',
 		parts: [
 			{ name: 'LiPo Battery 3S 2200 mAh', why: 'The power needed to lift this heavier rig.', price: 360_000 },
 			{ name: 'Battery On/Off Switch', why: 'In the battery’s + wire and rated 60 A or more, so the drone powers up and down without unplugging.' },
@@ -256,7 +275,7 @@ export const partGroups: PartGroup[] = [
 		id: 'control',
 		title: 'Flight control',
 		icon: 'target',
-		color: 'var(--chart-3)',
+		color: 'var(--bom-3)',
 		parts: [
 			{ name: 'MicoAir743 V2 (H743, 30×30)', why: 'The drone’s main flight brain, running INAV 9.1.', price: 1_500_000 },
 			{ name: 'MicoAir IO Board', why: 'The power hub at the centre of the top plate: feeds the four ESCs and the flight controller.' },
@@ -268,7 +287,7 @@ export const partGroups: PartGroup[] = [
 		id: 'video',
 		title: 'Video & 4G',
 		icon: 'video-camera',
-		color: 'var(--chart-4)',
+		color: 'var(--bom-4)',
 		parts: [
 			{ name: 'Raspberry Pi 4 (4 GB)', why: 'Streams the video over 4G, reads flight data from the flight controller over USB and serves the live dashboard.', price: 3_600_000 },
 			{ name: 'Raspberry Pi Camera Module 3', why: '12 MP autofocus camera that plugs straight into the Pi with a ribbon and streams 720p at 60 fps or 1080p at 30 fps.', price: 864_000 },

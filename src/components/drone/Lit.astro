@@ -1,0 +1,60 @@
+---
+/**
+ * A render that comes up from darkness (the spec's "lights up from darkness"): until it scrolls into view it is its own
+ * dark silhouette; then the lit picture fades in over it, as if the studio lights switched on (./drone-motion.ts sets
+ * data-lit). Opacity and scale only. Without motion it is simply the picture. The silhouette is the same file, so
+ * nothing more downloads.
+ */
+interface Props {
+	src: string;
+	srcset?: string;
+	sizes?: string;
+	alt: string;
+	width: number;
+	height: number;
+	loading?: "lazy" | "eager";
+	class?: string;
+}
+const { src, srcset, sizes, alt, width, height, loading = "lazy", class: className } = Astro.props;
+---
+
+<div class:list={["lit", className]} data-lights>
+	<img class="lit-dark" src={src} srcset={srcset} sizes={sizes} alt="" aria-hidden="true" width={width} height={height} loading={loading} decoding="async" />
+	<img class="lit-on" src={src} srcset={srcset} sizes={sizes} alt={alt} width={width} height={height} loading={loading} decoding="async" />
+</div>
+
+<style>
+	.lit {
+		display: grid;
+		grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+	}
+	.lit > img {
+		grid-area: 1 / 1;
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+	}
+	.lit-dark {
+		visibility: hidden;
+		filter: brightness(0);
+	}
+	:global(.motion) .lit-dark {
+		visibility: visible;
+		opacity: 0.85;
+		transition: opacity 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) calc(var(--lights-delay, 0ms) + 0.3s);
+	}
+	:global(.motion) .lit-on {
+		opacity: 0;
+		scale: 1.035;
+		transition:
+			opacity 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) var(--lights-delay, 0ms),
+			scale 2.2s cubic-bezier(0.2, 0.7, 0.2, 1) var(--lights-delay, 0ms);
+	}
+	.lit[data-lit] .lit-on {
+		opacity: 1;
+		scale: 1;
+	}
+	.lit[data-lit] .lit-dark {
+		opacity: 0;
+	}
+</style>
