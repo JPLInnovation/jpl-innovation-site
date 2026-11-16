@@ -1,0 +1,333 @@
+---
+/**
+ * /work/lifetime/: the software sheet. The page opens with the product itself, running (LifetimeDay: one simulated
+ * school day on Lifetime Server, run by the scroll), then the case, the real screens as whole plates, and the
+ * write-up from src/text/projects/lifetime.md, section by section, with "Coming in version 1.2.0" drawn as the next
+ * revision. Words: src/text/projects/lifetime.md, lifetime.ts and the lifetime entry of hooks.ts.
+ */
+import { getEntry } from "astro:content";
+import sharp from "sharp";
+import BackLink from "@/components/BackLink.astro";
+import ChapterBackdrop from "@/components/ChapterBackdrop.astro";
+import ContactSection from "@/components/ContactSection.astro";
+import LifetimeDay from "@/components/lifetime/LifetimeDay.astro";
+import NextChapter from "@/components/NextChapter.astro";
+import PageIntro from "@/components/PageIntro.astro";
+import ProjectCase from "@/components/ProjectCase.astro";
+import TitleBlock from "@/components/TitleBlock.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { lifetimePage as text } from "@/text/projects/lifetime";
+import { backToWork } from "@/text/work";
+
+const entry = (await getEntry("work", "lifetime"))!;
+const { data } = entry;
+
+interface Plate {
+	src: string;
+	alt: string;
+	width: number;
+	height: number;
+}
+/** A picture's own size, so the plate keeps its aspect ratio and never crops. */
+async function plate(src: string, alt: string): Promise<Plate> {
+	const meta = await sharp(`public${src}`).metadata();
+	return { src, alt, width: meta.width ?? 1600, height: meta.height ?? 1000 };
+}
+const unescape = (s: string) => s.replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+
+// The write-up, cut at its headings: each section keeps the markdown's own HTML; its pictures come out as plates.
+const sections = await Promise.all(
+	(entry.rendered?.html ?? "")
+		.split(/(?=<h2[\s>])/)
+		.filter((chunk) => chunk.startsWith("<h2"))
+		.map(async (chunk) => {
+			const head = chunk.match(/^<h2([^>]*)>([\s\S]*?)<\/h2>/)!;
+			const id = head[1].match(/id="([^"]*)"/)?.[1] ?? "";
+			const found: Array<[string, string]> = [];
+			const body = chunk
+				.slice(head[0].length)
+				.replace(/<p>\s*(<img[^>]*>)\s*<\/p>/g, (_, img: string) => {
+					found.push([img.match(/src="([^"]*)"/)?.[1] ?? "", unescape(img.match(/alt="([^"]*)"/)?.[1] ?? "")]);
+					return "";
+				})
+				// "**Energy and cost**: kWh and…": the bold term stands as the item's own line; its colon stays for screen readers
+				.replace(/(<li><strong>[\s\S]*?<\/strong>):\s*/g, '$1<span class="sr-only">: </span>');
+			return { id, title: head[2], body, plates: await Promise.all(found.map(([src, alt]) => plate(src, alt))) };
+		}),
+);
+const realScreens = await Promise.all(text.plates.extra.map((p) => plate(p.src, p.alt)));
+const isRevision = (id: string) => id.startsWith("coming-in-version");
+---
+
+<BaseLayout title={`${data.title} | JPL Innovation`} description={data.description}>
+	<ChapterBackdrop project="lifetime" />
+	<PageIntro title={data.title} lede={data.description}>
+		<BackLink slot="before" href="/work/">{backToWork}</BackLink>
+		<TitleBlock rows={text.titleBlock.rows} label={text.titleBlock.label} class="lt-titleblock" />
+	</PageIntro>
+
+	<LifetimeDay />
+
+	<ProjectCase project="lifetime" />
+
+	<section class="lt-real" aria-labelledby="lt-real-heading">
+		<div class="wrapper lt-real-head">
+			<h2 id="lt-real-heading" class="lt-sec-h">{text.plates.heading}</h2>
+			<p class="lt-lead">{text.plates.intro}</p>
+		</div>
+		{
+			realScreens.map((p) => (
+				<figure class="lt-plate">
+					<a href={p.src} class="lt-plate-link"><img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} /></a>
+					<figcaption aria-hidden="true">{p.alt}</figcaption>
+				</figure>
+			))
+		}
+	</section>
+
+	{
+		sections.map((s) =>
+			isRevision(s.id) ? (
+				<section class="wrapper lt-rev-wrap" aria-labelledby={s.id}>
+					<div class="lt-rev">
+						<svg class="lt-rev-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+							<rect x="0" y="0" width="100" height="100" vector-effect="non-scaling-stroke" />
+						</svg>
+						<p class="lt-rev-mark" aria-hidden="true">
+							<svg viewBox="0 0 40 36">
+								<path d="M20 3 37 33H3Z" />
+							</svg>
+							<span>{text.revision}</span>
+						</p>
+						<h2 id={s.id} class="lt-sec-h" set:html={s.title} />
+						<div class="lt-text lt-rev-body" set:html={s.body} />
+					</div>
+				</section>
+			) : (
+				<>
+					<section class="wrapper lt-sec" aria-labelledby={s.id}>
+						<h2 id={s.id} class="lt-sec-h" set:html={s.title} />
+						<div class="lt-text" set:html={s.body} />
+					</section>
+					{s.plates.map((p) => (
+						<figure class="lt-plate">
+							<a href={p.src} class="lt-plate-link"><img src={p.src} alt={p.alt} width={p.width} height={p.height} loading="lazy" decoding="async" style={`max-width: ${p.width}px`} /></a>
+							<figcaption aria-hidden="true">{p.alt}</figcaption>
+						</figure>
+					))}
+				</>
+			),
+		)
+	}
+
+	<NextChapter current="lifetime" />
+	<ContactSection />
+</BaseLayout>
+
+<style>
+	:global(dl.title-block.lt-titleblock) {
+		margin-top: 1rem;
+		max-width: 64rem;
+	}
+	@media (min-width: 768px) {
+		:global(dl.title-block.lt-titleblock) {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+	.lt-real {
+		padding-block: clamp(3rem, 8dvh, 6rem) 0;
+	}
+	.lt-real-head {
+		display: grid;
+		gap: 0.75rem;
+		margin-bottom: 2rem;
+	}
+	.lt-sec-h {
+		font-size: clamp(1.9rem, 1.2rem + 2.4vw, 3.4rem);
+		font-weight: 850;
+		font-stretch: 116%;
+		line-height: 1;
+		letter-spacing: -0.01em;
+		text-wrap: balance;
+	}
+	.lt-lead {
+		font-size: var(--step-lead);
+		color: var(--ink-soft);
+		max-width: 44ch;
+		text-wrap: pretty;
+	}
+
+	/* The write-up: the heading on the left, the words on the right, ruled like a drawing's notes. */
+	.lt-sec {
+		display: grid;
+		gap: 1.25rem 4rem;
+		padding-block: clamp(3rem, 7dvh, 5.5rem) clamp(1.5rem, 3dvh, 2.5rem);
+	}
+	@media (min-width: 1024px) {
+		.lt-sec {
+			grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+			align-items: start;
+		}
+		/* the heading stays beside its notes while they scroll by */
+		.lt-sec .lt-sec-h {
+			position: sticky;
+			top: 6.5rem;
+		}
+	}
+	.lt-text {
+		font-size: var(--step-body);
+		line-height: 1.6;
+		max-width: 64ch;
+	}
+	.lt-text :global(p) {
+		text-wrap: pretty;
+	}
+	.lt-text :global(p + p) {
+		margin-top: 1em;
+	}
+	.lt-text :global(ul) {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		border-top: 1px solid var(--sheet-edge);
+	}
+	.lt-text :global(li) {
+		padding: 0.85em 0;
+		border-bottom: 1px solid var(--sheet-edge);
+		text-wrap: pretty;
+	}
+	.lt-text :global(strong) {
+		font-weight: 700;
+	}
+	.lt-text :global(a) {
+		text-decoration: underline;
+		text-decoration-color: var(--accent-brand);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 4px;
+	}
+	.lt-text :global(p + ul) {
+		margin-top: 1.25em;
+	}
+
+	/* A plate: the whole picture, at its own aspect ratio, as wide as the page allows (never wider than itself). */
+	.lt-plate {
+		margin: clamp(1.5rem, 4dvh, 3rem) auto 0;
+		padding-inline: clamp(1rem, 4vw, 2.5rem);
+		max-width: 92rem;
+		display: grid;
+		justify-items: center;
+		gap: 0.8rem;
+	}
+	.lt-plate-link {
+		display: flex;
+		justify-content: center;
+		width: 100%;
+		border-radius: 14px;
+	}
+	.lt-plate img {
+		display: block;
+		width: 100%;
+		height: auto;
+		object-fit: contain;
+		border-radius: 14px;
+		box-shadow: 0 0 0 1px var(--sheet-edge);
+	}
+	.lt-plate figcaption {
+		width: 100%;
+		max-width: 72ch;
+		justify-self: start;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	@media (min-width: 1024px) {
+		.lt-plate figcaption {
+			justify-self: center;
+			text-align: center;
+		}
+	}
+
+	/* "Coming in version 1.2.0", drawn as the next revision: a phantom outline (the drawing's line for what isn't
+	   built into this revision yet) with the revision mark on its corner. */
+	.lt-rev-wrap {
+		padding-block: clamp(3.5rem, 9dvh, 7rem) clamp(2rem, 5dvh, 4rem);
+	}
+	.lt-rev {
+		position: relative;
+		display: grid;
+		gap: 1.25rem 4rem;
+		padding: clamp(2rem, 4vw, 3.5rem);
+	}
+	@media (min-width: 1024px) {
+		.lt-rev {
+			grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+			align-items: start;
+		}
+	}
+	.lt-rev-line {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+		pointer-events: none;
+	}
+	.lt-rev-line rect {
+		fill: none;
+		stroke: var(--accent-brand);
+		stroke-width: 2;
+		stroke-dasharray: 26 6 6 6 6 6;
+	}
+	.lt-rev-mark {
+		position: absolute;
+		top: 0;
+		left: clamp(1.25rem, 3vw, 2.5rem);
+		transform: translateY(calc(-100% - 0.35rem));
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding-inline: 0.5rem;
+		font-weight: 750;
+		font-stretch: 110%;
+		font-size: var(--step-small);
+		font-variant-numeric: tabular-nums;
+	}
+	.lt-rev-mark svg {
+		width: 1.6rem;
+		height: 1.45rem;
+	}
+	.lt-rev-mark path {
+		fill: none;
+		stroke: var(--accent-brand);
+		stroke-width: 2.5;
+		stroke-linejoin: round;
+	}
+	.lt-rev-body :global(li strong) {
+		display: block;
+		font-size: var(--step-lead);
+		font-stretch: 110%;
+		margin-bottom: 0.2rem;
+	}
+	@supports (animation-timeline: view()) {
+		@media (prefers-reduced-motion: no-preference) {
+			.lt-rev-line rect {
+				animation: lt-rev-draw linear both;
+				animation-timeline: view();
+				animation-range: entry 10% cover 40%;
+			}
+		}
+	}
+	@keyframes lt-rev-draw {
+		from {
+			stroke-dashoffset: 400;
+			opacity: 0;
+		}
+		to {
+			stroke-dashoffset: 0;
+			opacity: 1;
+		}
+	}
+	:global(html.reduce-motion) .lt-rev-line rect {
+		animation: none;
+	}
+</style>
