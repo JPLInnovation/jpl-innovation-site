@@ -560,11 +560,20 @@ export const robotChapter = {
 	},
 	/** The status strip at the top: the robot's real story, the team's city and its live local time. */
 	hud: {
-		state: 'ROOKIE ROBOT · 2026 SEASON',
-		detail: 'COMPETED AT 2 REGIONALS',
+		state: 'Rookie robot · 2026 season',
+		detail: 'Competed at 2 regionals',
 		city: 'Ho Chi Minh City',
 		timeZone: 'Asia/Ho_Chi_Minh',
 		timeLabel: 'Local time in',
+	},
+	/**
+	 * The field the robot stands on in 3D: the 2026 FRC field, drawn from the official field photograph (its carpet, tape
+	 * lines, HUBs, BUMPs, TRENCHes and FUEL), the arena's lights, and our own photo of the Vancouver arena blurred behind.
+	 * `alt` describes the still on the plain page (and is read with the 3D view); `note` is the small caption in 3D.
+	 */
+	field: {
+		alt: 'Our 2026 KitBot, from its CAD, on the 2026 FRC field: the grey carpet and its tape lines, the blue HUB with its AprilTags, the BUMPs and TRENCHes, yellow FUEL in the neutral zone, and the arena behind.',
+		note: 'Our CAD on the 2026 field, drawn from the official one. The drive and the shot are an illustration, not match footage.',
 	},
 	/** Beat 1: the robot in the dark, and the line it stands for. */
 	prologue: { statement: 'Designed, built and programmed by students.' },

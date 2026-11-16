@@ -2,29 +2,34 @@
 /**
  * The KitBot chapter on the FRC page, built like the drone chapter (src/components/DroneChapter.astro): one pinned,
  * full-window 3D stage that the page's own scroll moves the camera through (src/lib/three/models/frc-chapter.ts), with
- * each beat's words as real HTML over it. The stage stays put for about nine and a half screens of scroll, then lets go
- * into the rest of the page.
+ * each beat's words as real HTML over it. The robot stands on the 2026 field (its carpet, lines, HUBs, BUMPs and FUEL,
+ * the arena's lights and the team's own photograph of the stands behind), drives a short curve and shoots into its HUB
+ * as the beats go by, then turns for its close-ups. The stage stays put for about fourteen screens of scroll, then
+ * lets go into the rest of the page. It sits in the FRC page's special edition (src/pages/work/frc.astro): near-black,
+ * Anton for the big words, the edition's yellow; no glows.
  *
- *   01 Prologue   the KitBot low in the dark, lit from behind; what it stands for
- *   02 Stakes     the camera closes in on the launcher: the autonomous routine, 95% repeatable
- *   03 Reveal     the lights come up: the name, what it is, its numbers, where it raced
- *   04 Anatomy    the part-by-part stops, the rest of the robot fading back
+ *   Prologue   the KitBot in the dark arena, lit from behind; what it stands for
+ *   Stakes     over the launcher as it shoots into its HUB: the autonomous routine, 95% repeatable
+ *   Reveal     the field's lights come up: the name, what it is, its numbers, where it raced
+ *   Anatomy    the part-by-part stops, the rest of the robot fading back
  *
  * Every stop is one screen of native scroll (nothing is hijacked). Keyboard: arrows and Page Up/Down move one stop while
  * the chapter is on screen; "Skip the robot" goes past it. The chapter map at the side has a dot per beat and a tick per
  * part-by-part stop.
  *
- * Classic (data-read, decided before the first paint): the same words as one ordinary page in the same order, the
- * first three beats on a still dark picture, the parts as cards with renders of the real model (public/showcase/robot/,
- * scripts/showcase-stills.py). Used on phones (under 768 px), with reduced motion, without WebGL, when Classic is
- * chosen, and when the 3D gives up (too slow, a lost GPU, an error, or not up within 30 s).
+ * The 3D (the robot and the field's files) only loads once the chapter is within two screens.
+ *
+ * Classic (data-read, decided before the first paint): the same words as one ordinary page in the same order, under a
+ * still of the KitBot on the field (scripts/bake-field-still.py), the parts as cards with renders of the real model
+ * (public/showcase/robot/, scripts/showcase-stills.py). Used on phones (under 768 px), with reduced motion, without
+ * WebGL, when Classic is chosen, and when the 3D gives up (too slow, a lost GPU, an error, or not up within 120 s of
+ * starting to load).
  *
  * All the words: src/text/projects/frc.ts (robotChapter) and src/text/showcase/robot.ts.
  */
 // @ts-ignore: the project has no Node type definitions; this only runs at build time, in Node.
 import { existsSync } from "node:fs";
 import BeatLabel from "@/components/BeatLabel.astro";
-import { buttonVariants } from "@/components/ui/button";
 import { DataIcon } from "@/lib/icons";
 import { robotChapter as chapter } from "@/text/projects/frc";
 import { robotShowcase as parts } from "@/text/showcase/robot";
@@ -44,6 +49,10 @@ const still = (id: string) =>
 const overviewStill = still("overview");
 /** What shows until the 3D's first full frame is ready (scripts/showcase-stills.py). */
 const poster = existsSync("public/chapter/frc/poster.webp") ? "/chapter/frc/poster.webp" : undefined;
+/** The plain page's picture: the KitBot on the field, a still of the 3D (scripts/bake-field-still.py). */
+const fieldStill = existsSync("public/chapter/frc/field-still.webp")
+	? { src: "/chapter/frc/field-still.webp", srcset: "/chapter/frc/field-still-800.webp 800w, /chapter/frc/field-still.webp 1600w" }
+	: undefined;
 const hardwareSources: Record<string, { label: string; href: string }> = {
 	krakens: { label: 'WCP motor documentation', href: 'https://wcproducts.com/products/kraken' },
 	vision: { label: 'Limelight MegaTag2 documentation', href: 'https://docs.limelightvision.io/docs/docs-limelight/pipeline-apriltag/apriltag-robot-localization-megatag2' },
@@ -71,34 +80,20 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			el.removeAttribute("data-read");
 			el.classList.add("dark");
 			if (capture) el.setAttribute("data-capture", "");
-			setTimeout(() => {
-				if (el.isConnected && !el.hasAttribute("data-live") && !el.hasAttribute("data-read")) {
-					el.setAttribute("data-read", "");
-					el.classList.remove("dark");
-					console.warn("KitBot chapter: the 3D did not start in time, showing the plain page.");
-				}
-			}, 120000);
 		})();
 	</script>
 	<a class="kch-skip" href="#after-kitbot">{chapter.skip}</a>
 
 	<div class="kch-track">
 		<div class="kch-pin">
-			<div class="kch-bg" aria-hidden="true">
-				<div class="kch-bd kch-bd-arena"></div>
-				<div class="kch-bd kch-bd-field"></div>
-				<div class="kch-bd kch-bd-pits"></div>
-			</div>
+			<div class="kch-bg" aria-hidden="true"></div>
 			<div class="kch-stage" data-kch-stage>
-				<canvas role="img" aria-label={parts.modelLabel}></canvas>
+				<canvas role="img" aria-label={`${parts.modelLabel} ${chapter.field.alt}`}></canvas>
 			</div>
 			{poster && <img class="kch-poster" src={poster} alt="" width="1600" height="1200" />}
 			<div class="kch-veil" aria-hidden="true"></div>
 			<div class="kch-frame" aria-hidden="true">
 				<span class="kch-corner kch-tl"></span><span class="kch-corner kch-tr"></span><span class="kch-corner kch-bl"></span><span class="kch-corner kch-br"></span>
-			</div>
-			<div class="kch-frame kch-aim" aria-hidden="true">
-				<svg class="kch-cross" viewBox="-20 -20 40 40"><path d="M0-20v12M0 8v12M-20 0h12M8 0h12" fill="none" stroke="currentColor" stroke-width="1.6"></path><circle r="11" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"></circle></svg>
 			</div>
 
 			<div class="kch-hud" aria-hidden="true">
@@ -108,9 +103,10 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				</p>
 				<p class="kch-hud-right">
 					<span>{chapter.hud.city} <time class="kch-hud-time" data-kch-clock={chapter.hud.timeZone}>--:--:--</time></span>
-					<span class="kch-hud-count"><span data-kch-count>01</span> / {beatList.length.toString().padStart(2, "0")}</span>
+					<span class="kch-hud-count" data-kch-count>{beats.prologue.title}</span>
 				</p>
 			</div>
+			<p class="kch-caption" aria-hidden="true">{chapter.field.note}</p>
 
 			<nav class="kch-map" aria-label={chapter.mapLabel}>
 				<ol>
@@ -146,6 +142,8 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 
 			<div class="kch-panels">
 				<div class="kch-band dark">
+					<!-- The plain page's picture: a still of the 3D, the KitBot on the field (scripts/bake-field-still.py). -->
+					{fieldStill && <img class="kch-field-still" src={fieldStill.src} srcset={fieldStill.srcset} sizes="(min-width: 76rem) 76rem, 100vw" alt={chapter.field.alt} width="1600" height="900" loading="lazy" />}
 					<!-- 01 Prologue -->
 					<section id="prologue" class="kch-panel" data-stop="0" aria-labelledby="kitbot-prologue-label">
 						<BeatLabel id="kitbot-prologue-label" beat={beats.prologue} />
@@ -191,8 +189,8 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 							}
 						</dl>
 						<div class="kch-actions">
-							<a href={chapter.reveal.specsHref} class={buttonVariants({ variant: "signal", size: "lg" })}>{chapter.reveal.specsLink}</a>
-							<a href={chapter.reveal.resultsHref} class={buttonVariants({ variant: "outline", size: "lg" })}>{chapter.reveal.resultsLink}</a>
+							<a href={chapter.reveal.specsHref} class="frc-btn press"><span data-roll>{chapter.reveal.specsLink}</span><span class="frc-btn-chev" aria-hidden="true">»</span></a>
+							<a href={chapter.reveal.resultsHref} class="kch-link">{chapter.reveal.resultsLink}</a>
 						</div>
 						<p class="kch-note">{parts.note}</p>
 						{overviewStill && <img class="kch-still" src={overviewStill.src} srcset={overviewStill.srcset} sizes="(min-width: 48rem) 40rem, 100vw" alt={parts.modelLabel} width="1600" height="1200" loading="lazy" data-zoom={overviewStill.full} data-zoom-caption={parts.modelLabel} role="button" tabindex="0" />}
@@ -270,11 +268,9 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		gap: 0.6em;
 	}
 	.kch-hud-dot {
-		width: 0.55em;
-		height: 0.55em;
-		border-radius: 50%;
+		width: 0.5em;
+		height: 0.5em;
 		background: var(--accent);
-		box-shadow: 0 0 8px color-mix(in oklab, var(--accent) 80%, transparent);
 	}
 	.kch-hud-time {
 		display: inline-block;
@@ -455,16 +451,31 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	}
 
 	/* ---------- Classic: an ordinary page, in the same order ---------- */
-	.kch[data-read] :is(.kch-bg, .kch-stage, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate) {
+	.kch[data-read] :is(.kch-bg, .kch-stage, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-caption) {
 		display: none;
 	}
 	.kch[data-read] .kch-band {
-		padding-bottom: 10rem;
-		/* The still gradient: the 3D's colours, fading into the page. */
-		background:
-			linear-gradient(to bottom, rgb(3 10 16 / 0.35), rgb(3 10 16 / 0.6) 60%, #030a10 calc(100% - 10rem), transparent),
-			url("/chapter/frc/classic.webp") center 35% / cover no-repeat,
-			#071822;
+		padding-bottom: 6rem;
+		background: var(--frc-k, #070b12);
+	}
+	/* The still of the KitBot on the field, at the top of the plain page; the 3D draws it itself. */
+	.kch-field-still {
+		display: block;
+		width: 100%;
+		max-width: 76rem;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		margin-inline: auto;
+		object-fit: cover;
+		object-position: 68% 50%;
+	}
+	@media (max-width: 47.99rem) {
+		.kch-field-still {
+			aspect-ratio: 4 / 3;
+		}
+	}
+	.kch:not([data-read]) .kch-field-still {
+		display: none;
 	}
 	.kch[data-read] .kch-back {
 		padding-top: 1.5rem;
@@ -619,47 +630,13 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			--focus-x: 50%;
 		}
 	}
-	/* The backdrop: a very dark teal-blue gradient and a glow behind the drone (no pure black). */
+	/* Behind the canvas: the edition's near-black (the 3D's stands and floor fade into it at their edges). */
 	.kch-bg {
 		position: absolute;
 		inset: 0;
 		z-index: -2;
-		background:
-			radial-gradient(42% 52% at var(--focus-x) 50%, rgb(91 149 242 / calc(var(--look-glow, 0.24) * var(--glow-level, 1))), transparent 72%),
-			radial-gradient(120% 90% at 50% 10%, #0b2130, transparent 70%),
-			linear-gradient(to bottom, #071822, #030a10);
+		background: var(--frc-k, #070b12);
 	}
-	/* The backdrop layers: their images only once the 3D is up (data-images: beat 1's first, then the rest), each shown
-	   by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). Moved with transform and opacity only. */
-	.kch-bd {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
-	}
-	.kch-bd[data-off] {
-		visibility: hidden;
-	}
-	/* The team's own event photos, blurred (public/chapter/frc/): the arena (beat 1), the field being set up (2), the
-	   pits under our flag (3). Each shown by the camera (--bd-*, 0 to 1) times its strength in LOOK (--look-*). */
-	.kch-bd {
-		background: center / cover no-repeat;
-		transition: none;
-	}
-	.kch-bd-arena {
-		opacity: calc(var(--bd-arena, 0) * var(--look-arena, 0.75));
-		scale: calc(1.08 - var(--bd-arena, 0) * 0.08);
-	}
-	.kch-bd-field {
-		opacity: calc(var(--bd-field, 0) * var(--look-field, 0.7));
-		scale: calc(1 + var(--bd-push, 0) * 0.06);
-	}
-	.kch-bd-pits {
-		opacity: calc(var(--bd-pits, 0) * var(--look-pits, 0.6));
-		translate: calc(var(--bd-swing, 0) * -1.5%) 0;
-	}
-	.kch-pin[data-images] .kch-bd-arena { background-image: url("/chapter/frc/arena.webp"); }
-	.kch-pin[data-images="all"] .kch-bd-field { background-image: url("/chapter/frc/field.webp"); }
-	.kch-pin[data-images="all"] .kch-bd-pits { background-image: url("/chapter/frc/pits.webp"); }
 	.kch-stage {
 		position: absolute;
 		inset: 0;
@@ -690,30 +667,21 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		visibility: hidden;
 		transition: opacity 1.2s cubic-bezier(0.33, 1, 0.68, 1), visibility 0s 1.2s;
 	}
-	/* Over the canvas: the vignette, a scrim behind the words on the left (wide windows), and a light film grain (it
-	   keeps the dark gradient from banding). */
+	/* Over the canvas: a scrim behind the HUD along the top, and behind the words on the left (wide windows). */
 	.kch-veil {
 		position: absolute;
 		inset: 0;
 		pointer-events: none;
 		background:
-			linear-gradient(to right, rgb(3 10 16 / var(--bd-scrim, 0.7)), rgb(3 10 16 / calc(var(--bd-scrim, 0.7) * 0.75)) 36%, transparent 60%),
-			radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+			linear-gradient(to bottom in oklch, rgb(7 11 18 / 0.7) 4.5rem, rgb(7 11 18 / 0) 10rem),
+			linear-gradient(to right in oklch, rgb(7 11 18 / var(--look-scrim, 0.72)), rgb(7 11 18 / calc(var(--look-scrim, 0.72) * 0.7)) 34%, rgb(7 11 18 / 0) 58%);
 	}
 	@media (max-aspect-ratio: 6/5) {
 		.kch-veil {
-			background: radial-gradient(115% 95% at 50% 50%, transparent 52%, rgb(0 0 0 / var(--look-vignette, 0.62)));
+			background: linear-gradient(to bottom in oklch, rgb(7 11 18 / 0.7) 4.5rem, rgb(7 11 18 / 0) 10rem);
 		}
 	}
-	.kch-veil::after {
-		content: "";
-		position: absolute;
-		inset: 0;
-		opacity: var(--look-grain, 0.06);
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-		mix-blend-mode: overlay;
-	}
-	/* Corner brackets, and the crosshair on the lens on the stakes (where the camera looks). */
+	/* Corner brackets: the frame of the shot. */
 	.kch-frame {
 		position: absolute;
 		inset: 5.75rem 1.5rem 1.5rem;
@@ -732,19 +700,6 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	.kch-tr { right: 0; top: 0; border-right-width: 1.5px; border-top-width: 1.5px; }
 	.kch-bl { left: 0; bottom: 0; border-left-width: 1.5px; border-bottom-width: 1.5px; }
 	.kch-br { right: 0; bottom: 0; border-right-width: 1.5px; border-bottom-width: 1.5px; }
-	/* (on the whole pin, so its middle is where the camera looks: the lens, on the stakes) */
-	.kch-aim {
-		inset: 0;
-	}
-	.kch-cross {
-		position: absolute;
-		left: var(--focus-x);
-		top: 50%;
-		width: 3rem;
-		translate: -50% -50%;
-		color: var(--accent);
-		opacity: var(--w-stakes, 0);
-	}
 	.kch-hud {
 		position: absolute;
 		inset: 5.25rem 0 auto;
@@ -752,9 +707,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		justify-content: space-between;
 		gap: 1rem 2rem;
 		padding-inline: var(--left);
-		font: 500 0.78rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-		letter-spacing: 0.08em;
-		text-transform: uppercase;
+		font: 500 0.875rem/1.4 var(--font-sans);
 		color: var(--muted-foreground);
 		pointer-events: none;
 	}
@@ -848,11 +801,9 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 			right: var(--left);
 			translate: 0 0;
 			padding: 1.25rem;
-			border-radius: 1rem;
-			background: rgb(3 10 16 / 0.72);
-			-webkit-backdrop-filter: blur(8px);
-			backdrop-filter: blur(8px);
-		}		.kch:not([data-read]) #stakes .kch-stat {
+			background: rgb(7 11 18 / 0.86);
+		}
+		.kch:not([data-read]) #stakes .kch-stat {
 			font-size: clamp(4rem, 10vw, 6.5rem);
 		}
 		.kch:not([data-read]) .kch-panel {
@@ -861,19 +812,17 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		}
 	}
 
-	/* The chapter map: a dot per beat at the right edge, a tick per part-by-part stop under beat 4; each is a link. */
+	/* The chapter map: a square per beat at the right edge, a tick per part-by-part stop under beat 4; each is a link.
+	   Solid, square, the edition's yellow for where you are. */
 	.kch-map {
 		position: absolute;
 		right: max(0.75rem, env(safe-area-inset-right));
 		top: 50%;
 		z-index: 3;
 		translate: 0 -50%;
-		padding: 0.5rem 0.3rem;
-		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
-		border-radius: 999px;
-		background: color-mix(in oklab, var(--background) 60%, transparent);
-		-webkit-backdrop-filter: blur(10px);
-		backdrop-filter: blur(10px);
+		padding: 0.35rem 0.2rem;
+		background: rgb(7 11 18 / 0.72);
+		border: 1px solid var(--sheet-edge, rgb(238 241 246 / 0.12));
 	}
 	.kch-map ol {
 		display: flex;
@@ -886,22 +835,21 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.2rem;
-		padding: 0.4rem 0.35rem;
-		border-radius: 999px;
+		padding: 0.45rem 0.4rem;
 		color: var(--muted-foreground);
-		font: 600 0.68rem/1 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
 	}
 	.kch-map a:focus-visible {
 		outline: 2px solid var(--ring);
 		outline-offset: 2px;
 	}
+	.kch-map-n {
+		display: none;
+	}
 	.kch-map-dot {
-		width: 0.55rem;
-		height: 0.55rem;
-		border-radius: 50%;
+		width: 0.5rem;
+		height: 0.5rem;
 		border: 1.5px solid currentColor;
-		transition: background 0.3s, scale 0.3s;
+		transition: background-color 0.3s, border-color 0.3s;
 	}
 	.kch-map a[aria-current] {
 		color: var(--foreground);
@@ -909,41 +857,37 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	.kch-map a[aria-current] .kch-map-dot {
 		border-color: var(--accent);
 		background: var(--accent);
-		scale: 1.25;
 	}
 	.kch-ticks {
 		padding-block: 0.15rem;
 	}
 	.kch-ticks a {
-		padding: 0.22rem 0.5rem;
+		padding: 0.24rem 0.45rem;
 	}
 	.kch-ticks a::before {
 		content: "";
 		display: block;
-		width: 0.6rem;
+		width: 0.55rem;
 		height: 2px;
-		border-radius: 1px;
 		background: currentColor;
 		opacity: 0.55;
-		transition: width 0.25s, opacity 0.25s;
+		transition: scale 0.25s, opacity 0.25s;
 	}
 	.kch-ticks a[aria-current]::before {
-		width: 0.9rem;
+		scale: 1.5 1;
 		opacity: 1;
 		background: var(--accent);
 	}
 	.kch-map-title {
 		position: absolute;
-		right: calc(100% + 0.6rem);
+		right: calc(100% + 0.5rem);
 		top: 50%;
 		translate: 6px -50%;
-		padding: 0.4rem 0.65rem;
-		border-radius: 999px;
+		padding: 0.45rem 0.7rem;
 		white-space: nowrap;
-		background: color-mix(in oklab, var(--background) 86%, transparent);
-		border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+		background: var(--frc-s, #121a29);
 		color: var(--foreground);
-		font: 600 0.75rem/1 var(--font-sans, inherit);
+		font: 600 0.8125rem/1 var(--font-sans);
 		opacity: 0;
 		pointer-events: none;
 		transition: opacity 0.25s, translate 0.25s;
@@ -963,9 +907,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		gap: 0.9rem;
 		padding-bottom: 2.5rem;
 		pointer-events: none;
-		font: 500 0.8rem/1.4 ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		font: 500 0.875rem/1.4 var(--font-sans);
 		color: var(--muted-foreground);
 		transition: opacity 0.6s;
 	}
@@ -1002,12 +944,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		color: var(--foreground);
 		font-variant-numeric: tabular-nums;
 	}
-	/* After the chapter: its dark fades gradually into the page's own colour (both themes). */
-	.kch:not([data-read]) + .kch-after {
-		height: 40vh;
-		background: linear-gradient(to bottom, #030a10, color-mix(in oklab, #030a10 40%, transparent) 45%, transparent);
-		pointer-events: none;
-	}
+	/* After the chapter (the skip link's target): the edition's near-black carries straight on, nothing to fade. */
 	.kch-after:focus {
 		outline: none;
 	}
@@ -1016,7 +953,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		display: none;
 	}
 	/* ?showcase=capture: the robot alone, on a transparent background (scripts/showcase-stills.py). */
-	.kch[data-capture] :is(.kch-bg, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-panels, .kch-skip) {
+	.kch[data-capture] :is(.kch-bg, .kch-poster, .kch-veil, .kch-frame, .kch-hud, .kch-map, .kch-gate, .kch-panels, .kch-skip, .kch-caption) {
 		display: none;
 	}
 	.kch[data-capture] .kch-pin {
@@ -1041,8 +978,7 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
  }
 
 	/* ---------- The FRC page's special edition (src/pages/work/frc.astro, .frc-ed): the chapter's big words in the
-	   page's display face, its labels in plain Archivo (no monospace, no all-caps, no beat numbers). The 3D view's own HUD
-	   and chapter map are left to the showcase's rebuild (spec §8). */
+	   page's display face, its labels in plain Archivo (no monospace, no all-caps, no beat numbers). */
 	.frc-ed .kch :is(.kch-statement, .kch-stat, .kch-stat-secondary, .kch-reveal h2, .kch-panel h3) {
 		font-family: var(--frc-disp);
 		font-weight: 400;
@@ -1069,6 +1005,71 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 	}
 	.frc-ed .kch :is(.kch-panel > p:not([class]), .kch-intro, .kch-aside, .kch-stat-source, .kch-note) {
 		font-family: var(--font-sans);
+	}
+	/* The HUD names the beat in the display face; in 3D the panels' own beat labels are for screen readers only (the
+	   plain page keeps them). */
+	.frc-ed .kch-hud-count {
+		font: 400 1.5rem/1 var(--frc-disp);
+		text-transform: uppercase;
+		color: var(--frc-y);
+	}
+	.kch:not([data-read]) .kch-panel > .chapter-label {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	/* What the picture is, small, bottom right inside the frame. */
+	.kch-caption {
+		position: absolute;
+		right: calc(1.5rem + 1.75rem);
+		bottom: 1.85rem;
+		max-width: min(30rem, 60vw);
+		font-size: 0.8125rem;
+		line-height: 1.4;
+		text-align: right;
+		color: var(--muted-foreground);
+		text-wrap: pretty;
+		pointer-events: none;
+	}
+	@media (max-aspect-ratio: 6/5) {
+		.kch-caption {
+			display: none;
+		}
+	}
+	/* The edition is square: the plain page's pictures and the two-state toggle, and the 3D's part labels as the
+	   edition's yellow tags (the stage draws them, src/lib/three/stage.ts). */
+	.frc-ed .kch :is(.kch-still, .kch-state-pick, .kch-state-pick label, .kch-skip) {
+		border-radius: 0;
+	}
+	.frc-ed .kch .stage-label {
+		border: 0;
+		border-radius: 0;
+		background: var(--frc-y);
+		color: var(--frc-k);
+		box-shadow: none;
+		font-weight: 650;
+	}
+	/* The reveal's second way on: a plain link beside the edition's yellow button. */
+	.kch-actions {
+		align-items: center;
+	}
+	.kch-link {
+		font-weight: 650;
+		color: var(--foreground);
+		text-decoration: underline;
+		text-decoration-color: var(--frc-y, currentColor);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 0.3em;
+	}
+	.kch-link:hover {
+		color: var(--frc-y);
+	}
+	.kch-link:focus-visible {
+		outline: 2px solid var(--ring);
+		outline-offset: 3px;
 	}
 </style>
 
@@ -1167,41 +1168,13 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		root.addEventListener("focusin", onFocus);
 		cleanups.push(() => root.removeEventListener("focusin", onFocus));
 
-		// The backdrop follows the camera: the arena on beat 1, the field on 2, the pits on 3, then the grid alone.
-		const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-		const round = (x: number) => Math.round(x * 100) / 100;
-		const layers = {
-			arena: root.querySelector<HTMLElement>(".kch-bd-arena")!,
-			field: root.querySelector<HTMLElement>(".kch-bd-field")!,
-			pits: root.querySelector<HTMLElement>(".kch-bd-pits")!,
-		};
-		const shown: Record<string, number> = {};
-		const set = (name: string, value: number) => {
-			const v = round(value);
-			if (shown[name] === v) return;
-			shown[name] = v;
-			pin.style.setProperty(`--bd-${name}`, String(v));
-		};
-		const backdrop = (at: number) => {
-			const arena = clamp01(1 - at * 0.9);
-			const field = clamp01(1 - Math.abs(at - 1) * 1.2);
-			const pits = clamp01(1 - Math.abs(at - 2) * 1.05);
-			set("arena", arena);
-			set("field", field);
-			set("push", clamp01(at));
-			set("pits", pits);
-			set("swing", Math.max(-1, Math.min(1, at - 2)));
-			set("scrim", 0.7);
-			for (const [name, value] of [["arena", arena], ["field", field], ["pits", pits]] as const) layers[name].toggleAttribute("data-off", value <= 0.005);
-		};
-		backdrop(0);
-
-		// The words, the HUD's counter, the map and the announcement follow the camera.
+		// The words, the HUD's beat, the map and the announcement follow the camera.
 		const levels = new Float32Array(panels.length).fill(-1);
 		let shownStop = -1;
 		let lastFrame = -Infinity;
 		let announceTimer: number | undefined;
-		const beatNames = beatLinks.map((a) => `${a.querySelector(".kch-map-n")!.textContent} / ${String(beatLinks.length).padStart(2, "0")}: ${a.querySelector(".kch-map-title")!.textContent}`);
+		const beatTitles = beatLinks.map((a) => a.querySelector(".kch-map-title")!.textContent ?? "");
+		const beatNames = beatLinks.map((a, b) => `${b + 1} / ${beatLinks.length}: ${beatTitles[b]}`);
 		const onFrame = (at: number) => {
 			if (at === lastFrame) return;
 			lastFrame = at;
@@ -1213,13 +1186,11 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				panel.style.setProperty("--on", String(on));
 				panel.toggleAttribute("data-shown", on > 0.5);
 			});
-			root.style.setProperty("--w-stakes", String(Math.round(Math.max(0, 1 - Math.abs(at - 1) * 2.2) * 100) / 100));
-			backdrop(at);
 			const current = Math.max(0, Math.min(last, Math.round(at)));
 			if (current === shownStop) return;
 			shownStop = current;
 			const beat = Math.min(current, 3);
-			count.textContent = String(beat + 1).padStart(2, "0");
+			count.textContent = beatTitles[beat];
 			beatLinks.forEach((a, b) => (b === beat ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
 			tickLinks.forEach((a, k) => (k === current - 3 ? a.setAttribute("aria-current", "step") : a.removeAttribute("aria-current")));
 			window.clearTimeout(announceTimer);
@@ -1267,16 +1238,33 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 		type Hook = { go(n: number | null, variant?: string): void; capture(): string };
 		const w = window as unknown as { __showcase?: Hook };
 		let hook: Hook | undefined;
-		Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()])
+		// The robot and the field's files load only once the chapter is within two screens (at once for the stills).
+		const start = () => {
+			// Up within 120 s of starting to load, or the plain page.
+			const slow = window.setTimeout(() => {
+				if (!root.hasAttribute("data-live")) toRead("not up within 120 s");
+			}, 120000);
+			cleanups.push(() => clearTimeout(slow));
+			return Promise.all([import("@/lib/three/stage"), import("@/lib/three/models/frc-chapter"), afterIntro()]);
+		};
+		const near = new Promise<Awaited<ReturnType<typeof start>>>((resolve, reject) => {
+			if (capture) return start().then(resolve, reject);
+			const io = new IntersectionObserver(
+				(entries) => {
+					if (!entries.some((e) => e.isIntersecting)) return;
+					io.disconnect();
+					start().then(resolve, reject);
+				},
+				{ rootMargin: "200% 0px" },
+			);
+			io.observe(root);
+			cleanups.push(() => io.disconnect());
+		});
+		near
 			.then(async ([stageModule, chapterModule]) => {
 				if (cancelled || root.hasAttribute("data-read")) return;
 				if (chapterModule.STOPS.join() !== stops.join()) console.warn("KitBot chapter: the page's stops and the camera's differ.", stops, chapterModule.STOPS);
-				const look = chapterModule.LOOK;
-				pin.style.setProperty("--look-glow", String(look.glow));
-				pin.style.setProperty("--look-vignette", String(look.vignette));
-				pin.style.setProperty("--look-grain", String(look.grain));
-				for (const [name, value] of Object.entries(look.backdrop)) pin.style.setProperty(`--look-${name}`, String(value));
-				backdrop(position());
+				pin.style.setProperty("--look-scrim", String(chapterModule.LOOK.scrim));
 				dispose = await stageModule.mountStage(
 					stage,
 					canvas,
@@ -1297,9 +1285,6 @@ const hardwareSources: Record<string, { label: string; href: string }> = {
 				}
 				root.setAttribute("data-live", "");
 				closeGate();
-				pin.setAttribute("data-images", "first");
-				const more = window.setTimeout(() => pin.setAttribute("data-images", "all"), 1200);
-				cleanups.push(() => clearTimeout(more));
 				// A link to a stop (/work/frc/#intake) lands on it, on arrival and when the address changes to one.
 				const toHash = () => {
 					const hashed = stops.indexOf(decodeURIComponent(location.hash.slice(1)));
