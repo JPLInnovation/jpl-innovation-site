@@ -120,10 +120,20 @@ export const awakeMinutes = (m: Machine, until: number) => m.awake.reduce((n, s)
 export const awakeHours = (m: Machine, until: number) => awakeMinutes(m, until) / 60;
 
 /** The first minute an approved new computer is awake with the server up: its first report. */
+const firsts = new WeakMap<Machine, number>();
 function firstReport(m: Machine) {
 	if (m.approved === undefined) return -Infinity;
-	for (let t = m.approved; t < FULL_DAY; t++) if (awakeAt(m, t) && serverUp(t)) return t;
-	return Infinity;
+	let first = firsts.get(m);
+	if (first === undefined) {
+		first = Infinity;
+		for (let t = m.approved; t < FULL_DAY; t++)
+			if (awakeAt(m, t) && serverUp(t)) {
+				first = t;
+				break;
+			}
+		firsts.set(m, first);
+	}
+	return first;
 }
 
 /** What the server records for computer `m` at minute `t` (null: not in the fleet yet). */

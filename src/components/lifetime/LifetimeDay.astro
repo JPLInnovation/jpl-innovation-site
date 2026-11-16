@@ -1,0 +1,2011 @@
+---
+/**
+ * The Lifetime page's live thing: the product itself, in HTML. One simulated school day (src/lib/look/lifetime-day.ts)
+ * runs as the page scrolls: a plan of the lab whose screens light up as the computers wake, and a Lifetime Server
+ * window, faithful to the real one (its Glass and Classic styles, its dark and light themes, its two languages), that
+ * counts along. Mid-day the server goes down: the window freezes, the computers keep counting, and when the server is
+ * back their time arrives and the gap stays Unknown.
+ *
+ * Reduced motion: no pinning, the end of the day, still (the slider still moves through the day by hand).
+ * Paused off screen. Words: src/text/projects/lifetime.ts.
+ */
+import { Clock, Hourglass, Monitor, MonitorOff, Moon, Sun } from "lucide-react";
+import { DAY, MACHINES, OUTAGES } from "@/lib/look/lifetime-day";
+import { lifetimePage, lifetimeUi } from "@/text/projects/lifetime";
+import {
+	GAUGE_TICKS,
+	STATUSES,
+	beats,
+	chipGlyph,
+	clock,
+	compareHtml,
+	coverScale,
+	defaultPick,
+	duration,
+	eventsHtml,
+	fill,
+	listed,
+	rowHtml,
+	top,
+	view,
+	weekEnd,
+} from "./day-view";
+
+const text = lifetimePage.demo;
+const ui = lifetimeUi.en;
+const v = view(DAY.end); // the end of the day: what reduced motion and no script show
+const PAGE = 6;
+const rows = listed(v, null).slice(0, PAGE);
+const pick = defaultPick;
+const compare = compareHtml(MACHINES[pick]);
+const span = DAY.end - DAY.start;
+
+// The plan: three rows of seven desks facing the whiteboard, the teacher's desk front left, the server cabinet front
+// right, the door bottom right. Lab computers fill the desks in order; LAB-21 (the new one) takes the last desk.
+const desks = MACHINES.map((m, i) => {
+	if (m.group === "teacher") return { i, x: 26, y: 42, teacher: true };
+	const seat = m.name === "LAB-21" ? 20 : Number(m.name.slice(4)) - 1;
+	return { i, x: 24 + (seat % 7) * 54, y: 112 + Math.floor(seat / 7) * 62, teacher: false };
+});
+const deskLabel = (i: number) => `${MACHINES[i].name}, ${v.present[i] ? (v.awake[i] ? text.plan.awake : text.plan.asleep) : text.plan.empty}`;
+
+// The gauge: the product's half ring of 31 ticks.
+const ticks = Array.from({ length: GAUGE_TICKS }, (_, i) => {
+	const a = Math.PI * (1 - i / (GAUGE_TICKS - 1));
+	const [cx, cy, outer, inner] = [120, 124, 104, 82];
+	return { x1: cx + inner * Math.cos(a), y1: cy - inner * Math.sin(a), x2: cx + outer * Math.cos(a), y2: cy - outer * Math.sin(a) };
+});
+const axis = [4, 3, 2, 1, 0].map((k) => `${(top * k) / 4} h`);
+const [queuedBefore, queuedAfter] = text.queued.split("{queued}");
+const ending = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en"), count: v.fleet.total });
+---
+
+<section class="ltd" aria-labelledby="ltd-heading" data-ltd>
+	<div class="wrapper ltd-head">
+		<h2 id="ltd-heading" class="ltd-h2">{text.heading}</h2>
+		<p class="ltd-intro">{text.intro}</p>
+	</div>
+
+	<div class="ltd-track" data-track>
+		<div class="ltd-stage" data-stage>
+			<div class="ltd-fit" data-fit>
+				<p class="ltd-clock" aria-hidden="true"><span data-clock>{clock(DAY.end)}</span></p>
+
+				<div class="ltd-beats">
+					{
+						beats.map((b, i) => (
+							<p class:list={["ltd-beat", { "is-on": i === v.beat }]} data-beat={i} aria-hidden={i === v.beat ? undefined : "true"}>
+								{i === beats.length - 1 ? ending : b.text}
+							</p>
+						))
+					}
+					<p class="ltd-queued" data-queued>{queuedBefore}<b data-queued-value></b>{queuedAfter}</p>
+				</div>
+
+				<div class="ltd-plan-wrap">
+					<svg class="ltd-plan" viewBox="0 0 420 300" role="radiogroup" aria-label={text.plan.label} data-plan>
+						<g class="ltd-walls" aria-hidden="true">
+							<path d="M6 6H414V294H392M352 294H6Z" />
+							<path class="ltd-thin" d="M352 294A40 40 0 0 1 392 254V294" />
+							<path class="ltd-board" d="M130 12H290" />
+						</g>
+						<path class="ltd-cable" aria-hidden="true" d="M376 64V100M376 100H404V250M404 100V100M404 158H396M404 220H396" />
+						<g class="ltd-server" aria-hidden="true" data-server>
+							<rect x="356" y="22" width="40" height="42" rx="3" />
+							<path class="ltd-thin" d="M362 34H390M362 44H390M362 54H390" />
+							<circle class="ltd-led" cx="386" cy="29" r="3.5" />
+							<text x="346" y="44" text-anchor="end" class="ltd-label" data-server-label>{text.plan.server}</text>
+						</g>
+						<text x="26" y="34" class="ltd-label" aria-hidden="true">{text.plan.teacher}</text>
+						{
+							desks.map((d) => (
+								<g
+									class:list={["ltd-desk", { "is-on": v.awake[d.i], "is-absent": !v.present[d.i], "is-picked": d.i === pick }]}
+									transform={`translate(${d.x} ${d.y})`}
+									role="radio"
+									aria-checked={d.i === pick ? "true" : "false"}
+									aria-label={deskLabel(d.i)}
+									tabindex={d.i === pick ? "0" : "-1"}
+									data-desk={d.i}
+								>
+									<rect class="ltd-ring" x="-5" y="-7" width="54" height="52" rx="7" />
+									<path class="ltd-glow" d="M8 5H36L42 26H2Z" />
+									<rect class="ltd-top" x="0" y="0" width="44" height="26" rx="2" />
+									<rect class="ltd-screen" x="9" y="2" width="26" height="4.5" rx="1.5" />
+									<path class="ltd-chair" d="M12 32Q22 40 32 32" />
+								</g>
+							))
+						}
+					</svg>
+				</div>
+
+				<div class="ltd-compare">
+					<p class="sr-only" data-compare-sr></p>
+					<div class="ltd-compare-row" aria-hidden="true">
+						<span class="ltd-compare-label" data-own-label>{fill(text.compare.computer, { name: MACHINES[pick].name })}</span>
+						<span class="ltd-strip" data-own><span data-own-segs set:html={compare.own} /><i class="ltd-cover" data-own-cover></i></span>
+					</div>
+					<div class="ltd-compare-row" aria-hidden="true">
+						<span class="ltd-compare-label">{text.compare.server}</span>
+						<span class="ltd-strip" data-seen><span data-seen-segs set:html={compare.seen} /><i class="ltd-cover" data-seen-cover></i></span>
+					</div>
+					<div class="ltd-compare-row" aria-hidden="true">
+						<span></span>
+						<span class="ltd-hours"><span>06:00</span><span>12:00</span><span>18:00</span></span>
+					</div>
+					<p class="ltd-legend" aria-hidden="true">
+						<span><i class="is-awake"></i>{text.compare.awake}</span>
+						<span><i class="is-online"></i>{text.compare.online}</span>
+						<span><i class="is-unknown"></i>{text.compare.unknown}</span>
+					</p>
+				</div>
+
+				<div class="ltd-controls">
+					<label class="ltd-time">
+						<span>{text.controls.time}</span>
+						<input type="range" min={DAY.start} max={DAY.end} step="5" value={DAY.end} aria-valuetext={clock(DAY.end)} data-time />
+					</label>
+					<div class="ltd-switches">
+						<div class="ltd-seg" role="group" aria-label={text.controls.style}>
+							<button type="button" aria-pressed="true" data-set-style="glass">{text.controls.glass}</button>
+							<button type="button" aria-pressed="false" data-set-style="classic">{text.controls.classic}</button>
+						</div>
+						<div class="ltd-seg" role="group" aria-label={text.controls.theme}>
+							<button type="button" aria-pressed="true" data-set-theme="dark">{text.controls.dark}</button>
+							<button type="button" aria-pressed="false" data-set-theme="light">{text.controls.light}</button>
+						</div>
+					</div>
+				</div>
+				<p class="ltd-caption">{text.caption}</p>
+
+				<div class="ltd-appwrap">
+					<div class="lt-app" data-app data-style="glass" data-theme="dark" role="region" aria-label={text.windowLabel} lang="en">
+						<div class="lt-top">
+							<span class="lt-logo" aria-hidden="true">
+								<svg viewBox="0 0 1280 1280">
+									<rect x="22" y="22" width="1236" height="1236" rx="245" fill="#071038" stroke="#3a5592" stroke-width="8"></rect>
+									<path d="M1052.1 506.2A429.5 429.5 0 1 1 740.4 227" fill="none" stroke="#f2eedf" stroke-width="67"></path>
+									<circle cx="802.5" cy="262.5" r="47" fill="#f5d042"></circle>
+									<path fill="#f2eedf" d="M324 589h192v101H324zM516 627h39v26h-39zM555 551h166v176H555zM721 627h41v26h-41zM762 589h189v101H762z"></path>
+								</svg>
+							</span>
+							<span class="lt-name">
+								<span class="lt-appname" data-t="app">{ui.app}</span>
+								<span class="lt-sub" data-t="where">{ui.where}</span>
+							</span>
+							<span class="lt-nav" aria-hidden="true">
+								{ui.nav.map((n, i) => <span class:list={["lt-nav-item", { "is-on": i === 0 }]} data-t={`nav.${i}`}>{n}</span>)}
+							</span>
+							<span class="lt-tools">
+								<button type="button" class="lt-btn lt-round" data-lang aria-label="English. Tiếng Việt">EN</button>
+								<button type="button" class="lt-btn lt-round lt-themebtn" data-app-theme aria-label={`${text.controls.theme}: ${text.controls.dark}`}>
+									<Moon className="lt-ti lt-ti-moon" strokeWidth={2} aria-hidden="true" />
+									<Sun className="lt-ti lt-ti-sun" strokeWidth={2} aria-hidden="true" />
+								</button>
+								<span class="lt-status">
+									<i class="lt-dot is-online" data-run-dot></i>
+									<span class="lt-status-words">
+										<span class="lt-run" data-run>{ui.running}</span>
+										<span class="lt-sub" data-updated>{fill(ui.updated, { time: clock(v.fleet.updated) })}</span>
+									</span>
+								</span>
+								<span class="lt-btn lt-refresh" aria-hidden="true" data-t="refresh">{ui.refresh}</span>
+							</span>
+						</div>
+
+						<div class="lt-body" data-body>
+							<div class="lt-titlerow">
+								<p class="lt-title">
+									<span data-t="title">{ui.title}</span>
+									<small data-t="today">{ui.today}</small>
+								</p>
+								<span class="lt-actions" aria-hidden="true">
+									<span class="lt-btn" data-t="exportReport">{ui.exportReport}</span>
+									<span class="lt-btn lt-primary" data-t="addDevice">{ui.addDevice}</span>
+								</span>
+							</div>
+
+							<div class="lt-grid">
+								<div class="lt-strip">
+									<span class="lt-strip-bar" aria-hidden="true">
+										{STATUSES.map((s) => <i class={`is-${s}`} data-seg={s} />)}
+									</span>
+									<span class="lt-chips" role="group" aria-label={fill(ui.gaugeNote, { connected: v.fleet.online, total: v.enrolled })} data-chips>
+										{
+											STATUSES.map((s) => (
+												<button type="button" class={`lt-chip lt-chip-btn is-${s}`} data-filter={s} aria-pressed="false">
+													<Fragment set:html={chipGlyph(s)} />
+													<span><b data-num={s}>{v.fleet[s]}</b> <span data-t={`states.${s}`}>{ui.states[s]}</span></span>
+												</button>
+											))
+										}
+									</span>
+								</div>
+
+								<div class="lt-card lt-kpi" style="grid-area: k1">
+									<Monitor className="lt-kpi-icon" strokeWidth={1.5} aria-hidden="true" />
+									<span class="lt-kpi-value" data-kpi="online">{v.fleet.online}</span>
+									<span class="lt-kpi-label" data-t="connected">{ui.connected}</span>
+									<span class="lt-kpi-note" data-kpi-note="enrolled">{fill(ui.ofComputers, { count: v.enrolled })}</span>
+								</div>
+								<div class:list={["lt-card lt-kpi", { "is-alert": v.fleet.offline > 0 }]} style="grid-area: k2" data-kpi-card="offline">
+									<MonitorOff className="lt-kpi-icon" strokeWidth={1.5} aria-hidden="true" />
+									<span class="lt-kpi-value" data-kpi="offline">{v.fleet.offline}</span>
+									<span class="lt-kpi-label" data-t="offline">{ui.offline}</span>
+									<span class="lt-kpi-note" data-t="notHeard">{ui.notHeard}</span>
+								</div>
+								<div class="lt-card lt-kpi" style="grid-area: k3">
+									<Clock className="lt-kpi-icon" strokeWidth={1.5} aria-hidden="true" />
+									<span class="lt-kpi-value" data-kpi="awake">{duration(v.awakeToday, "en")}</span>
+									<span class="lt-kpi-label" data-t="awakeToday">{ui.awakeToday}</span>
+									<span class="lt-kpi-note" data-kpi-note="reporting">{fill(ui.reporting, { count: v.reporting })}</span>
+								</div>
+								<div class:list={["lt-card lt-kpi", { "is-alert": v.fleet.pending > 0 }]} style="grid-area: k4" data-kpi-card="pending">
+									<Hourglass className="lt-kpi-icon" strokeWidth={1.5} aria-hidden="true" />
+									<span class="lt-review" aria-hidden="true" data-t="review">{ui.review}</span>
+									<span class="lt-kpi-value" data-kpi="pending">{v.fleet.pending}</span>
+									<span class="lt-kpi-label" data-t="pending">{ui.pending}</span>
+									<span class="lt-kpi-note" data-t="reviewRequired">{ui.reviewRequired}</span>
+								</div>
+
+								<div class="lt-card lt-gauge">
+									<p class="lt-card-title" data-t="onlineNow">{ui.onlineNow}</p>
+									<svg class="lt-gauge-svg" viewBox="0 0 240 132" aria-hidden="true">
+										{
+											ticks.map((t, i) => (
+												<line class:list={{ "is-lit": i < v.lit }} x1={t.x1.toFixed(1)} y1={t.y1.toFixed(1)} x2={t.x2.toFixed(1)} y2={t.y2.toFixed(1)} data-tick />
+											))
+										}
+										<text x="120" y="120" text-anchor="middle" class="lt-gauge-num" data-gauge-num>{v.fleet.online}</text>
+									</svg>
+									<p class="lt-gauge-note" data-gauge-note>{fill(ui.gaugeNote, { connected: v.fleet.online, total: v.enrolled })}</p>
+								</div>
+
+								<div class="lt-card lt-chart">
+									<div class="lt-card-head">
+										<p class="lt-card-title" data-t="daily">{ui.daily}</p>
+										<span class="lt-select" aria-hidden="true"><span data-t="last7">{ui.last7}</span></span>
+									</div>
+									<div class="lt-plot" aria-hidden="true">
+										<span class="lt-axis">{axis.map((a) => <span>{a}</span>)}</span>
+										<span class="lt-bars">
+											{
+												weekEnd.map((h, i) => (
+													<span class="lt-col">
+														<span class="lt-barbox">
+															{h === null ? (
+																<i class="lt-missing" />
+															) : (
+																<i
+																	class:list={["lt-bar", { "is-today": i === 6 }]}
+																	style={`transform: scaleY(${((i === 6 ? v.today : h) / top).toFixed(4)})`}
+																	data-today={i === 6 ? "" : undefined}
+																/>
+															)}
+														</span>
+														<span class="lt-day" data-t={`days.${i}`}>{ui.days[i]}</span>
+													</span>
+												))
+											}
+										</span>
+									</div>
+									<p class="lt-note" data-t="dailyNote">{ui.dailyNote}</p>
+								</div>
+
+								<div class="lt-card lt-details" data-details>
+									<p class="lt-card-title" data-t="details">{ui.details}</p>
+									<p class="lt-det-name" data-det-name>{MACHINES[pick].name}</p>
+									<p class="lt-sub" data-det-line></p>
+									<p class="lt-det-value" data-det-value></p>
+									<p class="lt-sub" data-t="awakeToday">{ui.awakeToday}</p>
+									<span class="lt-btn lt-open" aria-hidden="true" data-t="openDevice">{ui.openDevice}</span>
+								</div>
+
+								<div class="lt-card lt-devices">
+									<div class="lt-card-head">
+										<p class="lt-card-title" data-t="devices">{ui.devices}</p>
+										<span class="lt-search" aria-hidden="true" data-t="search">{ui.search}</span>
+										<span class="lt-select" aria-hidden="true"><span data-t="allGroups">{ui.allGroups}</span></span>
+									</div>
+									<p class="lt-row lt-head" aria-hidden="true">
+										<span class="lt-cell lt-name" data-t="columns.device">{ui.columns.device}</span>
+										<span class="lt-cell lt-group" data-t="columns.group">{ui.columns.group}</span>
+										<span class="lt-cell lt-state" data-t="columns.status">{ui.columns.status}</span>
+										<span class="lt-cell lt-awake" data-t="columns.awake">{ui.columns.awake}</span>
+										<span class="lt-cell lt-when"><span data-t="columns.timeline">{ui.columns.timeline}</span></span>
+									</p>
+									<ol class="lt-rows" data-rows style={`--cover: ${coverScale(v).toFixed(4)}`} set:html={rows.map((i) => rowHtml(i, v, "en", i === pick)).join("")} />
+									<div class="lt-pager">
+										<span class="lt-sub" data-showing>{fill(ui.showing, { start: 1, end: rows.length, total: v.fleet.total })}</span>
+										<button type="button" class="lt-btn" data-prev data-t="previous" disabled>{ui.previous}</button>
+										<span class="lt-btn lt-pagenum" data-page>1</span>
+										<button type="button" class="lt-btn" data-next data-t="next">{ui.next}</button>
+									</div>
+								</div>
+
+								<div class="lt-card lt-events">
+									<p class="lt-card-title" data-t="events">{ui.events}</p>
+									<ol class="lt-evlist" data-events set:html={eventsHtml(v, "en")} />
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	import { DAY, MACHINES, OUTAGES, type Status } from "@/lib/look/lifetime-day";
+	import { lifetimePage, lifetimeUi } from "@/text/projects/lifetime";
+	import {
+		beats,
+		clock,
+		compareHtml,
+		coverScale,
+		defaultPick,
+		duration,
+		eventsHtml,
+		fill,
+		listed,
+		rowHtml,
+		rowValues,
+		top,
+		view,
+		type Lang,
+		type View,
+	} from "@/components/lifetime/day-view";
+
+	const text = lifetimePage.demo;
+	let teardown: (() => void) | null = null;
+
+	function init() {
+		teardown?.();
+		teardown = null;
+		const root = document.querySelector<HTMLElement>("[data-ltd]");
+		if (!root) return;
+		const $ = <T extends Element = HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
+		const $$ = <T extends Element = HTMLElement>(sel: string) => [...root.querySelectorAll<T>(sel)];
+		const html = document.documentElement;
+		const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches || html.classList.contains("reduce-motion");
+
+		const track = $("[data-track]");
+		const stage = $("[data-stage]");
+		const fit = $("[data-fit]");
+		const app = $("[data-app]");
+		const slider = $<HTMLInputElement>("[data-time]");
+		const rowsEl = $("[data-rows]");
+		const desks = $$<SVGGElement>("[data-desk]");
+		const ticks = $$<SVGLineElement>("[data-tick]");
+		const beatEls = $$("[data-beat]");
+		const span = DAY.end - DAY.start;
+		const outage = OUTAGES[0];
+
+		// The window starts in the site's theme; its own switches take over from there.
+		let lang: Lang = "en";
+		let filter: Status | null = null;
+		let page = 0;
+		let pick = defaultPick;
+		let pageSize = 6;
+		let listedKey = "";
+		let last = -1;
+		let v: View = view(DAY.end);
+
+		const setTheme = (theme: "dark" | "light") => {
+			app.dataset.theme = theme;
+			$$("[data-set-theme]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.setTheme === theme)));
+			$("[data-app-theme]").setAttribute("aria-label", `${text.controls.theme}: ${theme === "dark" ? text.controls.dark : text.controls.light}`);
+		};
+		const setStyle = (style: "glass" | "classic") => {
+			app.dataset.style = style;
+			$$("[data-set-style]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.setStyle === style)));
+		};
+		setTheme(html.classList.contains("dark") ? "dark" : "light");
+
+		/** Words in the window's language, by key ("states.online", "nav.0"). */
+		const word = (key: string) => key.split(".").reduce<any>((o, k) => o?.[k], lifetimeUi[lang]) as string;
+
+		function renderRows() {
+			const ids = listed(v, filter);
+			const pages = Math.max(1, Math.ceil(ids.length / pageSize));
+			page = Math.min(page, pages - 1);
+			const shown = ids.slice(page * pageSize, page * pageSize + pageSize);
+			const focused = (document.activeElement as HTMLElement | null)?.dataset?.pick;
+			rowsEl.innerHTML = shown.map((i) => rowHtml(i, v, lang, i === pick)).join("");
+			if (focused !== undefined) rowsEl.querySelector<HTMLElement>(`[data-pick="${focused}"]`)?.focus({ preventScroll: true });
+			listedKey = `${ids.join(",")}|${page}|${pageSize}|${lang}`;
+			$("[data-showing]").textContent = fill(word("showing"), {
+				start: shown.length ? page * pageSize + 1 : 0,
+				end: page * pageSize + shown.length,
+				total: ids.length,
+			});
+			$("[data-page]").textContent = String(page + 1);
+			$<HTMLButtonElement>("[data-prev]").disabled = page === 0;
+			$<HTMLButtonElement>("[data-next]").disabled = page >= pages - 1;
+		}
+
+		function renderPick() {
+			const m = MACHINES[pick];
+			const c = compareHtml(m);
+			$("[data-own-segs]").innerHTML = c.own;
+			$("[data-seen-segs]").innerHTML = c.seen;
+			$("[data-own-label]").textContent = fill(text.compare.computer, { name: m.name });
+			$("[data-det-name]").textContent = m.name;
+			desks.forEach((d) => {
+				const on = Number(d.dataset.desk) === pick;
+				d.classList.toggle("is-picked", on);
+				d.setAttribute("aria-checked", String(on));
+				d.setAttribute("tabindex", on ? "0" : "-1");
+			});
+			rowsEl.querySelectorAll<HTMLElement>("[data-pick]").forEach((b) => {
+				const on = Number(b.dataset.pick) === pick;
+				b.setAttribute("aria-pressed", String(on));
+				b.parentElement!.classList.toggle("is-selected", on);
+			});
+		}
+
+		/** Everything that follows the minute. Writes only; nothing here reads layout. */
+		let renders = 0;
+		function render(t: number, force = false) {
+			if (t === last && !force) return;
+			last = t;
+			renders++;
+			v = view(t);
+			const f = v.fleet;
+			$("[data-clock]").textContent = clock(t);
+			if (!sliding) {
+				slider.value = String(t);
+				slider.setAttribute("aria-valuetext", clock(t));
+			}
+			beatEls.forEach((el, i) => {
+				el.classList.toggle("is-on", i === v.beat);
+				if (i === v.beat) el.removeAttribute("aria-hidden");
+				else el.setAttribute("aria-hidden", "true");
+			});
+			beatEls.at(-1)!.textContent = fill(text.beats.at(-1)!.text, { hours: duration(v.awakeToday, "en"), count: f.total });
+			const q = $("[data-queued]");
+			q.classList.toggle("is-on", v.queued > 0 && v.beat >= 3 && v.beat <= 6);
+			$("[data-queued-value]").textContent = duration(v.queued, "en");
+
+			// the plan
+			desks.forEach((d) => {
+				const i = Number(d.dataset.desk);
+				d.classList.toggle("is-on", v.awake[i] && v.present[i]);
+				d.classList.toggle("is-absent", !v.present[i]);
+				d.setAttribute("aria-label", `${MACHINES[i].name}, ${v.present[i] ? (v.awake[i] ? text.plan.awake : text.plan.asleep) : text.plan.empty}`);
+			});
+			$("[data-server]").classList.toggle("is-down", !v.live);
+			$("[data-server-label]").textContent = v.live ? text.plan.server : text.plan.serverOff;
+			$("[data-own-cover]").style.transform = `scaleX(${1 - (t + 1 - DAY.start) / span})`;
+			$("[data-seen-cover]").style.transform = `scaleX(${Math.max(0, 1 - (f.updated + 1 - DAY.start) / span)})`;
+			const m = MACHINES[pick];
+			const own = v.known[pick];
+			$("[data-compare-sr]").textContent = `${m.name}: ${duration(own, "en")} ${text.compare.awake.toLowerCase()}.`;
+
+			// the window
+			app.classList.toggle("is-stopped", !v.live);
+			$("[data-run]").textContent = word(v.live ? "running" : "stopped");
+			$("[data-run-dot]").className = `lt-dot ${v.live ? "is-online" : "is-down"}`;
+			$("[data-updated]").textContent = fill(word("updated"), { time: clock(f.updated) });
+			let offset = 0;
+			for (const s of ["online", "offline", "noreport", "pending"] as Status[]) {
+				const share = f.total ? f[s] / f.total : 0;
+				$(`[data-seg="${s}"]`).style.transform = `translateX(${offset * 100}%) scaleX(${share})`;
+				offset += share;
+				$(`[data-num="${s}"]`).textContent = String(f[s]);
+				$(`[data-filter="${s}"]`).classList.toggle("is-empty", f[s] === 0);
+			}
+			$("[data-chips]").setAttribute("aria-label", fill(word("gaugeNote"), { connected: f.online, total: v.enrolled }));
+			$('[data-kpi="online"]').textContent = String(f.online);
+			$('[data-kpi-note="enrolled"]').textContent = fill(word("ofComputers"), { count: v.enrolled });
+			$('[data-kpi="offline"]').textContent = String(f.offline);
+			$('[data-kpi-card="offline"]').classList.toggle("is-alert", f.offline > 0);
+			$('[data-kpi="awake"]').textContent = v.awakeToday ? duration(v.awakeToday, lang) : word("notAvailable");
+			$('[data-kpi-note="reporting"]').textContent = fill(word("reporting"), { count: v.reporting });
+			$('[data-kpi="pending"]').textContent = String(f.pending);
+			$('[data-kpi-card="pending"]').classList.toggle("is-alert", f.pending > 0);
+			ticks.forEach((tick, i) => tick.classList.toggle("is-lit", i < v.lit));
+			$("[data-gauge-num]").textContent = String(f.online);
+			$("[data-gauge-note]").textContent = fill(word("gaugeNote"), { connected: f.online, total: v.enrolled });
+			$("[data-today]").style.transform = `scaleY(${(v.today / top).toFixed(4)})`;
+			rowsEl.style.setProperty("--cover", coverScale(v).toFixed(4));
+
+			const ids = listed(v, filter);
+			const pages = Math.max(1, Math.ceil(ids.length / pageSize));
+			if (`${ids.join(",")}|${Math.min(page, pages - 1)}|${pageSize}|${lang}` !== listedKey) renderRows();
+			else
+				rowsEl.querySelectorAll<HTMLElement>("[data-row]").forEach((row) => {
+					const values = rowValues(Number(row.dataset.row), v, lang);
+					const chip = row.querySelector<HTMLElement>("[data-chip]")!;
+					if (chip.dataset.state !== values.state) {
+						chip.innerHTML = values.chip;
+						chip.dataset.state = values.state;
+					}
+					row.querySelector("[data-awake]")!.textContent = values.awake;
+				});
+			const ps = v.states[pick] as Status | null;
+			$("[data-det-line]").textContent = `${word(`groups.${m.group}`)} · ${ps ? word(`rowStatus.${ps}`) : word("notAvailable")}`;
+			$("[data-det-value]").textContent = own ? duration(own, lang) : word("notAvailable");
+			$("[data-events]").innerHTML = eventsHtml(v, lang);
+		}
+
+		function relabel() {
+			app.setAttribute("lang", lang);
+			$$("[data-t]").forEach((el) => {
+				const w = word(el.dataset.t!);
+				if (typeof w === "string") el.textContent = w;
+			});
+			$("[data-lang]").textContent = lifetimeUi[lang].lang;
+			listedKey = "";
+			render(last, true);
+		}
+
+		// ----- the scroll runs the day -----
+		let trackTop = 0; // the scroll position where the stage pins
+		let runway = 1;
+		let target = DAY.end;
+		let shown = DAY.end;
+		let visible = false;
+		let frame = 0;
+		let then = 0;
+		let sliding = false;
+		let slideTimer = 0;
+		const pinned = () => !reduced();
+
+		function measure() {
+			root.classList.toggle("is-still", !pinned());
+			const header = document.querySelector<HTMLElement>("[data-site-header]");
+			const headerHeight = header ? header.offsetHeight : 64;
+			root.style.setProperty("--ltd-top", `${headerHeight}px`);
+			trackTop = track.getBoundingClientRect().top + scrollY - headerHeight;
+			runway = Math.max(1, track.offsetHeight - stage.offsetHeight);
+			// the whole stage fits the screen: scaled down a little on short screens rather than cut off
+			const pad = getComputedStyle(stage);
+			const available = stage.clientHeight - parseFloat(pad.paddingTop) - parseFloat(pad.paddingBottom);
+			const natural = fit.offsetHeight;
+			fit.style.setProperty("--fit", pinned() && natural > available ? String(Math.max(0.6, available / natural)) : "1");
+			const compact = app.clientWidth < 560;
+			const size = compact ? 4 : 6;
+			if (size !== pageSize) {
+				pageSize = size;
+				page = 0;
+				listedKey = "";
+			}
+		}
+		const fromScroll = () => DAY.start + Math.min(1, Math.max(0, (scrollY - trackTop) / runway)) * span;
+
+		function tick(now: number) {
+			frame = 0;
+			const dt = Math.min(0.1, (now - (then || now)) / 1000);
+			then = now;
+			shown += (target - shown) * (1 - Math.exp(-dt / 0.09));
+			if (Math.abs(target - shown) < 0.4) shown = target;
+			render(Math.round(shown));
+			if (shown !== target && visible) frame = requestAnimationFrame(tick);
+			else then = 0;
+		}
+		const wake = () => {
+			if (!frame && visible) frame = requestAnimationFrame(tick);
+		};
+		const onScroll = () => {
+			if (!visible || !pinned()) return;
+			target = fromScroll();
+			wake();
+		};
+
+		const observer = new IntersectionObserver(([entry]) => {
+			visible = entry.isIntersecting;
+			if (visible) onScroll();
+			else if (frame) {
+				cancelAnimationFrame(frame);
+				frame = 0;
+				then = 0;
+			}
+		});
+		observer.observe(track);
+
+		// ----- controls -----
+		const onInput = () => {
+			const t = Number(slider.value);
+			slider.setAttribute("aria-valuetext", clock(t));
+			if (pinned()) {
+				sliding = true;
+				clearTimeout(slideTimer);
+				slideTimer = window.setTimeout(() => (sliding = false), 400);
+				scrollTo({ top: trackTop + ((t - DAY.start) / span) * runway, behavior: "instant" });
+			} else {
+				target = shown = t;
+				render(t);
+			}
+		};
+		slider.addEventListener("input", onInput);
+
+		const onClick = (e: Event) => {
+			const el = (e.target as Element).closest<HTMLElement>("[data-set-style],[data-set-theme],[data-app-theme],[data-lang],[data-filter],[data-pick],[data-prev],[data-next],[data-desk]");
+			if (!el) return;
+			if (el.dataset.setStyle) setStyle(el.dataset.setStyle as "glass" | "classic");
+			else if (el.dataset.setTheme) setTheme(el.dataset.setTheme as "dark" | "light");
+			else if (el.hasAttribute("data-app-theme")) setTheme(app.dataset.theme === "dark" ? "light" : "dark");
+			else if (el.hasAttribute("data-lang")) {
+				lang = lang === "en" ? "vi" : "en";
+				relabel();
+			} else if (el.dataset.filter) {
+				const s = el.dataset.filter as Status;
+				filter = filter === s ? null : s;
+				page = 0;
+				$$("[data-filter]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === filter)));
+				listedKey = "";
+				render(last, true);
+			} else if (el.hasAttribute("data-prev") || el.hasAttribute("data-next")) {
+				page += el.hasAttribute("data-next") ? 1 : -1;
+				listedKey = "";
+				render(last, true);
+			} else {
+				const i = Number(el.dataset.pick ?? el.dataset.desk);
+				if (MACHINES[i] && (el.dataset.pick !== undefined || !el.classList.contains("is-absent"))) {
+					pick = i;
+					renderPick();
+					render(last, true);
+				}
+			}
+		};
+		root.addEventListener("click", onClick);
+
+		// The plan is one stop for the keyboard: the arrow keys move between desks (a radio group).
+		const onKey = (e: KeyboardEvent) => {
+			const desk = (e.target as Element).closest<SVGGElement>("[data-desk]");
+			if (!desk) return;
+			const order = desks.filter((d) => !d.classList.contains("is-absent"));
+			const at = order.indexOf(desk);
+			const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+			if (e.key === " " || e.key === "Enter") {
+				e.preventDefault();
+				desk.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+				return;
+			}
+			if (!step) return;
+			e.preventDefault();
+			const next = order[(at + step + order.length) % order.length];
+			pick = Number(next.dataset.desk);
+			renderPick();
+			render(last, true);
+			next.focus();
+		};
+		root.addEventListener("keydown", onKey);
+
+		const resize = () => {
+			measure();
+			if (pinned()) target = shown = fromScroll();
+			listedKey = "";
+			render(Math.round(shown), true);
+		};
+		const ro = new ResizeObserver(() => {
+			const before = fit.style.getPropertyValue("--fit");
+			measure();
+			if (fit.style.getPropertyValue("--fit") !== before) render(last, true);
+		});
+		ro.observe(fit);
+		addEventListener("scroll", onScroll, { passive: true });
+		addEventListener("resize", resize);
+		const motionQuery = matchMedia("(prefers-reduced-motion: reduce)");
+		motionQuery.addEventListener("change", resize);
+		document.fonts?.ready.then(resize);
+
+		renderPick();
+		resize();
+		if (!pinned()) render(DAY.end, true);
+
+		// for the page checks (scripts/check-lifetime.py)
+		(window as any).__lifetime = { view: () => ({ ...v, minute: last }), running: () => frame !== 0, renders: () => renders };
+
+		teardown = () => {
+			observer.disconnect();
+			ro.disconnect();
+			removeEventListener("scroll", onScroll);
+			removeEventListener("resize", resize);
+			motionQuery.removeEventListener("change", resize);
+			root.removeEventListener("click", onClick);
+			root.removeEventListener("keydown", onKey);
+			slider.removeEventListener("input", onInput);
+			if (frame) cancelAnimationFrame(frame);
+		};
+	}
+
+	document.addEventListener("astro:page-load", init);
+	document.addEventListener("astro:before-swap", () => {
+		teardown?.();
+		teardown = null;
+	});
+</script>
+
+<style is:global>
+	/* ---------- the section and the story column (site look) ---------- */
+	.ltd {
+		--ltd-top: 4rem;
+		padding-top: clamp(3rem, 8dvh, 6rem);
+	}
+	.ltd-head {
+		display: grid;
+		gap: 1rem;
+		margin-bottom: clamp(1.5rem, 4dvh, 3rem);
+	}
+	.ltd-h2 {
+		font-size: var(--step-head);
+		font-weight: 850;
+		font-stretch: 118%;
+		line-height: 0.98;
+		letter-spacing: -0.01em;
+		max-width: 16ch;
+		text-wrap: balance;
+	}
+	.ltd-intro {
+		font-size: var(--step-lead);
+		max-width: 46ch;
+		color: var(--ink-soft);
+		text-wrap: pretty;
+	}
+	.ltd-track {
+		position: relative;
+		height: 640dvh;
+	}
+	.ltd-stage {
+		position: sticky;
+		top: var(--ltd-top);
+		height: calc(100dvh - var(--ltd-top));
+		overflow: clip;
+		display: flex;
+		justify-content: center;
+		padding: 0.75rem clamp(1rem, 2.5vw, 2.5rem) 1rem;
+	}
+	.ltd-fit {
+		--fit: 1;
+		width: 100%;
+		max-width: 92rem;
+		height: max-content;
+		transform: scale(var(--fit));
+		transform-origin: 50% 0;
+		display: grid;
+		gap: 0.9rem 2.5rem;
+		grid-template-columns: minmax(17rem, 21rem) minmax(0, 1fr);
+		grid-template-rows: auto auto auto auto auto 1fr;
+		grid-template-areas:
+			"clock app"
+			"beats app"
+			"plan app"
+			"compare app"
+			"controls app"
+			"caption app";
+	}
+	.ltd-clock {
+		grid-area: clock;
+		font-size: clamp(3.25rem, 2rem + 4vw, 6.5rem);
+		font-weight: 820;
+		font-stretch: 125%;
+		line-height: 0.85;
+		letter-spacing: -0.02em;
+		font-variant-numeric: tabular-nums;
+	}
+	.ltd-beats {
+		grid-area: beats;
+		display: grid;
+	}
+	.ltd-beat,
+	.ltd-queued {
+		grid-area: 1 / 1;
+		font-size: var(--step-body);
+		line-height: 1.45;
+		text-wrap: pretty;
+		opacity: 0;
+		transition: opacity 0.35s;
+	}
+	.ltd-beat.is-on {
+		opacity: 1;
+	}
+	.ltd-queued {
+		grid-area: 2 / 1;
+		margin-top: 0.5rem;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.ltd-queued b {
+		color: var(--ink);
+		font-variant-numeric: tabular-nums;
+	}
+	.ltd-queued.is-on {
+		opacity: 1;
+	}
+	.ltd-plan-wrap {
+		grid-area: plan;
+		margin-top: 1.6rem;
+	}
+	.ltd-plan {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+	.ltd-walls path {
+		fill: none;
+		stroke: var(--ink);
+		stroke-width: 2.5;
+		stroke-linejoin: round;
+	}
+	.ltd-walls .ltd-thin,
+	.ltd-server .ltd-thin {
+		stroke-width: 1;
+		stroke: color-mix(in oklab, var(--ink) 55%, transparent);
+		fill: none;
+	}
+	.ltd-walls .ltd-board {
+		stroke-width: 5;
+		stroke-linecap: round;
+	}
+	.ltd-cable {
+		fill: none;
+		stroke: var(--accent-brand);
+		stroke-width: 1.5;
+		stroke-dasharray: 2 4;
+		stroke-linecap: round;
+		transition: opacity 0.3s;
+	}
+	.ltd-server rect {
+		fill: color-mix(in oklab, var(--ink) 8%, transparent);
+		stroke: var(--ink);
+		stroke-width: 1.5;
+	}
+	.ltd-led {
+		fill: #4cc38a;
+		transition: fill 0.3s;
+	}
+	.ltd-server.is-down .ltd-led {
+		fill: var(--destructive);
+	}
+	.ltd:has(.ltd-server.is-down) .ltd-cable {
+		opacity: 0.18;
+	}
+	.ltd-label {
+		font-size: 13px;
+		font-weight: 650;
+		fill: var(--ink-soft);
+	}
+	.ltd-server.is-down .ltd-label {
+		fill: var(--destructive);
+	}
+	.ltd-desk {
+		cursor: pointer;
+		outline: none;
+	}
+	.ltd-desk .ltd-top {
+		fill: color-mix(in oklab, var(--ink) 5%, transparent);
+		stroke: color-mix(in oklab, var(--ink) 60%, transparent);
+		stroke-width: 1;
+	}
+	.ltd-desk .ltd-screen {
+		fill: color-mix(in oklab, var(--ink) 30%, transparent);
+		transition: fill 0.25s;
+	}
+	.ltd-desk .ltd-glow {
+		fill: var(--mark);
+		opacity: 0;
+		transition: opacity 0.35s;
+	}
+	.ltd-desk.is-on .ltd-glow {
+		opacity: 0.42;
+	}
+	.ltd-desk.is-on .ltd-screen {
+		fill: var(--mark);
+		stroke: var(--ink);
+		stroke-width: 0.75;
+	}
+	.ltd-desk .ltd-chair {
+		fill: none;
+		stroke: color-mix(in oklab, var(--ink) 45%, transparent);
+		stroke-width: 1.5;
+		stroke-linecap: round;
+	}
+	.ltd-desk.is-absent .ltd-screen,
+	.ltd-desk.is-absent .ltd-chair {
+		opacity: 0;
+	}
+	.ltd-desk.is-absent .ltd-top {
+		stroke-dasharray: 3 3;
+	}
+	.ltd-desk .ltd-ring {
+		fill: none;
+		stroke: transparent;
+		stroke-width: 2;
+	}
+	.ltd-desk.is-picked .ltd-ring {
+		stroke: var(--accent-brand);
+	}
+	.ltd-desk:focus-visible .ltd-ring {
+		stroke: var(--ring);
+		stroke-width: 3;
+	}
+	.ltd-compare {
+		grid-area: compare;
+		display: grid;
+		gap: 0.45rem;
+		font-size: var(--step-small);
+	}
+	.ltd-compare-row {
+		display: grid;
+		grid-template-columns: 9.5rem 1fr;
+		align-items: center;
+		gap: 0.75rem;
+	}
+	.ltd-compare-label {
+		color: var(--ink-soft);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.ltd-strip {
+		position: relative;
+		height: 0.7rem;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--ink) 9%, transparent);
+		overflow: hidden;
+	}
+	.ltd-strip .lt-seg,
+	.ltd-cover {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+	}
+	.ltd-cover {
+		right: 0;
+		width: 100%;
+		background: var(--field);
+		transform-origin: 100% 50%;
+		opacity: 0.86;
+	}
+	.ltd-strip .is-awake,
+	.ltd-legend .is-awake {
+		background: var(--mark);
+	}
+	.ltd-strip .is-online,
+	.ltd-legend .is-online {
+		background: var(--accent-brand);
+	}
+	.ltd-strip .is-unknown,
+	.ltd-legend .is-unknown {
+		background: transparent;
+		box-shadow: inset 0 0 0 1.5px var(--ink-soft);
+		border-radius: 3px;
+	}
+	.ltd-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1rem;
+		color: var(--ink-soft);
+		margin-top: 0.2rem;
+	}
+	.ltd-legend > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.ltd-legend i {
+		width: 0.85rem;
+		height: 0.55rem;
+		border-radius: 999px;
+	}
+	.ltd-hours {
+		display: flex;
+		justify-content: space-between;
+		margin-top: -0.2rem;
+		color: var(--ink-soft);
+		font-size: 0.75rem;
+		font-variant-numeric: tabular-nums;
+	}
+	.ltd-controls {
+		grid-area: controls;
+		display: grid;
+		gap: 0.8rem;
+		margin-top: 0.4rem;
+	}
+	.ltd-time {
+		display: grid;
+		gap: 0.3rem;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+	}
+	.ltd-time input {
+		width: 100%;
+		accent-color: var(--accent-brand);
+		min-height: 2.75rem;
+	}
+	.ltd-switches {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+	.ltd-seg {
+		display: inline-flex;
+		padding: 3px;
+		border-radius: 999px;
+		box-shadow: inset 0 0 0 1px var(--sheet-edge);
+	}
+	.ltd-seg button {
+		min-height: 2.5rem;
+		padding: 0 1rem;
+		border-radius: 999px;
+		font-size: var(--step-small);
+		font-weight: 650;
+		color: var(--ink-soft);
+		transition:
+			background-color 0.2s,
+			color 0.2s;
+	}
+	.ltd-seg button[aria-pressed="true"] {
+		background: var(--ink);
+		color: var(--field);
+	}
+	.ltd-caption {
+		grid-area: caption;
+		font-size: var(--step-small);
+		color: var(--ink-soft);
+		max-width: 40ch;
+		text-wrap: pretty;
+	}
+	.ltd-appwrap {
+		grid-area: app;
+		container-type: inline-size;
+		align-self: start;
+		min-width: 0;
+	}
+
+	/* Still (reduced motion): an ordinary section, the end of the day. */
+	.ltd.is-still .ltd-track {
+		height: auto;
+	}
+	.ltd.is-still .ltd-stage {
+		position: static;
+		height: auto;
+		overflow: visible;
+	}
+	.ltd.is-still .ltd-fit {
+		transform: none;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.ltd-track {
+			height: auto;
+		}
+		.ltd-stage {
+			position: static;
+			height: auto;
+		}
+		.ltd-fit {
+			transform: none;
+		}
+	}
+
+	/* Tablets and phones: the story on top (clock and words beside the plan), the window under it. */
+	@media (max-width: 1023px) {
+		.ltd-fit {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			grid-template-rows: auto;
+			gap: 0.6rem 1.25rem;
+			grid-template-areas:
+				"clock plan"
+				"beats plan"
+				"app app"
+				"controls controls"
+				"caption caption";
+		}
+		.ltd-plan-wrap {
+			margin-top: 0;
+		}
+		.ltd-compare {
+			display: none;
+		}
+		.ltd-controls {
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: end;
+			margin-top: 0;
+		}
+	}
+	@media (max-width: 639px) {
+		.ltd-fit {
+			grid-template-columns: minmax(0, 1fr) 46%;
+			gap: 0.5rem 0.75rem;
+		}
+		.ltd-clock {
+			font-size: clamp(2.4rem, 11vw, 3.4rem);
+		}
+		.ltd-beat,
+		.ltd-queued {
+			font-size: 0.875rem;
+			line-height: 1.35;
+		}
+		.ltd-label {
+			display: none;
+		}
+		.ltd-controls {
+			grid-template-columns: 1fr;
+			gap: 0.4rem;
+		}
+		.ltd-time {
+			grid-template-columns: auto 1fr;
+			align-items: center;
+			gap: 0.75rem;
+		}
+		.ltd-time input {
+			min-height: 2.25rem;
+		}
+		.ltd-switches {
+			justify-content: space-between;
+		}
+		.ltd-seg button {
+			min-height: 2.25rem;
+			padding: 0 0.8rem;
+		}
+		.ltd-caption {
+			font-size: 0.75rem;
+			max-width: none;
+		}
+	}
+
+	/* ---------- the window: Lifetime Server, in the product's own palette ---------- */
+	.lt-app {
+		--r: 12px;
+		position: relative;
+		color: var(--lt-text);
+		font-size: clamp(11px, 0.55rem + 0.42cqi, 13.5px);
+		line-height: 1.3;
+		border-radius: 20px;
+		overflow: hidden;
+		box-shadow: 0 0 0 1px var(--lt-edge);
+		background: var(--lt-bg);
+		font-variant-numeric: tabular-nums;
+	}
+	.lt-app[data-theme="dark"] {
+		--lt-bg: #0b1426;
+		--lt-card: #12203a;
+		--lt-card-a: rgb(18 32 58 / 0.72);
+		--lt-text: #fff;
+		--lt-muted: #9fb0cc;
+		--lt-border: #22345a;
+		--lt-pill: #223959;
+		--lt-accent: #ffc93c;
+		--lt-on-accent: #0b1426;
+		--lt-track: #1b2a46;
+		--lt-bar: #3a5688;
+		--lt-good: #4cc38a;
+		--lt-info: #7db4ff;
+		--lt-danger: #ff8a8a;
+		--lt-field: #0f1a30;
+		--lt-edge: rgb(255 255 255 / 0.1);
+		--lt-wash: rgb(255 255 255 / 0.11);
+		--lt-wash-mid: rgb(255 255 255 / 0.03);
+		--lt-amber: rgb(255 201 60 / 0.09);
+		--lt-sky: #2353a0;
+		--lt-sky-mid: #15306a;
+		--lt-ember-mid: #3a3220;
+		--lt-ember: #8a6516;
+	}
+	.lt-app[data-theme="light"] {
+		--lt-bg: #f3f4f1;
+		--lt-card: #fcfcfa;
+		--lt-card-a: rgb(252 252 250 / 0.6);
+		--lt-text: #252d2d;
+		--lt-muted: #5f6b69;
+		--lt-border: #d3d9d5;
+		--lt-pill: #dde3eb;
+		--lt-accent: #9a5b00;
+		--lt-on-accent: #fff;
+		--lt-track: #e1e6e1;
+		--lt-bar: #b8c4d6;
+		--lt-good: #2e8b57;
+		--lt-info: #2b5da8;
+		--lt-danger: #b3261e;
+		--lt-field: #ecefea;
+		--lt-edge: rgb(20 33 61 / 0.12);
+		--lt-wash: rgb(255 255 255 / 0.7);
+		--lt-wash-mid: rgb(255 255 255 / 0.22);
+		--lt-amber: rgb(154 91 0 / 0.06);
+		--lt-sky: #bfd3f2;
+		--lt-sky-mid: #dde6f3;
+		--lt-ember-mid: #f2ebda;
+		--lt-ember: #f1d58c;
+	}
+	/* Glass: the product's blue-to-gold depth behind everything (its window_gradient). */
+	.lt-app[data-style="glass"] {
+		background: linear-gradient(
+			in oklab 135deg,
+			var(--lt-sky) 0%,
+			var(--lt-sky-mid) 28%,
+			var(--lt-bg) 55%,
+			var(--lt-ember-mid) 80%,
+			var(--lt-ember) 100%
+		);
+	}
+	.lt-top {
+		display: flex;
+		align-items: center;
+		gap: 0.9em;
+		padding: 1.1em 1.4em 0.6em;
+	}
+	.lt-logo svg {
+		width: 2.6em;
+		height: 2.6em;
+		display: block;
+	}
+	.lt-name {
+		display: grid;
+		min-width: 0;
+	}
+	.lt-appname {
+		font-size: 1.35em;
+		font-weight: 650;
+		white-space: nowrap;
+	}
+	.lt-sub {
+		color: var(--lt-muted);
+		font-size: 0.9em;
+	}
+	.lt-name .lt-sub {
+		white-space: nowrap;
+	}
+	.lt-nav {
+		position: relative;
+		margin-inline: auto;
+		display: flex;
+		padding: 0.25em;
+		border-radius: 999px;
+		background: rgb(0 0 0 / 0.22);
+		box-shadow: inset 0 0 0 1px var(--lt-edge);
+	}
+	.lt-app[data-theme="light"] .lt-nav {
+		background: rgb(20 33 61 / 0.06);
+	}
+	.lt-nav-item {
+		padding: 0.55em 1.25em;
+		border-radius: 999px;
+		color: var(--lt-muted);
+		white-space: nowrap;
+	}
+	.lt-nav-item.is-on {
+		color: var(--lt-text);
+		background: var(--lt-pill);
+	}
+	.lt-app[data-theme="dark"] .lt-nav-item.is-on {
+		color: #fff0bf;
+	}
+	.lt-app[data-style="glass"] .lt-nav-item.is-on {
+		background: linear-gradient(in oklab, rgb(255 255 255 / 0.24), rgb(160 190 240 / 0.09)), rgb(58 86 136 / 0.5);
+		box-shadow:
+			inset 0 0 0 1px rgb(255 255 255 / 0.22),
+			inset 0 -2px 0 rgb(255 201 60 / 0.35);
+	}
+	.lt-app[data-style="glass"][data-theme="light"] .lt-nav-item.is-on {
+		background: #fff;
+		color: #6b3f00;
+		box-shadow:
+			inset 0 0 0 1px rgb(20 33 61 / 0.12),
+			inset 0 -2px 0 rgb(154 91 0 / 0.3);
+	}
+	.lt-tools {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.lt-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4em;
+		min-height: 2.6em;
+		padding: 0 1.1em;
+		border-radius: 9px;
+		color: var(--lt-text);
+		background: var(--lt-pill);
+		box-shadow: inset 0 0 0 1px var(--lt-edge);
+		white-space: nowrap;
+		font-weight: 500;
+	}
+	.lt-app[data-style="glass"] .lt-btn {
+		background: linear-gradient(in oklab, var(--lt-wash), var(--lt-wash-mid)), color-mix(in oklab, var(--lt-pill) 70%, transparent);
+	}
+	button.lt-btn:disabled {
+		opacity: 0.45;
+	}
+	button.lt-btn:focus-visible,
+	.lt-chip-btn:focus-visible,
+	.lt-row-btn:focus-visible {
+		outline: 2px solid var(--lt-accent);
+		outline-offset: 2px;
+	}
+	.lt-round {
+		min-width: 2.6em;
+		padding: 0;
+		border-radius: 999px;
+		font-weight: 650;
+		position: relative;
+	}
+	.lt-themebtn {
+		color: var(--lt-accent);
+	}
+	.lt-ti {
+		position: absolute;
+		width: 1.25em;
+		height: 1.25em;
+		transition:
+			opacity 0.25s,
+			filter 0.25s,
+			transform 0.25s;
+	}
+	.lt-app[data-theme="dark"] .lt-ti-sun,
+	.lt-app[data-theme="light"] .lt-ti-moon {
+		opacity: 0;
+		filter: blur(4px);
+		transform: scale(0.6);
+	}
+	.lt-status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.lt-status-words {
+		display: grid;
+		min-width: 9.5em;
+	}
+	.lt-run {
+		color: var(--lt-good);
+	}
+	.lt-app.is-stopped .lt-run {
+		color: var(--lt-danger);
+	}
+	.lt-dot {
+		display: inline-block;
+		width: 0.62em;
+		height: 0.62em;
+		border-radius: 50%;
+		flex: none;
+		background: var(--lt-muted);
+	}
+	.lt-dot.is-online {
+		background: var(--lt-good);
+	}
+	.lt-dot.is-offline {
+		background: var(--lt-accent);
+	}
+	.lt-dot.is-pending {
+		background: var(--lt-info);
+	}
+	.lt-dot.is-down {
+		background: var(--lt-danger);
+	}
+	.lt-body {
+		padding: 0.6em 1.4em 1.4em;
+		transition: opacity 0.4s;
+	}
+	.lt-app.is-stopped .lt-body {
+		opacity: 0.55;
+	}
+	.lt-titlerow {
+		display: flex;
+		align-items: center;
+		gap: 1em;
+		margin-bottom: 0.9em;
+	}
+	.lt-title {
+		font-size: 1.75em;
+		font-weight: 650;
+		display: flex;
+		align-items: baseline;
+		gap: 0.6em;
+		white-space: nowrap;
+	}
+	.lt-title small {
+		font-size: 0.5em;
+		font-weight: 400;
+		color: var(--lt-muted);
+	}
+	.lt-actions {
+		margin-left: auto;
+		display: flex;
+		gap: 0.6em;
+	}
+	.lt-app[data-style] .lt-btn.lt-primary {
+		background: var(--lt-accent);
+		color: var(--lt-on-accent);
+		font-weight: 650;
+		box-shadow: none;
+	}
+	.lt-grid {
+		display: grid;
+		gap: 0.9em;
+		grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(17.5em, 1.35fr);
+		grid-template-areas:
+			"strip strip strip strip gauge"
+			"k1 k2 k3 k4 gauge"
+			"chart chart chart chart details"
+			"devices devices devices devices events";
+		align-items: start;
+	}
+	/* Cards: Classic is a solid card with a hairline; Glass is the product's translucent panel (lit cap, amber lower
+	   edge, a light rim). Neither throws a shadow. */
+	.lt-card {
+		position: relative;
+		border-radius: var(--r);
+		padding: 1.05em 1.15em;
+		background: var(--lt-card);
+		box-shadow: inset 0 0 0 1px var(--lt-border);
+		min-width: 0;
+	}
+	.lt-app[data-style="glass"] .lt-card {
+		background:
+			linear-gradient(in oklab, transparent calc(100% - 1.8em), var(--lt-amber)),
+			linear-gradient(in oklab, var(--lt-wash), var(--lt-wash-mid) 50%, transparent),
+			var(--lt-card-a);
+		box-shadow:
+			inset 0 0 0 1px var(--lt-border),
+			inset 1px 1px 0 1px rgb(255 255 255 / 0.07);
+	}
+	.lt-app[data-style="glass"][data-theme="light"] .lt-card {
+		box-shadow:
+			inset 0 0 0 1px rgb(20 33 61 / 0.1),
+			inset 1px 1px 0 1px rgb(255 255 255 / 0.8);
+	}
+	.lt-card-title {
+		font-size: 1.22em;
+		font-weight: 650;
+	}
+	.lt-card-head {
+		display: flex;
+		align-items: center;
+		gap: 0.8em;
+		margin-bottom: 0.6em;
+	}
+	.lt-select,
+	.lt-search {
+		margin-left: auto;
+		min-height: 2.4em;
+		display: inline-flex;
+		align-items: center;
+		padding: 0 2.2em 0 0.8em;
+		border-radius: 7px;
+		background: var(--lt-field);
+		box-shadow: inset 0 0 0 1px var(--lt-border);
+		position: relative;
+		white-space: nowrap;
+	}
+	.lt-select::after {
+		content: "";
+		position: absolute;
+		right: 0.8em;
+		top: 50%;
+		border: 0.3em solid transparent;
+		border-top-color: var(--lt-muted);
+		margin-top: -0.1em;
+	}
+	.lt-search {
+		color: var(--lt-muted);
+		padding-right: 6em;
+	}
+	.lt-search + .lt-select {
+		margin-left: 0;
+	}
+	/* the state strip: one bar of the four states, then a chip per state (click: which computers) */
+	.lt-strip {
+		grid-area: strip;
+		display: grid;
+		gap: 0.55em;
+	}
+	.lt-strip-bar {
+		position: relative;
+		height: 0.55em;
+		border-radius: 999px;
+		overflow: hidden;
+		background: var(--lt-track);
+	}
+	.lt-strip-bar i {
+		position: absolute;
+		inset: 0;
+		transform-origin: 0 50%;
+		transform: scaleX(0);
+		transition: transform 0.3s;
+	}
+	.lt-strip-bar .is-online {
+		background: var(--lt-good);
+	}
+	.lt-strip-bar .is-offline {
+		background: var(--lt-accent);
+	}
+	.lt-strip-bar .is-noreport {
+		background: var(--lt-muted);
+	}
+	.lt-strip-bar .is-pending {
+		background: var(--lt-info);
+	}
+	.lt-chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5em;
+	}
+	.lt-chip {
+		--tone: var(--lt-muted);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4em;
+		min-height: 2em;
+		padding: 0 0.75em 0 0.5em;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--tone) 15%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 60%, transparent);
+		color: var(--lt-text);
+		white-space: nowrap;
+	}
+	.lt-chip.is-online {
+		--tone: var(--lt-good);
+	}
+	.lt-chip.is-offline {
+		--tone: var(--lt-accent);
+	}
+	.lt-chip.is-pending {
+		--tone: var(--lt-info);
+	}
+	.lt-chip-btn {
+		min-height: 2.4em;
+		cursor: pointer;
+		transition: opacity 0.2s;
+	}
+	.lt-chip-btn.is-empty:not([aria-pressed="true"]) {
+		opacity: 0.45;
+	}
+	.lt-chip-btn[aria-pressed="true"] {
+		background: color-mix(in oklab, var(--tone) 34%, transparent);
+	}
+	.lt-glyph {
+		width: 1em;
+		height: 1em;
+		fill: none;
+		stroke: var(--tone);
+		stroke-width: 2.4;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		flex: none;
+	}
+	/* KPI cards */
+	.lt-kpi {
+		display: grid;
+		align-content: start;
+		gap: 0.15em;
+		min-height: 9.2em;
+	}
+	.lt-kpi-icon {
+		width: 1.9em;
+		height: 1.9em;
+		margin-bottom: 0.7em;
+	}
+	.lt-review {
+		position: absolute;
+		top: 1.2em;
+		right: 1.15em;
+		color: var(--lt-accent);
+		font-weight: 650;
+	}
+	.lt-kpi-value {
+		font-size: 1.95em;
+		font-weight: 650;
+		line-height: 1.1;
+		white-space: nowrap;
+	}
+	.lt-kpi.is-alert .lt-kpi-value {
+		color: var(--lt-accent);
+	}
+	.lt-kpi-label {
+		font-size: 1.08em;
+	}
+	.lt-kpi-note {
+		color: var(--lt-muted);
+		font-size: 0.9em;
+	}
+	/* the gauge: 31 ticks in a half ring */
+	.lt-gauge {
+		grid-area: gauge;
+		align-self: stretch;
+		display: grid;
+		align-content: space-between;
+		text-align: center;
+	}
+	.lt-gauge .lt-card-title {
+		text-align: left;
+	}
+	.lt-gauge-svg {
+		width: 100%;
+		max-width: 17em;
+		margin: 0.4em auto 0;
+		display: block;
+	}
+	.lt-gauge-svg line {
+		stroke: var(--lt-border);
+		stroke-width: 6;
+		stroke-linecap: round;
+		transition: stroke 0.25s;
+	}
+	.lt-gauge-svg line.is-lit {
+		stroke: var(--lt-accent);
+	}
+	.lt-gauge-num {
+		fill: var(--lt-text);
+		font-size: 42px;
+		font-weight: 300;
+	}
+	.lt-gauge-note {
+		color: var(--lt-muted);
+		font-size: 0.9em;
+	}
+	/* the daily chart */
+	.lt-chart {
+		grid-area: chart;
+	}
+	.lt-plot {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.6em;
+		height: 11em;
+		margin: 0.2em 0 0.4em;
+	}
+	.lt-axis {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		color: var(--lt-muted);
+		font-size: 0.9em;
+		text-align: right;
+		padding-bottom: 1.7em;
+		margin-top: -0.5em;
+	}
+	.lt-bars {
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		background: repeating-linear-gradient(to bottom, var(--lt-border) 0 1px, transparent 1px 25%) top / 100% calc(100% - 1.7em) no-repeat;
+		border-bottom: 0;
+	}
+	.lt-col {
+		display: grid;
+		grid-template-rows: 1fr 1.7em;
+		justify-items: center;
+		min-width: 0;
+	}
+	.lt-barbox {
+		position: relative;
+		width: min(3.2em, 52%);
+		height: 100%;
+		border-bottom: 1px solid var(--lt-border);
+	}
+	.lt-bar {
+		position: absolute;
+		inset: 0;
+		border-radius: 6px 6px 0 0;
+		background: var(--lt-bar);
+		transform-origin: 50% 100%;
+	}
+	.lt-bar.is-today {
+		background: var(--lt-accent);
+	}
+	.lt-missing {
+		position: absolute;
+		left: 50%;
+		bottom: 0.3em;
+		width: 0.7em;
+		height: 2px;
+		margin-left: -0.35em;
+		background: var(--lt-muted);
+		border-radius: 1px;
+	}
+	.lt-day {
+		color: var(--lt-muted);
+		font-size: 0.92em;
+		align-self: end;
+		white-space: nowrap;
+	}
+	.lt-note {
+		color: var(--lt-muted);
+		font-size: 0.88em;
+	}
+	/* device details */
+	.lt-details {
+		grid-area: details;
+		display: grid;
+		gap: 0.15em;
+		align-self: stretch;
+		align-content: start;
+	}
+	.lt-det-name {
+		margin-top: 0.5em;
+		font-weight: 650;
+		font-size: 1.1em;
+	}
+	.lt-det-value {
+		font-size: 1.9em;
+		font-weight: 650;
+		margin-top: 0.3em;
+	}
+	.lt-open {
+		margin-top: 0.7em;
+		justify-self: end;
+		color: var(--lt-muted);
+	}
+	/* the device list */
+	.lt-devices {
+		grid-area: devices;
+	}
+	.lt-rows {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.lt-row {
+		margin: 0;
+	}
+	.lt-row-btn,
+	.lt-head {
+		width: 100%;
+		display: grid;
+		grid-template-columns: 7.6em 5.4em 10.5em 6.4em minmax(0, 1fr);
+		align-items: center;
+		gap: 0.6em;
+		text-align: left;
+		padding: 0.45em 0.6em;
+		border-radius: 8px;
+		min-height: 2.75em;
+	}
+	.lt-head {
+		color: var(--lt-muted);
+		font-size: 0.86em;
+		min-height: 0;
+		padding-bottom: 0.35em;
+		border-bottom: 1px solid var(--lt-border);
+		border-radius: 0;
+	}
+	.lt-row + .lt-row .lt-row-btn {
+		box-shadow: 0 -1px 0 var(--lt-border);
+	}
+	.lt-row-btn {
+		cursor: pointer;
+		color: var(--lt-text);
+	}
+	.lt-row-btn:hover {
+		background: color-mix(in oklab, var(--lt-text) 5%, transparent);
+	}
+	.lt-row.is-selected .lt-row-btn {
+		background: color-mix(in oklab, var(--lt-accent) 14%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--lt-accent) 55%, transparent);
+	}
+	.lt-cell {
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.lt-awake {
+		text-align: right;
+	}
+	.lt-tl {
+		position: relative;
+		display: block;
+		height: 0.9em;
+		border-radius: 3px;
+		background: var(--lt-track);
+		overflow: hidden;
+	}
+	.lt-seg {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+	}
+	.lt-tl .is-online {
+		background: var(--lt-good);
+	}
+	.lt-tl .is-offline {
+		background: color-mix(in oklab, var(--lt-accent) 32%, transparent);
+	}
+	.lt-tl .is-unknown {
+		background: var(--lt-bg);
+		box-shadow: inset 0 0 0 1px var(--lt-muted);
+		border-radius: 2px;
+	}
+	.lt-tl-cover {
+		position: absolute;
+		inset: 0;
+		background: var(--lt-track);
+		transform-origin: 100% 50%;
+	}
+	.lt-pager {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+		margin-top: 0.7em;
+	}
+	.lt-pager .lt-sub {
+		margin-right: auto;
+	}
+	.lt-pagenum {
+		min-width: 2.6em;
+		padding: 0;
+	}
+	/* recent events */
+	.lt-events {
+		grid-area: events;
+		align-self: stretch;
+	}
+	.lt-evlist {
+		list-style: none;
+		margin: 0.6em 0 0;
+		padding: 0;
+	}
+	.lt-evlist li {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto auto;
+		gap: 0.6em;
+		align-items: center;
+		padding: 0.62em 0.3em;
+		border-bottom: 1px solid var(--lt-border);
+	}
+	.lt-ev-name {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.lt-ev-kind {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45em;
+		white-space: nowrap;
+	}
+
+	/* Medium window: one column, the gauge beside the chart; details and events are left out. */
+	@container (max-width: 879px) {
+		.lt-grid {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-template-areas:
+				"strip strip strip strip"
+				"k1 k2 k3 k4"
+				"gauge chart chart chart"
+				"devices devices devices devices";
+		}
+		.lt-details,
+		.lt-events,
+		.lt-refresh {
+			display: none;
+		}
+		.lt-gauge-svg {
+			max-width: 12em;
+		}
+		.lt-row-btn,
+		.lt-head {
+			grid-template-columns: 6.6em 10em 6.2em minmax(0, 1fr);
+		}
+		.lt-group {
+			display: none;
+		}
+	}
+	@container (max-width: 759px) {
+		.lt-nav,
+		.lt-actions,
+		.lt-search {
+			display: none;
+		}
+		.lt-tools {
+			margin-left: auto;
+		}
+	}
+	/* Compact window (phones): two across, short labels. */
+	@container (max-width: 559px) {
+		.lt-app {
+			font-size: 11px;
+			border-radius: 16px;
+		}
+		.lt-top {
+			padding: 0.9em 1em 0.4em;
+			gap: 0.6em;
+		}
+		.lt-name .lt-sub,
+		.lt-status-words .lt-sub {
+			display: none;
+		}
+		.lt-status-words {
+			min-width: 0;
+		}
+		.lt-body {
+			padding: 0.4em 1em 1em;
+		}
+		.lt-titlerow {
+			margin-bottom: 0.6em;
+		}
+		.lt-title {
+			font-size: 1.45em;
+		}
+		.lt-grid {
+			gap: 0.6em;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			grid-template-areas:
+				"strip strip"
+				"k1 k2"
+				"k3 k4"
+				"gauge chart"
+				"devices devices";
+		}
+		.lt-card {
+			padding: 0.75em 0.85em;
+		}
+		.lt-kpi {
+			min-height: 0;
+			grid-template-columns: auto 1fr;
+			column-gap: 0.6em;
+		}
+		.lt-kpi-icon {
+			margin: 0;
+			grid-row: span 2;
+			width: 1.6em;
+			height: 1.6em;
+		}
+		.lt-kpi-value {
+			font-size: 1.5em;
+		}
+		.lt-kpi-note,
+		.lt-review {
+			display: none;
+		}
+		.lt-plot {
+			height: 7.5em;
+		}
+		.lt-axis,
+		.lt-col:not(:last-child) .lt-day {
+			visibility: hidden;
+		}
+		.lt-axis {
+			display: none;
+		}
+		.lt-col:last-child .lt-day {
+			overflow: visible;
+			justify-self: end;
+		}
+		.lt-plot {
+			grid-template-columns: 1fr;
+		}
+		.lt-chart .lt-select,
+		.lt-note,
+		.lt-devices .lt-select {
+			display: none;
+		}
+		.lt-gauge-num {
+			font-size: 54px;
+		}
+		.lt-row-btn,
+		.lt-head {
+			grid-template-columns: 4.8em 1.4em 5.4em minmax(0, 1fr);
+			gap: 0.45em;
+			padding: 0.3em 0.4em;
+			min-height: 2.4em;
+		}
+		.lt-state .lt-chip {
+			padding: 0;
+			width: 1.6em;
+			min-height: 1.6em;
+			justify-content: center;
+		}
+		.lt-state .lt-chip > span {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+		}
+		.lt-head .lt-state {
+			visibility: hidden;
+		}
+		.lt-pager {
+			margin-top: 0.4em;
+		}
+		.lt-pager .lt-btn {
+			min-height: 2.2em;
+			padding: 0 0.7em;
+		}
+	}
+</style>
