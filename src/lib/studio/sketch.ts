@@ -9,6 +9,11 @@
  * How it is drawn: the page is built once as a list of marks in drawing order (short pen segments, words, a few
  * highlighter bars). Showing it up to some share of that list only draws the marks added since last time onto the
  * canvas that is already there, so revealing it costs a few strokes, not a repaint of the page.
+ *
+ * In the room the page is drawn in full, once, with a second small canvas (`order`) that holds each mark's place in
+ * the drawing order as a grey; the book's shader shows the ink up to the pen's place, and the blank page (`paper`)
+ * past it (room.ts). Sending the 2048 px
+ * page to the graphics card again at every step of the pen stalled frames.
  */
 import type { SketchText } from "../../text/studio";
 
@@ -401,7 +406,8 @@ function layout(text: SketchText, steps: SketchSteps, g: CanvasRenderingContext2
 	return marks;
 }
 
-function paper(g: CanvasRenderingContext2D) {
+/** The blank pages: the paper, its rules, the margin and the spine. */
+export function paper(g: CanvasRenderingContext2D) {
 	const w = SKETCH_WIDTH;
 	const h = SKETCH_HEIGHT;
 	g.fillStyle = "#f4eedd";
@@ -443,10 +449,10 @@ function paper(g: CanvasRenderingContext2D) {
 	}
 }
 
-function ink(g: CanvasRenderingContext2D, m: Mark) {
+function ink(g: CanvasRenderingContext2D, m: Mark, colour = INK[m.ink], grow = 0) {
 	if (m.k === 0) {
-		g.strokeStyle = INK[m.ink];
-		g.lineWidth = m.w;
+		g.strokeStyle = colour;
+		g.lineWidth = m.w + grow;
 		g.beginPath();
 		g.moveTo(m.x0, m.y0);
 		g.lineTo(m.x1, m.y1);
@@ -456,12 +462,17 @@ function ink(g: CanvasRenderingContext2D, m: Mark) {
 		g.translate(m.x, m.y);
 		g.rotate(m.rot);
 		g.font = font(m.size);
-		g.fillStyle = INK[m.ink];
+		g.fillStyle = colour;
 		g.fillText(m.text, 0, 0);
+		if (grow) {
+			g.strokeStyle = colour;
+			g.lineWidth = grow;
+			g.strokeText(m.text, 0, 0);
+		}
 		g.restore();
 	} else {
-		g.fillStyle = INK[m.ink];
-		g.fillRect(m.x, m.y, m.w, m.h);
+		g.fillStyle = colour;
+		g.fillRect(m.x - grow / 2, m.y - grow / 2, m.w + grow, m.h + grow);
 	}
 }
 
@@ -472,8 +483,12 @@ export interface Sketch {
 
 /**
  * @param surface  The canvas the sketchbook's pages are drawn on (SKETCH_WIDTH × SKETCH_HEIGHT) and a way to say it changed.
+ * @param order    Optional: a canvas of the same shape (any size) that gets every mark's place in the drawing order as
+ *                 a grey, 2/255 for the first to 250/255 for the last, on white, whenever the whole page is drawn. Each
+ *                 mark is drawn a little wider there than in ink, so a mask from it covers the ink's soft edges.
  */
-export function createSketch(surface: { g: CanvasRenderingContext2D; redraw(): void }, text: SketchText, steps: SketchSteps): Sketch {
+type Surface = { g: CanvasRenderingContext2D; redraw(): void };
+export function createSketch(surface: Surface, text: SketchText, steps: SketchSteps, order?: Surface): Sketch {
 	const { g } = surface;
 	g.lineCap = "round";
 	g.lineJoin = "round";
@@ -517,6 +532,20 @@ export function createSketch(surface: { g: CanvasRenderingContext2D; redraw(): v
 			for (let i = drawn; i < target && i < marks.length; i++) ink(g, marks[i]);
 			drawn = Math.min(target, marks.length);
 			surface.redraw();
+			if (order && drawn === marks.length) {
+				const o = order.g;
+				const scale = o.canvas.width / SKETCH_WIDTH;
+				o.setTransform(scale, 0, 0, scale, 0, 0);
+				o.lineCap = "round";
+				o.textBaseline = "alphabetic";
+				o.fillStyle = "#fff";
+				o.fillRect(0, 0, SKETCH_WIDTH, SKETCH_HEIGHT);
+				marks.forEach((m, i) => {
+					const grey = 2 + Math.round((i / marks.length) * 248);
+					ink(o, m, `rgb(${grey},${grey},${grey})`, 5); // a little wider than the ink, so its soft edges are covered too
+				});
+				order.redraw();
+			}
 		},
 	};
 	return api;

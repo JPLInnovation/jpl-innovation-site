@@ -3,7 +3,7 @@
  * through. Metres, y up. The room spans x -8.5 to 8.5 and z -3.4 (front wall) to 6.4 (back wall), 3.4 m high.
  *
  *   Front wall, left to right:  the desk (lamp, sketchbook, monitor, keyboard, the logo on the wall above), then the
- *                               four work stations (robot cart, drone bench, switch rack, test bench), and the curved
+ *                               five work stations (robot cart, drone bench, software stand, switch rack, test bench), and the curved
  *                               project wall at the right-hand end.
  *   Back wall, right to left:   the whiteboard and binders, the long window, the team's table, the door. Above its sill
  *                               the back wall is glass, onto the city at night (backdrop.ts), except around the door
@@ -19,6 +19,7 @@
 import {
 	BoxGeometry,
 	CanvasTexture,
+	LinearFilter,
 	CylinderGeometry,
 	DoubleSide,
 	Fog,
@@ -49,7 +50,7 @@ import { buildBackdrop } from "./backdrop";
 import { buildProps } from "./props";
 import { createLightPool, type LightSpec } from "./lights";
 import { BLANK, buildDeskSheets, type SheetPlace } from "./desk-sheets";
-import { createSketch, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
+import { createSketch, paper, SKETCH_HEIGHT, SKETCH_WIDTH } from "./sketch";
 import { type PageScreen, pageScreen } from "./screens";
 import { buildStations, type Stations } from "./stations";
 import { buildBench, type BuildBench } from "./build-bench";
@@ -90,6 +91,7 @@ const SCENE_LAMPS: Record<string, { at: P3; aim: P3; power: number; angle: numbe
 	web: LAMP.test,
 	robotics: LAMP.robot,
 	drones: LAMP.drone,
+	software: LAMP.drone,
 	crew: LAMP.crew,
 	research: sceneLamp(LAMP.build, 0.35),
 	networks: { at: [3.3, 3.2, -1.5], aim: [3.3, 1.2, -2.7], power: 26, angle: 0.5 },
@@ -386,16 +388,42 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 
 	// The sketchbook, open flat; the pencil beside it.
 	const sketch = canvasSurface(SKETCH_WIDTH, SKETCH_HEIGHT);
-	const sketchPages = createSketch(sketch, content.sketch.text, { states: content.sketch.states });
+	// The page is drawn in full once; `order` holds each stroke's place in the drawing order, and the shader shows the
+	// ink up to the pen's place (sketch.ts). Nothing is sent to the graphics card while the pen moves.
+	const orderCanvas = document.createElement("canvas");
+	orderCanvas.width = SKETCH_WIDTH / 2;
+	orderCanvas.height = SKETCH_HEIGHT / 2;
+	const orderTexture = new CanvasTexture(orderCanvas);
+	orderTexture.generateMipmaps = false;
+	orderTexture.minFilter = LinearFilter;
+	const blank = canvasSurface(SKETCH_WIDTH, SKETCH_HEIGHT); // the same pages with nothing on them yet
+	paper(blank.g);
+	blank.redraw();
+	createSketch(sketch, content.sketch.text, { states: content.sketch.states }, { g: orderCanvas.getContext("2d")!, redraw: () => (orderTexture.needsUpdate = true) }).show(1);
 	const SKETCH_TIME = 4; // seconds the pen takes, from the moment the camera gets to the book
 	let sketchStart = -1;
 	let sketchDone = false;
-	let sketchShown = 0;
-	let sketchAt = -1;
+	const sketchShow = { value: 0 };
 	const book = new Mesh(new PlaneGeometry(0.84, 0.3), hardware({ color: 0xffffff, map: sketch.texture, roughness: 0.9 }, "printed"));
 	// The lamp and the room's light fall on the page, and white paper under that much light is nearly white itself, which
 	// leaves the pen little to show against: the page is dimmed (see applyPalette) so the ink keeps its contrast.
 	const bookMaterial = book.material as MeshStandardMaterial;
+	{
+		const before = bookMaterial.onBeforeCompile;
+		bookMaterial.onBeforeCompile = (shader, renderer) => {
+			before.call(bookMaterial, shader, renderer);
+			shader.uniforms.uShow = sketchShow;
+			shader.uniforms.uOrder = { value: orderTexture };
+			shader.uniforms.uBlank = { value: blank.texture };
+			shader.fragmentShader = shader.fragmentShader.replace("void main() {", "uniform float uShow;\nuniform sampler2D uOrder;\nuniform sampler2D uBlank;\nvoid main() {").replace(
+				"#include <map_fragment>",
+				`#include <map_fragment>
+				float inkAt = texture2D(uOrder, vMapUv).r;
+				float inkHide = smoothstep(uShow - 0.012, uShow, inkAt) * step(inkAt, 0.99);
+				diffuseColor.rgb = mix(diffuseColor.rgb, diffuse * texture2D(uBlank, vMapUv).rgb, inkHide); // the blank page under it`,
+			);
+		};
+	}
 	book.rotation.x = -Math.PI / 2;
 	book.rotation.z = 0.03;
 	book.position.set(deskX - 0.32, deskTop + 0.011, deskZ + 0.14);
@@ -536,7 +564,7 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 		stationDrone: stations.drone,
 		bench,
 		parts: { monitor, robot: stations.robot, rack: stations.rack, laptop: stations.laptop, drone: stations.bench },
-		busy: () => busy || bench.busy() || stations.bench.busy(),
+		busy: () => busy || bench.busy() || stations.bench.busy() || (sketchStart >= 0 && sketchShow.value < 1),
 		finishSketch() {
 			sketchDone = true;
 		},
@@ -561,15 +589,10 @@ export async function buildRoom(ctx: StageContext, content: RoomContent): Promis
 			(logo.material as MeshBasicMaterial).color.setScalar(0.25 + 0.75 * level);
 			(slogan.material as MeshBasicMaterial).opacity = level;
 
-			// The sketch draws itself once the camera is at the book, over a few seconds (the strokes arrive a few times a
-			// second at most), and stays drawn from then on, wherever the camera goes.
+			// The sketch draws itself once the camera is at the book, over a few seconds, and stays drawn from then on,
+			// wherever the camera goes.
 			if (sketchStart < 0 && (near.sketch ?? 0) > 0.6) sketchStart = time;
-			const sketchWant = sketchDone ? 1 : sketchStart < 0 ? 0 : Math.min(1, (time - sketchStart) / SKETCH_TIME);
-			if (sketchWant > sketchShown && (time - sketchAt > 0.05 || sketchWant >= 1)) {
-				sketchShown = sketchWant;
-				sketchAt = time;
-				sketchPages.show(sketchWant);
-			}
+			sketchShow.value = sketchDone ? 1 : sketchStart < 0 ? 0 : Math.min(1, (time - sketchStart) / SKETCH_TIME);
 
 		},
 		applyPalette(p) {
